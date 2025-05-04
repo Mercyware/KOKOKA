@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const AcademicYearSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   name: {
     type: String,
     required: [true, 'Please provide academic year name'],
-    unique: true,
     trim: true
   },
   startDate: {
@@ -46,5 +50,8 @@ AcademicYearSchema.virtual('isCurrent').get(function() {
   const now = new Date();
   return now >= this.startDate && now <= this.endDate;
 });
+
+// Compound index to ensure unique academic year names within a school
+AcademicYearSchema.index({ name: 1, school: 1 }, { unique: true });
 
 module.exports = mongoose.model('AcademicYear', AcademicYearSchema);

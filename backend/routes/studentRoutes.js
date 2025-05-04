@@ -3,9 +3,10 @@ const router = express.Router();
 const studentController = require('../controllers/studentController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
+const schoolDataRoutes = require('./schoolDataRoutes');
 
-// All routes require authentication
-router.use(authMiddleware.protect);
+// All routes require authentication and school context
+router.use(schoolDataRoutes.filterBySchoolMiddleware);
 
 /**
  * @swagger
@@ -323,6 +324,7 @@ router.get(
  */
 router.post(
   '/',
+  schoolDataRoutes.scopeToSchoolMiddleware,
   roleMiddleware.restrictTo('admin'),
   studentController.createStudent
 );

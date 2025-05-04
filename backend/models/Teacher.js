@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const TeacherSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -8,8 +13,7 @@ const TeacherSchema = new mongoose.Schema({
   },
   employeeId: {
     type: String,
-    required: [true, 'Please provide an employee ID'],
-    unique: true
+    required: [true, 'Please provide an employee ID']
   },
   dateOfBirth: {
     type: Date,
@@ -199,5 +203,8 @@ TeacherSchema.virtual('yearsOfService').get(function() {
   
   return years;
 });
+
+// Compound index to ensure unique employee IDs within a school
+TeacherSchema.index({ employeeId: 1, school: 1 }, { unique: true });
 
 module.exports = mongoose.model('Teacher', TeacherSchema);

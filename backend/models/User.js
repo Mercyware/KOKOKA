@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   name: {
     type: String,
     required: [true, 'Please provide a name'],
@@ -25,7 +30,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'teacher', 'admin', 'cashier', 'librarian', 'counselor', 'nurse', 'security', 'maintenance', 'other'],
+    enum: ['student', 'teacher', 'admin', 'superadmin', 'cashier', 'librarian', 'counselor', 'nurse', 'security', 'maintenance', 'other'],
     default: 'student'
   },
   profileImage: {

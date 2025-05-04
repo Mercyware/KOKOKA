@@ -37,7 +37,8 @@
     "swagger-ui-express": "^5.0.0",
     "winston": "^3.11.0",
     "xss-clean": "^0.1.4",
-    "express-async-handler": "^1.2.0"
+    "express-async-handler": "^1.2.0",
+    "slugify": "^1.6.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",

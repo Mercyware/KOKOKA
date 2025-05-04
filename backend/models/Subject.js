@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const SubjectSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   name: {
     type: String,
     required: [true, 'Please provide subject name'],
@@ -46,8 +51,8 @@ const SubjectSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure unique subject codes within an academic year
-SubjectSchema.index({ code: 1, academicYear: 1 }, { unique: true });
+// Compound index to ensure unique subject codes within an academic year and school
+SubjectSchema.index({ code: 1, academicYear: 1, school: 1 }, { unique: true });
 
 // Virtual for teachers assigned to this subject
 SubjectSchema.virtual('teachers', {

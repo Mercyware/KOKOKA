@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const ClassSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   name: {
     type: String,
     required: [true, 'Please provide class name'],
@@ -34,8 +39,8 @@ const ClassSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure unique class names within an academic year
-ClassSchema.index({ name: 1, academicYear: 1 }, { unique: true });
+// Compound index to ensure unique class names within an academic year and school
+ClassSchema.index({ name: 1, academicYear: 1, school: 1 }, { unique: true });
 
 // Virtual for class arms
 ClassSchema.virtual('classArms', {

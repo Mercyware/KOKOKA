@@ -13,8 +13,19 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
     
+    // Get school from request (set by school middleware) or from request body
+    const schoolId = req.school ? req.school._id : req.body.school;
+    
+    if (!schoolId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'School ID is required' 
+      });
+    }
+    
     // Create new user
     const user = new User({
+      school: schoolId,
       name,
       email,
       password,
@@ -24,9 +35,15 @@ exports.register = async (req, res) => {
     await user.save();
     
     // Generate JWT token
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
-      expiresIn: '30d'
-    });
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role,
+        school: user.school 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '30d' }
+    );
     
     res.status(201).json({
       success: true,
@@ -35,7 +52,8 @@ exports.register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        school: user.school
       }
     });
   } catch (error) {
@@ -61,9 +79,15 @@ exports.login = async (req, res) => {
     }
     
     // Generate JWT token
-    const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
-      expiresIn: '30d'
-    });
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        role: user.role,
+        school: user.school 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '30d' }
+    );
     
     res.json({
       success: true,
@@ -72,7 +96,8 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        school: user.school
       }
     });
   } catch (error) {

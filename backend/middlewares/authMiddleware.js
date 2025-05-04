@@ -57,8 +57,17 @@ exports.protect = async (req, res, next) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      school: user.school
     };
+    
+    // If token has school info but user doesn't match, reject
+    if (decoded.school && user.school && decoded.school.toString() !== user.school.toString()) {
+      return res.status(401).json({
+        success: false,
+        message: 'User does not belong to the specified school'
+      });
+    }
     
     next();
   } catch (error) {
@@ -99,7 +108,7 @@ exports.refreshToken = async (req, res, next) => {
     
     // Generate new access token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user._id, role: user.role, school: user.school },
       JWT_SECRET,
       { expiresIn: '1h' }
     );

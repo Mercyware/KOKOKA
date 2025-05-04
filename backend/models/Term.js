@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const TermSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   name: {
     type: String,
     required: [true, 'Please provide term name'],
@@ -37,8 +42,8 @@ const TermSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure unique term names within an academic year
-TermSchema.index({ name: 1, academicYear: 1 }, { unique: true });
+// Compound index to ensure unique term names within an academic year and school
+TermSchema.index({ name: 1, academicYear: 1, school: 1 }, { unique: true });
 
 // Virtual to check if term is current
 TermSchema.virtual('isCurrent').get(function() {

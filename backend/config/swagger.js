@@ -39,6 +39,217 @@ const swaggerOptions = {
         },
       },
       schemas: {
+        School: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Auto-generated ID of the school',
+            },
+            name: {
+              type: 'string',
+              description: 'School name',
+            },
+            slug: {
+              type: 'string',
+              description: 'URL-friendly version of the school name',
+            },
+            subdomain: {
+              type: 'string',
+              description: 'Unique subdomain for the school',
+            },
+            logo: {
+              type: 'string',
+              description: 'URL to school logo image',
+            },
+            address: {
+              type: 'object',
+              properties: {
+                street: {
+                  type: 'string',
+                },
+                city: {
+                  type: 'string',
+                },
+                state: {
+                  type: 'string',
+                },
+                zipCode: {
+                  type: 'string',
+                },
+                country: {
+                  type: 'string',
+                },
+              },
+            },
+            contactInfo: {
+              type: 'object',
+              properties: {
+                email: {
+                  type: 'string',
+                  format: 'email',
+                },
+                phone: {
+                  type: 'string',
+                },
+                website: {
+                  type: 'string',
+                },
+              },
+            },
+            description: {
+              type: 'string',
+              description: 'School description',
+            },
+            established: {
+              type: 'string',
+              format: 'date',
+              description: 'Date when the school was established',
+            },
+            type: {
+              type: 'string',
+              enum: ['primary', 'secondary', 'college', 'university', 'vocational', 'other'],
+              description: 'Type of school',
+            },
+            status: {
+              type: 'string',
+              enum: ['active', 'pending', 'suspended', 'inactive'],
+              description: 'Current status of the school',
+            },
+            settings: {
+              type: 'object',
+              properties: {
+                theme: {
+                  type: 'object',
+                  properties: {
+                    primaryColor: {
+                      type: 'string',
+                    },
+                    secondaryColor: {
+                      type: 'string',
+                    },
+                    accentColor: {
+                      type: 'string',
+                    },
+                    logo: {
+                      type: 'string',
+                    },
+                  },
+                },
+                grading: {
+                  type: 'object',
+                  properties: {
+                    system: {
+                      type: 'string',
+                      enum: ['percentage', 'letter', 'gpa', 'custom'],
+                    },
+                    passMark: {
+                      type: 'number',
+                    },
+                    scale: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          grade: {
+                            type: 'string',
+                          },
+                          minScore: {
+                            type: 'number',
+                          },
+                          maxScore: {
+                            type: 'number',
+                          },
+                          gpa: {
+                            type: 'number',
+                          },
+                          description: {
+                            type: 'string',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                academicYear: {
+                  type: 'object',
+                  properties: {
+                    startMonth: {
+                      type: 'number',
+                    },
+                    endMonth: {
+                      type: 'number',
+                    },
+                    terms: {
+                      type: 'number',
+                    },
+                  },
+                },
+                features: {
+                  type: 'object',
+                  properties: {
+                    sms: {
+                      type: 'boolean',
+                    },
+                    email: {
+                      type: 'boolean',
+                    },
+                    library: {
+                      type: 'boolean',
+                    },
+                    transport: {
+                      type: 'boolean',
+                    },
+                    hostel: {
+                      type: 'boolean',
+                    },
+                    ai: {
+                      type: 'boolean',
+                    },
+                  },
+                },
+              },
+            },
+            subscription: {
+              type: 'object',
+              properties: {
+                plan: {
+                  type: 'string',
+                  enum: ['free', 'basic', 'premium', 'enterprise'],
+                },
+                startDate: {
+                  type: 'string',
+                  format: 'date-time',
+                },
+                endDate: {
+                  type: 'string',
+                  format: 'date-time',
+                },
+                status: {
+                  type: 'string',
+                  enum: ['active', 'trial', 'expired', 'cancelled'],
+                },
+                paymentMethod: {
+                  type: 'string',
+                },
+                paymentId: {
+                  type: 'string',
+                },
+              },
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'School creation date',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'School last update date',
+            },
+          },
+        },
         User: {
           type: 'object',
           required: ['name', 'email', 'password', 'role'],
@@ -306,6 +517,10 @@ const swaggerOptions = {
       {
         name: 'Auth',
         description: 'Authentication endpoints',
+      },
+      {
+        name: 'Schools',
+        description: 'School management endpoints',
       },
       {
         name: 'Students',

@@ -15,6 +15,7 @@ const ENV_CONFIG = {
   HOST: process.env.HOST || 'localhost',
   API_URL: process.env.API_URL || 'http://localhost:5000/api',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  MAIN_DOMAIN: process.env.MAIN_DOMAIN || 'schoolmanagement.com',
   
   // CORS configuration
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',

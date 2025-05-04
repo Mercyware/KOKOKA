@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const StaffSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -8,8 +13,7 @@ const StaffSchema = new mongoose.Schema({
   },
   employeeId: {
     type: String,
-    required: [true, 'Please provide an employee ID'],
-    unique: true
+    required: [true, 'Please provide an employee ID']
   },
   staffType: {
     type: String,
@@ -322,5 +326,8 @@ StaffSchema.virtual('remainingLeaves').get(function() {
   // Assuming a standard allocation of 30 leave days per year
   return Math.max(0, 30 - leaveDays);
 });
+
+// Compound index to ensure unique employee IDs within a school
+StaffSchema.index({ employeeId: 1, school: 1 }, { unique: true });
 
 module.exports = mongoose.model('Staff', StaffSchema);

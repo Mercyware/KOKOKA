@@ -17,9 +17,11 @@ const { setupSwagger } = require('./config/swagger');
 
 // Import middleware
 const errorHandler = require('./middlewares/errorHandler');
+const { extractSchoolFromSubdomain } = require('./middlewares/schoolMiddleware');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const schoolRoutes = require('./routes/schoolRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const staffRoutes = require('./routes/staffRoutes');
@@ -114,7 +116,11 @@ app.get('/api/health', (req, res) => {
 // Setup Swagger documentation
 setupSwagger(app);
 
+// Apply school subdomain middleware to all routes
+app.use(extractSchoolFromSubdomain);
+
 // API routes
+app.use('/api/schools', schoolRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);

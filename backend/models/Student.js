@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const StudentSchema = new mongoose.Schema({
+  school: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    required: [true, 'School is required']
+  },
   // Personal Information
   firstName: {
     type: String,
@@ -32,7 +37,6 @@ const StudentSchema = new mongoose.Schema({
   admissionNumber: {
     type: String,
     required: [true, 'Please provide an admission number'],
-    unique: true,
     trim: true
   },
   admissionDate: {
@@ -332,9 +336,11 @@ StudentSchema.virtual('averageGrade').get(function() {
 
 // Indexes for faster lookups
 StudentSchema.index({ firstName: 1, lastName: 1 });
-StudentSchema.index({ admissionNumber: 1 });
 StudentSchema.index({ class: 1 });
 StudentSchema.index({ 'guardians': 1 });
 StudentSchema.index({ status: 1 });
+
+// Compound index to ensure unique admission numbers within a school
+StudentSchema.index({ admissionNumber: 1, school: 1 }, { unique: true });
 
 module.exports = mongoose.model('Student', StudentSchema);
