@@ -1,0 +1,29 @@
+# Logs
+logs/*.log
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Build outputs
+dist/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Miscellaneous
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# Coverage reports
+coverage/
