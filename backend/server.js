@@ -22,10 +22,17 @@ const errorHandler = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const timetableRoutes = require('./routes/timetableRoutes');
 const examRoutes = require('./routes/examRoutes');
 const feeRoutes = require('./routes/feeRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const academicYearRoutes = require('./routes/academicYearRoutes');
+const termRoutes = require('./routes/termRoutes');
+const classRoutes = require('./routes/classRoutes');
+const classArmRoutes = require('./routes/classArmRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
+const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -111,9 +118,16 @@ setupSwagger(app);
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/staff', staffRoutes);
 app.use('/api/timetables', timetableRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/fees', feeRoutes);
+app.use('/api/academic-years', academicYearRoutes);
+app.use('/api/terms', termRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/class-arms', classArmRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 
 // AI routes (conditionally enabled)
 if (env.FEATURE_AI_ENABLED) {

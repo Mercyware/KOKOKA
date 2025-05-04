@@ -194,6 +194,52 @@ const swaggerOptions = {
             // Other properties omitted for brevity
           },
         },
+        Staff: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Auto-generated ID of the staff',
+            },
+            user: {
+              type: 'string',
+              description: 'Reference to User model',
+            },
+            employeeId: {
+              type: 'string',
+              description: 'Staff employee ID',
+            },
+            staffType: {
+              type: 'string',
+              enum: ['teacher', 'admin', 'cashier', 'librarian', 'counselor', 'nurse', 'security', 'maintenance', 'other'],
+              description: 'Type of staff',
+            },
+            dateOfBirth: {
+              type: 'string',
+              format: 'date',
+              description: 'Staff date of birth',
+            },
+            gender: {
+              type: 'string',
+              enum: ['male', 'female', 'other'],
+              description: 'Staff gender',
+            },
+            department: {
+              type: 'string',
+              description: 'Staff department',
+            },
+            position: {
+              type: 'string',
+              description: 'Staff position',
+            },
+            status: {
+              type: 'string',
+              enum: ['active', 'on leave', 'terminated', 'retired', 'suspended'],
+              description: 'Staff status',
+            },
+            // Other properties omitted for brevity
+          },
+        },
         Error: {
           type: 'object',
           properties: {
@@ -268,6 +314,10 @@ const swaggerOptions = {
       {
         name: 'Teachers',
         description: 'Teacher management endpoints',
+      },
+      {
+        name: 'Staff',
+        description: 'Staff management endpoints',
       },
       {
         name: 'Timetables',

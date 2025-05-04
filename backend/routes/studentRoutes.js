@@ -33,7 +33,7 @@ router.use(authMiddleware.protect);
  *         name: sort
  *         schema:
  *           type: string
- *         description: Sort field (e.g., name, admissionNumber)
+ *         description: Sort field (e.g., firstName, lastName, admissionNumber)
  *       - in: query
  *         name: order
  *         schema:
@@ -41,15 +41,63 @@ router.use(authMiddleware.protect);
  *           enum: [asc, desc]
  *           default: asc
  *         description: Sort order
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, graduated, transferred, suspended, expelled]
+ *         description: Filter by student status
+ *       - in: query
+ *         name: class
+ *         schema:
+ *           type: string
+ *         description: Filter by class ID
+ *       - in: query
+ *         name: gender
+ *         schema:
+ *           type: string
+ *           enum: [male, female, other]
+ *         description: Filter by gender
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name or admission number
+ *       - in: query
+ *         name: admissionDateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by admission date (from)
+ *       - in: query
+ *         name: admissionDateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by admission date (to)
  *     responses:
  *       200:
- *         description: A list of students
+ *         description: A list of students with pagination
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Student'
+ *               type: object
+ *               properties:
+ *                 students:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Student'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       403:
@@ -68,7 +116,7 @@ router.get(
  * /students/{id}:
  *   get:
  *     summary: Get student by ID
- *     description: Retrieve a specific student by ID. Accessible by admins, teachers, and the student themselves.
+ *     description: Retrieve a specific student by ID with detailed information. Accessible by admins, teachers, and the student themselves.
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
@@ -106,7 +154,7 @@ router.get(
  * /students:
  *   post:
  *     summary: Create new student
- *     description: Create a new student record. Accessible by admins only.
+ *     description: Create a new student record with optional guardian information. Accessible by admins only.
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
@@ -117,21 +165,45 @@ router.get(
  *           schema:
  *             type: object
  *             required:
- *               - user
+ *               - firstName
+ *               - lastName
  *               - admissionNumber
  *               - class
  *               - dateOfBirth
  *               - gender
  *             properties:
- *               user:
+ *               firstName:
  *                 type: string
- *                 description: Reference to User model ID
+ *                 description: Student's first name
+ *               lastName:
+ *                 type: string
+ *                 description: Student's last name
+ *               middleName:
+ *                 type: string
+ *                 description: Student's middle name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Student's email address
  *               admissionNumber:
  *                 type: string
  *                 description: Unique admission number
+ *               admissionDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Date of admission
  *               class:
  *                 type: string
  *                 description: Reference to Class model ID
+ *               section:
+ *                 type: string
+ *                 description: Class section
+ *               rollNumber:
+ *                 type: string
+ *                 description: Roll number in class
+ *               house:
+ *                 type: string
+ *                 description: School house
  *               dateOfBirth:
  *                 type: string
  *                 format: date
@@ -140,6 +212,26 @@ router.get(
  *                 type: string
  *                 enum: [male, female, other]
  *                 description: Student's gender
+ *               bloodGroup:
+ *                 type: string
+ *                 enum: [A+, A-, B+, B-, AB+, AB-, O+, O-, unknown]
+ *                 description: Student's blood group
+ *               height:
+ *                 type: object
+ *                 properties:
+ *                   value:
+ *                     type: number
+ *                   unit:
+ *                     type: string
+ *                     enum: [cm, in]
+ *               weight:
+ *                 type: object
+ *                 properties:
+ *                   value:
+ *                     type: number
+ *                   unit:
+ *                     type: string
+ *                     enum: [kg, lb]
  *               address:
  *                 type: object
  *                 properties:
@@ -153,6 +245,66 @@ router.get(
  *                     type: string
  *                   country:
  *                     type: string
+ *               contactInfo:
+ *                 type: object
+ *                 properties:
+ *                   phone:
+ *                     type: string
+ *                   alternativePhone:
+ *                     type: string
+ *               guardians:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     relationship:
+ *                       type: string
+ *                       enum: [father, mother, grandfather, grandmother, uncle, aunt, sibling, legal guardian, other]
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                     phone:
+ *                       type: string
+ *                     occupation:
+ *                       type: string
+ *                     address:
+ *                       type: object
+ *                     isPrimary:
+ *                       type: boolean
+ *               healthInfo:
+ *                 type: object
+ *                 properties:
+ *                   allergies:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   medicalConditions:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *               previousSchool:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   contactInfo:
+ *                     type: string
+ *               nationality:
+ *                 type: string
+ *               religion:
+ *                 type: string
+ *               languages:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               notes:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Student created successfully
@@ -180,7 +332,7 @@ router.post(
  * /students/{id}:
  *   put:
  *     summary: Update student
- *     description: Update an existing student record. Accessible by admins only.
+ *     description: Update an existing student record with optional guardian information. Accessible by admins only.
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
@@ -198,26 +350,42 @@ router.post(
  *           schema:
  *             type: object
  *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               middleName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
  *               class:
  *                 type: string
- *                 description: Reference to Class model ID
+ *               section:
+ *                 type: string
+ *               rollNumber:
+ *                 type: string
+ *               house:
+ *                 type: string
+ *               bloodGroup:
+ *                 type: string
+ *               height:
+ *                 type: object
+ *               weight:
+ *                 type: object
  *               address:
  *                 type: object
- *                 properties:
- *                   street:
- *                     type: string
- *                   city:
- *                     type: string
- *                   state:
- *                     type: string
- *                   zipCode:
- *                     type: string
- *                   country:
- *                     type: string
+ *               contactInfo:
+ *                 type: object
+ *               guardians:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               healthInfo:
+ *                 type: object
  *               status:
  *                 type: string
  *                 enum: [active, graduated, transferred, suspended, expelled]
- *                 description: Student status
  *     responses:
  *       200:
  *         description: Student updated successfully
@@ -247,7 +415,7 @@ router.put(
  * /students/{id}:
  *   delete:
  *     summary: Delete student
- *     description: Delete a student record. Accessible by admins only.
+ *     description: Delete a student record and associated data. Accessible by admins only.
  *     tags: [Students]
  *     security:
  *       - bearerAuth: []
@@ -403,6 +571,338 @@ router.get(
   '/:id/grades',
   roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
   studentController.getStudentGrades
+);
+
+/**
+ * @swagger
+ * /students/{id}/guardians:
+ *   post:
+ *     summary: Add or update guardian
+ *     description: Add a new guardian or update an existing guardian for a student. Accessible by admins only.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - relationship
+ *               - phone
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 description: Guardian ID (if updating existing guardian)
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               relationship:
+ *                 type: string
+ *                 enum: [father, mother, grandfather, grandmother, uncle, aunt, sibling, legal guardian, other]
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               alternativePhone:
+ *                 type: string
+ *               occupation:
+ *                 type: string
+ *               employer:
+ *                 type: string
+ *               address:
+ *                 type: object
+ *               isEmergencyContact:
+ *                 type: boolean
+ *               isAuthorizedPickup:
+ *                 type: boolean
+ *               isPrimary:
+ *                 type: boolean
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Guardian added or updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Guardian'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.post(
+  '/:id/guardians',
+  roleMiddleware.restrictTo('admin'),
+  studentController.manageGuardian
+);
+
+/**
+ * @swagger
+ * /students/{id}/guardians/{guardianId}:
+ *   delete:
+ *     summary: Remove guardian from student
+ *     description: Remove a guardian from a student. Accessible by admins only.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: path
+ *         name: guardianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Guardian ID
+ *     responses:
+ *       200:
+ *         description: Guardian removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Guardian removed from student successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.delete(
+  '/:id/guardians/:guardianId',
+  roleMiddleware.restrictTo('admin'),
+  studentController.removeGuardian
+);
+
+/**
+ * @swagger
+ * /students/{id}/documents:
+ *   get:
+ *     summary: Get student documents
+ *     description: Retrieve documents for a specific student. Accessible by admins, teachers, and the student themselves.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     responses:
+ *       200:
+ *         description: Student documents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Document'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role or ownership
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get(
+  '/:id/documents',
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
+  studentController.getStudentDocuments
+);
+
+/**
+ * @swagger
+ * /students/{id}/documents:
+ *   post:
+ *     summary: Upload document for student
+ *     description: Upload a new document for a student. Accessible by admins only.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - type
+ *               - fileUrl
+ *               - fileName
+ *               - fileType
+ *               - fileSize
+ *             properties:
+ *               title:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [birth_certificate, medical_record, immunization_record, previous_school_record, transfer_certificate, report_card, id_card, passport, visa, residence_permit, guardian_id, fee_receipt, scholarship_document, special_needs_assessment, photo, other]
+ *               description:
+ *                 type: string
+ *               fileUrl:
+ *                 type: string
+ *               fileName:
+ *                 type: string
+ *               fileType:
+ *                 type: string
+ *               fileSize:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Document'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.post(
+  '/:id/documents',
+  roleMiddleware.restrictTo('admin'),
+  studentController.uploadDocument
+);
+
+/**
+ * @swagger
+ * /students/{id}/documents/{documentId}:
+ *   delete:
+ *     summary: Delete document
+ *     description: Delete a document from a student. Accessible by admins only.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Document ID
+ *     responses:
+ *       200:
+ *         description: Document deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Document deleted successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.delete(
+  '/:id/documents/:documentId',
+  roleMiddleware.restrictTo('admin'),
+  studentController.deleteDocument
+);
+
+/**
+ * @swagger
+ * /students/{id}/documents/{documentId}/verify:
+ *   put:
+ *     summary: Verify document
+ *     description: Verify a document for a student. Accessible by admins only.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Document ID
+ *     responses:
+ *       200:
+ *         description: Document verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Document'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.put(
+  '/:id/documents/:documentId/verify',
+  roleMiddleware.restrictTo('admin'),
+  studentController.verifyDocument
 );
 
 module.exports = router;

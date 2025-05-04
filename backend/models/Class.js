@@ -1,0 +1,56 @@
+const mongoose = require('mongoose');
+
+const ClassSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Please provide class name'],
+    trim: true
+  },
+  academicYear: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AcademicYear',
+    required: [true, 'Please provide academic year']
+  },
+  level: {
+    type: Number,
+    required: [true, 'Please provide class level'],
+    min: 1
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  subjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject'
+  }],
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Compound index to ensure unique class names within an academic year
+ClassSchema.index({ name: 1, academicYear: 1 }, { unique: true });
+
+// Virtual for class arms
+ClassSchema.virtual('classArms', {
+  ref: 'ClassArm',
+  localField: '_id',
+  foreignField: 'class',
+  justOne: false
+});
+
+// Virtual for students in this class (across all arms)
+ClassSchema.virtual('students', {
+  ref: 'Student',
+  localField: '_id',
+  foreignField: 'class',
+  justOne: false
+});
+
+module.exports = mongoose.model('Class', ClassSchema);
