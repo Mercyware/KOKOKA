@@ -20,6 +20,11 @@ import {
   Step,
   StepLabel,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import { Visibility, VisibilityOff, School as SchoolIcon, Domain } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -46,8 +51,10 @@ const RegisterSchool: React.FC = () => {
   const [subdomainChecking, setSubdomainChecking] = useState(false);
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [reviewValid, setReviewValid] = useState(false);
 
-  const steps = ['School Information', 'Admin Account', 'Review & Submit'];
+  const steps = ['School Information', 'Admin Account', 'Review', 'Submit'];
 
   // School information validation schema
   const schoolInfoValidationSchema = Yup.object({
@@ -87,6 +94,16 @@ const RegisterSchool: React.FC = () => {
     return Yup.object({}); // No validation for review step
   };
 
+  const isReviewValid = async () => {
+    const combinedValidationSchema = schoolInfoValidationSchema.concat(adminValidationSchema);
+    try {
+      await combinedValidationSchema.validate(formik.values, { abortEarly: false });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   // Formik form handling
   const formik = useFormik({
     initialValues: {
@@ -110,10 +127,21 @@ const RegisterSchool: React.FC = () => {
         return;
       }
 
-      // Submit the form
-      await registerSchool(values);
+      // For the final step, show confirmation dialog
+      if (activeStep === steps.length - 1) {
+        setConfirmDialogOpen(true);
+        return;
+      }
     },
   });
+
+  useEffect(() => {
+    const validateReview = async () => {
+      const valid = await isReviewValid();
+      setReviewValid(valid);
+    };
+    validateReview();
+  }, [formik.values]);
 
   // Check subdomain availability when subdomain changes
   useEffect(() => {
@@ -123,7 +151,11 @@ const RegisterSchool: React.FC = () => {
         setSubdomainChecking(true);
         try {
           const response = await authService.checkSubdomainAvailability(subdomain);
-          setSubdomainAvailable(response.data?.available !== false || response.data?.available === null);
+          // Handle both possible response structures
+          const isAvailable = 'available' in response 
+            ? response.available !== false 
+            : response.data?.available !== false || response.data?.available === null;
+          setSubdomainAvailable(isAvailable);
         } catch (error) {
           setSubdomainAvailable(false);
         } finally {
@@ -156,6 +188,13 @@ const RegisterSchool: React.FC = () => {
     const currentValidationSchema = getValidationSchema();
     try {
       await currentValidationSchema.validate(formik.values, { abortEarly: false });
+      
+      // If moving from Review to Submit, validate all fields
+      if (activeStep === 2) {
+        const combinedValidationSchema = schoolInfoValidationSchema.concat(adminValidationSchema);
+        await combinedValidationSchema.validate(formik.values, { abortEarly: false });
+      }
+      
       setActiveStep((prevStep) => prevStep + 1);
     } catch (error) {
       // Validation failed, formik will handle the errors
@@ -171,6 +210,17 @@ const RegisterSchool: React.FC = () => {
   // Toggle password visibility
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  // Handle confirmation dialog close
+  const handleConfirmDialogClose = () => {
+    setConfirmDialogOpen(false);
+  };
+
+  // Handle confirmation dialog confirm
+  const handleConfirmSubmit = async () => {
+    setConfirmDialogOpen(false);
+    await registerSchool(formik.values);
   };
 
   // Register school
@@ -445,53 +495,64 @@ const RegisterSchool: React.FC = () => {
   );
 
   // Render review form
-  const renderReviewForm = () => (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <Typography variant="subtitle1" gutterBottom>
-          School Information
-        </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="body1">
-            <strong>Name:</strong> {formik.values.schoolName}
+  const renderReviewForm = () => {
+    const isSubmitStep = activeStep === 3;
+    
+    return (
+      <Grid container spacing={2}>
+        {isSubmitStep && (
+          <Grid item xs={12}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Please review your information one last time before submitting. Click the "Submit Registration" button below when you're ready to complete your registration.
+            </Alert>
+          </Grid>
+        )}
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" gutterBottom>
+            School Information
           </Typography>
-          <Typography variant="body1">
-            <strong>Subdomain:</strong> {formik.values.subdomain}.schoolmanagement.com
-          </Typography>
-          <Typography variant="body1">
-            <strong>Type:</strong> {schoolTypes.find(t => t.value === formik.values.schoolType)?.label}
-          </Typography>
-          <Typography variant="body1">
-            <strong>Email:</strong> {formik.values.email}
-          </Typography>
-          {formik.values.phone && (
+          <Box sx={{ pl: 2 }}>
             <Typography variant="body1">
-              <strong>Phone:</strong> {formik.values.phone}
+              <strong>Name:</strong> {formik.values.schoolName}
             </Typography>
-          )}
-          {formik.values.website && (
             <Typography variant="body1">
-              <strong>Website:</strong> {formik.values.website}
+              <strong>Subdomain:</strong> {formik.values.subdomain}.schoolmanagement.com
             </Typography>
-          )}
-        </Box>
-      </Grid>
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2 }} />
-        <Typography variant="subtitle1" gutterBottom>
-          Admin Account
-        </Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography variant="body1">
-            <strong>Name:</strong> {formik.values.adminName}
+            <Typography variant="body1">
+              <strong>Type:</strong> {schoolTypes.find(t => t.value === formik.values.schoolType)?.label}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Email:</strong> {formik.values.email}
+            </Typography>
+            {formik.values.phone && (
+              <Typography variant="body1">
+                <strong>Phone:</strong> {formik.values.phone}
+              </Typography>
+            )}
+            {formik.values.website && (
+              <Typography variant="body1">
+                <strong>Website:</strong> {formik.values.website}
+              </Typography>
+            )}
+          </Box>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle1" gutterBottom>
+            Admin Account
           </Typography>
-          <Typography variant="body1">
-            <strong>Email:</strong> {formik.values.adminEmail}
-          </Typography>
-        </Box>
+          <Box sx={{ pl: 2 }}>
+            <Typography variant="body1">
+              <strong>Name:</strong> {formik.values.adminName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Email:</strong> {formik.values.adminEmail}
+            </Typography>
+          </Box>
+        </Grid>
       </Grid>
-    </Grid>
-  );
+    );
+  };
 
   // Render form based on active step
   const getStepContent = (step: number) => {
@@ -501,6 +562,7 @@ const RegisterSchool: React.FC = () => {
       case 1:
         return renderAdminForm();
       case 2:
+      case 3:
         return renderReviewForm();
       default:
         return 'Unknown step';
@@ -569,18 +631,68 @@ const RegisterSchool: React.FC = () => {
               onClick={activeStep === steps.length - 1 ? undefined : handleNext}
               disabled={
                 (activeStep === 0 && subdomainAvailable === false) ||
-                registrationLoading
+                registrationLoading ||
+                (activeStep === steps.length - 1 && !reviewValid)
               }
             >
               {registrationLoading ? (
                 <CircularProgress size={24} />
               ) : activeStep === steps.length - 1 ? (
-                'Register School'
+                'Submit Registration'
               ) : (
                 'Next'
               )}
             </Button>
           </Box>
+
+          {/* Confirmation Dialog */}
+          <Dialog
+            open={confirmDialogOpen}
+            onClose={handleConfirmDialogClose}
+            aria-labelledby="confirm-registration-dialog-title"
+            aria-describedby="confirm-registration-dialog-description"
+          >
+            <DialogTitle id="confirm-registration-dialog-title">
+              Confirm School Registration
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="confirm-registration-dialog-description">
+                You are about to register a new school with the following details:
+              </DialogContentText>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2">School Information:</Typography>
+                <Typography variant="body2">
+                  <strong>Name:</strong> {formik.values.schoolName}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Subdomain:</strong> {formik.values.subdomain}.schoolmanagement.com
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Type:</strong> {schoolTypes.find(t => t.value === formik.values.schoolType)?.label}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Email:</strong> {formik.values.email}
+                </Typography>
+                
+                <Typography variant="subtitle2" sx={{ mt: 2 }}>Admin Account:</Typography>
+                <Typography variant="body2">
+                  <strong>Name:</strong> {formik.values.adminName}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Email:</strong> {formik.values.adminEmail}
+                </Typography>
+              </Box>
+              <DialogContentText sx={{ mt: 2 }}>
+                Please review the information carefully. Once registered, your school will be in pending status until approved.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleConfirmDialogClose}>Cancel</Button>
+              <Button onClick={handleConfirmSubmit} variant="contained" color="primary">
+                Confirm Registration
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
 
         <Box mt={3}>
