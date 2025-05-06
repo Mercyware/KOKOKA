@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline } from '@mui/material';
+import Home from './pages/Home';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import RegisterSchool from './pages/auth/RegisterSchool';
+import Welcome from './pages/auth/Welcome';
 
 // Dashboard
 import Dashboard from './pages/dashboard/Dashboard';
@@ -27,14 +29,22 @@ const App: React.FC = () => {
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route 
-              path="/register-school" 
-              element={
-                <React.Suspense fallback={<div>Loading...</div>}>
-                  <RegisterSchool />
-                </React.Suspense>
-              } 
-            />
+<Route 
+  path="/register-school" 
+  element={
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <RegisterSchool />
+    </React.Suspense>
+  } 
+/>
+<Route 
+  path="/auth/welcome" 
+  element={
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <Welcome />
+    </React.Suspense>
+  } 
+/>
             
             {/* Protected Routes */}
             <Route
@@ -179,7 +189,7 @@ const App: React.FC = () => {
             <Route path="/not-found" element={<NotFound />} />
             
             {/* Redirect to dashboard if authenticated, otherwise to login */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+<Route path="/" element={<Home />} />
             
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/not-found" replace />} />

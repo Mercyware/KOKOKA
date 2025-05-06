@@ -57,6 +57,8 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
+    const logger = require('../utils/logger');
+    logger.logError(error, { component: 'authController', operation: 'login' });
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -67,18 +69,22 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     
     // Check if user exists
-    const user = await User.findOne({ email });
+    const logger = require('../utils/logger');
+    const user = await User.findOne({ email }).select('+password');
+    logger.info('Retrieved user:', { email, user: JSON.stringify(user) });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
     // Check password
     const isMatch = await user.matchPassword(password);
+    logger.info('Password match:', { isMatch });
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
     // Generate JWT token
+    logger.info('JWT_SECRET:', JWT_SECRET);
     const token = jwt.sign(
       { 
         id: user._id, 
@@ -91,13 +97,15 @@ exports.login = async (req, res) => {
     
     res.json({
       success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        school: user.school
+      data: {
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          school: user.school
+        }
       }
     });
   } catch (error) {

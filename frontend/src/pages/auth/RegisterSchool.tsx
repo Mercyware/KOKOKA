@@ -265,7 +265,7 @@ const RegisterSchool: React.FC = () => {
             });
           }
           // Redirect to dashboard
-          navigate('/dashboard');
+navigate('/auth/welcome');
         } else {
           // Redirect to login with success message
           navigate('/login', {

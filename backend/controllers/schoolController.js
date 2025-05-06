@@ -66,14 +66,11 @@ exports.registerSchool = async (req, res) => {
       }
       
       // Create admin user
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-      
       const admin = new User({
         school: school._id,
         name: adminName,
         email,
-        password: hashedPassword,
+        password, // Let the User model handle password hashing
         role: 'admin'
       });
       

@@ -59,12 +59,16 @@ UserSchema.pre('save', async function(next) {
   }
 
   const salt = await bcrypt.genSalt(10);
+  const logger = require('../utils/logger');
   this.password = await bcrypt.hash(this.password, salt);
+  logger.info('Password hashed during save:', { hashedPassword: this.password });
   next();
 });
 
 // Match user entered password to hashed password in database
+const logger = require('../utils/logger');
 UserSchema.methods.matchPassword = async function(enteredPassword) {
+  logger.info('Comparing passwords:', { enteredPassword, hashedPassword: this.password });
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
