@@ -42,12 +42,48 @@ exports.getAcademicYearById = async (req, res) => {
   }
 };
 
+// Check if academic year name already exists
+exports.checkAcademicYearName = async (req, res, next) => {
+  const { name, school } = req.query;
+
+  if (!name || !school) {
+    return res.status(400).json({
+      success: false,
+      message: 'Name and school are required',
+    });
+  }
+
+  const existingAcademicYear = await AcademicYear.findOne({ name, school });
+
+  if (existingAcademicYear) {
+    return res.status(200).json({
+      success: true,
+      exists: true,
+      message: 'Academic year name already exists for this school',
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    exists: false,
+    message: 'Academic year name is available',
+  });
+};
+
 // Create new academic year
 exports.createAcademicYear = async (req, res) => {
   try {
     // Add the current user as creator
     req.body.createdBy = req.user.id;
-    
+    const { name, school } = req.body;
+
+  // Validate if the name already exists for the school
+  const existingAcademicYear = await AcademicYear.findOne({ name, school });
+
+  if (existingAcademicYear) {
+    return next(new AppError('Academic year name already exists for this school', 400));
+  }
+
     const academicYear = new AcademicYear(req.body);
     await academicYear.save();
     
@@ -64,6 +100,7 @@ exports.createAcademicYear = async (req, res) => {
     });
   }
 };
+
 
 // Update academic year
 exports.updateAcademicYear = async (req, res) => {

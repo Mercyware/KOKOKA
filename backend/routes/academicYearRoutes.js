@@ -7,6 +7,9 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 // Protect all routes
 router.use(authMiddleware.protect);
 
+// Check if academic year name exists
+router.get('/check-name', academicYearController.checkAcademicYearName);
+
 /**
  * @swagger
  * /api/academic-years:

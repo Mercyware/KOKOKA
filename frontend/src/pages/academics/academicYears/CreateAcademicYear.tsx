@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import Layout from '../../../components/layout/Layout';
 import { post } from '../../../services/api';
+import * as authService from '../../../services/authService';
 
 interface FormData {
   name: string;
@@ -31,6 +32,7 @@ const CreateAcademicYear: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isDuplicate, setIsDuplicate] = useState(false); // Track duplicate name
   const [formData, setFormData] = useState<FormData>({
     name: '',
     startDate: '',
@@ -46,19 +48,54 @@ const CreateAcademicYear: React.FC = () => {
     severity: 'success' as 'success' | 'error',
   });
 
-  const handleTextFieldChange = (
+  const checkDuplicateName = async (name: string): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem('token');
+      const school = authState.user?.school;
+      const response = await fetch(
+        `/api/academic-years/check-name?name=${encodeURIComponent(name)}&school=${encodeURIComponent(school || '')}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      return data.exists || false;
+    } catch (error) {
+      console.error('Error checking duplicate name:', error);
+      return false;
+    }
+  };
+
+  const handleTextFieldChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
-    // Clear error when field is edited
-    if (errors[name]) {
-      setErrors(prev => ({
+    if (name === 'name' && value) {
+      const isDuplicate = await checkDuplicateName(value);
+      setIsDuplicate(isDuplicate); // Update duplicate state
+      if (isDuplicate) {
+        setErrors((prev) => ({
+          ...prev,
+          name: 'Academic year name already exists',
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          name: '',
+        }));
+      }
+    } else {
+      setErrors((prev) => ({
         ...prev,
         [name]: '',
       }));
@@ -67,13 +104,12 @@ const CreateAcademicYear: React.FC = () => {
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       [name]: checked,
     }));
   };
-
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -112,16 +148,16 @@ const CreateAcademicYear: React.FC = () => {
         ...formData,
         school: authState.user?.school,
       };
-      
+
       const response = await post('/academic-years', dataToSubmit);
-      
+
       if (response.success) {
         setSnackbar({
           open: true,
           message: 'Academic year created successfully',
           severity: 'success',
         });
-        
+
         // Redirect to academic years list after successful creation
         setTimeout(() => {
           navigate('/academics/academic-years');
@@ -146,7 +182,7 @@ const CreateAcademicYear: React.FC = () => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({
+    setSnackbar((prev) => ({
       ...prev,
       open: false,
     }));
@@ -242,7 +278,7 @@ const CreateAcademicYear: React.FC = () => {
                     type="submit"
                     variant="contained"
                     color="primary"
-                    disabled={loading}
+                    disabled={loading || isDuplicate} // Disable if loading or duplicate
                     startIcon={loading && <CircularProgress size={20} />}
                   >
                     {loading ? 'Creating...' : 'Create Academic Year'}
