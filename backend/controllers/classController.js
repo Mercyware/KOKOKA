@@ -10,9 +10,16 @@ exports.getAllClasses = async (req, res) => {
       .populate('subjects', 'name code')
       .sort({ level: 1, name: 1 });
     
-    res.json(classes);
+    res.json({
+      success: true,
+      data: classes
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -24,12 +31,22 @@ exports.getClassById = async (req, res) => {
       .populate('subjects', 'name code');
     
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
-    res.json(classObj);
+    res.json({
+      success: true,
+      data: classObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -42,7 +59,10 @@ exports.createClass = async (req, res) => {
     // Verify that the academic year exists
     const academicYear = await AcademicYear.findById(req.body.academicYear);
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Academic year not found' 
+      });
     }
     
     // Verify that the subjects exist if provided
@@ -52,16 +72,27 @@ exports.createClass = async (req, res) => {
       });
       
       if (subjectCount !== req.body.subjects.length) {
-        return res.status(404).json({ message: 'One or more subjects not found' });
+        return res.status(404).json({ 
+          success: false,
+          message: 'One or more subjects not found' 
+        });
       }
     }
     
     const classObj = new Class(req.body);
     await classObj.save();
     
-    res.status(201).json(classObj);
+    res.status(201).json({
+      success: true,
+      message: 'Class created successfully',
+      data: classObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -72,7 +103,10 @@ exports.updateClass = async (req, res) => {
     if (req.body.academicYear) {
       const academicYear = await AcademicYear.findById(req.body.academicYear);
       if (!academicYear) {
-        return res.status(404).json({ message: 'Academic year not found' });
+        return res.status(404).json({ 
+          success: false,
+          message: 'Academic year not found' 
+        });
       }
     }
     
@@ -83,7 +117,10 @@ exports.updateClass = async (req, res) => {
       });
       
       if (subjectCount !== req.body.subjects.length) {
-        return res.status(404).json({ message: 'One or more subjects not found' });
+        return res.status(404).json({ 
+          success: false,
+          message: 'One or more subjects not found' 
+        });
       }
     }
     
@@ -94,12 +131,23 @@ exports.updateClass = async (req, res) => {
     );
     
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
-    res.json(classObj);
+    res.json({
+      success: true,
+      message: 'Class updated successfully',
+      data: classObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -109,12 +157,22 @@ exports.deleteClass = async (req, res) => {
     const classObj = await Class.findByIdAndDelete(req.params.id);
     
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
-    res.json({ message: 'Class deleted successfully' });
+    res.json({ 
+      success: true,
+      message: 'Class deleted successfully' 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -125,9 +183,16 @@ exports.getClassesByAcademicYear = async (req, res) => {
       .populate('subjects', 'name code')
       .sort({ level: 1, name: 1 });
     
-    res.json(classes);
+    res.json({
+      success: true,
+      data: classes
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -139,17 +204,26 @@ exports.addSubjectToClass = async (req, res) => {
     // Verify that the subject exists
     const subject = await Subject.findById(subjectId);
     if (!subject) {
-      return res.status(404).json({ message: 'Subject not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Subject not found' 
+      });
     }
     
     const classObj = await Class.findById(req.params.id);
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
     // Check if subject is already added to the class
     if (classObj.subjects.includes(subjectId)) {
-      return res.status(400).json({ message: 'Subject already added to this class' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Subject already added to this class' 
+      });
     }
     
     // Add subject to class
@@ -162,9 +236,17 @@ exports.addSubjectToClass = async (req, res) => {
       await subject.save();
     }
     
-    res.json(classObj);
+    res.json({
+      success: true,
+      message: 'Subject added to class successfully',
+      data: classObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -175,12 +257,18 @@ exports.removeSubjectFromClass = async (req, res) => {
     
     const classObj = await Class.findById(req.params.id);
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
     // Check if subject is in the class
     if (!classObj.subjects.includes(subjectId)) {
-      return res.status(400).json({ message: 'Subject not in this class' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Subject not in this class' 
+      });
     }
     
     // Remove subject from class
@@ -198,9 +286,17 @@ exports.removeSubjectFromClass = async (req, res) => {
       await subject.save();
     }
     
-    res.json(classObj);
+    res.json({
+      success: true,
+      message: 'Subject removed from class successfully',
+      data: classObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -210,14 +306,24 @@ exports.getClassArms = async (req, res) => {
     const classObj = await Class.findById(req.params.id);
     
     if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Class not found' 
+      });
     }
     
     // Use the virtual to get class arms
     await classObj.populate('classArms');
     
-    res.json(classObj.classArms);
+    res.json({
+      success: true,
+      data: classObj.classArms
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };

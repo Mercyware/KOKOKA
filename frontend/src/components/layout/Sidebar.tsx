@@ -206,6 +206,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
               </ListItemButton>
               <ListItemButton
                 sx={{ pl: 4 }}
+                selected={isActive('/students/create')}
+                onClick={() => handleNavigate('/students/create')}
+              >
+                <ListItemIcon>
+                  <PeopleIcon color={isActive('/students/create') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Create Student" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
                 selected={isActive('/students/attendance')}
                 onClick={() => handleNavigate('/students/attendance')}
               >

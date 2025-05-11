@@ -4,9 +4,16 @@ const AcademicYear = require('../models/AcademicYear');
 exports.getAllAcademicYears = async (req, res) => {
   try {
     const academicYears = await AcademicYear.find().sort({ startDate: -1 });
-    res.json(academicYears);
+    res.json({
+      success: true,
+      data: academicYears
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -16,12 +23,22 @@ exports.getAcademicYearById = async (req, res) => {
     const academicYear = await AcademicYear.findById(req.params.id);
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Academic year not found' 
+      });
     }
     
-    res.json(academicYear);
+    res.json({
+      success: true,
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -34,9 +51,17 @@ exports.createAcademicYear = async (req, res) => {
     const academicYear = new AcademicYear(req.body);
     await academicYear.save();
     
-    res.status(201).json(academicYear);
+    res.status(201).json({
+      success: true,
+      message: 'Academic year created successfully',
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -50,12 +75,23 @@ exports.updateAcademicYear = async (req, res) => {
     );
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Academic year not found' 
+      });
     }
     
-    res.json(academicYear);
+    res.json({
+      success: true,
+      message: 'Academic year updated successfully',
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -65,12 +101,22 @@ exports.deleteAcademicYear = async (req, res) => {
     const academicYear = await AcademicYear.findByIdAndDelete(req.params.id);
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Academic year not found' 
+      });
     }
     
-    res.json({ message: 'Academic year deleted successfully' });
+    res.json({ 
+      success: true,
+      message: 'Academic year deleted successfully' 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -85,12 +131,22 @@ exports.getCurrentAcademicYear = async (req, res) => {
     });
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'No current academic year found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'No current academic year found' 
+      });
     }
     
-    res.json(academicYear);
+    res.json({
+      success: true,
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -108,12 +164,23 @@ exports.setActiveAcademicYear = async (req, res) => {
     );
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Academic year not found' 
+      });
     }
     
-    res.json(academicYear);
+    res.json({
+      success: true,
+      message: 'Academic year set as active successfully',
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
@@ -123,11 +190,21 @@ exports.getActiveAcademicYear = async (req, res) => {
     const academicYear = await AcademicYear.findOne({ isActive: true });
     
     if (!academicYear) {
-      return res.status(404).json({ message: 'No active academic year found' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'No active academic year found' 
+      });
     }
     
-    res.json(academicYear);
+    res.json({
+      success: true,
+      data: academicYear
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };

@@ -17,6 +17,17 @@ import Welcome from './pages/auth/Welcome';
 // Dashboard
 import Dashboard from './pages/dashboard/Dashboard';
 
+// Student Pages
+import CreateStudent from './pages/students/CreateStudent';
+
+// Academic Pages
+import ClassesList from './pages/academics/classes/ClassesList';
+import CreateClass from './pages/academics/classes/CreateClass';
+import EditClass from './pages/academics/classes/EditClass';
+import AcademicYearsList from './pages/academics/academicYears/AcademicYearsList';
+import CreateAcademicYear from './pages/academics/academicYears/CreateAcademicYear';
+import EditAcademicYear from './pages/academics/academicYears/EditAcademicYear';
+
 // Placeholder for other pages
 const Unauthorized = () => <div>Unauthorized</div>;
 const NotFound = () => <div>Page Not Found</div>;
@@ -69,11 +80,28 @@ const App: React.FC = () => {
             />
             
             {/* Academic Routes */}
+            {/* Classes Routes */}
             <Route
               path="/academics/classes"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
-                  <div>Classes Management</div>
+                  <ClassesList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/classes/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateClass />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/classes/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditClass />
                 </ProtectedRoute>
               }
             />
@@ -93,11 +121,28 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            {/* Academic Years Routes */}
             <Route
               path="/academics/academic-years"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-                  <div>Academic Years Management</div>
+                  <AcademicYearsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/academic-years/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateAcademicYear />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/academic-years/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditAcademicYear />
                 </ProtectedRoute>
               }
             />
@@ -108,6 +153,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
                   <div>Students List</div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/students/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateStudent />
                 </ProtectedRoute>
               }
             />
