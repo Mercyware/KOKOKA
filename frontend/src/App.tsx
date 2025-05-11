@@ -5,6 +5,8 @@ import Home from './pages/Home';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/layout/Layout';
+import PublicLayout from './components/layout/PublicLayout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -189,7 +191,7 @@ const App: React.FC = () => {
             <Route path="/not-found" element={<NotFound />} />
             
             {/* Redirect to dashboard if authenticated, otherwise to login */}
-<Route path="/" element={<Home />} />
+<Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
             
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/not-found" replace />} />

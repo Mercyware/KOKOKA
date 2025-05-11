@@ -64,7 +64,14 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Only redirect to login if not on a public route
+      const publicRoutes = ['/', '/login', '/register', '/register-school'];
+      const currentPath = window.location.pathname;
+      
+      if (!publicRoutes.includes(currentPath)) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

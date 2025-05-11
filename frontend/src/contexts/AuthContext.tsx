@@ -144,32 +144,68 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
       }
 
-      // Then try to get the current user
-      const response = await authService.getCurrentUser();
-      if (response.success && response.data) {
-        setAuthState({
-          isAuthenticated: true,
-          user: response.data,
-          loading: false,
-          error: null,
-        });
-        // Update user in local storage
-        authService.setUser(response.data);
-        return true;
-      } else {
-        // If the request fails, clear auth data
-        authService.removeAuthToken();
-        authService.removeUser();
-        setAuthState({
-          isAuthenticated: false,
-          user: null,
-          loading: false,
-          error: response.message || 'Authentication failed',
-        });
-        return false;
+      // Get user from localStorage as a fallback
+      const localUser = authService.getUser();
+
+      // Then try to get the current user from API
+      try {
+        const response = await authService.getCurrentUser();
+        if (response.success && response.data) {
+          setAuthState({
+            isAuthenticated: true,
+            user: response.data,
+            loading: false,
+            error: null,
+          });
+          // Update user in local storage
+          authService.setUser(response.data);
+          return true;
+        } else if (localUser) {
+          // If API call fails but we have a user in localStorage, use that
+          setAuthState({
+            isAuthenticated: true,
+            user: localUser,
+            loading: false,
+            error: null,
+          });
+          return true;
+        } else {
+          // If no user in localStorage and API call fails, clear auth data
+          authService.removeAuthToken();
+          authService.removeUser();
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            loading: false,
+            error: response.message || 'Authentication failed',
+          });
+          return false;
+        }
+      } catch (error: any) {
+        // If API call throws an error but we have a user in localStorage, use that
+        if (localUser) {
+          setAuthState({
+            isAuthenticated: true,
+            user: localUser,
+            loading: false,
+            error: null,
+          });
+          return true;
+        } else {
+          // If no user in localStorage and API call throws an error, clear auth data
+          authService.removeAuthToken();
+          authService.removeUser();
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            loading: false,
+            error: error.message || 'Authentication failed',
+          });
+          return false;
+        }
       }
     } catch (error: any) {
-      // If there's an error, clear auth data
+      // If there's an error in the outer try block, clear auth data
       authService.removeAuthToken();
       authService.removeUser();
       setAuthState({

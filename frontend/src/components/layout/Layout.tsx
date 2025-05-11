@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, CssBaseline, Toolbar } from '@mui/material';
+import { Box, CssBaseline, Toolbar, useTheme } from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
@@ -10,6 +10,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const drawerWidth = 240;
+  const theme = useTheme();
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -32,8 +33,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
           mt: '64px', // AppBar height
+          marginLeft: 0, // For mobile
+          [theme.breakpoints.up('sm')]: {
+          },
         }}
       >
         {children}
