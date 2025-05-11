@@ -8,6 +8,91 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 router.use(authMiddleware.protect);
 
 // Check if academic year name exists
+/**
+ * @swagger
+ * /api/academic-years/check-name:
+ *  get:
+ *    summary: Check if academic year name exists
+ *   description: Check if an academic year name already exists for a specific school. Accessible by all authenticated users.
+ *   tags: [Academic Years]
+ *  security:
+ *    - bearerAuth: []
+ *  parameters:
+ *   - in: query
+ *    name: name
+ *   required: true
+ *   schema:
+ *     type: string
+ *   description: Academic year name to check
+ *  - in: query
+ *   name: school
+ *  required: true
+ *  schema:
+ *    type: string
+ *  description: School ID
+ * responses:
+ *  200:
+ *   description: Academic year name exists
+ *  content:
+ *    application/json:
+ *     schema:
+ *      type: object
+ *     properties:
+ *      exists:
+ *       type: boolean
+ *      example: true
+ *     message:
+ *      type: string
+ *     example: Academic year name already exists
+ *  400:
+ *   description: Bad request
+ *  content:
+ *    application/json:
+ *     schema:
+ *      type: object
+ *     properties:
+ *      success:
+ *      type: boolean
+ *     example: false
+ *     message:
+ *      type: string
+ *     example: Name and school are required
+ *  401:
+ *  $ref: '#/components/responses/UnauthorizedError'
+ *  404:
+ *  description: Academic year not found
+ *  content:
+ *   application/json:
+ *    schema:
+ *     type: object
+ *    properties:
+ *     success:
+ *     type: boolean
+ *    example: false
+ *    message:
+ *    type: string
+ *   example: Academic year not found
+ *  500:
+ *  $ref: '#/components/responses/ServerError'
+ * *  description: Server error
+ *  content:
+ *   application/json:
+ *    schema:
+ *    type: object
+ *   properties:
+ *    success:
+ *   type: boolean
+ *  example: false
+ *   message:
+ *   type: string
+ *  example: Server error
+ * *  error:
+ *  type: string
+ * example: Error message
+ * * 500:
+ * description: Server error
+ * content:
+ */
 router.get('/check-name', academicYearController.checkAcademicYearName);
 
 /**
@@ -422,6 +507,45 @@ router.delete('/:id', academicYearController.deleteAcademicYear);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.patch('/:id/set-active', academicYearController.setActiveAcademicYear);
+router.put('/:id/set-active', academicYearController.setActiveAcademicYear);
+/**
+ * @swagger
+ * /api/academic-years/set-active:
+ *   patch:
+ *     summary: Set active academic year
+ *     description: Set an academic year as active and deactivate all others. Accessible by admin users only.
+ *     tags: [Academic Years]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Academic year ID to set as active
+ *     responses:
+ *       200:
+ *         description: Academic year set as active successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Academic year set as active successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have admin role
+ *       404:
+ *         description: Academic year not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
 
 module.exports = router;
