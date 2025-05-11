@@ -105,11 +105,26 @@ exports.createAcademicYear = async (req, res) => {
 // Update academic year
 exports.updateAcademicYear = async (req, res) => {
   try {
+    // Check for duplicate name
+    const existingAcademicYear = await AcademicYear.findOne({
+      name: req.body.name,
+      school: req.body.school,
+      _id: { $ne: req.params.id } // Exclude the current academic year
+    });
+
+    if (existingAcademicYear) {
+      return res.status(400).json({
+        success: false,
+        message: 'An academic year with this name already exists for the school'
+      });
+    }
+
     const academicYear = await AcademicYear.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
+
     
     if (!academicYear) {
       return res.status(404).json({ 
