@@ -82,6 +82,14 @@ router.get('/', subjectController.getAllSubjects);
 
 /**
  * @swagger
+ * /api/subjects/school-manager-subjects:
+ *  get:
+ *    summary: Get subjects from School Manager
+ * */
+router.get('/subject-list', subjectController.getSchoolManagerSubjects);
+
+/**
+ * @swagger
  * /api/subjects/{id}:
  *   get:
  *     summary: Get subject by ID
@@ -454,6 +462,70 @@ router.delete('/:id/classes', subjectController.removeClassFromSubject);
 
 // Admin only routes
 router.use(roleMiddleware.restrictTo('admin'));
+
+/**
+ * @swagger
+ * /api/subjects/import:
+ *   post:
+ *     summary: Import subject from School Manager
+ *     description: Import a subject from the School Manager database into the local database. Accessible by admin users only.
+ *     tags: [Subjects]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - code
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Subject name
+ *               code:
+ *                 type: string
+ *                 description: Subject code
+ *               description:
+ *                 type: string
+ *                 description: Subject description
+ *     responses:
+ *       201:
+ *         description: Subject imported successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     code:
+ *                       type: string
+ *                 message:
+ *                   type: string
+ *                   example: Subject imported successfully
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have admin role
+ *       404:
+ *         description: No active academic year found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.post('/import', subjectController.importSubjectFromSchoolManager);
 
 /**
  * @swagger

@@ -173,6 +173,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Academic Years" />
               </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/academic-calendars')}
+                onClick={() => handleNavigate('/academics/academic-calendars')}
+              >
+                <ListItemIcon>
+                  <EventIcon color={isActive('/academics/academic-calendars') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Academic Calendars" />
+              </ListItemButton>
             </List>
           </Collapse>
         </React.Fragment>

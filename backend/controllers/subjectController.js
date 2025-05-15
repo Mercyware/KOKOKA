@@ -1,21 +1,109 @@
 const Subject = require('../models/Subject');
 const AcademicYear = require('../models/AcademicYear');
 const Class = require('../models/Class');
+const mongoose = require('mongoose');
+const logger = require('../utils/logger');
+
+// Define a schema for the schoolmanager subjects collection
+const SchoolManagerSubjectSchema = new mongoose.Schema({
+  name: String,
+  code: String,
+  created_at: Date,
+  updated_at: Date,
+  created_by: String
+});
+
+// Create a model for the schoolmanager subjects collection
+let SchoolManagerSubject;
+try {
+  // Try to get the model if it already exists
+  SchoolManagerSubject = mongoose.model('SchoolManagerSubject');
+} catch (error) {
+  // Create the model if it doesn't exist
+  SchoolManagerSubject = mongoose.model('SchoolManagerSubject', SchoolManagerSubjectSchema, 'subjects');
+}
+
+// Connect to the schoolmanager database
+const connectToSchoolManager = async () => {
+  try {
+    // Create a new connection to the schoolmanager database
+    const conn = await mongoose.createConnection('mongodb://localhost:27017/schoolmanager', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    
+    // Define the model on this connection
+    const SchoolManagerSubject = conn.model('Subject', SchoolManagerSubjectSchema, 'subjects');
+    
+    return { conn, SchoolManagerSubject };
+  } catch (error) {
+    logger.error(`Error connecting to schoolmanager database: ${error.message}`);
+    throw error;
+  }
+};
+
+// Get all subjects
+exports.getSchoolManagerSubjects = async (req, res) => {
+  let connection;
+  try {
+    // Connect to the schoolmanager database
+    const { conn, SchoolManagerSubject } = await connectToSchoolManager();
+    connection = conn;
+    
+    // Fetch subjects from the schoolmanager database
+    const schoolManagerSubjects = await SchoolManagerSubject.find().sort({ name: 1 });
+    
+    res.json({
+      success: true,
+      data: schoolManagerSubjects,
+      message: `Retrieved ${schoolManagerSubjects.length} subjects from schoolmanager`
+    });
+  } catch (error) {
+    logger.error(`Error fetching subjects: ${error.message}`);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  } finally {
+    // Close the connection to the schoolmanager database
+    if (connection) {
+      await connection.close();
+    }
+  }
+};
+
 
 // Get all subjects
 exports.getAllSubjects = async (req, res) => {
+  let connection;
   try {
+   
+    // Also fetch subjects from the local database
     const subjects = await Subject.find()
       .populate('academicYear', 'name')
       .populate('classes', 'name level')
       .sort({ name: 1 });
     
-    res.json(subjects);
+    res.json({
+      success: true,
+      data: subjects,
+      message: `Retrieved ${subjects.length} subjects`
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    logger.error(`Error fetching subjects: ${error.message}`);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  } finally {
+    // Close the connection to the schoolmanager database
+    if (connection) {
+      await connection.close();
+    }
   }
 };
-
 // Get subject by ID
 exports.getSubjectById = async (req, res) => {
   try {
@@ -38,36 +126,53 @@ exports.createSubject = async (req, res) => {
   try {
     // Add the current user as creator
     req.body.createdBy = req.user.id;
-    
+
     // Verify that the academic year exists
     const academicYear = await AcademicYear.findById(req.body.academicYear);
     if (!academicYear) {
       return res.status(404).json({ message: 'Academic year not found' });
     }
-    
+
     // Verify that the classes exist if provided
     if (req.body.classes && req.body.classes.length > 0) {
       const classCount = await Class.countDocuments({
         _id: { $in: req.body.classes }
       });
-      
+
       if (classCount !== req.body.classes.length) {
         return res.status(404).json({ message: 'One or more classes not found' });
       }
     }
-    
+
+    // Prevent duplicate subject for the same school and academic year
+    const existingSubject = await Subject.findOne({
+      name: req.body.name,
+      school: req.user.school,
+      academicYear: req.body.academicYear
+    });
+    if (existingSubject) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subject with this name already exists for this school in the selected academic year'
+      });
+    }
+
     const subject = new Subject(req.body);
     await subject.save();
-    
+
     // Add subject to classes
-    if (req.body.classes && req.body.classes.length > 0) {
-      await Class.updateMany(
-        { _id: { $in: req.body.classes } },
-        { $addToSet: { subjects: subject._id } }
-      );
-    }
-    
-    res.status(201).json(subject);
+    // if (req.body.classes && req.body.classes.length > 0) {
+    //   await Class.updateMany(
+    //     { _id: { $in: req.body.classes } },
+    //     { $addToSet: { subjects: subject._id } }
+    //   );
+    // }
+
+    res.status(201).json({
+      success: true,
+      data: subject,
+      message: 'Subject created successfully'
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -287,5 +392,49 @@ exports.getSubjectTeachers = async (req, res) => {
     res.json(subject.teachers);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Import subject from school manager
+exports.importSubjectFromSchoolManager = async (req, res) => {
+  try {
+    // Add the current user as creator
+    req.body.createdBy = req.user.id;
+    
+    // Get the current active academic year
+    const activeAcademicYear = await AcademicYear.findOne({ isActive: true });
+    if (!activeAcademicYear) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'No active academic year found. Please create an academic year first.' 
+      });
+    }
+    
+    // Set the academic year to the active academic year
+    req.body.academicYear = activeAcademicYear._id;
+    
+    // Set the school to the current user's school
+    req.body.school = req.user.school;
+    
+    // Remove the source field and id field as we're creating a new subject
+    delete req.body.source;
+    delete req.body.id;
+    
+    // Create the subject
+    const subject = new Subject(req.body);
+    await subject.save();
+    
+    res.status(201).json({
+      success: true,
+      data: subject,
+      message: 'Subject imported successfully'
+    });
+  } catch (error) {
+    logger.error(`Error importing subject: ${error.message}`);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };

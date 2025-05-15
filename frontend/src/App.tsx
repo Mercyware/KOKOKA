@@ -27,6 +27,12 @@ import EditClass from './pages/academics/classes/EditClass';
 import AcademicYearsList from './pages/academics/academicYears/AcademicYearsList';
 import CreateAcademicYear from './pages/academics/academicYears/CreateAcademicYear';
 import EditAcademicYear from './pages/academics/academicYears/EditAcademicYear';
+import AcademicCalendarsList from './pages/academics/academicCalendars/AcademicCalendarsList';
+import CreateAcademicCalendar from './pages/academics/academicCalendars/CreateAcademicCalendar';
+import EditAcademicCalendar from './pages/academics/academicCalendars/EditAcademicCalendar';
+import SubjectsList from './pages/academics/subjects/SubjectsList';
+import CreateSubject from './pages/academics/subjects/CreateSubject';
+import EditSubject from './pages/academics/subjects/EditSubject';
 
 // Placeholder for other pages
 const Unauthorized = () => <div>Unauthorized</div>;
@@ -105,11 +111,28 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            {/* Subjects Routes */}
             <Route
               path="/academics/subjects"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
-                  <div>Subjects Management</div>
+                  <SubjectsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/subjects/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateSubject />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/subjects/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditSubject />
                 </ProtectedRoute>
               }
             />
@@ -143,6 +166,32 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                   <EditAcademicYear />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Academic Calendar Routes */}
+            <Route
+              path="/academics/academic-calendars"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <AcademicCalendarsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/academic-calendars/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateAcademicCalendar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/academic-calendars/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditAcademicCalendar />
                 </ProtectedRoute>
               }
             />

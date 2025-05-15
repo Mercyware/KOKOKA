@@ -41,6 +41,24 @@ const SubjectSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class'
   }],
+  numberOfTests: {
+    type: Number,
+    default: 2,
+    min: [0, 'Number of tests cannot be negative'],
+    max: [10, 'Number of tests cannot exceed 10']
+  },
+  testPercentage: {
+    type: Number,
+    default: 30,
+    min: [0, 'Test percentage cannot be negative'],
+    max: [100, 'Test percentage cannot exceed 100']
+  },
+  examPercentage: {
+    type: Number,
+    default: 70,
+    min: [0, 'Exam percentage cannot be negative'],
+    max: [100, 'Exam percentage cannot exceed 100']
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
