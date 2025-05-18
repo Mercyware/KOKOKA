@@ -31,6 +31,7 @@ import {
   CalendarMonth as CalendarIcon,
   Class as ClassIcon,
   Subject as SubjectIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -183,6 +184,26 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Academic Calendars" />
               </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/houses')}
+                onClick={() => handleNavigate('/academics/houses')}
+              >
+                <ListItemIcon>
+                  <SchoolIcon color={isActive('/academics/houses') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Houses" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/class-arms')}
+                onClick={() => handleNavigate('/academics/class-arms')}
+              >
+                <ListItemIcon>
+                  <ClassIcon color={isActive('/academics/class-arms') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Class Arms" />
+              </ListItemButton>
             </List>
           </Collapse>
         </React.Fragment>
@@ -243,6 +264,26 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                   <AssessmentIcon color={isActive('/students/grades') ? 'primary' : undefined} />
                 </ListItemIcon>
                 <ListItemText primary="Grades" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/students/history-search')}
+                onClick={() => handleNavigate('/students/history-search')}
+              >
+                <ListItemIcon>
+                  <HistoryIcon color={isActive('/students/history-search') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Class History" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/students/filter')}
+                onClick={() => handleNavigate('/students/filter')}
+              >
+                <ListItemIcon>
+                  <PeopleIcon color={isActive('/students/filter') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Filter Students" />
               </ListItemButton>
             </List>
           </Collapse>

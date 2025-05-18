@@ -3,9 +3,10 @@ const router = express.Router();
 const subjectController = require('../controllers/subjectController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
+const schoolDataRoutes = require('./schoolDataRoutes');
 
-// Protect all routes
-router.use(authMiddleware.protect);
+// Apply authentication and school context middleware
+router.use(schoolDataRoutes.filterBySchoolMiddleware);
 
 /**
  * @swagger

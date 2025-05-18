@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import PublicLayout from './components/layout/PublicLayout';
+import DevSubdomainSelector from './components/DevSubdomainSelector';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -19,6 +20,9 @@ import Dashboard from './pages/dashboard/Dashboard';
 
 // Student Pages
 import CreateStudent from './pages/students/CreateStudent';
+import StudentHistorySearch from './pages/students/StudentHistorySearch';
+import StudentDetails from './pages/students/StudentDetails';
+import StudentFilterList from './pages/students/StudentFilterList';
 
 // Academic Pages
 import ClassesList from './pages/academics/classes/ClassesList';
@@ -33,6 +37,15 @@ import EditAcademicCalendar from './pages/academics/academicCalendars/EditAcadem
 import SubjectsList from './pages/academics/subjects/SubjectsList';
 import CreateSubject from './pages/academics/subjects/CreateSubject';
 import EditSubject from './pages/academics/subjects/EditSubject';
+import HousesList from './pages/academics/houses/HousesList';
+import CreateHouse from './pages/academics/houses/CreateHouse';
+import EditHouse from './pages/academics/houses/EditHouse';
+import SectionsList from './pages/academics/sections/SectionsList';
+import CreateSection from './pages/academics/sections/CreateSection';
+import EditSection from './pages/academics/sections/EditSection';
+import ClassArmsList from './pages/academics/classArms/ClassArmsList';
+import CreateClassArm from './pages/academics/classArms/CreateClassArm';
+import EditClassArm from './pages/academics/classArms/EditClassArm';
 
 // Placeholder for other pages
 const Unauthorized = () => <div>Unauthorized</div>;
@@ -44,6 +57,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <CssBaseline />
         <Router>
+          <DevSubdomainSelector />
           <Routes>
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
@@ -70,7 +84,9 @@ const App: React.FC = () => {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -80,7 +96,9 @@ const App: React.FC = () => {
               path="/school"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-                  <div>School Management</div>
+                  <Layout>
+                    <div>School Management</div>
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -196,12 +214,102 @@ const App: React.FC = () => {
               }
             />
             
+            {/* Houses Routes */}
+            <Route
+              path="/academics/houses"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <HousesList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/houses/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateHouse />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/houses/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditHouse />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Sections Routes */}
+            <Route
+              path="/academics/sections"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <SectionsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/sections/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateSection />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/sections/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditSection />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Class Arms Routes */}
+            <Route
+              path="/academics/class-arms"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <ClassArmsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/class-arms/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateClassArm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/class-arms/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditClassArm />
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Student Routes */}
             <Route
               path="/students/list"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
-                  <div>Students List</div>
+                  <Layout>
+                    <StudentFilterList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/students/filter"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <StudentFilterList />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -209,7 +317,9 @@ const App: React.FC = () => {
               path="/students/create"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
-                  <CreateStudent />
+                  <Layout>
+                    <CreateStudent />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -217,7 +327,9 @@ const App: React.FC = () => {
               path="/students/attendance"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
-                  <div>Student Attendance</div>
+                  <Layout>
+                    <div>Student Attendance</div>
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -225,7 +337,29 @@ const App: React.FC = () => {
               path="/students/grades"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
-                  <div>Student Grades</div>
+                  <Layout>
+                    <div>Student Grades</div>
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/students/history-search"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <StudentHistorySearch />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/students/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <StudentDetails />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

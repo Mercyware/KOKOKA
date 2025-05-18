@@ -3,6 +3,7 @@ const router = express.Router();
 const classArmController = require('../controllers/classArmController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
+const schoolDataRoutes = require('./schoolDataRoutes');
 
 // Protect all routes
 router.use(authMiddleware.protect);
@@ -32,46 +33,12 @@ router.use(authMiddleware.protect);
  *                   name:
  *                     type: string
  *                     description: Class arm name
- *                   class:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *                       level:
- *                         type: number
- *                   academicYear:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *                   classTeacher:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       user:
- *                         type: string
- *                       employeeId:
- *                         type: string
- *                   capacity:
- *                     type: number
- *                     description: Maximum number of students
+ *                   school:
+ *                     type: string
+ *                     description: School ID
  *                   description:
  *                     type: string
  *                     description: Class arm description
- *                   location:
- *                     type: object
- *                     properties:
- *                       building:
- *                         type: string
- *                       floor:
- *                         type: string
- *                       roomNumber:
- *                         type: string
  *                   createdAt:
  *                     type: string
  *                     format: date-time
@@ -85,7 +52,7 @@ router.use(authMiddleware.protect);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/', classArmController.getAllClassArms);
+router.get('/', schoolDataRoutes.filterBySchoolMiddleware, classArmController.getAllClassArms);
 
 /**
  * @swagger
@@ -115,44 +82,16 @@ router.get('/', classArmController.getAllClassArms);
  *                   type: string
  *                 name:
  *                   type: string
- *                 class:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     name:
- *                       type: string
- *                     level:
- *                       type: number
- *                 academicYear:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     name:
- *                       type: string
- *                 classTeacher:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     user:
- *                       type: string
- *                     employeeId:
- *                       type: string
- *                 capacity:
- *                   type: number
+ *                 school:
+ *                   type: string
  *                 description:
  *                   type: string
- *                 location:
- *                   type: object
- *                   properties:
- *                     building:
- *                       type: string
- *                     floor:
- *                       type: string
- *                     roomNumber:
- *                       type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       404:
@@ -160,122 +99,8 @@ router.get('/', classArmController.getAllClassArms);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/:id', classArmController.getClassArmById);
+router.get('/:id', schoolDataRoutes.filterBySchoolMiddleware, classArmController.getClassArmById);
 
-/**
- * @swagger
- * /api/class-arms/class/{classId}:
- *   get:
- *     summary: Get class arms by class
- *     description: Retrieve class arms for a specific class. Accessible by all authenticated users.
- *     tags: [Class Arms]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: classId
- *         required: true
- *         schema:
- *           type: string
- *         description: Class ID
- *     responses:
- *       200:
- *         description: List of class arms for the specified class
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   name:
- *                     type: string
- *                   class:
- *                     type: string
- *                   academicYear:
- *                     type: string
- *                   classTeacher:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       user:
- *                         type: string
- *                       employeeId:
- *                         type: string
- *                   capacity:
- *                     type: number
- *                   description:
- *                     type: string
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.get('/class/:classId', classArmController.getClassArmsByClass);
-
-/**
- * @swagger
- * /api/class-arms/academic-year/{academicYearId}:
- *   get:
- *     summary: Get class arms by academic year
- *     description: Retrieve class arms for a specific academic year. Accessible by all authenticated users.
- *     tags: [Class Arms]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: academicYearId
- *         required: true
- *         schema:
- *           type: string
- *         description: Academic year ID
- *     responses:
- *       200:
- *         description: List of class arms for the specified academic year
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   name:
- *                     type: string
- *                   class:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *                       level:
- *                         type: number
- *                   academicYear:
- *                     type: string
- *                   classTeacher:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       user:
- *                         type: string
- *                       employeeId:
- *                         type: string
- *                   capacity:
- *                     type: number
- *                   description:
- *                     type: string
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.get('/academic-year/:academicYearId', classArmController.getClassArmsByAcademicYear);
 
 /**
  * @swagger
@@ -309,73 +134,8 @@ router.get('/academic-year/:academicYearId', classArmController.getClassArmsByAc
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/:id/students', classArmController.getClassArmStudents);
+router.get('/:id/students', schoolDataRoutes.filterBySchoolMiddleware, classArmController.getClassArmStudents);
 
-// Admin and teacher routes
-router.use(roleMiddleware.restrictTo('admin', 'teacher'));
-
-/**
- * @swagger
- * /api/class-arms/{id}/assign-teacher:
- *   patch:
- *     summary: Assign class teacher
- *     description: Assign a teacher to a class arm. Accessible by admin and teacher users.
- *     tags: [Class Arms]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Class arm ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - teacherId
- *             properties:
- *               teacherId:
- *                 type: string
- *                 description: ID of the teacher to assign to the class arm
- *     responses:
- *       200:
- *         description: Teacher assigned to class arm successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id:
- *                   type: string
- *                 name:
- *                   type: string
- *                 class:
- *                   type: string
- *                 academicYear:
- *                   type: string
- *                 classTeacher:
- *                   type: string
- *                 capacity:
- *                   type: number
- *                 description:
- *                   type: string
- *       400:
- *         description: Staff member must be a teacher to be assigned as class teacher
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       403:
- *         description: Forbidden - User does not have required role
- *       404:
- *         description: Class arm or teacher not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.patch('/:id/assign-teacher', classArmController.assignClassTeacher);
 
 // Admin only routes
 router.use(roleMiddleware.restrictTo('admin'));
@@ -397,36 +157,13 @@ router.use(roleMiddleware.restrictTo('admin'));
  *             type: object
  *             required:
  *               - name
- *               - class
- *               - academicYear
  *             properties:
  *               name:
  *                 type: string
  *                 description: Class arm name (e.g., "A", "B", "Red", "Blue")
- *               class:
- *                 type: string
- *                 description: ID of the class this arm belongs to
- *               academicYear:
- *                 type: string
- *                 description: ID of the academic year this class arm belongs to
- *               classTeacher:
- *                 type: string
- *                 description: ID of the teacher assigned to this class arm
- *               capacity:
- *                 type: number
- *                 description: Maximum number of students
  *               description:
  *                 type: string
  *                 description: Class arm description
- *               location:
- *                 type: object
- *                 properties:
- *                   building:
- *                     type: string
- *                   floor:
- *                     type: string
- *                   roomNumber:
- *                     type: string
  *     responses:
  *       201:
  *         description: Class arm created successfully
@@ -439,25 +176,16 @@ router.use(roleMiddleware.restrictTo('admin'));
  *                   type: string
  *                 name:
  *                   type: string
- *                 class:
+ *                 school:
  *                   type: string
- *                 academicYear:
- *                   type: string
- *                 classTeacher:
- *                   type: string
- *                 capacity:
- *                   type: number
  *                 description:
  *                   type: string
- *                 location:
- *                   type: object
- *                   properties:
- *                     building:
- *                       type: string
- *                     floor:
- *                       type: string
- *                     roomNumber:
- *                       type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -469,7 +197,7 @@ router.use(roleMiddleware.restrictTo('admin'));
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.post('/', classArmController.createClassArm);
+router.post('/', schoolDataRoutes.scopeToSchoolMiddleware, roleMiddleware.restrictTo('admin'), classArmController.createClassArm);
 
 /**
  * @swagger
@@ -497,30 +225,9 @@ router.post('/', classArmController.createClassArm);
  *               name:
  *                 type: string
  *                 description: Class arm name
- *               class:
- *                 type: string
- *                 description: ID of the class this arm belongs to
- *               academicYear:
- *                 type: string
- *                 description: ID of the academic year this class arm belongs to
- *               classTeacher:
- *                 type: string
- *                 description: ID of the teacher assigned to this class arm
- *               capacity:
- *                 type: number
- *                 description: Maximum number of students
  *               description:
  *                 type: string
  *                 description: Class arm description
- *               location:
- *                 type: object
- *                 properties:
- *                   building:
- *                     type: string
- *                   floor:
- *                     type: string
- *                   roomNumber:
- *                     type: string
  *     responses:
  *       200:
  *         description: Class arm updated successfully
@@ -533,25 +240,16 @@ router.post('/', classArmController.createClassArm);
  *                   type: string
  *                 name:
  *                   type: string
- *                 class:
+ *                 school:
  *                   type: string
- *                 academicYear:
- *                   type: string
- *                 classTeacher:
- *                   type: string
- *                 capacity:
- *                   type: number
  *                 description:
  *                   type: string
- *                 location:
- *                   type: object
- *                   properties:
- *                     building:
- *                       type: string
- *                     floor:
- *                       type: string
- *                     roomNumber:
- *                       type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
  *       400:
  *         $ref: '#/components/responses/ValidationError'
  *       401:
@@ -563,7 +261,7 @@ router.post('/', classArmController.createClassArm);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.put('/:id', classArmController.updateClassArm);
+router.put('/:id', schoolDataRoutes.scopeToSchoolMiddleware, roleMiddleware.restrictTo('admin'), classArmController.updateClassArm);
 
 /**
  * @swagger
@@ -601,6 +299,6 @@ router.put('/:id', classArmController.updateClassArm);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.delete('/:id', classArmController.deleteClassArm);
+router.delete('/:id', schoolDataRoutes.requireSchoolMiddleware, roleMiddleware.restrictTo('admin'), classArmController.deleteClassArm);
 
 module.exports = router;

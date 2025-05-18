@@ -8,6 +8,26 @@ const logger = require('../utils/logger');
  */
 exports.extractSchoolFromSubdomain = async (req, res, next) => {
   try {
+    // Check for X-School-Subdomain header first (used by frontend in development)
+    const headerSubdomain = req.headers['x-school-subdomain'];
+    
+    if (headerSubdomain) {
+      // Find school by subdomain from header
+      const school = await School.findOne({ 
+        subdomain: headerSubdomain, 
+        status: { $in: ['active', 'pending'] } // Allow both active and pending schools
+      });
+      
+      if (school) {
+        // Attach school to request object
+        req.school = school;
+        logger.info(`Request for school from header: ${school.name} (${headerSubdomain})`);
+        return next();
+      } else {
+        logger.warn(`Invalid subdomain in header: ${headerSubdomain}`);
+      }
+    }
+    
     // Get host from request headers
     const host = req.headers.host;
     
@@ -33,7 +53,7 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
       if (school) {
         // Attach school to request object
         req.school = school;
-        logger.info(`Request for school: ${school.name} (${subdomain})`);
+        logger.info(`Request for school from host: ${school.name} (${subdomain})`);
       } else {
         logger.warn(`Invalid subdomain accessed: ${subdomain}`);
       }

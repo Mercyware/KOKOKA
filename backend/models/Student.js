@@ -21,6 +21,10 @@ const StudentSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  photo: {
+    type: String,
+    trim: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -44,6 +48,10 @@ const StudentSchema = new mongoose.Schema({
     required: [true, 'Please provide admission date'],
     default: Date.now
   },
+  academicYear: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AcademicYear'
+  },
   class: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Class',
@@ -53,17 +61,13 @@ const StudentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ClassArm'
   },
-  section: {
-    type: String,
-    trim: true
-  },
   rollNumber: {
     type: String,
     trim: true
   },
   house: {
-    type: String,
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'House'
   },
   
   // Physical Information

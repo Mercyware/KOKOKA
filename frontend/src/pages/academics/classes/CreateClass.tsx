@@ -21,12 +21,9 @@ import {
 } from '@mui/material';
 import Layout from '../../../components/layout/Layout';
 import { post, get } from '../../../services/api';
-import { AcademicYear } from '../../../types';
-
 interface FormData {
   name: string;
   level: number;
-  academicYear: string;
   description: string;
   school?: string;
 }
@@ -35,11 +32,9 @@ const CreateClass: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     level: 1,
-    academicYear: '',
     description: '',
     school: authState.user?.school,
   });
@@ -50,35 +45,6 @@ const CreateClass: React.FC = () => {
     severity: 'success' as 'success' | 'error',
   });
 
-  // Fetch academic years on component mount
-  useEffect(() => {
-    const fetchAcademicYears = async () => {
-      try {
-        const response = await get<AcademicYear[]>('/academic-years');
-        if (response.data) {
-          setAcademicYears(response.data);
-          
-          // Set the active academic year as default if available
-          const activeYear = response.data.find(year => year.isActive);
-          if (activeYear) {
-            setFormData(prev => ({
-              ...prev,
-              academicYear: activeYear.id,
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching academic years:', error);
-        setSnackbar({
-          open: true,
-          message: 'Failed to load academic years',
-          severity: 'error',
-        });
-      }
-    };
-
-    fetchAcademicYears();
-  }, []);
 
   const handleTextFieldChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -126,7 +92,6 @@ const CreateClass: React.FC = () => {
     // Required fields validation
     if (!formData.name) newErrors.name = 'Class name is required';
     if (!formData.level || formData.level < 1) newErrors.level = 'Valid class level is required';
-    if (!formData.academicYear) newErrors.academicYear = 'Academic year is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -228,24 +193,6 @@ const CreateClass: React.FC = () => {
                   required
                   InputProps={{ inputProps: { min: 1 } }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth error={!!errors.academicYear} required>
-                  <InputLabel>Academic Year</InputLabel>
-                  <Select
-                    name="academicYear"
-                    value={formData.academicYear}
-                    onChange={handleSelectChange}
-                    label="Academic Year"
-                  >
-                    {academicYears.map((year) => (
-                      <MenuItem key={year.id} value={year.id}>
-                        {year.name} {year.isActive && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.academicYear && <FormHelperText>{errors.academicYear}</FormHelperText>}
-                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField

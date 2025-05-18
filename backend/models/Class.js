@@ -11,11 +11,6 @@ const ClassSchema = new mongoose.Schema({
     required: [true, 'Please provide class name'],
     trim: true
   },
-  academicYear: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'AcademicYear',
-    required: [true, 'Please provide academic year']
-  },
   level: {
     type: Number,
     required: [true, 'Please provide class level'],
@@ -39,16 +34,9 @@ const ClassSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure unique class names within an academic year and school
-ClassSchema.index({ name: 1, academicYear: 1, school: 1 }, { unique: true });
+// Compound index to ensure unique class names within a school
+ClassSchema.index({ name: 1, school: 1 }, { unique: true });
 
-// Virtual for class arms
-ClassSchema.virtual('classArms', {
-  ref: 'ClassArm',
-  localField: '_id',
-  foreignField: 'class',
-  justOne: false
-});
 
 // Virtual for students in this class (across all arms)
 ClassSchema.virtual('students', {

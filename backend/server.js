@@ -23,6 +23,7 @@ const { extractSchoolFromSubdomain } = require('./middlewares/schoolMiddleware')
 const authRoutes = require('./routes/authRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
 const studentRoutes = require('./routes/studentRoutes');
+const studentClassHistoryRoutes = require('./routes/studentClassHistoryRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const staffRoutes = require('./routes/staffRoutes');
 const timetableRoutes = require('./routes/timetableRoutes');
@@ -36,6 +37,8 @@ const classRoutes = require('./routes/classRoutes');
 const classArmRoutes = require('./routes/classArmRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
 const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
+const houseRoutes = require('./routes/houseRoutes');
+const sectionRoutes = require('./routes/sectionRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -124,6 +127,7 @@ app.use(extractSchoolFromSubdomain);
 app.use('/api/schools', schoolRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/student-class-history', studentClassHistoryRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/timetables', timetableRoutes);
@@ -136,6 +140,8 @@ app.use('/api/classes', classRoutes);
 app.use('/api/class-arms', classArmRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
+app.use('/api/houses', houseRoutes);
+app.use('/api/sections', sectionRoutes);
 
 // AI routes (conditionally enabled)
 if (env.FEATURE_AI_ENABLED) {

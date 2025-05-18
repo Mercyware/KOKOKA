@@ -21,12 +21,11 @@ import {
 } from '@mui/material';
 import Layout from '../../../components/layout/Layout';
 import { get, put } from '../../../services/api';
-import { AcademicYear, Class } from '../../../types';
+import { Class } from '../../../types';
 
 interface FormData {
   name: string;
   level: number;
-  academicYear: string;
   description: string;
   school?: string;
 }
@@ -37,11 +36,9 @@ const EditClass: React.FC = () => {
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     level: 1,
-    academicYear: '',
     description: '',
     school: authState.user?.school,
   });
@@ -64,18 +61,9 @@ const EditClass: React.FC = () => {
           setFormData({
             name: classData.name,
             level: classData.level,
-            academicYear: typeof classData.academicYear === 'object' && classData.academicYear !== null
-              ? (classData.academicYear as any).id
-              : classData.academicYear,
             description: classData.description || '',
             school: classData.school || authState.user?.school,
           });
-        }
-
-        // Fetch academic years
-        const academicYearsResponse = await get<AcademicYear[]>('/academic-years');
-        if (academicYearsResponse.data) {
-          setAcademicYears(academicYearsResponse.data);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -138,7 +126,6 @@ const EditClass: React.FC = () => {
     // Required fields validation
     if (!formData.name) newErrors.name = 'Class name is required';
     if (!formData.level || formData.level < 1) newErrors.level = 'Valid class level is required';
-    if (!formData.academicYear) newErrors.academicYear = 'Academic year is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -250,24 +237,6 @@ const EditClass: React.FC = () => {
                   required
                   InputProps={{ inputProps: { min: 1 } }}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth error={!!errors.academicYear} required>
-                  <InputLabel>Academic Year</InputLabel>
-                  <Select
-                    name="academicYear"
-                    value={formData.academicYear}
-                    onChange={handleSelectChange}
-                    label="Academic Year"
-                  >
-                    {academicYears.map((year) => (
-                      <MenuItem key={year.id} value={year.id}>
-                        {year.name} {year.isActive && '(Active)'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.academicYear && <FormHelperText>{errors.academicYear}</FormHelperText>}
-                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField

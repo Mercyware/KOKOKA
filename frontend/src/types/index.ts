@@ -107,6 +107,31 @@ export interface Subscription {
   paymentId?: string;
 }
 
+export interface House {
+  id: string;
+  school: string;
+  name: string;
+  color?: string;
+  houseHead?: string;
+  description?: string;
+  createdBy?: string;
+  students?: string[];
+  studentCount?: number;
+}
+
+/**
+ * @deprecated Use ClassArm instead. This interface is kept for backward compatibility.
+ */
+export interface Section {
+  id: string;
+  school: string;
+  name: string;
+  description?: string;
+  createdBy?: string;
+  students?: string[];
+  studentCount?: number;
+}
+
 export interface Student {
   id: string;
   school: string;
@@ -117,13 +142,14 @@ export interface Student {
   email?: string;
   admissionNumber: string;
   admissionDate: Date;
+  academicYear?: string;
   class: string;
   classArm?: string;
-  section?: string;
   rollNumber?: string;
-  house?: string;
+  house?: string | House;
   dateOfBirth: Date;
   gender: 'male' | 'female' | 'other';
+  photo?: string;
   bloodGroup?: string;
   height?: {
     value: number;
@@ -246,6 +272,32 @@ export interface AcademicHistory {
   performance: string;
 }
 
+export interface StudentClassHistory {
+  id: string;
+  student: string;
+  class: {
+    id: string;
+    name: string;
+    level: number;
+  };
+  classArm?: {
+    id: string;
+    name: string;
+  };
+  academicYear: {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+  };
+  school: string;
+  startDate: Date;
+  endDate?: Date;
+  status: 'active' | 'completed' | 'transferred' | 'withdrawn';
+  remarks?: string;
+  photo?: string;
+}
+
 export interface ScholarshipInfo {
   name: string;
   amount: number;
@@ -261,6 +313,59 @@ export interface Achievement {
   date: Date;
   category?: string;
   awardedBy?: string;
+}
+
+export interface Staff {
+  id: string;
+  school: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  employeeId: string;
+  position: string;
+  department?: string;
+  dateOfBirth?: Date;
+  gender?: 'male' | 'female' | 'other';
+  address?: Address;
+  contactInfo?: {
+    phone?: string;
+    alternatePhone?: string;
+    emergencyContact?: {
+      name?: string;
+      relationship?: string;
+      phone?: string;
+    };
+  };
+  qualifications?: {
+    degree: string;
+    institution: string;
+    year: number;
+    specialization?: string;
+  }[];
+  joinDate: Date;
+  endDate?: Date;
+  status: 'active' | 'on leave' | 'terminated' | 'retired';
+  salary?: {
+    amount: number;
+    currency: string;
+    paymentFrequency: 'monthly' | 'bi-weekly' | 'weekly';
+  };
+  bankDetails?: {
+    accountName?: string;
+    accountNumber?: string;
+    bankName?: string;
+    branchCode?: string;
+    ifscCode?: string;
+  };
+  documents?: {
+    resume?: string;
+    idProof?: string;
+    addressProof?: string;
+    offerLetter?: string;
+    contract?: string;
+  };
+  createdBy?: string;
+  remarks?: string;
 }
 
 export interface Teacher {
@@ -350,7 +455,6 @@ export interface Class {
   id: string;
   school: string;
   name: string;
-  academicYear: string;
   level: number;
   description?: string;
   subjects?: string[];
@@ -363,17 +467,7 @@ export interface ClassArm {
   id: string;
   school: string;
   name: string;
-  class: string;
-  academicYear: string;
-  classTeacher?: string;
-  capacity: number;
   description?: string;
-  location?: {
-    building?: string;
-    floor?: string;
-    roomNumber?: string;
-  };
-  createdBy?: string;
   students?: string[];
   studentCount?: number;
 }

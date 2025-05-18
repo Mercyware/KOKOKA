@@ -149,7 +149,6 @@ const ClassesList: React.FC = () => {
                   <TableRow>
                     <TableCell>Name</TableCell>
                     <TableCell>Level</TableCell>
-                    <TableCell>Academic Year</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -160,11 +159,6 @@ const ClassesList: React.FC = () => {
                       <TableRow hover key={cls.id}>
                         <TableCell>{cls.name}</TableCell>
                         <TableCell>{cls.level}</TableCell>
-                        <TableCell>
-                          {typeof cls.academicYear === 'object' && cls.academicYear !== null
-                            ? (cls.academicYear as any).name
-                            : cls.academicYear}
-                        </TableCell>
                         <TableCell>{cls.description || '-'}</TableCell>
                         <TableCell align="right">
                           <Tooltip title="Edit">
@@ -182,7 +176,7 @@ const ClassesList: React.FC = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
+                      <TableCell colSpan={4} align="center">
                         No classes found
                       </TableCell>
                     </TableRow>

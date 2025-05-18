@@ -1,6 +1,7 @@
 const Student = require('../models/Student');
 const Guardian = require('../models/Guardian');
 const Document = require('../models/Document');
+const StudentClassHistory = require('../models/StudentClassHistory');
 const mongoose = require('mongoose');
 
 // Get all students with pagination, filtering, and sorting
@@ -70,6 +71,7 @@ exports.getAllStudents = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .populate('class', 'name')
+      .populate('academicYear', 'name')
       .populate('primaryGuardian', 'firstName lastName phone email')
       .lean();
     
@@ -94,7 +96,9 @@ exports.getAllStudents = async (req, res) => {
 exports.getStudentById = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
-      .populate('class', 'name grade section')
+      .populate('class', 'name grade')
+      .populate('classArm', 'name')
+      .populate('academicYear', 'name startDate endDate')
       .populate('guardians', 'firstName lastName relationship phone email isEmergencyContact')
       .populate('primaryGuardian', 'firstName lastName relationship phone email')
       .populate('documents', 'title type fileUrl uploadedAt status')
@@ -115,9 +119,6 @@ exports.getStudentById = async (req, res) => {
 
 // Create new student with optional guardian information
 exports.createStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
   try {
     const { 
       firstName, 
@@ -126,8 +127,9 @@ exports.createStudent = async (req, res) => {
       email,
       admissionNumber,
       admissionDate,
+      academicYear,
       class: classId,
-      section,
+      classArm,
       rollNumber,
       house,
       dateOfBirth,
@@ -144,8 +146,35 @@ exports.createStudent = async (req, res) => {
       religion,
       languages,
       notes,
-      status
+      status,
+      photo
     } = req.body;
+    
+    // Process photo if provided as base64
+    let photoUrl = photo;
+    if (photo && photo.startsWith('data:image')) {
+      // Extract file extension and create a unique filename
+      const fileExtension = photo.split(';')[0].split('/')[1];
+      const fileName = `student_${Date.now()}.${fileExtension}`;
+      
+      // In a real implementation, you would save this file to a storage service
+      // For now, we'll just use the base64 data directly
+      photoUrl = photo;
+      
+      // Example code for saving to disk (commented out)
+      /*
+      const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filePath = path.join(__dirname, '../uploads/students', fileName);
+      
+      // Ensure directory exists
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      
+      // Write file
+      fs.writeFileSync(filePath, buffer);
+      photoUrl = `/uploads/students/${fileName}`;
+      */
+    }
     
     // Create student
     const studentData = {
@@ -155,8 +184,9 @@ exports.createStudent = async (req, res) => {
       email,
       admissionNumber,
       admissionDate: admissionDate || new Date(),
+      academicYear,
       class: classId,
-      section,
+      classArm,
       rollNumber,
       house,
       dateOfBirth,
@@ -172,10 +202,14 @@ exports.createStudent = async (req, res) => {
       religion,
       languages,
       notes,
-      status: status || 'active'
+      status: status || 'active',
+      photo: photoUrl,
+      school: req.school // From middleware
     };
     
+    // Create and save student first to get a valid _id
     const student = new Student(studentData);
+    await student.save();
     
     // Process guardians if provided
     if (guardiansData && guardiansData.length > 0) {
@@ -198,13 +232,13 @@ exports.createStudent = async (req, res) => {
         // If guardian doesn't exist, create new one
         if (!guardian) {
           guardian = new Guardian(guardianData);
-          await guardian.save({ session });
+          await guardian.save();
         }
         
         // Add student to guardian's students array if not already there
         if (!guardian.students.includes(student._id)) {
           guardian.students.push(student._id);
-          await guardian.save({ session });
+          await guardian.save();
         }
         
         guardianIds.push(guardian._id);
@@ -215,36 +249,56 @@ exports.createStudent = async (req, res) => {
         }
       }
       
-      // Update student with guardian information
-      student.guardians = guardianIds;
-      student.primaryGuardian = primaryGuardianId;
-    }
-    
-    await student.save({ session });
-    await session.commitTransaction();
-    
-    res.status(201).json(student);
-  } catch (error) {
-    await session.abortTransaction();
-    
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        message: 'Duplicate key error', 
-        error: 'A student with this admission number already exists' 
+      // Update student with guardian information in a separate operation
+      await Student.findByIdAndUpdate(student._id, {
+        guardians: guardianIds,
+        primaryGuardian: primaryGuardianId
       });
     }
     
-    res.status(500).json({ message: 'Server error', error: error.message });
-  } finally {
-    session.endSession();
+    // Create initial class history entry
+    if (classId && academicYear) {
+      const classHistory = new StudentClassHistory({
+        student: student._id,
+        class: classId,
+        classArm: classArm || null,
+        academicYear: academicYear,
+        school: student.school,
+        startDate: admissionDate || new Date(),
+        status: 'active',
+        remarks: 'Initial class assignment',
+        photo: photo
+      });
+      
+      await classHistory.save();
+    }
+    
+    // Return student with populated references
+    const result = await Student.findById(student._id)
+      .populate('class', 'name')
+      .populate('academicYear', 'name')
+      .populate('primaryGuardian', 'firstName lastName');
+    
+    res.status(201).json({
+      success: true,
+      message: 'Student created successfully',
+      student: result
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'A student with this admission number already exists', 
+        error: 'Duplicate key error' 
+      });
+    }
+    
+    res.status(500).json({ success:false, message: 'Server error', error: error.message });
   }
 };
 
 // Update student
 exports.updateStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
   try {
     const studentId = req.params.id;
     
@@ -257,11 +311,43 @@ exports.updateStudent = async (req, res) => {
     // Extract guardian data if provided
     const { guardians: guardiansData, ...studentData } = req.body;
     
+    // Process photo if provided as base64
+    if (studentData.photo && studentData.photo.startsWith('data:image')) {
+      // Extract file extension and create a unique filename
+      const fileExtension = studentData.photo.split(';')[0].split('/')[1];
+      const fileName = `student_${Date.now()}.${fileExtension}`;
+      
+      // In a real implementation, you would save this file to a storage service
+      // For now, we'll just use the base64 data directly
+      // photoUrl = studentData.photo;
+      
+      // Example code for saving to disk (commented out)
+      /*
+      const base64Data = studentData.photo.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filePath = path.join(__dirname, '../uploads/students', fileName);
+      
+      // Ensure directory exists
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      
+      // Write file
+      fs.writeFileSync(filePath, buffer);
+      studentData.photo = `/uploads/students/${fileName}`;
+      */
+    }
+    
+    // Check if class or academic year is being updated
+    const classChanged = studentData.class && 
+      studentData.class.toString() !== existingStudent.class.toString();
+    
+    const academicYearChanged = studentData.academicYear && 
+      studentData.academicYear.toString() !== existingStudent.academicYear.toString();
+    
     // Update student data
     const updatedStudent = await Student.findByIdAndUpdate(
       studentId,
       studentData,
-      { new: true, runValidators: true, session }
+      { new: true, runValidators: true }
     );
     
     // Process guardians if provided
@@ -278,7 +364,7 @@ exports.updateStudent = async (req, res) => {
           guardian = await Guardian.findByIdAndUpdate(
             guardianData._id,
             guardianData,
-            { new: true, session }
+            { new: true }
           );
         } else {
           // Check if guardian already exists by email or phone
@@ -293,14 +379,14 @@ exports.updateStudent = async (req, res) => {
           // If guardian doesn't exist, create new one
           if (!guardian) {
             guardian = new Guardian(guardianData);
-            await guardian.save({ session });
+            await guardian.save();
           }
         }
         
         // Add student to guardian's students array if not already there
         if (!guardian.students.includes(studentId)) {
           guardian.students.push(studentId);
-          await guardian.save({ session });
+          await guardian.save();
         }
         
         guardianIds.push(guardian._id);
@@ -317,20 +403,49 @@ exports.updateStudent = async (req, res) => {
         updatedStudent.primaryGuardian = primaryGuardianId;
       }
       
-      await updatedStudent.save({ session });
+      await updatedStudent.save();
     }
     
-    await session.commitTransaction();
+    // Update class history if class or academic year changed
+    if (classChanged || academicYearChanged) {
+      // Find current active class history
+      const currentHistory = await StudentClassHistory.findOne({
+        student: studentId,
+        status: 'active'
+      });
+      
+      // If found, mark as completed
+      if (currentHistory) {
+        currentHistory.status = 'completed';
+        currentHistory.endDate = new Date();
+        await currentHistory.save();
+      }
+      
+      // Create new class history entry
+      const newHistory = new StudentClassHistory({
+        student: studentId,
+        class: updatedStudent.class,
+        classArm: updatedStudent.classArm,
+        academicYear: updatedStudent.academicYear,
+        school: updatedStudent.school,
+        startDate: new Date(),
+        status: 'active',
+        remarks: 'Class/Academic year updated',
+        photo: updatedStudent.photo
+      });
+      
+      await newHistory.save();
+    }
     
-    // Return updated student with populated guardian data
+    // Return updated student with populated data
     const result = await Student.findById(studentId)
       .populate('guardians', 'firstName lastName relationship phone email')
-      .populate('primaryGuardian', 'firstName lastName relationship phone email');
+      .populate('primaryGuardian', 'firstName lastName relationship phone email')
+      .populate('class', 'name level')
+      .populate('academicYear', 'name startDate endDate');
     
     res.json(result);
   } catch (error) {
-    await session.abortTransaction();
-    
     if (error.code === 11000) {
       return res.status(400).json({ 
         message: 'Duplicate key error', 
@@ -339,16 +454,11 @@ exports.updateStudent = async (req, res) => {
     }
     
     res.status(500).json({ message: 'Server error', error: error.message });
-  } finally {
-    session.endSession();
   }
 };
 
 // Delete student
 exports.deleteStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
   try {
     const studentId = req.params.id;
     
@@ -363,30 +473,28 @@ exports.deleteStudent = async (req, res) => {
     if (student.guardians && student.guardians.length > 0) {
       await Guardian.updateMany(
         { _id: { $in: student.guardians } },
-        { $pull: { students: studentId } },
-        { session }
+        { $pull: { students: studentId } }
       );
     }
     
     // Delete associated documents
     if (student.documents && student.documents.length > 0) {
       await Document.deleteMany(
-        { _id: { $in: student.documents } },
-        { session }
+        { _id: { $in: student.documents } }
       );
     }
     
-    // Delete student
-    await Student.findByIdAndDelete(studentId, { session });
+    // Delete associated class history records
+    await StudentClassHistory.deleteMany(
+      { student: studentId }
+    );
     
-    await session.commitTransaction();
+    // Delete student
+    await Student.findByIdAndDelete(studentId);
     
     res.json({ message: 'Student deleted successfully' });
   } catch (error) {
-    await session.abortTransaction();
     res.status(500).json({ message: 'Server error', error: error.message });
-  } finally {
-    session.endSession();
   }
 };
 
@@ -424,9 +532,6 @@ exports.getStudentGrades = async (req, res) => {
 
 // Add or update student guardian
 exports.manageGuardian = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
   try {
     const studentId = req.params.id;
     const guardianData = req.body;
@@ -444,7 +549,7 @@ exports.manageGuardian = async (req, res) => {
       guardian = await Guardian.findByIdAndUpdate(
         guardianData._id,
         guardianData,
-        { new: true, session }
+        { new: true }
       );
       
       if (!guardian) {
@@ -463,14 +568,14 @@ exports.manageGuardian = async (req, res) => {
       // If guardian doesn't exist, create new one
       if (!guardian) {
         guardian = new Guardian(guardianData);
-        await guardian.save({ session });
+        await guardian.save();
       }
     }
     
     // Add student to guardian's students array if not already there
     if (!guardian.students.includes(studentId)) {
       guardian.students.push(studentId);
-      await guardian.save({ session });
+      await guardian.save();
     }
     
     // Add guardian to student's guardians array if not already there
@@ -483,23 +588,16 @@ exports.manageGuardian = async (req, res) => {
       student.primaryGuardian = guardian._id;
     }
     
-    await student.save({ session });
-    await session.commitTransaction();
+    await student.save();
     
     res.json(guardian);
   } catch (error) {
-    await session.abortTransaction();
     res.status(500).json({ message: 'Server error', error: error.message });
-  } finally {
-    session.endSession();
   }
 };
 
 // Remove guardian from student
 exports.removeGuardian = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  
   try {
     const { id: studentId, guardianId } = req.params;
     
@@ -525,23 +623,18 @@ exports.removeGuardian = async (req, res) => {
       student.primaryGuardian = student.guardians.length > 0 ? student.guardians[0] : null;
     }
     
-    await student.save({ session });
+    await student.save();
     
     // Remove student from guardian's students array
     guardian.students = guardian.students.filter(
       s => s.toString() !== studentId
     );
     
-    await guardian.save({ session });
-    
-    await session.commitTransaction();
+    await guardian.save();
     
     res.json({ message: 'Guardian removed from student successfully' });
   } catch (error) {
-    await session.abortTransaction();
     res.status(500).json({ message: 'Server error', error: error.message });
-  } finally {
-    session.endSession();
   }
 };
 
@@ -671,6 +764,31 @@ exports.verifyDocument = async (req, res) => {
     await document.save();
     
     res.json(document);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get student class history
+exports.getStudentClassHistory = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    
+    // Check if student exists
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    
+    // Get class history
+    const history = await StudentClassHistory.find({ student: studentId })
+      .populate('class', 'name level')
+      .populate('classArm', 'name')
+      .populate('academicYear', 'name startDate endDate')
+      .sort({ startDate: -1 }) // Sort by start date (newest first)
+      .lean();
+    
+    res.json(history);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

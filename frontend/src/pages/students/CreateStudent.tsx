@@ -23,6 +23,9 @@ import {
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
 import { post, get } from '../../services/api';
+import { getAllAcademicYears } from '../../services/academicYearService';
+import { getClassArms } from '../../services/classArmService';
+import { getHouses } from '../../services/houseService';
 import { SelectChangeEvent } from '@mui/material/Select';
 
 // Simple interface for form data
@@ -33,12 +36,14 @@ interface FormData {
   email: string;
   admissionNumber: string;
   admissionDate: string;
+  academicYear: string;
   dateOfBirth: string;
   gender: string;
   class: string;
-  section: string;
+  classArm: string;
   rollNumber: string;
   house: string;
+  photo: string;
   address: {
     street: string;
     city: string;
@@ -67,10 +72,37 @@ interface ClassData {
   name: string;
 }
 
+// Interface for academic year data
+interface AcademicYearData {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+// Interface for class arm data
+interface ClassArmData {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+// Interface for house data
+interface HouseData {
+  id: string;
+  name: string;
+  color?: string;
+  description?: string;
+}
+
 const CreateStudent: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<ClassData[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYearData[]>([]);
+  const [classArms, setClassArms] = useState<ClassArmData[]>([]);
+  const [houses, setHouses] = useState<HouseData[]>([]);
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -78,12 +110,14 @@ const CreateStudent: React.FC = () => {
     email: '',
     admissionNumber: '',
     admissionDate: new Date().toISOString().split('T')[0],
+    academicYear: '',
     dateOfBirth: new Date().toISOString().split('T')[0],
     gender: 'male',
     class: '',
-    section: '',
+    classArm: '',
     rollNumber: '',
     house: '',
+    photo: '',
     address: {
       street: '',
       city: '',
@@ -116,20 +150,43 @@ const CreateStudent: React.FC = () => {
     isPrimary: true,
   });
 
-  // Fetch classes on component mount
+  // Fetch classes, academic years, class arms, and houses on component mount
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
-        const response = await get<ClassData[]>('/classes');
-        if (response.data) {
-          setClasses(response.data);
+        // Fetch classes
+        const classesResponse = await get<ClassData[]>('/classes');
+        if (classesResponse.data) {
+          setClasses(classesResponse.data);
         }
+
+        // Fetch academic years
+        const academicYearsResponse = await getAllAcademicYears();
+        if (academicYearsResponse.data) {
+          // Map the response data to AcademicYearData format
+          const mappedAcademicYears = academicYearsResponse.data.map(year => ({
+            id: year.id,
+            name: year.name,
+            startDate: new Date(year.startDate).toISOString().split('T')[0],
+            endDate: new Date(year.endDate).toISOString().split('T')[0],
+            isActive: year.isActive
+          }));
+          setAcademicYears(mappedAcademicYears);
+        }
+
+        // Fetch class arms
+        const classArmsData = await getClassArms();
+        setClassArms(classArmsData);
+
+        // Fetch houses
+        const housesData = await getHouses();
+        setHouses(housesData);
       } catch (error) {
-        console.error('Error fetching classes:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchClasses();
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent<string>) => {
@@ -386,6 +443,76 @@ const CreateStudent: React.FC = () => {
                       required
                     />
                   </Grid>
+                  <Grid item xs={12}>
+                    <Box sx={{ 
+                      border: '1px dashed #ccc', 
+                      borderRadius: 1, 
+                      p: 3, 
+                      textAlign: 'center',
+                      mb: 2,
+                      backgroundColor: '#f9f9f9'
+                    }}>
+                      {formData.photo ? (
+                        <Box sx={{ mb: 2 }}>
+                          <img 
+                            src={formData.photo} 
+                            alt="Student preview" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '200px', 
+                              borderRadius: '4px' 
+                            }} 
+                          />
+                        </Box>
+                      ) : (
+                        <Box sx={{ 
+                          width: '100%', 
+                          height: '150px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          backgroundColor: '#eee',
+                          borderRadius: '4px',
+                          mb: 2
+                        }}>
+                          <Typography variant="body2" color="textSecondary">
+                            No photo selected
+                          </Typography>
+                        </Box>
+                      )}
+                      <input
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        id="photo-upload"
+                        type="file"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFormData(prev => ({
+                                ...prev,
+                                photo: reader.result as string
+                              }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <label htmlFor="photo-upload">
+                        <Button
+                          variant="contained"
+                          component="span"
+                          sx={{ mt: 1 }}
+                        >
+                          Upload Photo
+                        </Button>
+                      </label>
+                      <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                        Upload a clear photo of the student (JPG, PNG)
+                      </Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
               </AccordionDetails>
             </Accordion>
@@ -421,6 +548,29 @@ const CreateStudent: React.FC = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Academic Year</InputLabel>
+                      <Select
+                        name="academicYear"
+                        value={formData.academicYear}
+                        onChange={handleChange}
+                        label="Academic Year"
+                      >
+                      {academicYears && Array.isArray(academicYears) && academicYears.length > 0 ? (
+                        academicYears.map((year) => (
+                          <MenuItem key={year.id} value={year.id}>
+                            {year.name}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem value="">
+                          <em>No academic years available</em>
+                        </MenuItem>
+                      )}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                     <FormControl fullWidth error={!!errors.class} required>
                       <InputLabel>Class</InputLabel>
                       <Select
@@ -429,23 +579,46 @@ const CreateStudent: React.FC = () => {
                         onChange={handleChange}
                         label="Class"
                       >
-                        {classes.map((cls) => (
-                          <MenuItem key={cls.id} value={cls.id}>
-                            {cls.name}
+                        {classes && Array.isArray(classes) && classes.length > 0 ? (
+                          classes.map((cls) => (
+                            <MenuItem key={cls.id} value={cls.id}>
+                              {cls.name}
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem value="">
+                            <em>No classes available</em>
                           </MenuItem>
-                        ))}
+                        )}
                       </Select>
                       {errors.class && <FormHelperText>{errors.class}</FormHelperText>}
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Section"
-                      name="section"
-                      value={formData.section}
-                      onChange={handleChange}
-                    />
+                    <FormControl fullWidth>
+                      <InputLabel>Class Arm</InputLabel>
+                      <Select
+                        name="classArm"
+                        value={formData.classArm}
+                        onChange={handleChange}
+                        label="Class Arm"
+                      >
+                        <MenuItem value="">
+                          <em>None</em>
+                        </MenuItem>
+                        {classArms && Array.isArray(classArms) && classArms.length > 0 ? (
+                          classArms.map((classArm) => (
+                            <MenuItem key={classArm.id} value={classArm.id}>
+                              {classArm.name}
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem value="">
+                            <em>No class arms available</em>
+                          </MenuItem>
+                        )}
+                      </Select>
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -457,13 +630,44 @@ const CreateStudent: React.FC = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="House"
-                      name="house"
-                      value={formData.house}
-                      onChange={handleChange}
-                    />
+                    <FormControl fullWidth>
+                      <InputLabel>House</InputLabel>
+                      <Select
+                        name="house"
+                        value={formData.house}
+                        onChange={handleChange}
+                        label="House"
+                      >
+                        <MenuItem value="">
+                          <em>None</em>
+                        </MenuItem>
+                        {houses && Array.isArray(houses) && houses.length > 0 ? (
+                          houses.map((house) => (
+                            <MenuItem key={house.id} value={house.id}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {house.color && (
+                                  <Box
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      backgroundColor: house.color,
+                                      borderRadius: '50%',
+                                      mr: 1,
+                                      border: '1px solid #ddd'
+                                    }}
+                                  />
+                                )}
+                                {house.name}
+                              </Box>
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem value="">
+                            <em>No houses available</em>
+                          </MenuItem>
+                        )}
+                      </Select>
+                    </FormControl>
                   </Grid>
                 </Grid>
               </AccordionDetails>
@@ -567,7 +771,7 @@ const CreateStudent: React.FC = () => {
                       <Typography variant="subtitle1" gutterBottom>
                         Added Guardians
                       </Typography>
-                      {formData.guardians.map((g, index) => (
+                      {formData.guardians && Array.isArray(formData.guardians) && formData.guardians.map((g, index) => (
                         <Box
                           key={index}
                           sx={{

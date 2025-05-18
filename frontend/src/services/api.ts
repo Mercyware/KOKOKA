@@ -1,14 +1,16 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, PaginatedResponse } from '../types';
+import { getDevSubdomain, initDevSubdomain } from '../utils/devSubdomain';
 
-// Get the current subdomain from the hostname
+// Get the current subdomain from the hostname or localStorage
 const getSubdomain = (): string | null => {
   const hostname = window.location.hostname;
   
   // For development environment, check if subdomain is in localStorage
   if (hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-    // For development, we can use a subdomain stored in localStorage
-    const devSubdomain = localStorage.getItem('dev_subdomain');
+    // Initialize with a default subdomain if none exists
+    // You can change 'demo' to any default subdomain you want to use for development
+    const devSubdomain = initDevSubdomain('demo');
     if (devSubdomain) {
       console.log(`Using development subdomain: ${devSubdomain}`);
       return devSubdomain;

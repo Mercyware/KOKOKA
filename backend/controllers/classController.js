@@ -1,12 +1,10 @@
 const Class = require('../models/Class');
-const AcademicYear = require('../models/AcademicYear');
 const Subject = require('../models/Subject');
 
 // Get all classes
 exports.getAllClasses = async (req, res) => {
   try {
     const classes = await Class.find()
-      .populate('academicYear', 'name')
       .populate('subjects', 'name code')
       .sort({ level: 1, name: 1 });
     
@@ -27,7 +25,6 @@ exports.getAllClasses = async (req, res) => {
 exports.getClassById = async (req, res) => {
   try {
     const classObj = await Class.findById(req.params.id)
-      .populate('academicYear', 'name')
       .populate('subjects', 'name code');
     
     if (!classObj) {
@@ -55,15 +52,6 @@ exports.createClass = async (req, res) => {
   try {
     // Add the current user as creator
     req.body.createdBy = req.user.id;
-    
-    // Verify that the academic year exists
-    const academicYear = await AcademicYear.findById(req.body.academicYear);
-    if (!academicYear) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Academic year not found' 
-      });
-    }
     
     // Verify that the subjects exist if provided
     if (req.body.subjects && req.body.subjects.length > 0) {
@@ -99,16 +87,6 @@ exports.createClass = async (req, res) => {
 // Update class
 exports.updateClass = async (req, res) => {
   try {
-    // If academic year is being updated, verify it exists
-    if (req.body.academicYear) {
-      const academicYear = await AcademicYear.findById(req.body.academicYear);
-      if (!academicYear) {
-        return res.status(404).json({ 
-          success: false,
-          message: 'Academic year not found' 
-        });
-      }
-    }
     
     // Verify that the subjects exist if provided
     if (req.body.subjects && req.body.subjects.length > 0) {
@@ -176,25 +154,6 @@ exports.deleteClass = async (req, res) => {
   }
 };
 
-// Get classes by academic year
-exports.getClassesByAcademicYear = async (req, res) => {
-  try {
-    const classes = await Class.find({ academicYear: req.params.academicYearId })
-      .populate('subjects', 'name code')
-      .sort({ level: 1, name: 1 });
-    
-    res.json({
-      success: true,
-      data: classes
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error', 
-      error: error.message 
-    });
-  }
-};
 
 // Add subject to class
 exports.addSubjectToClass = async (req, res) => {

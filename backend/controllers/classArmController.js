@@ -7,12 +7,9 @@ const Staff = require('../models/Staff');
 exports.getAllClassArms = async (req, res) => {
   try {
     const classArms = await ClassArm.find()
-      .populate('class', 'name level')
-      .populate('academicYear', 'name')
-      .populate('classTeacher', 'user employeeId')
-      .sort({ 'class.level': 1, 'class.name': 1, name: 1 });
+      .sort({ name: 1 });
     
-    res.json(classArms);
+    res.json({ data: classArms });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -21,16 +18,13 @@ exports.getAllClassArms = async (req, res) => {
 // Get class arm by ID
 exports.getClassArmById = async (req, res) => {
   try {
-    const classArm = await ClassArm.findById(req.params.id)
-      .populate('class', 'name level')
-      .populate('academicYear', 'name')
-      .populate('classTeacher', 'user employeeId');
+    const classArm = await ClassArm.findById(req.params.id);
     
     if (!classArm) {
       return res.status(404).json({ message: 'Class arm not found' });
     }
     
-    res.json(classArm);
+    res.json({ data: classArm });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -39,38 +33,19 @@ exports.getClassArmById = async (req, res) => {
 // Create new class arm
 exports.createClassArm = async (req, res) => {
   try {
-    // Add the current user as creator
-    req.body.createdBy = req.user.id;
+    // Extract only name and description from request body
+    const { name, description } = req.body;
     
-    // Verify that the class exists
-    const classObj = await Class.findById(req.body.class);
-    if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
-    }
+    // Create new class arm with only name, description, and required school field
+    const classArm = new ClassArm({
+      name,
+      description,
+      school: req.user.school // Get school from authenticated user
+    });
     
-    // Verify that the academic year exists
-    const academicYear = await AcademicYear.findById(req.body.academicYear);
-    if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
-    }
-    
-    // Verify that the class teacher exists if provided
-    if (req.body.classTeacher) {
-      const teacher = await Staff.findById(req.body.classTeacher);
-      if (!teacher) {
-        return res.status(404).json({ message: 'Teacher not found' });
-      }
-      
-      // Verify that the staff is a teacher
-      if (teacher.staffType !== 'teacher') {
-        return res.status(400).json({ message: 'Staff member must be a teacher to be assigned as class teacher' });
-      }
-    }
-    
-    const classArm = new ClassArm(req.body);
     await classArm.save();
     
-    res.status(201).json(classArm);
+    res.status(201).json({ data: classArm });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -79,38 +54,17 @@ exports.createClassArm = async (req, res) => {
 // Update class arm
 exports.updateClassArm = async (req, res) => {
   try {
-    // If class is being updated, verify it exists
-    if (req.body.class) {
-      const classObj = await Class.findById(req.body.class);
-      if (!classObj) {
-        return res.status(404).json({ message: 'Class not found' });
-      }
-    }
+    // Extract only name and description from request body
+    const { name, description } = req.body;
     
-    // If academic year is being updated, verify it exists
-    if (req.body.academicYear) {
-      const academicYear = await AcademicYear.findById(req.body.academicYear);
-      if (!academicYear) {
-        return res.status(404).json({ message: 'Academic year not found' });
-      }
-    }
-    
-    // If class teacher is being updated, verify they exist
-    if (req.body.classTeacher) {
-      const teacher = await Staff.findById(req.body.classTeacher);
-      if (!teacher) {
-        return res.status(404).json({ message: 'Teacher not found' });
-      }
-      
-      // Verify that the staff is a teacher
-      if (teacher.staffType !== 'teacher') {
-        return res.status(400).json({ message: 'Staff member must be a teacher to be assigned as class teacher' });
-      }
-    }
+    // Create update object with only allowed fields
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
     
     const classArm = await ClassArm.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
     
@@ -118,7 +72,7 @@ exports.updateClassArm = async (req, res) => {
       return res.status(404).json({ message: 'Class arm not found' });
     }
     
-    res.json(classArm);
+    res.json({ data: classArm });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -139,63 +93,6 @@ exports.deleteClassArm = async (req, res) => {
   }
 };
 
-// Get class arms by class
-exports.getClassArmsByClass = async (req, res) => {
-  try {
-    const classArms = await ClassArm.find({ class: req.params.classId })
-      .populate('classTeacher', 'user employeeId')
-      .sort({ name: 1 });
-    
-    res.json(classArms);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Get class arms by academic year
-exports.getClassArmsByAcademicYear = async (req, res) => {
-  try {
-    const classArms = await ClassArm.find({ academicYear: req.params.academicYearId })
-      .populate('class', 'name level')
-      .populate('classTeacher', 'user employeeId')
-      .sort({ 'class.level': 1, 'class.name': 1, name: 1 });
-    
-    res.json(classArms);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Assign class teacher
-exports.assignClassTeacher = async (req, res) => {
-  try {
-    const { teacherId } = req.body;
-    
-    // Verify that the teacher exists
-    const teacher = await Staff.findById(teacherId);
-    if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found' });
-    }
-    
-    // Verify that the staff is a teacher
-    if (teacher.staffType !== 'teacher') {
-      return res.status(400).json({ message: 'Staff member must be a teacher to be assigned as class teacher' });
-    }
-    
-    const classArm = await ClassArm.findById(req.params.id);
-    if (!classArm) {
-      return res.status(404).json({ message: 'Class arm not found' });
-    }
-    
-    // Assign teacher to class arm
-    classArm.classTeacher = teacherId;
-    await classArm.save();
-    
-    res.json(classArm);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
 
 // Get students in class arm
 exports.getClassArmStudents = async (req, res) => {
@@ -209,7 +106,7 @@ exports.getClassArmStudents = async (req, res) => {
     // Use the virtual to get students
     await classArm.populate('students');
     
-    res.json(classArm.students);
+    res.json({ data: classArm.students });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
