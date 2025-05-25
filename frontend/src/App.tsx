@@ -24,6 +24,12 @@ import StudentHistorySearch from './pages/students/StudentHistorySearch';
 import StudentDetails from './pages/students/StudentDetails';
 import StudentFilterList from './pages/students/StudentFilterList';
 
+// Staff Pages
+import StaffList from './pages/staff/StaffList';
+import CreateStaff from './pages/staff/CreateStaff';
+import StaffDetails from './pages/staff/StaffDetails';
+import EditStaff from './pages/staff/EditStaff';
+
 // Academic Pages
 import ClassesList from './pages/academics/classes/ClassesList';
 import CreateClass from './pages/academics/classes/CreateClass';
@@ -46,6 +52,9 @@ import EditSection from './pages/academics/sections/EditSection';
 import ClassArmsList from './pages/academics/classArms/ClassArmsList';
 import CreateClassArm from './pages/academics/classArms/CreateClassArm';
 import EditClassArm from './pages/academics/classArms/EditClassArm';
+import DepartmentsList from './pages/academics/departments/DepartmentsList';
+import CreateDepartment from './pages/academics/departments/CreateDepartment';
+import EditDepartment from './pages/academics/departments/EditDepartment';
 
 // Placeholder for other pages
 const Unauthorized = () => <div>Unauthorized</div>;
@@ -292,6 +301,32 @@ const App: React.FC = () => {
               }
             />
             
+            {/* Departments Routes */}
+            <Route
+              path="/academics/departments"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <DepartmentsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/departments/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <CreateDepartment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academics/departments/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <EditDepartment />
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Student Routes */}
             <Route
               path="/students/list"
@@ -365,6 +400,46 @@ const App: React.FC = () => {
             />
             
             {/* Staff Routes */}
+            <Route
+              path="/staff/list"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <StaffList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <CreateStaff />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <StaffDetails />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <EditStaff />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/staff/teachers"
               element={

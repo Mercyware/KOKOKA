@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -32,6 +32,8 @@ import {
   Class as ClassIcon,
   Subject as SubjectIcon,
   History as HistoryIcon,
+  Work as WorkIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -134,16 +136,26 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
           </ListItem>
           <Collapse in={openMenus.academics} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={isActive('/academics/classes')}
-                onClick={() => handleNavigate('/academics/classes')}
-              >
-                <ListItemIcon>
-                  <ClassIcon color={isActive('/academics/classes') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Classes" />
-              </ListItemButton>
+                  <ListItemButton
+                    component={Link}
+                    to="/academics/class-arms"
+                    sx={{ pl: 4 }}
+                  >
+                    <ListItemIcon>
+                      <SchoolIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Class Arms" />
+                  </ListItemButton>
+                  <ListItemButton
+                    component={Link}
+                    to="/academics/departments"
+                    sx={{ pl: 4 }}
+                  >
+                    <ListItemIcon>
+                      <BusinessIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary="Departments" />
+                  </ListItemButton>
               <ListItemButton
                 sx={{ pl: 4 }}
                 selected={isActive('/academics/subjects')}
@@ -203,6 +215,16 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                   <ClassIcon color={isActive('/academics/class-arms') ? 'primary' : undefined} />
                 </ListItemIcon>
                 <ListItemText primary="Class Arms" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/departments')}
+                onClick={() => handleNavigate('/academics/departments')}
+              >
+                <ListItemIcon>
+                  <WorkIcon color={isActive('/academics/departments') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Departments" />
               </ListItemButton>
             </List>
           </Collapse>
@@ -306,6 +328,26 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
           </ListItem>
           <Collapse in={openMenus.staff} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/staff/list')}
+                onClick={() => handleNavigate('/staff/list')}
+              >
+                <ListItemIcon>
+                  <PeopleIcon color={isActive('/staff/list') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="All Staff" />
+              </ListItemButton>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/staff/create')}
+                onClick={() => handleNavigate('/staff/create')}
+              >
+                <ListItemIcon>
+                  <PersonIcon color={isActive('/staff/create') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Create Staff" />
+              </ListItemButton>
               <ListItemButton
                 sx={{ pl: 4 }}
                 selected={isActive('/staff/teachers')}

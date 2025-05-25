@@ -19,8 +19,12 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Container,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { 
+  ExpandMore as ExpandMoreIcon,
+  ArrowBack as ArrowBackIcon 
+} from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
 import { post, get } from '../../services/api';
 import { getAllAcademicYears } from '../../services/academicYearService';
@@ -346,27 +350,50 @@ const CreateStudent: React.FC = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({
-      ...prev,
+      ...prev,     
       open: false,
     }));
   };
 
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Create New Student
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
-
-        <Paper sx={{ p: 3 }}>
+      <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+        <Box sx={{ mt: 2, mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' }, 
+            alignItems: { xs: 'flex-start', sm: 'center' }, 
+            mb: 3,
+            gap: 2
+          }}>
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/students/list')}
+              sx={{ mr: { xs: 0, sm: 2 } }}
+              variant="outlined"
+              size="small"
+            >
+              Back to List
+            </Button>
+            <Typography variant="h4" component="h1">
+              Create New Student
+            </Typography>
+          </Box>
+          
+          <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, boxShadow: 2 }}>
           <form onSubmit={handleSubmit}>
             {/* Personal Information */}
-            <Accordion defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">Personal Information</Typography>
+            <Accordion defaultExpanded sx={{ mb: 2, boxShadow: '0px 2px 4px rgba(0,0,0,0.05)' }}>
+              <AccordionSummary 
+                expandIcon={<ExpandMoreIcon />}
+                sx={{ 
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 500 }}>Personal Information</Typography>
               </AccordionSummary>
-              <AccordionDetails>
+              <AccordionDetails sx={{ pt: 3 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
                     <TextField
@@ -931,9 +958,9 @@ const CreateStudent: React.FC = () => {
               </Button>
             </Box>
           </form>
-        </Paper>
+          </Paper>
 
-        <Snackbar
+          <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={handleCloseSnackbar}
@@ -946,8 +973,9 @@ const CreateStudent: React.FC = () => {
           >
             {snackbar.message}
           </Alert>
-        </Snackbar>
-      </Box>
+          </Snackbar>
+        </Box>
+      </Container>
     </Layout>
   );
 };

@@ -6,7 +6,9 @@ const asyncHandler = require('express-async-handler');
 // @route   GET /api/staff
 // @access  Private/Admin
 exports.getAllStaff = asyncHandler(async (req, res) => {
-  const staff = await Staff.find().populate('user', 'name email role profileImage');
+  const staff = await Staff.find({ school: req.school.id })
+    .populate('user', 'name email role profileImage')
+    .populate('department', 'name');
   
   res.status(200).json({
     success: true,
@@ -19,7 +21,12 @@ exports.getAllStaff = asyncHandler(async (req, res) => {
 // @route   GET /api/staff/:id
 // @access  Private/Admin or Self
 exports.getStaffById = asyncHandler(async (req, res) => {
-  const staff = await Staff.findById(req.params.id).populate('user', 'name email role profileImage');
+  const staff = await Staff.findOne({ 
+    _id: req.params.id,
+    school: req.school.id
+  })
+    .populate('user', 'name email role profileImage')
+    .populate('department', 'name description');
   
   if (!staff) {
     res.status(404);
@@ -151,7 +158,12 @@ exports.deleteStaff = asyncHandler(async (req, res) => {
 // @route   GET /api/staff/user/:userId
 // @access  Private/Admin or Self
 exports.getStaffByUserId = asyncHandler(async (req, res) => {
-  const staff = await Staff.findOne({ user: req.params.userId }).populate('user', 'name email role profileImage');
+  const staff = await Staff.findOne({ 
+    user: req.params.userId,
+    school: req.school.id
+  })
+    .populate('user', 'name email role profileImage')
+    .populate('department', 'name');
   
   if (!staff) {
     res.status(404);
@@ -168,7 +180,12 @@ exports.getStaffByUserId = asyncHandler(async (req, res) => {
 // @route   GET /api/staff/type/:staffType
 // @access  Private/Admin
 exports.getStaffByType = asyncHandler(async (req, res) => {
-  const staff = await Staff.find({ staffType: req.params.staffType }).populate('user', 'name email role profileImage');
+  const staff = await Staff.find({ 
+    staffType: req.params.staffType,
+    school: req.school.id
+  })
+    .populate('user', 'name email role profileImage')
+    .populate('department', 'name');
   
   res.status(200).json({
     success: true,
@@ -178,10 +195,15 @@ exports.getStaffByType = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get staff by department
-// @route   GET /api/staff/department/:department
+// @route   GET /api/staff/department/:departmentId
 // @access  Private/Admin
 exports.getStaffByDepartment = asyncHandler(async (req, res) => {
-  const staff = await Staff.find({ department: req.params.department }).populate('user', 'name email role profileImage');
+  const staff = await Staff.find({ 
+    department: req.params.departmentId,
+    school: req.school.id
+  })
+    .populate('user', 'name email role profileImage')
+    .populate('department', 'name');
   
   res.status(200).json({
     success: true,

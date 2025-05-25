@@ -39,6 +39,7 @@ const subjectRoutes = require('./routes/subjectRoutes');
 const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 const houseRoutes = require('./routes/houseRoutes');
 const sectionRoutes = require('./routes/sectionRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -142,6 +143,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 app.use('/api/houses', houseRoutes);
 app.use('/api/sections', sectionRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // AI routes (conditionally enabled)
 if (env.FEATURE_AI_ENABLED) {

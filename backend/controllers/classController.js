@@ -286,3 +286,25 @@ exports.getClassArms = async (req, res) => {
     });
   }
 };
+
+// Get classes by academic year
+exports.getClassesByAcademicYear = async (req, res) => {
+  try {
+    const { academicYearId } = req.params;
+    
+    const classes = await Class.find({ academicYear: academicYearId })
+      .populate('subjects', 'name code')
+      .sort({ level: 1, name: 1 });
+    
+    res.json({
+      success: true,
+      data: classes
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};

@@ -60,7 +60,8 @@ const StaffSchema = new mongoose.Schema({
     documents: [String] // URLs to documents
   }],
   department: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
     required: [true, 'Please specify the department']
   },
   position: {
