@@ -62,7 +62,7 @@ const StaffList: React.FC = () => {
         
         // Fetch staff members
         const staffResponse = await getStaffMembers({});
-        setStaffMembers(staffResponse.staff || []);
+        setStaffMembers(staffResponse.data || []);
         
         // Fetch departments
         const departmentsResponse = await getDepartments();
@@ -110,7 +110,7 @@ const StaffList: React.FC = () => {
         search: searchTerm || undefined,
       };
       const response = await getStaffMembers(filterOptions);
-      setStaffMembers(response.staff || []);
+      setStaffMembers(response.data || []);
     } catch (error) {
       console.error('Error refreshing staff members:', error);
     } finally {

@@ -32,8 +32,6 @@ import { getDepartments, Department } from '../../services/departmentService';
 interface UserFormData {
   name: string;
   email: string;
-  password: string;
-  confirmPassword: string;
   role: string;
 }
 
@@ -60,11 +58,10 @@ interface StaffFormData {
 const CreateStaff: React.FC = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<number>(0);
+  const [generatedPassword, setGeneratedPassword] = useState<string>('');
   const [userFormData, setUserFormData] = useState<UserFormData>({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
     role: 'teacher',
   });
   const [staffFormData, setStaffFormData] = useState<StaffFormData>({
@@ -96,6 +93,18 @@ const CreateStaff: React.FC = () => {
     severity: 'success' as 'success' | 'error',
   });
 
+  // Function to generate a random password
+  const generatePassword = (): string => {
+    const length = 10;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
+    return password;
+  };
+
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -112,6 +121,10 @@ const CreateStaff: React.FC = () => {
     };
 
     fetchDepartments();
+    
+    // Generate password when component mounts
+    const password = generatePassword();
+    setGeneratedPassword(password);
   }, []);
 
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,12 +227,6 @@ const CreateStaff: React.FC = () => {
     if (!userFormData.email) newErrors.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(userFormData.email)) newErrors.email = 'Invalid email format';
     
-    if (!userFormData.password) newErrors.password = 'Password is required';
-    else if (userFormData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    
-    if (!userFormData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
-    else if (userFormData.password !== userFormData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    
     if (!userFormData.role) newErrors.role = 'Role is required';
 
     setUserErrors(newErrors);
@@ -284,7 +291,7 @@ const CreateStaff: React.FC = () => {
         user: {
           name: userFormData.name,
           email: userFormData.email,
-          password: userFormData.password,
+          password: generatedPassword,
           role: userFormData.role,
         },
         employeeId: staffFormData.employeeId,
@@ -411,31 +418,18 @@ const CreateStaff: React.FC = () => {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Password"
-                      name="password"
-                      type="password"
-                      value={userFormData.password}
-                      onChange={handleUserInputChange}
-                      error={!!userErrors.password}
-                      helperText={userErrors.password}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Confirm Password"
-                      name="confirmPassword"
-                      type="password"
-                      value={userFormData.confirmPassword}
-                      onChange={handleUserInputChange}
-                      error={!!userErrors.confirmPassword}
-                      helperText={userErrors.confirmPassword}
-                      required
-                    />
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="primary">
+                      A password will be automatically generated for this staff member.
+                    </Typography>
+                    <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                      <Typography variant="body2">
+                        <strong>Generated Password:</strong> {generatedPassword}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        Please save this password. It will be needed for the staff member's first login.
+                      </Typography>
+                    </Box>
                   </Grid>
                   <Grid item xs={12}>
                     <FormControl fullWidth required error={!!userErrors.role}>

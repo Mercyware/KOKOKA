@@ -44,21 +44,45 @@ exports.getStaffById = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 exports.createStaff = asyncHandler(async (req, res) => {
   const { 
-    userId, employeeId, staffType, dateOfBirth, gender, nationalId, 
+    user, userId, employeeId, staffType, dateOfBirth, gender, nationalId, 
     address, contactInfo, qualifications, department, position, 
     schedule, experience, specializations, certifications, 
     achievements, salary, bankDetails, documents, status, accessPermissions 
   } = req.body;
   
-  // Check if user exists
-  const user = await User.findById(userId);
-  if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+  let userObj;
+  
+  // If user object is provided, create a new user
+  if (user && !userId) {
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ email: user.email });
+    if (existingUser) {
+      res.status(400);
+      throw new Error('User with this email already exists');
+    }
+    
+    // Create new user
+    userObj = await User.create({
+      school: req.school.id,
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      role: user.role || staffType
+    });
+  } else if (userId) {
+    // Check if user exists
+    userObj = await User.findById(userId);
+    if (!userObj) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  } else {
+    res.status(400);
+    throw new Error('Either user details or userId must be provided');
   }
   
   // Check if staff with this employee ID already exists
-  const staffExists = await Staff.findOne({ employeeId });
+  const staffExists = await Staff.findOne({ employeeId, school: req.school.id });
   if (staffExists) {
     res.status(400);
     throw new Error('Staff with this employee ID already exists');
@@ -66,7 +90,8 @@ exports.createStaff = asyncHandler(async (req, res) => {
   
   // Create staff
   const staff = await Staff.create({
-    user: userId,
+    school: req.school.id,
+    user: userObj._id,
     employeeId,
     staffType,
     dateOfBirth,
@@ -90,7 +115,7 @@ exports.createStaff = asyncHandler(async (req, res) => {
   });
   
   // Update user role based on staff type
-  await User.findByIdAndUpdate(userId, { role: staffType });
+  await User.findByIdAndUpdate(userObj._id, { role: staffType });
   
   res.status(201).json({
     success: true,
