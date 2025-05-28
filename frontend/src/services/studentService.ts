@@ -136,6 +136,14 @@ export const searchStudentsByAcademicYearAndClass = async (params: {
   return response.data;
 };
 
+/**
+ * Get students by class and arm/section
+ */
+export const getStudentsByClassAndArm = async (classId: string, classArmId: string) => {
+  const response = await api.get(`/students/class/${classId}/arm/${classArmId}`);
+  return response.data;
+};
+
 export default {
   getStudents,
   getStudentById,
@@ -150,5 +158,6 @@ export default {
   verifyStudentDocument,
   getStudentClassHistory,
   getAllStudentClassHistory,
-  searchStudentsByAcademicYearAndClass
+  searchStudentsByAcademicYearAndClass,
+  getStudentsByClassAndArm
 };

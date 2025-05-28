@@ -354,7 +354,7 @@ router.get('/user/:userId', protect, restrictToOwnerOrRoles('user', ['admin']), 
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/type/:staffType', protect, hasStaffManagementAccess, getStaffByType);
+router.get('/type/:staffType', protect, isStaff, getStaffByType);
 
 /**
  * @swagger

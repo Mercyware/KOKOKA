@@ -310,12 +310,12 @@ StaffSchema.virtual('yearsOfService').get(function() {
 // Virtual for remaining leave days
 StaffSchema.virtual('remainingLeaves').get(function() {
   const currentYear = new Date().getFullYear();
-  const approvedLeaves = this.leaves.filter(
+  const leavesArray = Array.isArray(this.leaves) ? this.leaves : [];
+  const approvedLeaves = leavesArray.filter(
     leave => 
       leave.status === 'approved' && 
       new Date(leave.startDate).getFullYear() === currentYear
   );
-  
   const leaveDays = approvedLeaves.reduce((total, leave) => {
     const start = new Date(leave.startDate);
     const end = new Date(leave.endDate);
@@ -323,7 +323,6 @@ StaffSchema.virtual('remainingLeaves').get(function() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
     return total + diffDays;
   }, 0);
-  
   // Assuming a standard allocation of 30 leave days per year
   return Math.max(0, 30 - leaveDays);
 });

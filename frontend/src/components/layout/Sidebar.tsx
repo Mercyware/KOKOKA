@@ -34,6 +34,8 @@ import {
   History as HistoryIcon,
   Work as WorkIcon,
   Business as BusinessIcon,
+  SupervisorAccount as SupervisorIcon,
+  EventSeat as SeatIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -55,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
     academics: false,
     students: false,
     staff: false,
+    assignments: false,
   });
 
   // Toggle nested menu
@@ -307,6 +310,98 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Filter Students" />
               </ListItemButton>
+            </List>
+          </Collapse>
+        </React.Fragment>
+      );
+    }
+
+    // Assignments - available to admin and teachers
+    if (role === 'admin' || role === 'teacher' || role === 'superadmin') {
+      menuItems.push(
+        <React.Fragment key="assignments">
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleToggleMenu('assignments')}>
+              <ListItemIcon>
+                <WorkIcon />
+              </ListItemIcon>
+              <ListItemText primary="Assignments" />
+              {openMenus.assignments ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openMenus.assignments} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {/* Teacher Subject Assignments */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/assignments/teacher-subjects')}
+                onClick={() => handleNavigate('/assignments/teacher-subjects')}
+              >
+                <ListItemIcon>
+                  <SubjectIcon color={isActive('/assignments/teacher-subjects') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Teacher Subjects" />
+              </ListItemButton>
+              {role === 'admin' || role === 'superadmin' ? (
+                <ListItemButton
+                  sx={{ pl: 6 }}
+                  selected={isActive('/assignments/teacher-subjects/create')}
+                  onClick={() => handleNavigate('/assignments/teacher-subjects/create')}
+                >
+                  <ListItemIcon>
+                    <SubjectIcon fontSize="small" color={isActive('/assignments/teacher-subjects/create') ? 'primary' : undefined} />
+                  </ListItemIcon>
+                  <ListItemText primary="Assign Subject" />
+                </ListItemButton>
+              ) : null}
+              
+              {/* Class Teachers */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/assignments/class-teachers')}
+                onClick={() => handleNavigate('/assignments/class-teachers')}
+              >
+                <ListItemIcon>
+                  <SupervisorIcon color={isActive('/assignments/class-teachers') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Class Teachers" />
+              </ListItemButton>
+              {role === 'admin' || role === 'superadmin' ? (
+                <ListItemButton
+                  sx={{ pl: 6 }}
+                  selected={isActive('/assignments/class-teachers/create')}
+                  onClick={() => handleNavigate('/assignments/class-teachers/create')}
+                >
+                  <ListItemIcon>
+                    <SupervisorIcon fontSize="small" color={isActive('/assignments/class-teachers/create') ? 'primary' : undefined} />
+                  </ListItemIcon>
+                  <ListItemText primary="Assign Class Teacher" />
+                </ListItemButton>
+              ) : null}
+              
+              {/* Sitting Positions */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/assignments/sitting-positions')}
+                onClick={() => handleNavigate('/assignments/sitting-positions')}
+              >
+                <ListItemIcon>
+                  <SeatIcon color={isActive('/assignments/sitting-positions') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Sitting Positions" />
+              </ListItemButton>
+              {(role === 'admin' || role === 'teacher' || role === 'superadmin') ? (
+                <ListItemButton
+                  sx={{ pl: 6 }}
+                  selected={isActive('/assignments/sitting-positions/create')}
+                  onClick={() => handleNavigate('/assignments/sitting-positions/create')}
+                >
+                  <ListItemIcon>
+                    <SeatIcon fontSize="small" color={isActive('/assignments/sitting-positions/create') ? 'primary' : undefined} />
+                  </ListItemIcon>
+                  <ListItemText primary="Assign Sitting Position" />
+                </ListItemButton>
+              ) : null}
             </List>
           </Collapse>
         </React.Fragment>

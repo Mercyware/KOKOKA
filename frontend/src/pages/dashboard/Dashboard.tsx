@@ -219,7 +219,7 @@ const Dashboard: React.FC = () => {
         </Typography>
 
         {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+<Grid container spacing={3} sx={{ mt: 1, justifyContent: 'center' }}>
           <Grid item xs={12} sm={6} md={3}>
             <Paper
               elevation={0}

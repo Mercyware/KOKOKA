@@ -56,6 +56,17 @@ import DepartmentsList from './pages/academics/departments/DepartmentsList';
 import CreateDepartment from './pages/academics/departments/CreateDepartment';
 import EditDepartment from './pages/academics/departments/EditDepartment';
 
+// Assignment Pages
+import ClassTeachersList from './pages/assignments/class-teachers/ClassTeachersList';
+import CreateClassTeacher from './pages/assignments/class-teachers/CreateClassTeacher';
+import EditClassTeacher from './pages/assignments/class-teachers/EditClassTeacher';
+import SittingPositionsList from './pages/assignments/sitting-positions/SittingPositionsList';
+import CreateSittingPosition from './pages/assignments/sitting-positions/CreateSittingPosition';
+import EditSittingPosition from './pages/assignments/sitting-positions/EditSittingPosition';
+import TeacherSubjectAssignmentsList from './pages/assignments/teacher-subjects/TeacherSubjectAssignmentsList';
+import CreateTeacherSubjectAssignment from './pages/assignments/teacher-subjects/CreateTeacherSubjectAssignment';
+import EditTeacherSubjectAssignment from './pages/assignments/teacher-subjects/EditTeacherSubjectAssignment';
+
 // Placeholder for other pages
 const Unauthorized = () => <div>Unauthorized</div>;
 const NotFound = () => <div>Page Not Found</div>;
@@ -473,6 +484,103 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'cashier', 'superadmin']}>
                   <div>Fees Management</div>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Assignment Routes */}
+            {/* Class Teachers Routes */}
+            <Route
+              path="/assignments/class-teachers"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <ClassTeachersList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/class-teachers/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <CreateClassTeacher />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/class-teachers/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <EditClassTeacher />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Sitting Positions Routes */}
+            <Route
+              path="/assignments/sitting-positions"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <SittingPositionsList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/sitting-positions/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <CreateSittingPosition />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/sitting-positions/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <EditSittingPosition />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Teacher Subject Assignments Routes */}
+            <Route
+              path="/assignments/teacher-subjects"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'teacher', 'superadmin']}>
+                  <Layout>
+                    <TeacherSubjectAssignmentsList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/teacher-subjects/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <CreateTeacherSubjectAssignment />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assignments/teacher-subjects/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                  <Layout>
+                    <EditTeacherSubjectAssignment />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

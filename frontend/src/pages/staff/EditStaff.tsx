@@ -1,696 +1,521 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Container,
-  Typography,
   Box,
-  Paper,
+  Typography,
   TextField,
   Button,
   Grid,
+  Paper,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
   CircularProgress,
-  Snackbar,
   Alert,
   Divider,
-  Stepper,
-  Step,
-  StepLabel,
   SelectChangeEvent,
-  Autocomplete,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
-import { getStaffMember, updateStaffMember } from '../../services/staffService';
-import { getDepartments, Department } from '../../services/departmentService';
+import * as staffService from '../../services/staffService';
+import * as departmentService from '../../services/departmentService';
 
-interface StaffFormData {
-  employeeId: string;
-  staffType: string;
-  dateOfBirth: Date | null;
-  gender: string;
-  nationalId: string;
-  department: string;
-  position: string;
-  phone: string;
-  alternatePhone: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  emergencyContactName: string;
-  emergencyContactRelationship: string;
-  emergencyContactPhone: string;
-  status: string;
+interface Department {
+  _id: string;
+  name: string;
 }
 
 const EditStaff: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [staffFormData, setStaffFormData] = useState<StaffFormData>({
-    employeeId: '',
-    staffType: '',
-    dateOfBirth: null,
-    gender: '',
-    nationalId: '',
-    department: '',
-    position: '',
-    phone: '',
-    alternatePhone: '',
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-    emergencyContactName: '',
-    emergencyContactRelationship: '',
-    emergencyContactPhone: '',
-    status: 'active',
-  });
-  const [staffErrors, setStaffErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+  
+  // Data for dropdowns
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
+  
+  // Form data
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    gender: '',
+    address: '',
+    department: '',
+    position: '',
+    employmentDate: '',
+    employeeId: '',
+    isTeacher: false,
+    qualifications: '',
+    emergencyContact: {
+      name: '',
+      relationship: '',
+      phone: '',
+    },
   });
-  const [staffName, setStaffName] = useState<string>('');
-  const [staffEmail, setStaffEmail] = useState<string>('');
-  const [staffRole, setStaffRole] = useState<string>('');
-
+  
+  // Form errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await getDepartments();
-        setDepartments(response.departments || []);
-      } catch (error) {
-        console.error('Error fetching departments:', error);
-        setSnackbar({
-          open: true,
-          message: 'Failed to load departments',
-          severity: 'error',
-        });
-      }
-    };
-
-    fetchDepartments();
-  }, []);
-
-  useEffect(() => {
-    const fetchStaffMember = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await getStaffMember(id || '');
-        const staffMember = response.staff;
         
-        if (staffMember) {
-          setStaffName(staffMember.user.name);
-          setStaffEmail(staffMember.user.email);
-          setStaffRole(staffMember.user.role);
+        // Fetch staff details
+        if (id) {
+          const staffResponse = await staffService.getStaffMember(id);
+          const staffData = staffResponse.data;
           
-          setStaffFormData({
-            employeeId: staffMember.employeeId,
-            staffType: staffMember.staffType,
-            dateOfBirth: staffMember.dateOfBirth ? new Date(staffMember.dateOfBirth) : null,
-            gender: staffMember.gender,
-            nationalId: staffMember.nationalId,
-            department: staffMember.department.id,
-            position: staffMember.position,
-            phone: staffMember.contactInfo?.phone || '',
-            alternatePhone: staffMember.contactInfo?.alternatePhone || '',
-            street: staffMember.address?.street || '',
-            city: staffMember.address?.city || '',
-            state: staffMember.address?.state || '',
-            zipCode: staffMember.address?.zipCode || '',
-            country: staffMember.address?.country || '',
-            emergencyContactName: staffMember.contactInfo?.emergencyContact?.name || '',
-            emergencyContactRelationship: staffMember.contactInfo?.emergencyContact?.relationship || '',
-            emergencyContactPhone: staffMember.contactInfo?.emergencyContact?.phone || '',
-            status: staffMember.status,
+          setFormData({
+            firstName: staffData.firstName || '',
+            lastName: staffData.lastName || '',
+            email: staffData.email || '',
+            phone: staffData.phone || '',
+            gender: staffData.gender || '',
+            address: staffData.address || '',
+            department: staffData.department?._id || '',
+            position: staffData.position || '',
+            employmentDate: staffData.employmentDate ? new Date(staffData.employmentDate).toISOString().split('T')[0] : '',
+            employeeId: staffData.employeeId || '',
+            isTeacher: staffData.isTeacher || false,
+            qualifications: staffData.qualifications || '',
+            emergencyContact: {
+              name: staffData.emergencyContact?.name || '',
+              relationship: staffData.emergencyContact?.relationship || '',
+              phone: staffData.emergencyContact?.phone || '',
+            },
           });
-        } else {
-          // Staff member not found
-          setSnackbar({
-            open: true,
-            message: 'Staff member not found',
-            severity: 'error',
-          });
-          navigate('/staff/list');
         }
-      } catch (error) {
-        console.error('Error fetching staff member:', error);
-        setSnackbar({
-          open: true,
-          message: 'Error fetching staff member',
-          severity: 'error',
-        });
-      } finally {
+        
+        // Fetch departments
+        const departmentsResponse = await departmentService.getDepartments();
+        setDepartments(departmentsResponse.data);
+        
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch data');
         setLoading(false);
       }
     };
-
-    if (id) {
-      fetchStaffMember();
-    }
-  }, [id, navigate]);
-
-  const handleStaffInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    
+    fetchData();
+  }, [id]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    if (!name) return;
-
-    setStaffFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
+      if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      if (parent === 'emergencyContact') {
+        setFormData((prev) => ({
+          ...prev,
+          emergencyContact: {
+            ...prev.emergencyContact,
+            [child]: value,
+          },
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+    
     // Clear error when field is edited
-    if (staffErrors[name]) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
-
-  const handleStaffSelectChange = (e: SelectChangeEvent) => {
+  
+  const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     
-    if (!name) return;
-
-    setStaffFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
     // Clear error when field is edited
-    if (staffErrors[name]) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
+  
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+  
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    let isValid = true;
     
-    setStaffFormData((prev) => ({
-      ...prev,
-      dateOfBirth: value ? new Date(value) : null,
-    }));
-
-    // Clear error when field is edited
-    if (staffErrors.dateOfBirth) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        dateOfBirth: '',
-      }));
+    if (!formData.firstName.trim()) {
+      errors.firstName = 'First name is required';
+      isValid = false;
     }
+    
+    if (!formData.lastName.trim()) {
+      errors.lastName = 'Last name is required';
+      isValid = false;
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Email is invalid';
+      isValid = false;
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    }
+    
+    if (!formData.gender) {
+      errors.gender = 'Gender is required';
+      isValid = false;
+    }
+    
+    if (!formData.department) {
+      errors.department = 'Department is required';
+      isValid = false;
+    }
+    
+    if (!formData.position.trim()) {
+      errors.position = 'Position is required';
+      isValid = false;
+    }
+    
+    if (!formData.employeeId.trim()) {
+      errors.employeeId = 'Employee ID is required';
+      isValid = false;
+    }
+    
+    setFormErrors(errors);
+    return isValid;
   };
-
-  const validateStaffForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!staffFormData.employeeId) newErrors.employeeId = 'Employee ID is required';
-    if (!staffFormData.staffType) newErrors.staffType = 'Staff type is required';
-    if (!staffFormData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!staffFormData.gender) newErrors.gender = 'Gender is required';
-    if (!staffFormData.nationalId) newErrors.nationalId = 'National ID is required';
-    if (!staffFormData.department) newErrors.department = 'Department is required';
-    if (!staffFormData.position) newErrors.position = 'Position is required';
-    if (!staffFormData.phone) newErrors.phone = 'Phone number is required';
-
-    setStaffErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleBack = () => {
-    navigate(`/staff/${id}`);
-  };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateStaffForm()) {
-      setSnackbar({
-        open: true,
-        message: 'Please fix the errors in the form',
-        severity: 'error',
-      });
+    
+    if (!validateForm()) {
       return;
     }
-
-    setSaving(true);
-
+    
     try {
-      // Prepare staff data for update
-      const staffData = {
-        employeeId: staffFormData.employeeId,
-        staffType: staffFormData.staffType,
-        dateOfBirth: staffFormData.dateOfBirth,
-        gender: staffFormData.gender,
-        nationalId: staffFormData.nationalId,
-        department: staffFormData.department,
-        position: staffFormData.position,
-        contactInfo: {
-          phone: staffFormData.phone,
-          alternatePhone: staffFormData.alternatePhone,
-          emergencyContact: {
-            name: staffFormData.emergencyContactName,
-            relationship: staffFormData.emergencyContactRelationship,
-            phone: staffFormData.emergencyContactPhone,
+      setSaving(true);
+      setError(null);
+      
+      if (id) {
+        // Convert formData to StaffUpdateData format
+        const updateData: staffService.StaffUpdateData = {
+          employeeId: formData.employeeId,
+          gender: formData.gender,
+          department: formData.department,
+          position: formData.position,
+          contactInfo: {
+            phone: formData.phone,
+            emergencyContact: formData.emergencyContact
           },
-        },
-        address: {
-          street: staffFormData.street,
-          city: staffFormData.city,
-          state: staffFormData.state,
-          zipCode: staffFormData.zipCode,
-          country: staffFormData.country,
-        },
-        status: staffFormData.status,
-      };
-
-      // Update the staff member using the API
-      const response = await updateStaffMember(id || '', staffData);
-
-      setSnackbar({
-        open: true,
-        message: 'Staff member updated successfully',
-        severity: 'success',
-      });
-
-      // Redirect to staff details after successful update
-      setTimeout(() => {
-        navigate(`/staff/${id}`);
-      }, 1500);
-    } catch (error) {
-      console.error('Error updating staff member:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while updating the staff member',
-        severity: 'error',
-      });
+          // Only add address if it's not empty
+          ...(formData.address ? {
+            address: {
+              street: formData.address
+            }
+          } : {})
+        };
+        
+        await staffService.updateStaffMember(id, updateData);
+        setSuccess(true);
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate(`/staff/${id}`);
+        }, 1500);
+      }
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to update staff');
+      }
     } finally {
       setSaving(false);
     }
   };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({
-      ...prev,
-      open: false,
-    }));
-  };
-
+  
   if (loading) {
     return (
       <Layout>
-        <Container maxWidth="md">
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-            <CircularProgress />
-          </Box>
-        </Container>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Box>
       </Layout>
     );
   }
-
+  
   return (
     <Layout>
-      <Container maxWidth="md">
-        <Box sx={{ mt: 4, mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={handleBack}
-              sx={{ mr: 2 }}
-              variant="outlined"
-              size="small"
-            >
-              Back
-            </Button>
-            <Typography variant="h4" component="h1">
-              Edit Staff Member
-            </Typography>
-          </Box>
-
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <form onSubmit={handleSubmit}>
-              <Typography variant="h6" gutterBottom>
-                User Account Information
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                These account details cannot be modified here. Contact the system administrator for account changes.
-              </Typography>
-              <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Full Name"
-                    value={staffName}
-                    disabled
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    value={staffEmail}
-                    disabled
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Role"
-                    value={staffRole.charAt(0).toUpperCase() + staffRole.slice(1)}
-                    disabled
-                  />
-                </Grid>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Edit Staff
+        </Typography>
+        
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>Staff updated successfully!</Alert>}
+        
+        <Paper sx={{ p: 3 }}>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Personal Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
               </Grid>
               
-              <Divider sx={{ mb: 3 }} />
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  error={!!formErrors.firstName}
+                  helperText={formErrors.firstName}
+                  required
+                />
+              </Grid>
               
-              <Typography variant="h6" gutterBottom>
-                Staff Details
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Update the staff member's personal and employment details.
-              </Typography>
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Employee ID"
-                    name="employeeId"
-                    value={staffFormData.employeeId}
-                    onChange={handleStaffInputChange}
-                    error={!!staffErrors.employeeId}
-                    helperText={staffErrors.employeeId}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required error={!!staffErrors.staffType}>
-                    <InputLabel>Staff Type</InputLabel>
-                    <Select
-                      name="staffType"
-                      value={staffFormData.staffType}
-                      onChange={handleStaffSelectChange}
-                      label="Staff Type"
-                    >
-                      <MenuItem value="teacher">Teacher</MenuItem>
-                      <MenuItem value="admin">Admin</MenuItem>
-                      <MenuItem value="cashier">Cashier</MenuItem>
-                      <MenuItem value="librarian">Librarian</MenuItem>
-                      <MenuItem value="counselor">Counselor</MenuItem>
-                      <MenuItem value="nurse">Nurse</MenuItem>
-                      <MenuItem value="security">Security</MenuItem>
-                      <MenuItem value="maintenance">Maintenance</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
-                    </Select>
-                    {staffErrors.staffType && <FormHelperText>{staffErrors.staffType}</FormHelperText>}
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Date of Birth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={staffFormData.dateOfBirth ? new Date(staffFormData.dateOfBirth.getTime() - staffFormData.dateOfBirth.getTimezoneOffset() * 60000).toISOString().split('T')[0] : ''}
-                    onChange={handleDateChange}
-                    error={!!staffErrors.dateOfBirth}
-                    helperText={staffErrors.dateOfBirth}
-                    required
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required error={!!staffErrors.gender}>
-                    <InputLabel>Gender</InputLabel>
-                    <Select
-                      name="gender"
-                      value={staffFormData.gender}
-                      onChange={handleStaffSelectChange}
-                      label="Gender"
-                    >
-                      <MenuItem value="male">Male</MenuItem>
-                      <MenuItem value="female">Female</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
-                    </Select>
-                    {staffErrors.gender && <FormHelperText>{staffErrors.gender}</FormHelperText>}
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="National ID"
-                    name="nationalId"
-                    value={staffFormData.nationalId}
-                    onChange={handleStaffInputChange}
-                    error={!!staffErrors.nationalId}
-                    helperText={staffErrors.nationalId}
-                    required
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                    Employment Information
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Autocomplete
-                    options={departments}
-                    getOptionLabel={(option) => option.name}
-                    value={departments.find(d => d.id === staffFormData.department) || null}
-                    onChange={(event, value) => {
-                      setStaffFormData((prev) => ({
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  error={!!formErrors.lastName}
+                  helperText={formErrors.lastName}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={!!formErrors.email}
+                  helperText={formErrors.email}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  error={!!formErrors.phone}
+                  helperText={formErrors.phone}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!formErrors.gender} required>
+                  <InputLabel id="gender-label">Gender</InputLabel>
+                  <Select
+                    labelId="gender-label"
+                    name="gender"
+                    value={formData.gender}
+                    label="Gender"
+                    onChange={handleSelectChange}
+                  >
+                    <MenuItem value="male">Male</MenuItem>
+                    <MenuItem value="female">Female</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                  {formErrors.gender && <FormHelperText>{formErrors.gender}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Employment Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth error={!!formErrors.department} required>
+                  <InputLabel id="department-label">Department</InputLabel>
+                  <Select
+                    labelId="department-label"
+                    name="department"
+                    value={formData.department}
+                    label="Department"
+                    onChange={handleSelectChange}
+                  >
+                    {departments.map((dept) => (
+                      <MenuItem key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {formErrors.department && <FormHelperText>{formErrors.department}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Position"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleChange}
+                  error={!!formErrors.position}
+                  helperText={formErrors.position}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Employment Date"
+                  name="employmentDate"
+                  type="date"
+                  value={formData.employmentDate}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Employee ID"
+                  name="employeeId"
+                  value={formData.employeeId}
+                  onChange={handleChange}
+                  error={!!formErrors.employeeId}
+                  helperText={formErrors.employeeId}
+                  required
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="is-teacher-label">Is Teacher</InputLabel>
+                  <Select
+                    labelId="is-teacher-label"
+                    name="isTeacher"
+                    value={formData.isTeacher ? 'true' : 'false'}
+                    label="Is Teacher"
+                    onChange={(e) => {
+                      setFormData((prev) => ({
                         ...prev,
-                        department: value ? value.id : '',
+                        isTeacher: e.target.value === 'true',
                       }));
-                      
-                      // Clear error when field is edited
-                      if (staffErrors.department) {
-                        setStaffErrors((prev) => ({
-                          ...prev,
-                          department: '',
-                        }));
-                      }
                     }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Department"
-                        error={!!staffErrors.department}
-                        helperText={staffErrors.department}
-                        required
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Position"
-                    name="position"
-                    value={staffFormData.position}
-                    onChange={handleStaffInputChange}
-                    error={!!staffErrors.position}
-                    helperText={staffErrors.position}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      name="status"
-                      value={staffFormData.status}
-                      onChange={handleStaffSelectChange}
-                      label="Status"
-                    >
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="inactive">Inactive</MenuItem>
-                      <MenuItem value="on_leave">On Leave</MenuItem>
-                      <MenuItem value="suspended">Suspended</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                    Contact Information
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone Number"
-                    name="phone"
-                    value={staffFormData.phone}
-                    onChange={handleStaffInputChange}
-                    error={!!staffErrors.phone}
-                    helperText={staffErrors.phone}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Alternative Phone Number"
-                    name="alternatePhone"
-                    value={staffFormData.alternatePhone}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                    Address
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Street Address"
-                    name="street"
-                    value={staffFormData.street}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="City"
-                    name="city"
-                    value={staffFormData.city}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="State/Province"
-                    name="state"
-                    value={staffFormData.state}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Zip/Postal Code"
-                    name="zipCode"
-                    value={staffFormData.zipCode}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Country"
-                    name="country"
-                    value={staffFormData.country}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                    Emergency Contact
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Name"
-                    name="emergencyContactName"
-                    value={staffFormData.emergencyContactName}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Relationship"
-                    name="emergencyContactRelationship"
-                    value={staffFormData.emergencyContactRelationship}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Phone Number"
-                    name="emergencyContactPhone"
-                    value={staffFormData.emergencyContactPhone}
-                    onChange={handleStaffInputChange}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sx={{ mt: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button
-                      variant="outlined"
-                      onClick={handleBack}
-                      disabled={saving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      disabled={saving}
-                      startIcon={saving && <CircularProgress size={20} />}
-                    >
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </Box>
-                </Grid>
+                  >
+                    <MenuItem value="true">Yes</MenuItem>
+                    <MenuItem value="false">No</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
-            </form>
-          </Paper>
-        </Box>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
+              
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Qualifications"
+                  name="qualifications"
+                  value={formData.qualifications}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Emergency Contact
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Contact Name"
+                  name="emergencyContact.name"
+                  value={formData.emergencyContact.name}
+                  onChange={handleChange}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Relationship"
+                  name="emergencyContact.relationship"
+                  value={formData.emergencyContact.relationship}
+                  onChange={handleChange}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Contact Phone"
+                  name="emergencyContact.phone"
+                  value={formData.emergencyContact.phone}
+                  onChange={handleChange}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sx={{ mt: 3 }}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate(`/staff/${id}`)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={saving}
+                  >
+                    {saving ? <CircularProgress size={24} /> : 'Update Staff'}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      </Box>
     </Layout>
   );
 };

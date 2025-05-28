@@ -18,8 +18,7 @@ const TeacherSubjectAssignmentSchema = new mongoose.Schema({
   },
   term: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Term',
-    required: [true, 'Please provide term']
+    ref: 'Term'
   },
   classes: [{
     class: {
@@ -54,9 +53,9 @@ const TeacherSubjectAssignmentSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure a teacher is assigned to a subject only once per term
+// Compound index to ensure a teacher is assigned to a subject only once per academic year
 TeacherSubjectAssignmentSchema.index(
-  { teacher: 1, subject: 1, term: 1 },
+  { teacher: 1, subject: 1, academicYear: 1 },
   { unique: true }
 );
 
