@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
-import MarketingPage from "./pages/Home";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +21,6 @@ const App = () => (
 <Route path="/" element={<Index />} />
 <Route path="/dashboard" element={<Index />} />
 <Route path="/login" element={<Login />} />
-<Route path="/auth/Login" element={<Login />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
