@@ -661,7 +661,7 @@ const MarketingPage = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" onClick={handleGetStarted}>
+<Button variant="outline" onClick={() => navigate('login')}>
                 Sign In
               </Button>
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={handleGetStarted}>
