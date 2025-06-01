@@ -8,7 +8,7 @@ const StudentsManager: React.FC = () => {
     // Implement navigation to add student page
   };
 
-  const handleViewStudent = (studentId: number) => {
+  const handleViewStudent = (studentId: string) => {
     console.log('View student clicked', studentId);
     // Implement navigation to view student page
   };

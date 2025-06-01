@@ -58,17 +58,18 @@ connectDB();
 
 // Middleware
 // Body parser
-app.use(express.json({ limit: env.FILE_UPLOAD_MAX_SIZE }));
-app.use(express.urlencoded({ extended: true, limit: env.FILE_UPLOAD_MAX_SIZE }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Cookie parser
 app.use(cookieParser());
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:8080',
-  methods: env.CORS_METHODS.split(','),
-  credentials: env.CORS_CREDENTIALS
+  origin: '*',  // Allow all origins for development
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-School-Subdomain']
 }));
 
 // Security headers

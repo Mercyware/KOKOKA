@@ -1,163 +1,130 @@
-import api from './api';
-import { Student, StudentClassHistory } from '../types';
+import { ApiResponse, PaginatedResponse, Student } from '../types';
+import api, { get, getPaginated, post, put, del } from './api';
 
-/**
- * Get all students with optional filtering, pagination, and sorting
- */
-export const getStudents = async (params?: {
+// Interface for student filter parameters
+export interface StudentFilters {
   page?: number;
   limit?: number;
   sort?: string;
   order?: 'asc' | 'desc';
-  status?: string;
+  status?: 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled';
   class?: string;
   search?: string;
   admissionDateFrom?: string;
   admissionDateTo?: string;
-  gender?: string;
-  academicYear?: string;
-}) => {
-  const response = await api.get('/students', { params });
-  return response.data;
+  gender?: 'male' | 'female' | 'other';
+  house?: string;
+  minAge?: number;
+  maxAge?: number;
+  minGPA?: number;
+  maxGPA?: number;
+  minAttendance?: number;
+  maxAttendance?: number;
+  nationality?: string;
+  religion?: string;
+}
+
+// Get all students with pagination and filtering
+export const getStudents = async (filters: StudentFilters = {}): Promise<PaginatedResponse<Student>> => {
+  try {
+    const response = await api.get('/students', { params: filters });
+    
+    // Handle the specific API response structure
+    if (response.data && response.data.students) {
+      return {
+        success: true,
+        data: response.data.students,
+        total: response.data.pagination.total,
+        count: response.data.pagination.limit,
+        pages: response.data.pagination.pages,
+        currentPage: response.data.pagination.page
+      };
+    }
+    
+    // Fallback to standard response handling
+    return await getPaginated<Student>('/students', filters);
+  } catch (error) {
+    console.error('Error fetching students:', error);
+    throw error;
+  }
 };
 
-/**
- * Get a student by ID
- */
-export const getStudentById = async (id: string) => {
-  const response = await api.get(`/students/${id}`);
-  return response.data;
+// Get student by ID
+export const getStudentById = async (id: string): Promise<ApiResponse<Student>> => {
+  try {
+    return await get<Student>(`/students/${id}`);
+  } catch (error) {
+    console.error(`Error fetching student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Create a new student
- */
-export const createStudent = async (studentData: Partial<Student>) => {
-  const response = await api.post('/students', studentData);
-  return response.data;
+// Create new student
+export const createStudent = async (studentData: Partial<Student>): Promise<ApiResponse<Student>> => {
+  try {
+    return await post<Student>('/students', studentData);
+  } catch (error) {
+    console.error('Error creating student:', error);
+    throw error;
+  }
 };
 
-/**
- * Update a student
- */
-export const updateStudent = async (id: string, studentData: Partial<Student>) => {
-  const response = await api.put(`/students/${id}`, studentData);
-  return response.data;
+// Update student
+export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<ApiResponse<Student>> => {
+  try {
+    return await put<Student>(`/students/${id}`, studentData);
+  } catch (error) {
+    console.error(`Error updating student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Delete a student
- */
-export const deleteStudent = async (id: string) => {
-  const response = await api.delete(`/students/${id}`);
-  return response.data;
+// Delete student
+export const deleteStudent = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    return await del<any>(`/students/${id}`);
+  } catch (error) {
+    console.error(`Error deleting student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Get student attendance
- */
-export const getStudentAttendance = async (id: string) => {
-  const response = await api.get(`/students/${id}/attendance`);
-  return response.data;
+// Get student attendance
+export const getStudentAttendance = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/attendance`);
+  } catch (error) {
+    console.error(`Error fetching attendance for student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Get student grades
- */
-export const getStudentGrades = async (id: string) => {
-  const response = await api.get(`/students/${id}/grades`);
-  return response.data;
+// Get student grades
+export const getStudentGrades = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/grades`);
+  } catch (error) {
+    console.error(`Error fetching grades for student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Get student documents
- */
-export const getStudentDocuments = async (id: string) => {
-  const response = await api.get(`/students/${id}/documents`);
-  return response.data;
+// Get student documents
+export const getStudentDocuments = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/documents`);
+  } catch (error) {
+    console.error(`Error fetching documents for student with ID ${id}:`, error);
+    throw error;
+  }
 };
 
-/**
- * Upload document for student
- */
-export const uploadStudentDocument = async (id: string, documentData: any) => {
-  const response = await api.post(`/students/${id}/documents`, documentData);
-  return response.data;
-};
-
-/**
- * Delete student document
- */
-export const deleteStudentDocument = async (studentId: string, documentId: string) => {
-  const response = await api.delete(`/students/${studentId}/documents/${documentId}`);
-  return response.data;
-};
-
-/**
- * Verify student document
- */
-export const verifyStudentDocument = async (studentId: string, documentId: string) => {
-  const response = await api.put(`/students/${studentId}/documents/${documentId}/verify`);
-  return response.data;
-};
-
-/**
- * Get student class history
- */
-export const getStudentClassHistory = async (id: string) => {
-  const response = await api.get<StudentClassHistory[]>(`/students/${id}/class-history`);
-  return response.data;
-};
-
-/**
- * Get all student class history records
- */
-export const getAllStudentClassHistory = async (params?: {
-  page?: number;
-  limit?: number;
-  academicYear?: string;
-  class?: string;
-}) => {
-  const response = await api.get('/student-class-history', { params });
-  return response.data;
-};
-
-/**
- * Search students by academic year and class
- */
-export const searchStudentsByAcademicYearAndClass = async (params: {
-  academicYear: string;
-  class?: string;
-  classArm?: string;
-  page?: number;
-  limit?: number;
-}) => {
-  const response = await api.get('/student-class-history/search', { params });
-  return response.data;
-};
-
-/**
- * Get students by class and arm/section
- */
-export const getStudentsByClassAndArm = async (classId: string, classArmId: string) => {
-  const response = await api.get(`/students/class/${classId}/arm/${classArmId}`);
-  return response.data;
-};
-
-export default {
-  getStudents,
-  getStudentById,
-  createStudent,
-  updateStudent,
-  deleteStudent,
-  getStudentAttendance,
-  getStudentGrades,
-  getStudentDocuments,
-  uploadStudentDocument,
-  deleteStudentDocument,
-  verifyStudentDocument,
-  getStudentClassHistory,
-  getAllStudentClassHistory,
-  searchStudentsByAcademicYearAndClass,
-  getStudentsByClassAndArm
+// Get student class history
+export const getStudentClassHistory = async (id: string): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/class-history`);
+  } catch (error) {
+    console.error(`Error fetching class history for student with ID ${id}:`, error);
+    throw error;
+  }
 };
