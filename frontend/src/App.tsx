@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
+import StudentsManager from "./pages/students/StudentsManager";
 
 const queryClient = new QueryClient();
 
@@ -19,9 +20,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-<Route path="/" element={<Index />} />
-<Route path="/dashboard" element={<Dashboard />} />
-<Route path="/login" element={<Login />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/students" element={<StudentsManager />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

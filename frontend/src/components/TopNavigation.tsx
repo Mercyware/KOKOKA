@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,6 +30,7 @@ interface TopNavigationProps {
 }
 
 const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
+  const navigate = useNavigate();
   const navigationItems = [
     {
       title: 'Students',
@@ -82,7 +84,10 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
             <NavigationMenuItem>
               <Button
                 variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-                onClick={() => onTabChange('dashboard')}
+                onClick={() => {
+                  onTabChange('dashboard');
+                  navigate('/dashboard');
+                }}
                 className="h-9"
               >
                 Dashboard

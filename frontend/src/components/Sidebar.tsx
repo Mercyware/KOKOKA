@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface SidebarProps {
 const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
   if (!user) return null;
   
+  const navigate = useNavigate();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['students']);
 
   const toggleMenu = (menuId: string) => {
@@ -183,6 +185,11 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                       toggleMenu(item.id);
                     } else {
                       onTabChange(item.id);
+                      
+                      // Navigate to appropriate route based on menu item
+                      if (item.id === 'dashboard') {
+                        navigate('/dashboard');
+                      }
                     }
                   }}
                 >
@@ -209,7 +216,14 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 
                             'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                           }`}
-                          onClick={() => onTabChange(subItem.id)}
+                          onClick={() => {
+                            onTabChange(subItem.id);
+                            
+                            // Navigate to appropriate route based on menu item
+                            if (subItem.id === 'students-list') {
+                              navigate('/students');
+                            }
+                          }}
                         >
                           <SubIconComponent className="mr-3 h-3 w-3 flex-shrink-0" />
                           <span>{subItem.label}</span>

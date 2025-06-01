@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  GraduationCap, 
-  Users, 
-  BarChart3, 
-  Shield, 
-  Clock, 
+import {
+  GraduationCap,
+  Users,
+  BarChart3,
+  Shield,
+  Clock,
   Star,
-  CheckCircle, 
-  TrendingUp, 
-  BookOpen, 
+  CheckCircle,
+  TrendingUp,
+  BookOpen,
   Award,
   Smartphone,
   Cloud,
@@ -189,10 +189,10 @@ const MarketingPage = () => {
           <span className="block">Platform</span>
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
-          Transform your educational institution with cutting-edge artificial intelligence. 
+          Transform your educational institution with cutting-edge artificial intelligence.
           Experience unprecedented insights, automation, and efficiency that's revolutionizing education worldwide.
         </p>
-        
+
         {/* AI Features Highlight */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-2xl max-w-4xl mx-auto my-8">
           <div className="flex items-center justify-center space-x-4 mb-4">
@@ -226,8 +226,8 @@ const MarketingPage = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3"
             onClick={handleGetStarted}
           >
@@ -250,7 +250,7 @@ const MarketingPage = () => {
             Unlike traditional school management systems, we're powered by cutting-edge AI technology
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -261,7 +261,7 @@ const MarketingPage = () => {
               Built from the ground up with artificial intelligence at its core
             </p>
           </div>
-          
+
           <div className="text-center">
             <div className="bg-purple-100 dark:bg-purple-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Zap className="h-8 w-8 text-purple-600" />
@@ -271,7 +271,7 @@ const MarketingPage = () => {
               AI-optimized performance that's 10x faster than traditional systems
             </p>
           </div>
-          
+
           <div className="text-center">
             <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Target className="h-8 w-8 text-green-600" />
@@ -281,7 +281,7 @@ const MarketingPage = () => {
               Predict and prevent issues before they happen with smart analytics
             </p>
           </div>
-          
+
           <div className="text-center">
             <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Sparkles className="h-8 w-8 text-yellow-600" />
@@ -431,7 +431,7 @@ const MarketingPage = () => {
                   </li>
                 ))}
               </ul>
-              <Button 
+              <Button
                 className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
                 variant={plan.popular ? 'default' : 'outline'}
                 onClick={handleGetStarted}
@@ -568,7 +568,7 @@ const MarketingPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Information</h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -579,7 +579,7 @@ const MarketingPage = () => {
                 <p className="text-gray-600 dark:text-gray-400">sales@edumanage.ai</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                 <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -648,11 +648,10 @@ const MarketingPage = () => {
                 <button
                   key={item.id}
                   onClick={() => setCurrentPage(item.id)}
-                  className={`text-sm font-medium transition-colors ${
-                    currentPage === item.id
+                  className={`text-sm font-medium transition-colors ${currentPage === item.id
                       ? 'text-blue-600 dark:text-blue-400'
                       : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </button>
@@ -661,7 +660,7 @@ const MarketingPage = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-<Button variant="outline" onClick={() => navigate('login')}>
+              <Button variant="outline" onClick={() => navigate('login')}>
                 Sign In
               </Button>
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={handleGetStarted}>
@@ -693,11 +692,10 @@ const MarketingPage = () => {
                     setCurrentPage(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`block w-full text-left px-3 py-2 text-base font-medium transition-colors ${
-                    currentPage === item.id
+                  className={`block w-full text-left px-3 py-2 text-base font-medium transition-colors ${currentPage === item.id
                       ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                       : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
+                    }`}
                 >
                   {item.name}
                 </button>
@@ -735,7 +733,7 @@ const MarketingPage = () => {
                 Transforming education with cutting-edge AI technology and intelligent solutions.
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Product</h3>
               <ul className="space-y-2 text-gray-600 dark:text-gray-400">
@@ -744,7 +742,7 @@ const MarketingPage = () => {
                 <li><button onClick={() => setCurrentPage('solutions')}>Solutions</button></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Support</h3>
               <ul className="space-y-2 text-gray-600 dark:text-gray-400">
@@ -753,7 +751,7 @@ const MarketingPage = () => {
                 <li><button onClick={() => setCurrentPage('resources')}>Community</button></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Company</h3>
               <ul className="space-y-2 text-gray-600 dark:text-gray-400">
@@ -763,7 +761,7 @@ const MarketingPage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
             <p>&copy; 2024 EduManage AI. All rights reserved.</p>
           </div>
