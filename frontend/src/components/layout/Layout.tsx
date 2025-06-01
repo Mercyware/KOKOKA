@@ -43,13 +43,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className={`min-h-screen bg-background ${theme}`}>
-      <Header 
-        user={user} 
-        onLogout={handleLogout} 
-        onToggleSidebar={handleToggleSidebar}
-        navigationMode={navigationMode}
-        onToggleNavigation={handleToggleNavigation}
-      />
+      {user && (
+        <Header 
+          user={user} 
+          onLogout={handleLogout} 
+          onToggleSidebar={handleToggleSidebar}
+          navigationMode={navigationMode}
+          onToggleNavigation={handleToggleNavigation}
+        />
+      )}
       
       {navigationMode === 'top' && (
         <TopNavigation 

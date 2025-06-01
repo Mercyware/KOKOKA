@@ -1,24 +1,27 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import ThemeToggle from './ThemeToggle';
 import {
-  LayoutDashboard,
   Users,
+  Plus,
   GraduationCap,
   BookOpen,
-  Calendar,
-  FileText,
+  UserCheck,
+  BarChart3,
   Settings,
-  LogOut,
+  ChevronDown,
   ChevronRight,
-  School,
-  Clock,
-  DollarSign,
   Home,
-  BarChart2,
-  MessageSquare,
-  Bell,
+  FileText,
+  Calendar,
+  Trophy,
+  ClipboardList,
+  PieChart,
+  Brain,
+  Globe
 } from 'lucide-react';
-import { cn } from '../lib/utils';
 
 interface SidebarProps {
   activeTab: string;
@@ -27,302 +30,204 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-interface SidebarItem {
-  title: string;
-  icon: React.ReactNode;
-  href: string;
-  id: string;
-  submenu?: SidebarItem[];
-}
+const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
+  if (!user) return null;
+  
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['students']);
 
-const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  onTabChange,
-  user,
-  onLogout,
-}) => {
-  const [openSubmenu, setOpenSubmenu] = React.useState<string | null>(null);
-
-  const handleSubmenuToggle = (id: string) => {
-    setOpenSubmenu(openSubmenu === id ? null : id);
+  const toggleMenu = (menuId: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    );
   };
 
-  const sidebarItems: SidebarItem[] = [
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home, hasSubmenu: false },
     {
-      title: 'Dashboard',
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      href: '/dashboard',
-      id: 'dashboard',
-    },
-    {
-      title: 'Students',
-      icon: <Users className="h-5 w-5" />,
-      href: '/dashboard/students',
       id: 'students',
+      label: 'Students',
+      icon: Users,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'All Students',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/students',
-          id: 'all-students',
-        },
-        {
-          title: 'Add Student',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/students/add',
-          id: 'add-student',
-        },
-        {
-          title: 'Student Attendance',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/students/attendance',
-          id: 'student-attendance',
-        },
-      ],
+        { id: 'students-list', label: 'All Students', icon: Users },
+        { id: 'students-add', label: 'Add Student', icon: Plus },
+        { id: 'students-reports', label: 'Reports', icon: FileText },
+      ]
     },
     {
-      title: 'Teachers',
-      icon: <GraduationCap className="h-5 w-5" />,
-      href: '/dashboard/teachers',
+      id: 'academic',
+      label: 'Academic',
+      icon: BookOpen,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
+        { id: 'report-templates', label: 'Report Cards', icon: FileText },
+        { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
+        { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart },
+      ]
+    },
+    {
       id: 'teachers',
+      label: 'Teachers',
+      icon: GraduationCap,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'All Teachers',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/teachers',
-          id: 'all-teachers',
-        },
-        {
-          title: 'Add Teacher',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/teachers/add',
-          id: 'add-teacher',
-        },
-        {
-          title: 'Teacher Assignments',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/teachers/assignments',
-          id: 'teacher-assignments',
-        },
-      ],
+        { id: 'teachers-list', label: 'All Teachers', icon: GraduationCap },
+        { id: 'teachers-add', label: 'Add Teacher', icon: Plus },
+        { id: 'teachers-schedule', label: 'Schedules', icon: Calendar },
+        { id: 'teachers-performance', label: 'Performance', icon: Trophy },
+      ]
     },
     {
-      title: 'Academics',
-      icon: <BookOpen className="h-5 w-5" />,
-      href: '/dashboard/academics',
-      id: 'academics',
+      id: 'courses',
+      label: 'Courses',
+      icon: BookOpen,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'Classes',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/academics/classes',
-          id: 'classes',
-        },
-        {
-          title: 'Class Arms',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/academics/class-arms',
-          id: 'class-arms',
-        },
-        {
-          title: 'Subjects',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/academics/subjects',
-          id: 'subjects',
-        },
-        {
-          title: 'Timetable',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/academics/timetable',
-          id: 'timetable',
-        },
-      ],
+        { id: 'courses-list', label: 'All Courses', icon: BookOpen },
+        { id: 'courses-add', label: 'Add Course', icon: Plus },
+        { id: 'courses-curriculum', label: 'Curriculum', icon: FileText },
+        { id: 'courses-assignments', label: 'Assignments', icon: ClipboardList },
+      ]
     },
     {
-      title: 'Examinations',
-      icon: <FileText className="h-5 w-5" />,
-      href: '/dashboard/examinations',
-      id: 'examinations',
+      id: 'attendance',
+      label: 'Attendance',
+      icon: UserCheck,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'Exam Schedule',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/examinations/schedule',
-          id: 'exam-schedule',
-        },
-        {
-          title: 'Results',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/examinations/results',
-          id: 'exam-results',
-        },
-        {
-          title: 'Grade System',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/examinations/grades',
-          id: 'grade-system',
-        },
-      ],
+        { id: 'attendance-today', label: 'Today\'s Attendance', icon: UserCheck },
+        { id: 'attendance-reports', label: 'Reports', icon: BarChart3 },
+        { id: 'attendance-bulk', label: 'Bulk Update', icon: ClipboardList },
+        { id: 'attendance-alerts', label: 'Alerts', icon: Settings },
+      ]
     },
     {
-      title: 'Calendar',
-      icon: <Calendar className="h-5 w-5" />,
-      href: '/dashboard/calendar',
-      id: 'calendar',
-    },
-    {
-      title: 'Finance',
-      icon: <DollarSign className="h-5 w-5" />,
-      href: '/dashboard/finance',
-      id: 'finance',
+      id: 'grades',
+      label: 'Grades',
+      icon: Trophy,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'Fee Structure',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/finance/fee-structure',
-          id: 'fee-structure',
-        },
-        {
-          title: 'Payments',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/finance/payments',
-          id: 'payments',
-        },
-        {
-          title: 'Expenses',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/finance/expenses',
-          id: 'expenses',
-        },
-      ],
+        { id: 'grades-entry', label: 'Grade Entry', icon: Trophy },
+        { id: 'grades-reports', label: 'Grade Reports', icon: FileText },
+        { id: 'grades-transcripts', label: 'Transcripts', icon: FileText },
+        { id: 'grades-analytics', label: 'Analytics', icon: BarChart3 },
+      ]
     },
     {
-      title: 'Reports',
-      icon: <BarChart2 className="h-5 w-5" />,
-      href: '/dashboard/reports',
-      id: 'reports',
-    },
-    {
-      title: 'Settings',
-      icon: <Settings className="h-5 w-5" />,
-      href: '/dashboard/settings',
-      id: 'settings',
+      id: 'analytics',
+      label: 'Analytics',
+      icon: BarChart3,
+      hasSubmenu: true,
       submenu: [
-        {
-          title: 'School Profile',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/settings/school',
-          id: 'school-profile',
-        },
-        {
-          title: 'Academic Year',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/settings/academic-year',
-          id: 'academic-year',
-        },
-        {
-          title: 'User Management',
-          icon: <ChevronRight className="h-4 w-4" />,
-          href: '/dashboard/settings/users',
-          id: 'user-management',
-        },
-      ],
+        { id: 'analytics-overview', label: 'Overview', icon: BarChart3 },
+        { id: 'analytics-performance', label: 'Performance', icon: Trophy },
+        { id: 'analytics-attendance', label: 'Attendance', icon: UserCheck },
+        { id: 'analytics-financial', label: 'Financial', icon: PieChart },
+      ]
     },
+    { id: 'ai-insights', label: 'AI Insights', icon: Brain, hasSubmenu: false },
+    { id: 'marketing', label: 'About', icon: Globe, hasSubmenu: false },
+    { id: 'settings', label: 'Settings', icon: Settings, hasSubmenu: false },
   ];
 
   return (
-    <div className="flex h-screen flex-col border-r bg-background">
-      <div className="p-6">
-        <h2 className="text-lg font-semibold">Kokoka</h2>
-        <p className="text-xs text-muted-foreground">School Management System</p>
+    <div className="bg-white dark:bg-gray-900 w-72 h-screen border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">EduManage Pro</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">School Management System</p>
       </div>
-      
-      <nav className="flex-1 overflow-auto p-3">
-        <ul className="space-y-1">
-          {sidebarItems.map((item) => (
-            <li key={item.id}>
-              {item.submenu ? (
-                <div className="space-y-1">
-                  <button
-                    onClick={() => handleSubmenuToggle(item.id)}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
-                      activeTab === item.id || openSubmenu === item.id
-                        ? 'bg-accent text-accent-foreground'
-                        : 'transparent'
-                    )}
-                  >
-                    <div className="flex items-center">
-                      {item.icon}
-                      <span className="ml-3">{item.title}</span>
-                    </div>
-                    <ChevronRight
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        openSubmenu === item.id && 'rotate-90'
-                      )}
-                    />
-                  </button>
-                  
-                  {openSubmenu === item.id && (
-                    <ul className="ml-6 space-y-1 mt-1">
-                      {item.submenu.map((subitem) => (
-                        <li key={subitem.id}>
-                          <Link
-                            to={subitem.href}
-                            className={cn(
-                              'flex items-center rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground',
-                              activeTab === subitem.id
-                                ? 'bg-accent/50 text-accent-foreground'
-                                : 'transparent'
-                            )}
-                            onClick={() => onTabChange(subitem.id)}
-                          >
-                            {subitem.icon}
-                            <span className="ml-3">{subitem.title}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  to={item.href}
-                  className={cn(
-                    'flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
-                    activeTab === item.id
-                      ? 'bg-accent text-accent-foreground'
-                      : 'transparent'
-                  )}
-                  onClick={() => onTabChange(item.id)}
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.title}</span>
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-      
-      {user && (
-        <div className="mt-auto border-t p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.role}</p>
-            </div>
-            <button
-              onClick={onLogout}
-              className="rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
+
+      {/* User Info */}
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center space-x-3 mb-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src="/api/placeholder/40/40" alt={user.name} />
+            <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              {user.name}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {user.email}
+            </p>
           </div>
         </div>
-      )}
+        <Badge variant="secondary" className="text-xs">
+          {user.role}
+        </Badge>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        <div className="px-3 space-y-1">
+          {menuItems.map((item) => {
+            const IconComponent = item.icon;
+            const isExpanded = expandedMenus.includes(item.id);
+            const isActive = activeTab === item.id || (item.hasSubmenu && item.submenu?.some(sub => sub.id === activeTab));
+
+            return (
+              <div key={item.id}>
+                <Button
+                  variant={isActive && !item.hasSubmenu ? "secondary" : "ghost"}
+                  className={`w-full justify-start text-left h-10 px-3 ${
+                    isActive ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 
+                    'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
+                  onClick={() => {
+                    if (item.hasSubmenu) {
+                      toggleMenu(item.id);
+                    } else {
+                      onTabChange(item.id);
+                    }
+                  }}
+                >
+                  <IconComponent className="mr-3 h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.hasSubmenu && (
+                    isExpanded ? 
+                      <ChevronDown className="h-4 w-4 flex-shrink-0" /> : 
+                      <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                  )}
+                </Button>
+
+                {/* Submenu */}
+                {item.hasSubmenu && isExpanded && item.submenu && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.submenu.map((subItem) => {
+                      const SubIconComponent = subItem.icon;
+                      return (
+                        <Button
+                          key={subItem.id}
+                          variant={activeTab === subItem.id ? "secondary" : "ghost"}
+                          className={`w-full justify-start text-left h-9 px-3 text-sm ${
+                            activeTab === subItem.id ? 
+                            'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 
+                            'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                          onClick={() => onTabChange(subItem.id)}
+                        >
+                          <SubIconComponent className="mr-3 h-3 w-3 flex-shrink-0" />
+                          <span>{subItem.label}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <ThemeToggle />
+      </div>
     </div>
   );
 };

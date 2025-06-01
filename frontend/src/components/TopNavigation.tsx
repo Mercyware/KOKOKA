@@ -1,280 +1,155 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from './ui/navigation-menu';
-import {
-  LayoutDashboard,
-  Users,
-  GraduationCap,
-  BookOpen,
-  Calendar,
-  FileText,
+} from '@/components/ui/navigation-menu';
+import { 
+  Users, 
+  UserCheck, 
+  BookOpen, 
+  GraduationCap, 
+  BarChart3, 
   Settings,
-  DollarSign,
-  BarChart2,
+  Plus,
+  FileText,
+  Calendar,
+  Trophy,
+  ClipboardList,
+  PieChart
 } from 'lucide-react';
-import { cn } from '../lib/utils';
 
 interface TopNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const TopNavigation: React.FC<TopNavigationProps> = ({
-  activeTab,
-  onTabChange,
-}) => {
+const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
+  const navigationItems = [
+    {
+      title: 'Students',
+      items: [
+        { id: 'students-list', label: 'All Students', icon: Users, description: 'View and manage all students' },
+        { id: 'students-add', label: 'Add Student', icon: Plus, description: 'Register new students' },
+        { id: 'students-reports', label: 'Reports', icon: FileText, description: 'Generate student reports' },
+      ]
+    },
+    {
+      title: 'Academic',
+      items: [
+        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList, description: 'Record student scores' },
+        { id: 'report-templates', label: 'Report Cards', icon: FileText, description: 'Generate report cards' },
+        { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen, description: 'Enter student grades' },
+        { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart, description: 'Analyze grade performance' },
+      ]
+    },
+    {
+      title: 'Teachers',
+      items: [
+        { id: 'teachers-list', label: 'All Teachers', icon: GraduationCap, description: 'View all teachers' },
+        { id: 'teachers-add', label: 'Add Teacher', icon: Plus, description: 'Add new teachers' },
+        { id: 'teachers-schedule', label: 'Schedules', icon: Calendar, description: 'Manage teacher schedules' },
+        { id: 'teachers-performance', label: 'Performance', icon: Trophy, description: 'Teacher performance metrics' },
+      ]
+    },
+    {
+      title: 'Attendance',
+      items: [
+        { id: 'attendance-today', label: 'Today\'s Attendance', icon: UserCheck, description: 'Mark daily attendance' },
+        { id: 'attendance-reports', label: 'Reports', icon: BarChart3, description: 'Attendance analytics' },
+        { id: 'attendance-bulk', label: 'Bulk Update', icon: ClipboardList, description: 'Bulk attendance updates' },
+      ]
+    },
+    {
+      title: 'Analytics',
+      items: [
+        { id: 'analytics-overview', label: 'Overview', icon: BarChart3, description: 'General analytics dashboard' },
+        { id: 'analytics-performance', label: 'Performance', icon: Trophy, description: 'Performance metrics' },
+        { id: 'analytics-attendance', label: 'Attendance', icon: UserCheck, description: 'Attendance trends' },
+      ]
+    }
+  ];
+
   return (
-    <div className="border-b">
-      <div className="container flex h-14 items-center">
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <div className="px-4 py-3">
         <NavigationMenu>
-          <NavigationMenuList>
+          <NavigationMenuList className="space-x-2">
             <NavigationMenuItem>
-              <Link to="/dashboard" onClick={() => onTabChange('dashboard')}>
-                <NavigationMenuLink 
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    activeTab === 'dashboard' && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            
-            <NavigationMenuItem>
-              <NavigationMenuTrigger 
-                className={cn(
-                  activeTab.startsWith('student') && 'bg-accent text-accent-foreground'
-                )}
+              <Button
+                variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
+                onClick={() => onTabChange('dashboard')}
+                className="h-9"
               >
-                <Users className="mr-2 h-4 w-4" />
-                Students
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to="/dashboard/students"
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        onClick={() => onTabChange('all-students')}
-                      >
-                        <Users className="h-6 w-6" />
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Students
+                Dashboard
+              </Button>
+            </NavigationMenuItem>
+
+            {navigationItems.map((section) => (
+              <NavigationMenuItem key={section.title}>
+                <NavigationMenuTrigger className="h-9">
+                  {section.title}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid gap-3 p-6 w-[400px] lg:w-[500px] lg:grid-cols-2">
+                    {section.items.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <div
+                          key={item.id}
+                          className="group relative flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                          onClick={() => onTabChange(item.id)}
+                        >
+                          <div className="flex-shrink-0">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+                              <IconComponent className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {item.label}
+                              </p>
+                              {activeTab === item.id && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Active
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {item.description}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Manage student records, attendance, and academic performance.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/students"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('all-students')}
-                    >
-                      <div className="text-sm font-medium leading-none">All Students</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        View and manage all student records.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/students/add"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('add-student')}
-                    >
-                      <div className="text-sm font-medium leading-none">Add Student</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Register a new student in the system.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/students/attendance"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('student-attendance')}
-                    >
-                      <div className="text-sm font-medium leading-none">Attendance</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Track and manage student attendance records.
-                      </p>
-                    </Link>
-                  </li>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            
+                      );
+                    })}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            ))}
+
             <NavigationMenuItem>
-              <NavigationMenuTrigger
-                className={cn(
-                  activeTab.startsWith('teacher') && 'bg-accent text-accent-foreground'
-                )}
+              <Button
+                variant={activeTab === 'ai-insights' ? 'default' : 'ghost'}
+                onClick={() => onTabChange('ai-insights')}
+                className="h-9"
               >
-                <GraduationCap className="mr-2 h-4 w-4" />
-                Teachers
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to="/dashboard/teachers"
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        onClick={() => onTabChange('all-teachers')}
-                      >
-                        <GraduationCap className="h-6 w-6" />
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Teachers
-                        </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Manage teacher records, assignments, and schedules.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/teachers"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('all-teachers')}
-                    >
-                      <div className="text-sm font-medium leading-none">All Teachers</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        View and manage all teacher records.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/teachers/add"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('add-teacher')}
-                    >
-                      <div className="text-sm font-medium leading-none">Add Teacher</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Register a new teacher in the system.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/teachers/assignments"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('teacher-assignments')}
-                    >
-                      <div className="text-sm font-medium leading-none">Assignments</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Manage teacher subject and class assignments.
-                      </p>
-                    </Link>
-                  </li>
-                </ul>
-              </NavigationMenuContent>
+                AI Insights
+              </Button>
             </NavigationMenuItem>
-            
+
             <NavigationMenuItem>
-              <NavigationMenuTrigger
-                className={cn(
-                  activeTab.startsWith('academic') && 'bg-accent text-accent-foreground'
-                )}
+              <Button
+                variant={activeTab === 'marketing' ? 'default' : 'ghost'}
+                onClick={() => onTabChange('marketing')}
+                className="h-9"
               >
-                <BookOpen className="mr-2 h-4 w-4" />
-                Academics
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                  <li>
-                    <Link
-                      to="/dashboard/academics/classes"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('classes')}
-                    >
-                      <div className="text-sm font-medium leading-none">Classes</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Manage school classes and sections.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/academics/class-arms"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('class-arms')}
-                    >
-                      <div className="text-sm font-medium leading-none">Class Arms</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Manage class arms and divisions.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/academics/subjects"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('subjects')}
-                    >
-                      <div className="text-sm font-medium leading-none">Subjects</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Manage academic subjects and curriculum.
-                      </p>
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/dashboard/academics/timetable"
-                      className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      onClick={() => onTabChange('timetable')}
-                    >
-                      <div className="text-sm font-medium leading-none">Timetable</div>
-                      <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                        Create and manage class timetables.
-                      </p>
-                    </Link>
-                  </li>
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            
-            <NavigationMenuItem>
-              <Link to="/dashboard/calendar" onClick={() => onTabChange('calendar')}>
-                <NavigationMenuLink 
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    activeTab === 'calendar' && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Calendar
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            
-            <NavigationMenuItem>
-              <Link to="/dashboard/reports" onClick={() => onTabChange('reports')}>
-                <NavigationMenuLink 
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    activeTab === 'reports' && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  Reports
-                </NavigationMenuLink>
-              </Link>
+                About
+              </Button>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>

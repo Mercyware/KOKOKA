@@ -1,145 +1,134 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { ArrowUpRight, Users, GraduationCap, BookOpen, Calendar, DollarSign, BarChart2, Activity } from 'lucide-react';
+import { 
+  Users, 
+  GraduationCap, 
+  BookOpen, 
+  TrendingUp, 
+  Calendar, 
+  AlertCircle,
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 const Dashboard = () => {
-  // Mock data for dashboard
   const stats = [
-    { 
-      title: 'Total Students', 
-      value: '1,234', 
-      change: '+12%', 
-      description: 'from last month', 
-      icon: <Users className="h-4 w-4 text-muted-foreground" /> 
-    },
-    { 
-      title: 'Total Teachers', 
-      value: '64', 
-      change: '+4%', 
-      description: 'from last month', 
-      icon: <GraduationCap className="h-4 w-4 text-muted-foreground" /> 
-    },
-    { 
-      title: 'Classes', 
-      value: '24', 
-      change: '0%', 
-      description: 'from last month', 
-      icon: <BookOpen className="h-4 w-4 text-muted-foreground" /> 
-    },
-    { 
-      title: 'Attendance Rate', 
-      value: '92%', 
-      change: '+2%', 
-      description: 'from last month', 
-      icon: <Calendar className="h-4 w-4 text-muted-foreground" /> 
-    },
-    { 
-      title: 'Fee Collection', 
-      value: '$245,000', 
-      change: '+18%', 
-      description: 'from last month', 
-      icon: <DollarSign className="h-4 w-4 text-muted-foreground" /> 
-    },
-    { 
-      title: 'Exam Pass Rate', 
-      value: '87%', 
-      change: '+5%', 
-      description: 'from last term', 
-      icon: <BarChart2 className="h-4 w-4 text-muted-foreground" /> 
-    },
+    { title: 'Total Students', value: '1,247', icon: Users, change: '+12%', color: 'bg-blue-500' },
+    { title: 'Teachers', value: '78', icon: GraduationCap, change: '+3%', color: 'bg-green-500' },
+    { title: 'Courses', value: '45', icon: BookOpen, change: '+8%', color: 'bg-purple-500' },
+    { title: 'Attendance Rate', value: '94.2%', icon: TrendingUp, change: '+2.1%', color: 'bg-orange-500' },
   ];
 
   const recentActivities = [
-    { id: 1, activity: 'New student John Doe enrolled in Grade 10', time: '2 hours ago' },
-    { id: 2, activity: 'Term 2 exam results published', time: '1 day ago' },
-    { id: 3, activity: 'Parent-teacher meeting scheduled for next week', time: '2 days ago' },
-    { id: 4, activity: 'New curriculum updates for Science subjects', time: '3 days ago' },
-    { id: 5, activity: 'Annual sports day preparations started', time: '5 days ago' },
+    { action: 'New student enrollment', name: 'Emma Wilson', time: '2 hours ago', type: 'success' },
+    { action: 'Grade submission', name: 'Math Class 10A', time: '4 hours ago', type: 'info' },
+    { action: 'Low attendance alert', name: 'John Smith', time: '6 hours ago', type: 'warning' },
+    { action: 'Assignment due reminder', name: 'Science Project', time: '1 day ago', type: 'pending' },
   ];
 
   const upcomingEvents = [
-    { id: 1, event: 'Parent-Teacher Conference', date: 'June 15, 2025', location: 'Main Hall' },
-    { id: 2, event: 'End of Term Exams', date: 'July 10-20, 2025', location: 'All Classrooms' },
-    { id: 3, event: 'Annual Science Fair', date: 'June 25, 2025', location: 'Science Block' },
-    { id: 4, event: 'School Board Meeting', date: 'June 5, 2025', location: 'Conference Room' },
+    { title: 'Parent-Teacher Meeting', date: 'Nov 15, 2024', time: '2:00 PM' },
+    { title: 'Science Fair', date: 'Nov 20, 2024', time: '10:00 AM' },
+    { title: 'Annual Sports Day', date: 'Nov 25, 2024', time: '9:00 AM' },
+    { title: 'Winter Break Begins', date: 'Dec 20, 2024', time: 'All Day' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Current Term: Term 2, 2024-2025</span>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening at your school.</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">Today</p>
+          <p className="text-lg font-semibold text-gray-900">November 10, 2024</p>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className={`inline-flex items-center ${stat.change.startsWith('+') ? 'text-green-600' : stat.change.startsWith('-') ? 'text-red-600' : ''}`}>
-                  {stat.change.startsWith('+') && <ArrowUpRight className="mr-1 h-3 w-3" />}
-                  {stat.change}
-                </span>
-                {' '}{stat.description}
-              </p>
+          <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-sm text-green-600 font-medium">{stat.change} from last month</p>
+                </div>
+                <div className={`${stat.color} p-3 rounded-lg`}>
+                  <stat.icon className="h-6 w-6 text-white" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Recent Activities */}
-        <Card className="col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* AI Insights */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="mr-2 h-4 w-4" />
-              Recent Activities
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <span>AI Performance Insights</span>
             </CardTitle>
-            <CardDescription>Latest updates from your school</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((item) => (
-                <div key={item.id} className="flex justify-between border-b pb-2 last:border-0 last:pb-0">
-                  <div>
-                    <p className="text-sm">{item.activity}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Student Engagement</span>
+                  <span className="text-sm text-gray-600">87%</span>
                 </div>
-              ))}
+                <Progress value={87} className="h-2" />
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Average Grade Performance</span>
+                  <span className="text-sm text-gray-600">78%</span>
+                </div>
+                <Progress value={78} className="h-2" />
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Attendance Prediction</span>
+                  <span className="text-sm text-gray-600">92%</span>
+                </div>
+                <Progress value={92} className="h-2" />
+              </div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">AI Recommendation</h4>
+              <p className="text-sm text-blue-800">
+                Based on current trends, consider implementing additional support for Math courses. 
+                Students show 15% lower engagement in afternoon sessions.
+              </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Upcoming Events */}
-        <Card className="col-span-1">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="mr-2 h-4 w-4" />
-              Upcoming Events
+            <CardTitle className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-purple-600" />
+              <span>Upcoming Events</span>
             </CardTitle>
-            <CardDescription>School events and important dates</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex flex-col space-y-1 border-b pb-3 last:border-0 last:pb-0">
-                  <p className="font-medium">{event.event}</p>
-                  <div className="flex justify-between">
-                    <p className="text-xs text-muted-foreground">{event.date}</p>
-                    <p className="text-xs text-muted-foreground">{event.location}</p>
+            <div className="space-y-3">
+              {upcomingEvents.map((event, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                  <div className="bg-purple-100 p-2 rounded-lg">
+                    <Calendar className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{event.title}</p>
+                    <p className="text-sm text-gray-600">{event.date}</p>
+                    <p className="text-xs text-gray-500">{event.time}</p>
                   </div>
                 </div>
               ))}
@@ -147,6 +136,36 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recent Activities */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {recentActivities.map((activity, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50">
+                <div className={`p-2 rounded-lg ${
+                  activity.type === 'success' ? 'bg-green-100' :
+                  activity.type === 'warning' ? 'bg-yellow-100' :
+                  activity.type === 'info' ? 'bg-blue-100' : 'bg-gray-100'
+                }`}>
+                  {activity.type === 'success' ? <CheckCircle className="h-4 w-4 text-green-600" /> :
+                   activity.type === 'warning' ? <AlertCircle className="h-4 w-4 text-yellow-600" /> :
+                   activity.type === 'info' ? <Calendar className="h-4 w-4 text-blue-600" /> :
+                   <Clock className="h-4 w-4 text-gray-600" />}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900">{activity.action}</p>
+                  <p className="text-sm text-gray-600">{activity.name}</p>
+                </div>
+                <p className="text-sm text-gray-500">{activity.time}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
