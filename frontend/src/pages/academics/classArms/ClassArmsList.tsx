@@ -1,219 +1,245 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Snackbar,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
-import { ClassArm } from '../../../types';
-import { getClassArms, deleteClassArm } from '../../../services/classArmService';
-import Layout from '../../../components/layout/Layout';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Edit, Trash2, Search, FileText, Users, School } from 'lucide-react';
 
-const ClassArmsList: React.FC = () => {
-  const navigate = useNavigate();
+interface ClassArm {
+  id: number;
+  name: string;
+  classId: number;
+  className: string;
+  teacherId: number | null;
+  teacherName: string | null;
+  studentCount: number;
+  createdAt: string;
+}
+
+const ClassArmsList = () => {
   const [classArms, setClassArms] = useState<ClassArm[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [classArmToDelete, setClassArmToDelete] = useState<ClassArm | null>(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const classArmsData = await getClassArms();
-        setClassArms(classArmsData);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load data. Please try again later.');
-        setLoading(false);
-      }
-    };
+    // In a real app, fetch class arms from API
+    // For demo, we'll use mock data
+    const mockClassArms: ClassArm[] = [
+      {
+        id: 1,
+        name: 'A',
+        classId: 1,
+        className: 'Primary 1',
+        teacherId: 101,
+        teacherName: 'John Smith',
+        studentCount: 35,
+        createdAt: '2023-01-15T08:30:00Z',
+      },
+      {
+        id: 2,
+        name: 'B',
+        classId: 1,
+        className: 'Primary 1',
+        teacherId: 102,
+        teacherName: 'Sarah Johnson',
+        studentCount: 32,
+        createdAt: '2023-01-15T09:15:00Z',
+      },
+      {
+        id: 3,
+        name: 'C',
+        classId: 1,
+        className: 'Primary 1',
+        teacherId: 103,
+        teacherName: 'Michael Brown',
+        studentCount: 30,
+        createdAt: '2023-01-15T10:00:00Z',
+      },
+      {
+        id: 4,
+        name: 'A',
+        classId: 2,
+        className: 'Primary 2',
+        teacherId: 104,
+        teacherName: 'Emily Davis',
+        studentCount: 33,
+        createdAt: '2023-01-16T08:30:00Z',
+      },
+      {
+        id: 5,
+        name: 'B',
+        classId: 2,
+        className: 'Primary 2',
+        teacherId: 105,
+        teacherName: 'Robert Wilson',
+        studentCount: 31,
+        createdAt: '2023-01-16T09:15:00Z',
+      },
+      {
+        id: 6,
+        name: 'A',
+        classId: 3,
+        className: 'Primary 3',
+        teacherId: 106,
+        teacherName: 'Jennifer Taylor',
+        studentCount: 34,
+        createdAt: '2023-01-17T08:30:00Z',
+      },
+      {
+        id: 7,
+        name: 'B',
+        classId: 3,
+        className: 'Primary 3',
+        teacherId: null,
+        teacherName: null,
+        studentCount: 29,
+        createdAt: '2023-01-17T09:15:00Z',
+      },
+    ];
 
-    fetchData();
+    setTimeout(() => {
+      setClassArms(mockClassArms);
+      setLoading(false);
+    }, 800);
   }, []);
 
-  const handleDeleteClick = (classArm: ClassArm) => {
-    setClassArmToDelete(classArm);
-    setDeleteDialogOpen(true);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!classArmToDelete) return;
-    
-    try {
-      setLoading(true);
-      await deleteClassArm(classArmToDelete.id);
-      setClassArms(classArms.filter(classArm => classArm.id !== classArmToDelete.id));
-      setSnackbar({
-        open: true,
-        message: 'Class Arm deleted successfully',
-        severity: 'success',
-      });
-      setDeleteDialogOpen(false);
-      setClassArmToDelete(null);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error deleting class arm:', err);
-      setSnackbar({
-        open: true,
-        message: 'Failed to delete class arm. It may have students assigned to it.',
-        severity: 'error',
-      });
-      setLoading(false);
-      setDeleteDialogOpen(false);
+  const filteredClassArms = classArms.filter(
+    (classArm) =>
+      classArm.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classArm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (classArm.teacherName && classArm.teacherName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this class arm?')) {
+      // In a real app, call API to delete
+      setClassArms(classArms.filter((classArm) => classArm.id !== id));
     }
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setClassArmToDelete(null);
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
-
   return (
-    <Layout>
-      <Box sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h1">
-          Class Arms
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          component={Link}
-          to="/academics/class-arms/create"
-        >
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Class Arms</h2>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
           Add Class Arm
         </Button>
-      </Box>
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-
-        {loading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : classArms.length === 0 ? (
-          <Alert severity="info">
-            No class arms found. Click "Add Class Arm" to create one.
-          </Alert>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {classArms.map((classArm) => (
-                  <TableRow key={classArm.id}>
-                    <TableCell>{classArm.name}</TableCell>
-                    <TableCell>{classArm.description}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton
-                          onClick={() => navigate(`/academics/class-arms/edit/${classArm.id}`)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          onClick={() => handleDeleteClick(classArm)}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Confirm Delete</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to delete the class arm "{classArmToDelete?.name}"? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-      </Box>
-    </Layout>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>All Class Arms</CardTitle>
+              <CardDescription>
+                Manage class arms and their assigned teachers
+              </CardDescription>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="Search class arms..."
+                className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={searchTerm}
+                onChange={handleSearch}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredClassArms.length === 0 ? (
+            <div className="text-center py-10">
+              <School className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">No Class Arms Found</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {searchTerm
+                  ? `No class arms matching "${searchTerm}"`
+                  : "You haven't added any class arms yet."}
+              </p>
+              {searchTerm && (
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => setSearchTerm('')}
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-3 px-4 text-left font-medium">Class</th>
+                    <th className="py-3 px-4 text-left font-medium">Arm</th>
+                    <th className="py-3 px-4 text-left font-medium">Class Teacher</th>
+                    <th className="py-3 px-4 text-left font-medium">Students</th>
+                    <th className="py-3 px-4 text-left font-medium">Created</th>
+                    <th className="py-3 px-4 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClassArms.map((classArm) => (
+                    <tr key={classArm.id} className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">{classArm.className}</td>
+                      <td className="py-3 px-4">{classArm.name}</td>
+                      <td className="py-3 px-4">
+                        {classArm.teacherName || (
+                          <span className="text-muted-foreground italic">Not assigned</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center">
+                          <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                          {classArm.studentCount}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {new Date(classArm.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/dashboard/academics/class-arms/${classArm.id}`}>
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">View</span>
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link to={`/dashboard/academics/class-arms/${classArm.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(classArm.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

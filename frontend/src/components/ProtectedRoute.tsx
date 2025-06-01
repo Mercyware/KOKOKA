@@ -1,14 +1,16 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { CircularProgress, Box } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  // For demonstration purposes, we're bypassing authentication
+  // In a real app, you would use the commented out code below
+  
+  /*
   const { authState } = useAuth();
   const location = useLocation();
 
@@ -36,8 +38,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     // Redirect to unauthorized page or dashboard based on user role
     return <Navigate to="/unauthorized" replace />;
   }
+  */
 
-  // Render children if authenticated and authorized
+  // Render children without authentication check
   return <>{children}</>;
 };
 

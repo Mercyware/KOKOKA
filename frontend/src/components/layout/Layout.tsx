@@ -1,47 +1,82 @@
-import React, { useState } from 'react';
-import { Box, CssBaseline, Toolbar, useTheme } from '@mui/material';
-import Header from './Header';
-import Sidebar from './Sidebar';
+import React, { useState, useEffect } from 'react';
+import Header from '../Header';
+import Sidebar from '../Sidebar';
+import TopNavigation from '../TopNavigation';
+import { useTheme } from '../ThemeProvider';
+import { Toaster } from '../ui/toaster';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const drawerWidth = 240;
-  const theme = useTheme();
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [navigationMode, setNavigationMode] = useState<'sidebar' | 'top'>('sidebar');
+  const { theme } = useTheme();
+
+  // Simulate user authentication
+  useEffect(() => {
+    // In a real app, check for auth token and fetch user data
+    const mockUser = {
+      name: 'Admin User',
+      email: 'admin@example.com',
+      role: 'Administrator'
+    };
+    
+    setUser(mockUser);
+  }, []);
+
+  const handleLogout = () => {
+    // In a real app, clear auth token and redirect to login
+    setUser(null);
+  };
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  const handleToggleNavigation = () => {
+    setNavigationMode(navigationMode === 'sidebar' ? 'top' : 'sidebar');
+  };
+
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
+    <div className={`min-h-screen bg-background ${theme}`}>
+      <Header 
+        user={user} 
+        onLogout={handleLogout} 
+        onToggleSidebar={handleToggleSidebar}
+        navigationMode={navigationMode}
+        onToggleNavigation={handleToggleNavigation}
+      />
       
-      {/* Header */}
-      <Header onToggleSidebar={handleToggleSidebar} drawerWidth={drawerWidth} />
+      {navigationMode === 'top' && (
+        <TopNavigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+        />
+      )}
       
-      {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} drawerWidth={drawerWidth} />
+      <div className="flex">
+        {navigationMode === 'sidebar' && sidebarOpen && (
+          <div className="hidden md:block">
+            <Sidebar 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab} 
+              user={user} 
+              onLogout={handleLogout} 
+            />
+          </div>
+        )}
+        
+        <main className="flex-1 p-6 md:p-8">
+          {children}
+        </main>
+      </div>
       
-      {/* Main content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px', // AppBar height
-          marginLeft: 0, // For mobile
-          [theme.breakpoints.up('sm')]: {
-          },
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
+      <Toaster />
+    </div>
   );
 };
 
