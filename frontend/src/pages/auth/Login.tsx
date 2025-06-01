@@ -1,28 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Container,
-  Grid,
-  Link,
-  Alert,
-  CircularProgress,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
-import { Visibility, VisibilityOff, School as SchoolIcon } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
+import { Eye, EyeOff, GraduationCap, Mail, Lock } from 'lucide-react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 
 const Login: React.FC = () => {
   const { login, authState } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [subdomain, setSubdomain] = useState<string | null>(null);
@@ -42,156 +33,140 @@ const Login: React.FC = () => {
     }
   }, [location]);
 
-  // Validation schema
-  const validationSchema = Yup.object({
-    email: Yup.string()
-      .email('Enter a valid email')
-      .required('Email is required'),
-    password: Yup.string()
-      .min(6, 'Password should be of minimum 6 characters length')
-      .required('Password is required'),
-  });
-
-  // Formik form handling
-  const formik = useFormik({
-    initialValues: {
-      email: '',
-      password: '',
-    },
-    validationSchema: validationSchema,
-    onSubmit: async (values) => {
-      const success = await login(values.email, values.password);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const success = await login(email, password);
       if (success) {
         navigate('/dashboard');
       }
-    },
-  });
-
-  // Toggle password visibility
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper
-        elevation={3}
-        sx={{
-          marginTop: 8,
-          padding: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          borderRadius: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <SchoolIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-          <Typography component="h1" variant="h5" fontWeight="bold">
-            School Management System
-          </Typography>
-          <Typography variant="body2" color="text.secondary" align="center">
-            Sign in to access your account
-          </Typography>
-        </Box>
-
-        {authState.error && (
-          <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {authState.error}
-          </Alert>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 dark:from-blue-950 dark:via-purple-950 dark:to-blue-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-3">
+              <GraduationCap className="h-10 w-10 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-400">
+            Sign in to your Kokoka School Management account
+          </CardDescription>
+        </CardHeader>
         
-        {successMessage && (
-          <Alert severity="success" sx={{ width: '100%', mb: 2 }}>
-            {successMessage}
-            {subdomain && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Your school is accessible at: <strong>{subdomain}.schoolmanagement.com</strong>
-              </Typography>
-            )}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 1, width: '100%' }}>
-          <TextField
-            margin="normal"
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            required
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.email && Boolean(formik.errors.email)}
-            helperText={formik.touched.email && formik.errors.email}
-          />
-          <TextField
-            margin="normal"
-            fullWidth
-            name="password"
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            id="password"
-            autoComplete="current-password"
-            required
-            value={formik.values.password}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            helperText={formik.touched.password && formik.errors.password}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2, py: 1.2 }}
-            disabled={authState.loading}
-          >
-            {authState.loading ? <CircularProgress size={24} /> : 'Sign In'}
-          </Button>
-          <Grid container>
-            <Grid item xs>
-              <Link component={RouterLink} to="/forgot-password" variant="body2">
+        <CardContent>
+          {authState.error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{authState.error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {successMessage && (
+            <Alert className="mb-4">
+              <AlertDescription>
+                {successMessage}
+                {subdomain && (
+                  <p className="mt-1">
+                    Your school is accessible at: <strong>{subdomain}.schoolmanagement.com</strong>
+                  </p>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Email Address
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between text-sm">
+              <Link
+                to="/forgot-password"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
                 Forgot password?
               </Link>
-            </Grid>
-            <Grid item>
-              <Link component={RouterLink} to="/register" variant="body2">
-                {"Don't have an account? Sign Up"}
+            </div>
+            
+            <Button
+              type="submit"
+              disabled={authState.loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5"
+            >
+              {authState.loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+              >
+                Create account
               </Link>
-            </Grid>
-          </Grid>
-          <Box mt={3}>
-            <Link component={RouterLink} to="/register-school" variant="body2">
+            </p>
+          </div>
+          
+          <div className="mt-4 text-center">
+            <Link
+              to="/register-school"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+            >
               Register a new school
             </Link>
-          </Box>
-        </Box>
-      </Paper>
-    </Container>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -29,11 +29,19 @@ const Index = () => {
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
           <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
           <button
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors mb-4"
             onClick={() => setUser({ name: 'John Doe', email: 'john.doe@example.com', role: 'Administrator' })}
           >
             Sign In
           </button>
+          <div className="text-center mt-4">
+            <a 
+              href="/login/new" 
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Try our new login page
+            </a>
+          </div>
         </div>
       </div>
     );
