@@ -133,7 +133,8 @@ export interface Section {
 }
 
 export interface Student {
-  id: string;
+  _id: string;
+  id: string; // Deprecated, use _id instead
   school: string;
   firstName: string;
   lastName: string;

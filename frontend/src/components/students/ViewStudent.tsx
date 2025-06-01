@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Calendar, GraduationCap, 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface ViewStudentProps {
-  studentId: number;
+  studentId: string;
   onBack: () => void;
   onEdit: () => void;
 }

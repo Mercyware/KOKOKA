@@ -241,7 +241,12 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
   // Format student name
   const formatStudentName = (student: Student) => {
-    return `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName}`;
+    const capitalize = (str: string) =>
+      str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+    return [student.firstName, student.middleName, student.lastName]
+      .filter(Boolean)
+      .map((str = '') => capitalize(str))
+      .join(' ');
   };
 
   // Get student class name
@@ -319,9 +324,9 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {students.map((student) => (
-          <Card key={student.id} className="hover:shadow-lg transition-shadow duration-200">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {students.map((student, index) => (
+          <Card key={student.id || index} className="hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
@@ -372,7 +377,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   size="sm"
                   variant="outline"
                   className="flex-1"
-                  onClick={() => onViewStudent(student.id)}
+                  onClick={() => handleViewStudent(student._id)} // Use handleViewStudent with id
                 >
                   <Eye className="h-4 w-4 mr-1" />
                   View
@@ -470,7 +475,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onViewStudent(student.id)}
+                        onClick={() => handleViewStudent(student.id)} // Use handleViewStudent with id
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -503,6 +508,13 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     setFilterMenuOpen(false);
   };
 
+  // Handler for viewing a student
+  const handleViewStudent = (studentId: string) => {
+    if (!studentId) return; // Guard: only navigate if studentId is valid
+    window.location.href = `/students/${studentId}`;
+  };
+
+  // Show ViewStudent component when a student is selected
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
