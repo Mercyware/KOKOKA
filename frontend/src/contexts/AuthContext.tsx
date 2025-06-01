@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async (): Promise<void> => {
     try {
       await authService.logout();
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

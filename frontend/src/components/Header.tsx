@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, Menu, LayoutGrid, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from './ThemeToggle';
@@ -11,7 +12,8 @@ interface HeaderProps {
   onToggleNavigation: () => void;
 }
 
-const Header = ({ user, onLogout, onToggleSidebar, navigationMode, onToggleNavigation }: HeaderProps) => {
+const Header = ({ user, onToggleSidebar, navigationMode, onToggleNavigation }: HeaderProps) => {
+  const { logout } = useAuth();
   if (!user) return null;
   
   return (
@@ -58,7 +60,7 @@ const Header = ({ user, onLogout, onToggleSidebar, navigationMode, onToggleNavig
         <ThemeToggle />
         
         <Button
-          onClick={onLogout}
+          onClick={logout}
           variant="outline"
           size="sm"
           className="flex items-center space-x-2"
