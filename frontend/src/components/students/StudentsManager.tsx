@@ -539,9 +539,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                         : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
                       } transition-colors duration-200`}
                     type="button"
-                    onClick={(e) => {
-                      setFilterMenuOpen(!filterMenuOpen);
-                    }}
+                    onClick={() => setFilterMenuOpen(!filterMenuOpen)} // <-- Remove e parameter and preventDefault
+
                   >
                     <Filter className={`h-4 w-4 ${activeFilters.length > 0 ? "animate-pulse" : ""}`} />
                     <span>Filter</span>
@@ -628,7 +627,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                               <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">All Statuses</SelectItem>
                               <SelectItem value="active">Active</SelectItem>
                               <SelectItem value="graduated">Graduated</SelectItem>
                               <SelectItem value="transferred">Transferred</SelectItem>
@@ -652,7 +650,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                               <SelectValue placeholder="All Genders" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">All Genders</SelectItem>
                               <SelectItem value="male">Male</SelectItem>
                               <SelectItem value="female">Female</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
@@ -674,7 +671,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                               <SelectValue placeholder="All Classes" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">All Classes</SelectItem>
                               {classes.map((classItem) => (
                                 <SelectItem key={classItem.id} value={classItem.id}>
                                   {classItem.name}
@@ -698,7 +694,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                               <SelectValue placeholder="All Houses" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">All Houses</SelectItem>
                               {houses.map((house) => (
                                 <SelectItem key={house.id} value={house.id}>
                                   {house.name}
