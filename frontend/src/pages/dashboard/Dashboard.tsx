@@ -68,10 +68,10 @@ const Dashboard: React.FC = () => {
         setLoading(true);
         // In a real application, you would fetch this data from your API
         // For now, we'll use mock data
-        
+
         // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         // Mock data
         setStats({
           students: 450,
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
             total: 450,
           },
         });
-        
+
         setRecentActivities([
           { id: 1, type: 'student', action: 'New student registered', name: 'John Doe', time: '2 hours ago' },
           { id: 2, type: 'exam', action: 'Exam results published', name: 'Mathematics Final', time: '5 hours ago' },
@@ -99,7 +99,7 @@ const Dashboard: React.FC = () => {
           { id: 4, type: 'class', action: 'New class added', name: 'Grade 10 Science', time: '2 days ago' },
           { id: 5, type: 'teacher', action: 'New teacher joined', name: 'Prof. Robert Smith', time: '3 days ago' },
         ]);
-        
+
         setUpcomingEvents([
           { id: 1, title: 'Mathematics Exam', date: '2023-06-15', time: '09:00 AM', location: 'Hall A' },
           { id: 2, title: 'Parent-Teacher Meeting', date: '2023-06-20', time: '02:00 PM', location: 'Conference Room' },
@@ -189,37 +189,41 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="80vh"
-        >
-          <CircularProgress />
-        </Box>
-      </Layout>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
     <Layout>
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{
+        p: { xs: 1, sm: 2, md: 3 },
+        mt: { xs: 1, sm: 2, md: 3 },
+        maxWidth: 1400,
+        margin: '0 auto',
+        width: '100%'
+      }}>
         <Typography variant="h4" gutterBottom>
           {authState.user?.role === 'admin'
             ? 'Admin Dashboard'
             : authState.user?.role === 'teacher'
-            ? 'Teacher Dashboard'
-            : authState.user?.role === 'student'
-            ? 'Student Dashboard'
-            : 'Dashboard'}
+              ? 'Teacher Dashboard'
+              : authState.user?.role === 'student'
+                ? 'Student Dashboard'
+                : 'Dashboard'}
         </Typography>
         <Typography variant="subtitle1" color="text.secondary" gutterBottom>
           Welcome back, {authState.user?.name}!
         </Typography>
 
         {/* Stats Cards */}
-<Grid container spacing={3} sx={{ mt: 1, justifyContent: 'center' }}>
+        <Grid container spacing={3} sx={{ mt: 1, justifyContent: 'center' }}>
           <Grid item xs={12} sm={6} md={3}>
             <Paper
               elevation={0}
