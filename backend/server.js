@@ -66,7 +66,7 @@ app.use(cookieParser());
 
 // CORS
 app.use(cors({
-  origin: env.CORS_ORIGIN,
+  origin: 'http://localhost:8080',
   methods: env.CORS_METHODS.split(','),
   credentials: env.CORS_CREDENTIALS
 }));
