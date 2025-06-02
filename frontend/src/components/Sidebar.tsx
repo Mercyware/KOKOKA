@@ -223,6 +223,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             if (subItem.id === 'students-list') {
                               navigate('/students');
                             }
+                            if (subItem.id === 'students-add') {
+                              navigate('/students/add');
+                            }
                           }}
                         >
                           <SubIconComponent className="mr-3 h-3 w-3 flex-shrink-0" />

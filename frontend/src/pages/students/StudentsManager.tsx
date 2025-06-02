@@ -4,13 +4,11 @@ import StudentsManagerComponent from '../../components/students/StudentsManager'
 
 const StudentsManager: React.FC = () => {
   const handleAddStudent = () => {
-    console.log('Add student clicked');
-    // Implement navigation to add student page
+    window.location.href = '/students/add';
   };
 
   const handleViewStudent = (studentId: string) => {
-    console.log('View student clicked', studentId);
-    // Implement navigation to view student page
+    window.location.href = `/students/${studentId}`;
   };
 
   return (

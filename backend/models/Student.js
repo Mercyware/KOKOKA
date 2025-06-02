@@ -57,9 +57,9 @@ const StudentSchema = new mongoose.Schema({
     ref: 'Class',
     required: true
   },
-  classArm: {
+  section: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ClassArm'
+    ref: 'Section'
   },
   rollNumber: {
     type: String,

@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, PaginatedResponse } from '../types';
+import { Section } from '../types/Section';
 import { getDevSubdomain, initDevSubdomain } from '../utils/devSubdomain';
 
 // Get the current subdomain from the hostname or localStorage
@@ -94,6 +95,14 @@ export const get = async <T>(
   } catch (error: any) {
     return handleApiError<T>(error);
   }
+};
+
+/**
+ * Fetch all sections
+ * @returns {Promise<ApiResponse<Section[]>>} A promise resolving to the list of sections
+ */
+export const fetchSections = async (): Promise<ApiResponse<Section[]>> => {
+  return get<Section[]>('/sections');
 };
 
 // Generic GET request for paginated data

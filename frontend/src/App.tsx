@@ -10,6 +10,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
 import StudentsManager from "./pages/students/StudentsManager";
 import ViewStudent from "@/pages/students/ViewStudent";
+import AddStudentForm from "./pages/students/AddStudentForm";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,16 @@ function ViewStudentWrapper() {
   );
 }
 
+function AddStudentFormWrapper() {
+  const navigate = useNavigate();
+  return (
+    <AddStudentForm
+      onBack={() => navigate(-1)}
+      onSave={() => navigate("/students")}
+    />
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" storageKey="edumanage-ui-theme">
@@ -38,6 +49,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/students" element={<StudentsManager />} />
+            <Route path="/students/add" element={<AddStudentFormWrapper />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
