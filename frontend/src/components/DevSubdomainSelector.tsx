@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import { getDevSubdomain, setDevSubdomain } from '../utils/devSubdomain';
+import api, { updateSubdomainHeader } from '../services/api';
 
 /**
  * A component that allows developers to select and change the development subdomain
@@ -69,6 +70,10 @@ const DevSubdomainSelector: React.FC = () => {
     }
 
     setDevSubdomain(subdomain.trim());
+    
+    // Update the API headers with the new subdomain
+    updateSubdomainHeader();
+    
     setOpen(false);
     setSnackbarMessage(`Development subdomain set to: ${subdomain.trim()}`);
     setSnackbarSeverity('success');

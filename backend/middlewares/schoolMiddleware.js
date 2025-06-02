@@ -1,3 +1,4 @@
+const { Console } = require('winston/lib/winston/transports');
 const School = require('../models/School');
 const logger = require('../utils/logger');
 
@@ -11,6 +12,7 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
     // Check for X-School-Subdomain header first (used by frontend in development)
     const headerSubdomain = req.headers['x-school-subdomain'];
     
+    console.log(`Header subdomain: ${headerSubdomain}`);
     if (headerSubdomain) {
       // Find school by subdomain from header
       const school = await School.findOne({ 
@@ -18,6 +20,7 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
         status: { $in: ['active', 'pending'] } // Allow both active and pending schools
       });
       
+      console.log(`Found school from header: ${school ? school.name : 'None'}`);
       if (school) {
         // Attach school to request object
         req.school = school;

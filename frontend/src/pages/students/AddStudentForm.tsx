@@ -99,6 +99,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     const fetchData = async () => {
       try {
         const sectionsResponse = await fetchSections();
+        console.log('Sections fetched:', sectionsResponse);
         if (sectionsResponse.success && sectionsResponse.data) {
           setSections(sectionsResponse.data);
         }

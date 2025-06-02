@@ -6,9 +6,17 @@ const asyncHandler = require('express-async-handler');
 // @route   GET /api/sections
 // @access  Private
 exports.getSections = asyncHandler(async (req, res) => {
-  // Create filter based on whether school is available
-  const filter = req.school ? { school: req.school._id } : {};
+  // Check if req.school exists before accessing _id
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
 
+  const filter = { school: req.school._id };
+
+  console.log('Filter for sections:', filter);
   const sections = await Section.find(filter)
     .sort({ name: 1 });
 
@@ -23,13 +31,18 @@ exports.getSections = asyncHandler(async (req, res) => {
 // @route   GET /api/sections/:id
 // @access  Private
 exports.getSection = asyncHandler(async (req, res) => {
-  // Create query based on whether school is available
-  const query = { _id: req.params.id };
-  if (req.school) {
-    query.school = req.school._id;
+  // Check if req.school exists before accessing _id
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
   }
 
-  const section = await Section.findOne(query);
+  const section = await Section.findOne({
+    _id: req.params.id,
+    school: req.school._id
+  });
 
   if (!section) {
     res.status(404);
@@ -37,13 +50,10 @@ exports.getSection = asyncHandler(async (req, res) => {
   }
 
   // Get students in this section
-  const studentQuery = { section: section._id };
-  if (req.school) {
-    studentQuery.school = req.school._id;
-  }
-  
-  const students = await Student.find(studentQuery)
-    .select('firstName lastName admissionNumber class');
+  const students = await Student.find({
+    section: section._id,
+    school: req.school._id
+  }).select('firstName lastName admissionNumber class');
 
   res.status(200).json({
     success: true,
@@ -58,23 +68,26 @@ exports.getSection = asyncHandler(async (req, res) => {
 // @route   POST /api/sections
 // @access  Private
 exports.createSection = asyncHandler(async (req, res) => {
-  // Set createdBy from user
-  req.body.createdBy = req.user._id;
-  
-  // Set school if available
-  if (req.school) {
-    req.body.school = req.school._id;
-    
-    // Check if section with same name already exists in this school
-    const existingSection = await Section.findOne({
-      name: req.body.name,
-      school: req.school._id
+  // Check if req.school exists before accessing _id
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
     });
-    
-    if (existingSection) {
-      res.status(400);
-      throw new Error('A section with this name already exists');
-    }
+  }
+
+  req.body.school = req.school._id;
+  req.body.createdBy = req.user._id;
+
+  // Check if section with same name already exists in this school
+  const existingSection = await Section.findOne({
+    name: req.body.name,
+    school: req.school._id
+  });
+
+  if (existingSection) {
+    res.status(400);
+    throw new Error('A section with this name already exists');
   }
 
   const section = await Section.create(req.body);
@@ -89,13 +102,18 @@ exports.createSection = asyncHandler(async (req, res) => {
 // @route   PUT /api/sections/:id
 // @access  Private
 exports.updateSection = asyncHandler(async (req, res) => {
-  // Create query based on whether school is available
-  const query = { _id: req.params.id };
-  if (req.school) {
-    query.school = req.school._id;
+  // Check if req.school exists before accessing _id
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
   }
 
-  let section = await Section.findOne(query);
+  let section = await Section.findOne({
+    _id: req.params.id,
+    school: req.school._id
+  });
 
   if (!section) {
     res.status(404);
@@ -103,7 +121,7 @@ exports.updateSection = asyncHandler(async (req, res) => {
   }
 
   // Check if another section with the same name exists (excluding this one)
-  if (req.body.name && req.body.name !== section.name && req.school) {
+  if (req.body.name && req.body.name !== section.name) {
     const existingSection = await Section.findOne({
       name: req.body.name,
       school: req.school._id,
@@ -135,13 +153,18 @@ exports.updateSection = asyncHandler(async (req, res) => {
 // @route   DELETE /api/sections/:id
 // @access  Private
 exports.deleteSection = asyncHandler(async (req, res) => {
-  // Create query based on whether school is available
-  const query = { _id: req.params.id };
-  if (req.school) {
-    query.school = req.school._id;
+  // Check if req.school exists before accessing _id
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
   }
 
-  const section = await Section.findOne(query);
+  const section = await Section.findOne({
+    _id: req.params.id,
+    school: req.school._id
+  });
 
   if (!section) {
     res.status(404);

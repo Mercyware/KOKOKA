@@ -43,6 +43,15 @@ if (subdomain) {
   api.defaults.headers.common['X-School-Subdomain'] = subdomain;
 }
 
+// Export a function to update the subdomain header
+export const updateSubdomainHeader = () => {
+  const subdomain = getDevSubdomain();
+  if (subdomain) {
+    api.defaults.headers.common['X-School-Subdomain'] = subdomain;
+    console.log(`API headers updated with subdomain: ${subdomain}`);
+  }
+};
+
 // Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {
