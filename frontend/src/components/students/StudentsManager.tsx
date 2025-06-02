@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { getStudents, StudentFilters } from '@/services/studentService';
+import { getAllAcademicYears } from '@/services/academicYearService';
 import { getClasses } from '@/services/classService';
 import { getHouses } from '@/services/houseService';
 import { Student, Class, House } from '@/types';
@@ -45,11 +46,12 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
   const [classes, setClasses] = useState<Class[]>([]);
   const [houses, setHouses] = useState<House[]>([]);
   const [savedFilters, setSavedFilters] = useState<{ name: string, filters: StudentFilters }[]>([]);
+  const [academicYears, setAcademicYears] = useState<{ id: string, name: string }[]>([]);
   const [newFilterName, setNewFilterName] = useState('');
   const [activeFilterCategory, setActiveFilterCategory] = useState<string>('basic');
   const [filterValues, setFilterValues] = useState<StudentFilters>({}); // New state for filter form values
 
-  // Fetch classes and houses on component mount
+  // Fetch classes, houses, and academic years on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,6 +60,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
         const housesResponse = await getHouses();
         setHouses(housesResponse.data || []);
+
+        const academicYearsResponse = await getAllAcademicYears();
+        setAcademicYears(
+          (academicYearsResponse.data || []).map((y: any) => ({
+            id: y.id || y._id,
+            name: y.name
+          }))
+        );
 
         // Load saved filters from localStorage
         const savedFiltersString = localStorage.getItem('studentFilters');
@@ -720,6 +730,28 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                     {/* Academic Filters */}
                     {activeFilterCategory === 'academic' && (
                       <div className="space-y-4">
+                        {/* Academic Year Filter */}
+                        <div className="space-y-2">
+                          <Label htmlFor="academic-year-filter" className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <span>Academic Year</span>
+                          </Label>
+                          <Select
+                            value={filters.academicYear || ''}
+                            onValueChange={(value) => applyFilter('academicYear', value || undefined)}
+                          >
+                            <SelectTrigger id="academic-year-filter">
+                              <SelectValue placeholder="All Academic Years" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {academicYears.map((year) => (
+                                <SelectItem key={year.id} value={year.id}>
+                                  {year.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                         {/* GPA Range Filter */}
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
@@ -1002,7 +1034,11 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   let displayValue = '';
 
                   // Get the value for display
-                  if (filter === 'status' && filters.status) {
+                  if (filter === 'academicYear' && filters.academicYear) {
+                    displayName = 'Academic Year';
+                    const year = academicYears.find(y => y.id === filters.academicYear);
+                    displayValue = year ? year.name : filters.academicYear;
+                  } else if (filter === 'status' && filters.status) {
                     displayValue = filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
                   } else if (filter === 'gender' && filters.gender) {
                     displayValue = filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1);
