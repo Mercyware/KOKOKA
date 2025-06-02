@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
 import { Section } from '@/types/Section';
@@ -14,6 +15,7 @@ import { ArrowLeft, Save, Calendar } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { getClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
+import { useNavigate } from 'react-router-dom';
 
 interface AddStudentFormProps {
   onBack: () => void;
@@ -21,6 +23,8 @@ interface AddStudentFormProps {
 }
 
 const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [sections, setSections] = useState<Section[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -218,17 +222,32 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
       const response = await createStudent(studentData);
       
       if (response.success) {
+        toast({
+          title: 'Student added successfully!',
+          description: 'The student profile has been created.',
+          variant: 'default',
+        });
+        setTimeout(() => {
+          navigate('/students');
+        }, 500); // Give the toast a moment to show
         if (onSave && response.data) {
           onSave(response.data);
         }
-        onBack();
       } else {
         console.error('Failed to save student:', response.error);
-        alert(`Failed to save student: ${response.message || response.error}`);
+toast({
+  title: 'Failed to save student',
+  description: response.message || response.error,
+  variant: 'destructive',
+});
       }
     } catch (error) {
       console.error('Error saving student:', error);
-      alert('An error occurred while saving the student. Please try again.');
+toast({
+  title: 'Error',
+  description: 'An error occurred while saving the student. Please try again.',
+  variant: 'destructive',
+});
     } finally {
       setLoading(false);
     }
