@@ -9,6 +9,13 @@ router.use(authMiddleware.protect);
 
 /**
  * @swagger
+ * tags:
+ *   name: Teacher Subject Assignments
+ *   description: Teacher subject assignment management endpoints
+ */
+
+/**
+ * @swagger
  * /api/teacher-subject-assignments:
  *   get:
  *     summary: Get all teacher subject assignments

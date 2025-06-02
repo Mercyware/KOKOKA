@@ -1,7 +1,6 @@
 const SittingPosition = require('../models/SittingPosition');
 const Student = require('../models/Student');
 const Class = require('../models/Class');
-const ClassArm = require('../models/ClassArm');
 const AcademicYear = require('../models/AcademicYear');
 const Term = require('../models/Term');
 

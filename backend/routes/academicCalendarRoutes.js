@@ -9,6 +9,13 @@ router.use(authMiddleware.protect);
 
 /**
  * @swagger
+ * tags:
+ *   name: Academic Calendars
+ *   description: Academic calendar management endpoints
+ */
+
+/**
+ * @swagger
  * /api/academic-calendars:
  *   get:
  *     summary: Get all academic calendars

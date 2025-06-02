@@ -13,6 +13,13 @@ router.get('/check-name', academicYearController.checkAcademicYearName);
 
 /**
  * @swagger
+ * tags:
+ *   name: Academic Years
+ *   description: Academic year management endpoints
+ */
+
+/**
+ * @swagger
  * /api/academic-years:
  *   get:
  *     summary: Get all academic years

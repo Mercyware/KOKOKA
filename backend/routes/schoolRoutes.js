@@ -11,6 +11,13 @@ const { extractSchoolFromSubdomain, requireSchool } = require('../middlewares/sc
 
 /**
  * @swagger
+ * tags:
+ *   name: Schools
+ *   description: School management endpoints
+ */
+
+/**
+ * @swagger
  * /schools/register:
  *   post:
  *     summary: Register a new school

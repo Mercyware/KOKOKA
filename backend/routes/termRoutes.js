@@ -9,6 +9,13 @@ router.use(authMiddleware.protect);
 
 /**
  * @swagger
+ * tags:
+ *   name: Terms
+ *   description: Term management endpoints
+ */
+
+/**
+ * @swagger
  * /api/terms:
  *   get:
  *     summary: Get all terms

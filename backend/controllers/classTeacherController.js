@@ -1,7 +1,6 @@
 const ClassTeacher = require('../models/ClassTeacher');
 const Staff = require('../models/Staff');
 const Class = require('../models/Class');
-const ClassArm = require('../models/ClassArm');
 const AcademicYear = require('../models/AcademicYear');
 
 // Get all class teacher assignments

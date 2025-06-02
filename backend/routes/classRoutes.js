@@ -9,6 +9,13 @@ router.use(authMiddleware.protect);
 
 /**
  * @swagger
+ * tags:
+ *   name: Classes
+ *   description: Class management endpoints
+ */
+
+/**
+ * @swagger
  * /api/classes:
  *   get:
  *     summary: Get all classes

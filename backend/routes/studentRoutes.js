@@ -10,6 +10,13 @@ router.use(schoolDataRoutes.filterBySchoolMiddleware);
 
 /**
  * @swagger
+ * tags:
+ *   name: Students
+ *   description: Student management endpoints
+ */
+
+/**
+ * @swagger
  * /students:
  *   get:
  *     summary: Get all students

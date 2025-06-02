@@ -4,7 +4,6 @@ const Subject = require('../models/Subject');
 const AcademicYear = require('../models/AcademicYear');
 const Term = require('../models/Term');
 const Class = require('../models/Class');
-const ClassArm = require('../models/ClassArm');
 
 // Get all teacher subject assignments
 exports.getAllAssignments = async function(req, res) {
@@ -41,7 +40,6 @@ exports.getAllAssignments = async function(req, res) {
       .populate('academicYear', 'name')
       .populate('term', 'name')
       .populate({ path: 'classes.class', select: 'name level' })
-      .populate({ path: 'classes.classArms', select: 'name' })
       .sort({ assignedDate: -1 });
 
     res.json(Array.isArray(assignments) ? assignments : []);
@@ -67,10 +65,6 @@ exports.getAssignmentById = async (req, res) => {
       .populate({
         path: 'classes.class',
         select: 'name level'
-      })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
       });
 
     if (!assignment) {
@@ -127,18 +121,6 @@ exports.createAssignment = async (req, res) => {
         const classObj = await Class.findById(classItem.class);
         if (!classObj) {
           return res.status(404).json({ message: `Class with ID ${classItem.class} not found` });
-        }
-
-        // Verify class arms exist if provided
-        if (classItem.classArms && classItem.classArms.length > 0) {
-          const armCount = await ClassArm.countDocuments({
-            _id: { $in: classItem.classArms },
-            class: classItem.class
-          });
-
-          if (armCount !== classItem.classArms.length) {
-            return res.status(404).json({ message: 'One or more class arms not found or do not belong to the specified class' });
-          }
         }
       }
     }
@@ -200,18 +182,6 @@ exports.updateAssignment = async (req, res) => {
         if (!classObj) {
           return res.status(404).json({ message: `Class with ID ${classItem.class} not found` });
         }
-
-        // Verify class arms exist if provided
-        if (classItem.classArms && classItem.classArms.length > 0) {
-          const armCount = await ClassArm.countDocuments({
-            _id: { $in: classItem.classArms },
-            class: classItem.class
-          });
-
-          if (armCount !== classItem.classArms.length) {
-            return res.status(404).json({ message: 'One or more class arms not found or do not belong to the specified class' });
-          }
-        }
       }
     }
 
@@ -270,10 +240,6 @@ exports.getAssignmentsByTeacher = async (req, res) => {
         path: 'classes.class',
         select: 'name level'
       })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
-      })
       .sort({ assignedDate: -1 });
 
     // Note: We don't need to populate teacher here since we're filtering by teacher ID
@@ -308,10 +274,6 @@ exports.getAssignmentsBySubject = async (req, res) => {
         path: 'classes.class',
         select: 'name level'
       })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
-      })
       .sort({ assignedDate: -1 });
 
     res.json(assignments);
@@ -336,10 +298,6 @@ exports.getAssignmentsByAcademicYear = async (req, res) => {
         path: 'classes.class',
         select: 'name level'
       })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
-      })
       .sort({ assignedDate: -1 });
 
     res.json(assignments);
@@ -363,10 +321,6 @@ exports.getAssignmentsByTerm = async (req, res) => {
       .populate({
         path: 'classes.class',
         select: 'name level'
-      })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
       })
       .sort({ assignedDate: -1 });
 
@@ -403,50 +357,6 @@ exports.getAssignmentsByClass = async (req, res) => {
       .populate({
         path: 'classes.class',
         select: 'name level'
-      })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
-      })
-      .sort({ assignedDate: -1 });
-
-    res.json(assignments);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Get assignments by class arm
-exports.getAssignmentsByClassArm = async (req, res) => {
-  try {
-    const filter = {
-      classes: {
-        $elemMatch: { classArms: req.params.classArmId }
-      }
-    };
-
-    // Apply academic year filter if provided
-    if (req.query.academicYear) {
-      filter.academicYear = req.query.academicYear;
-    }
-
-    const assignments = await TeacherSubjectAssignment.find(filter)
-      .populate({ 
-        path: 'teacher', 
-        select: 'user employeeId',
-        populate: { path: 'user', select: 'name' }, // Include staff name
-        options: { virtuals: false } // Disable virtuals for teacher to avoid filter property issue
-      })
-      .populate('subject', 'name code')
-      .populate('academicYear', 'name')
-      .populate('term', 'name')
-      .populate({
-        path: 'classes.class',
-        select: 'name level'
-      })
-      .populate({
-        path: 'classes.classArms',
-        select: 'name'
       })
       .sort({ assignedDate: -1 });
 
