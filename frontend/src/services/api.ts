@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { ApiResponse, PaginatedResponse } from '../types';
+import { ApiResponse, PaginatedResponse, House } from '../types';
 import { Section } from '../types/Section';
 import { getDevSubdomain, initDevSubdomain } from '../utils/devSubdomain';
 
@@ -104,6 +104,14 @@ export const get = async <T>(
   } catch (error: any) {
     return handleApiError<T>(error);
   }
+};
+
+/**
+ * Fetch all houses
+ * @returns {Promise<ApiResponse<House[]>>} A promise resolving to the list of houses
+ */
+export const fetchHouses = async (): Promise<ApiResponse<House[]>> => {
+  return get<House[]>('/houses');
 };
 
 /**

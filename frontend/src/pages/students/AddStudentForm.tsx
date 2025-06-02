@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchSections } from '@/services/api';
+import { fetchSections, fetchHouses } from '@/services/api';
+import { House } from '@/types';
 import { Section } from '@/types/Section';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import api from '@/services/api';
@@ -24,6 +25,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [houses, setHouses] = useState<House[]>([]);
   
   const [formData, setFormData] = useState({
     // Personal Information
@@ -99,7 +101,6 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     const fetchData = async () => {
       try {
         const sectionsResponse = await fetchSections();
-        console.log('Sections fetched:', sectionsResponse);
         if (sectionsResponse.success && sectionsResponse.data) {
           setSections(sectionsResponse.data);
         }
@@ -122,6 +123,19 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     };
     
     fetchData();
+
+    const fetchHousesData = async () => {
+      try {
+        const housesResponse = await fetchHouses();
+        if (housesResponse.success && housesResponse.data) {
+          setHouses(housesResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching houses:', error);
+      }
+    };
+
+    fetchHousesData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -443,10 +457,11 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
                           <SelectValue placeholder="Select house" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="red">Red House</SelectItem>
-                          <SelectItem value="blue">Blue House</SelectItem>
-                          <SelectItem value="green">Green House</SelectItem>
-                          <SelectItem value="yellow">Yellow House</SelectItem>
+                          {houses.map((house) => (
+                            <SelectItem key={house.id} value={house.id}>
+                              {house.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
