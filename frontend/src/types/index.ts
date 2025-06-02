@@ -145,7 +145,6 @@ export interface Student {
   admissionDate: Date;
   academicYear?: string;
   class: string;
-  classArm?: string;
   rollNumber?: string;
   house?: string | House;
   dateOfBirth: Date;
@@ -280,10 +279,6 @@ export interface StudentClassHistory {
     id: string;
     name: string;
     level: number;
-  };
-  classArm?: {
-    id: string;
-    name: string;
   };
   academicYear: {
     id: string;
@@ -460,17 +455,7 @@ export interface Class {
   description?: string;
   subjects?: string[];
   createdBy?: string;
-  classArms?: string[];
   students?: string[];
-}
-
-export interface ClassArm {
-  id: string;
-  school: string;
-  name: string;
-  description?: string;
-  students?: string[];
-  studentCount?: number;
 }
 
 export interface Subject {

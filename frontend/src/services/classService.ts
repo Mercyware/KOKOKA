@@ -69,14 +69,6 @@ export const getClassSubjects = async (id: string) => {
   return response.data;
 };
 
-/**
- * Get class arms for a class
- */
-export const getClassArms = async (id: string) => {
-  const response = await api.get(`/classes/${id}/arms`);
-  return response.data;
-};
-
 export default {
   getClasses,
   getClassById,
@@ -85,5 +77,4 @@ export default {
   deleteClass,
   getClassStudents,
   getClassSubjects,
-  getClassArms
 };

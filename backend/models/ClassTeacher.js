@@ -16,11 +16,6 @@ const ClassTeacherSchema = new mongoose.Schema({
     ref: 'Class',
     required: [true, 'Please provide class']
   },
-  classArm: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ClassArm',
-    required: [true, 'Please provide class arm/section']
-  },
   academicYear: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AcademicYear',
@@ -48,9 +43,9 @@ const ClassTeacherSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure a class and arm has only one class teacher per academic year
+// Compound index to ensure a class has only one class teacher per academic year
 ClassTeacherSchema.index(
-  { class: 1, classArm: 1, academicYear: 1 },
+  { class: 1, academicYear: 1 },
   { unique: true }
 );
 

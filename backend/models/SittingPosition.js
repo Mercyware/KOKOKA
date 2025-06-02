@@ -16,11 +16,6 @@ const SittingPositionSchema = new mongoose.Schema({
     ref: 'Class',
     required: [true, 'Please provide class']
   },
-  classArm: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ClassArm',
-    required: [true, 'Please provide class arm/section']
-  },
   academicYear: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AcademicYear',
@@ -73,21 +68,21 @@ const SittingPositionSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure a student has only one sitting position per class, arm, academic year and term
+// Compound index to ensure a student has only one sitting position per class, academic year and term
 SittingPositionSchema.index(
-  { student: 1, class: 1, classArm: 1, academicYear: 1, term: 1 },
+  { student: 1, class: 1, academicYear: 1, term: 1 },
   { unique: true }
 );
 
-// Compound index to ensure a position is assigned to only one student per class, arm, academic year and term
+// Compound index to ensure a position is assigned to only one student per class, academic year and term
 SittingPositionSchema.index(
-  { row: 1, column: 1, class: 1, classArm: 1, academicYear: 1, term: 1 },
+  { row: 1, column: 1, class: 1, academicYear: 1, term: 1 },
   { unique: true }
 );
 
-// Compound index to ensure a position number is assigned to only one student per class, arm, academic year and term
+// Compound index to ensure a position number is assigned to only one student per class, academic year and term
 SittingPositionSchema.index(
-  { positionNumber: 1, class: 1, classArm: 1, academicYear: 1, term: 1 },
+  { positionNumber: 1, class: 1, academicYear: 1, term: 1 },
   { unique: true }
 );
 

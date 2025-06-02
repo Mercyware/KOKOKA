@@ -184,53 +184,6 @@ router.get('/:id', classController.getClassById);
  */
 router.get('/academic-year/:academicYearId', classController.getClassesByAcademicYear);
 
-/**
- * @swagger
- * /api/classes/{id}/arms:
- *   get:
- *     summary: Get class arms
- *     description: Retrieve arms for a specific class. Accessible by all authenticated users.
- *     tags: [Classes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Class ID
- *     responses:
- *       200:
- *         description: List of class arms for the specified class
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   name:
- *                     type: string
- *                   class:
- *                     type: string
- *                   teacher:
- *                     type: string
- *                   capacity:
- *                     type: number
- *                   description:
- *                     type: string
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       404:
- *         description: Class not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.get('/:id/arms', classController.getClassArms);
-
 // Admin and teacher routes
 router.use(roleMiddleware.restrictTo('admin', 'teacher'));
 

@@ -75,15 +75,6 @@ router.use(authMiddleware.protect);
  *                               type: string
  *                             level:
  *                               type: number
- *                         classArms:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               _id:
- *                                 type: string
- *                               name:
- *                                 type: string
  *                   assignedDate:
  *                     type: string
  *                     format: date-time
@@ -273,15 +264,6 @@ router.get('/:id', teacherSubjectAssignmentController.getAssignmentById);
  *                               type: string
  *                             level:
  *                               type: number
- *                         classArms:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               _id:
- *                                 type: string
- *                               name:
- *                                 type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
@@ -356,15 +338,6 @@ router.get('/teacher/:teacherId', teacherSubjectAssignmentController.getAssignme
  *                               type: string
  *                             level:
  *                               type: number
- *                         classArms:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               _id:
- *                                 type: string
- *                               name:
- *                                 type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
@@ -441,15 +414,6 @@ router.get('/subject/:subjectId', teacherSubjectAssignmentController.getAssignme
  *                               type: string
  *                             level:
  *                               type: number
- *                         classArms:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               _id:
- *                                 type: string
- *                               name:
- *                                 type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
@@ -526,15 +490,6 @@ router.get('/academic-year/:academicYearId', teacherSubjectAssignmentController.
  *                               type: string
  *                             level:
  *                               type: number
- *                         classArms:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               _id:
- *                                 type: string
- *                               name:
- *                                 type: string
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       500:
@@ -609,73 +564,6 @@ router.get('/term/:termId', teacherSubjectAssignmentController.getAssignmentsByT
  */
 router.get('/class/:classId', teacherSubjectAssignmentController.getAssignmentsByClass);
 
-/**
- * @swagger
- * /api/teacher-subject-assignments/class-arm/{classArmId}:
- *   get:
- *     summary: Get assignments by class arm
- *     description: Retrieve teacher subject assignments for a specific class arm. Accessible by all authenticated users.
- *     tags: [Teacher Subject Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: classArmId
- *         required: true
- *         schema:
- *           type: string
- *         description: Class arm ID
- *     responses:
- *       200:
- *         description: List of assignments for the specified class arm
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   teacher:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       user:
- *                         type: string
- *                       employeeId:
- *                         type: string
- *                   subject:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *                       code:
- *                         type: string
- *                   academicYear:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *                   term:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       name:
- *                         type: string
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.get('/class-arm/:classArmId', teacherSubjectAssignmentController.getAssignmentsByClassArm);
-
 // Admin only routes
 router.use(roleMiddleware.restrictTo('admin'));
 
@@ -722,11 +610,6 @@ router.use(roleMiddleware.restrictTo('admin'));
  *                     class:
  *                       type: string
  *                       description: ID of the class
- *                     classArms:
- *                       type: array
- *                       items:
- *                         type: string
- *                       description: Array of class arm IDs
  *               assignedDate:
  *                 type: string
  *                 format: date-time
@@ -762,10 +645,6 @@ router.use(roleMiddleware.restrictTo('admin'));
  *                     properties:
  *                       class:
  *                         type: string
- *                       classArms:
- *                         type: array
- *                         items:
- *                           type: string
  *                 assignedDate:
  *                   type: string
  *                   format: date-time
@@ -829,11 +708,6 @@ router.post('/', teacherSubjectAssignmentController.createAssignment);
  *                     class:
  *                       type: string
  *                       description: ID of the class
- *                     classArms:
- *                       type: array
- *                       items:
- *                         type: string
- *                       description: Array of class arm IDs
  *               isActive:
  *                 type: boolean
  *                 description: Whether the assignment is active
@@ -865,10 +739,6 @@ router.post('/', teacherSubjectAssignmentController.createAssignment);
  *                     properties:
  *                       class:
  *                         type: string
- *                       classArms:
- *                         type: array
- *                         items:
- *                           type: string
  *                 assignedDate:
  *                   type: string
  *                   format: date-time

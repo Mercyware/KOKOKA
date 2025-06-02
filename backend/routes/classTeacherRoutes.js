@@ -11,7 +11,6 @@ router.use(authMiddleware.protect);
 router.get('/', classTeacherController.getAllClassTeachers);
 router.get('/check', classTeacherController.checkClassTeacherExists);
 router.get('/academic-year/:academicYearId', classTeacherController.getClassTeachersByAcademicYear);
-router.get('/class/:classId/arm/:classArmId', classTeacherController.getClassTeacherByClassAndArm);
 router.get('/teacher/:teacherId', classTeacherController.getClassesByTeacher);
 router.get('/:id', classTeacherController.getClassTeacherById);
 

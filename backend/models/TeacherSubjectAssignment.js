@@ -25,11 +25,7 @@ const TeacherSubjectAssignmentSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Class',
       required: true
-    },
-    classArms: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'ClassArm'
-    }]
+    }
   }],
   assignedDate: {
     type: Date,

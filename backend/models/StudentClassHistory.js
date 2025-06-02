@@ -11,10 +11,6 @@ const StudentClassHistorySchema = new mongoose.Schema({
     ref: 'Class',
     required: [true, 'Class is required']
   },
-  classArm: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ClassArm'
-  },
   academicYear: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AcademicYear',

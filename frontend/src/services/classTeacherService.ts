@@ -16,10 +16,6 @@ export interface ClassTeacherResponse {
     _id: string;
     name: string;
   };
-  classArm: {
-    _id: string;
-    name: string;
-  };
   academicYear: {
     _id: string;
     name: string;
@@ -32,7 +28,6 @@ export interface ClassTeacherResponse {
 export interface ClassTeacherRequest {
   teacher: string;
   class: string;
-  classArm: string;
   academicYear: string;
   isActive?: boolean;
   remarks?: string;
@@ -77,10 +72,10 @@ const getClassTeacher = async (id: string): Promise<ClassTeacherResponse> => {
   }
 };
 
-// Check if a class and arm already has a class teacher assigned for a specific academic year
-const checkClassTeacherExists = async (classId: string, classArmId: string, academicYearId: string): Promise<boolean> => {
+// Check if a class already has a class teacher assigned for a specific academic year
+const checkClassTeacherExists = async (classId: string, academicYearId: string): Promise<boolean> => {
   try {
-    const response = await api.get(`/class-teachers/check?class=${classId}&classArm=${classArmId}&academicYear=${academicYearId}`);
+    const response = await api.get(`/class-teachers/check?class=${classId}&academicYear=${academicYearId}`);
     return response.data.exists;
   } catch (error) {
     console.error('Error checking class teacher existence:', error);
