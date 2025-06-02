@@ -2,9 +2,10 @@ const Student = require('../models/Student');
 const Guardian = require('../models/Guardian');
 const Document = require('../models/Document');
 const StudentClassHistory = require('../models/StudentClassHistory');
+const AcademicYear = require('../models/AcademicYear');
 const mongoose = require('mongoose');
 
-// Get all students with pagination, filtering, and sorting
+// Get all students with pagination, filtering, and sorting via class history and academic year
 exports.getAllStudents = async (req, res) => {
   try {
     const { 
@@ -17,27 +18,54 @@ exports.getAllStudents = async (req, res) => {
       search,
       admissionDateFrom,
       admissionDateTo,
-      gender
+      gender,
+      academicYear
     } = req.query;
-    
-    // Build query
-    const query = {};
-    
+
+    // Determine academic year to use
+    let academicYearId = academicYear;
+    if (!academicYearId) {
+      // Get active academic year for the school
+      const activeYear = await AcademicYear.findOne({ school: req.school, isActive: true });
+      if (!activeYear) {
+        return res.status(400).json({ message: 'No active academic year found for this school.' });
+      }
+      academicYearId = activeYear._id;
+    }
+
+    // Get student IDs from StudentClassHistory for this school and academic year
+    const classHistoryRecords = await StudentClassHistory.find({
+      school: req.school,
+      academicYear: academicYearId
+    }).select('student');
+
+    const studentIds = classHistoryRecords.map(r => r.student);
+
+    // Build query for Student
+    const query = { _id: { $in: studentIds } };
+
     // Filter by status if provided
     if (status) {
       query.status = status;
     }
-    
-    // Filter by class if provided
+
+    // Filter by class if provided (match class in class history)
     if (classId) {
-      query.class = classId;
+      // Only include students whose class history for this year matches the classId
+      const filteredIds = [];
+      for (const record of classHistoryRecords) {
+        if (record.class && record.class.toString() === classId) {
+          filteredIds.push(record.student);
+        }
+      }
+      query._id = { $in: filteredIds };
     }
-    
+
     // Filter by gender if provided
     if (gender) {
       query.gender = gender;
     }
-    
+
     // Filter by admission date range if provided
     if (admissionDateFrom || admissionDateTo) {
       query.admissionDate = {};
@@ -48,7 +76,7 @@ exports.getAllStudents = async (req, res) => {
         query.admissionDate.$lte = new Date(admissionDateTo);
       }
     }
-    
+
     // Search by name or admission number
     if (search) {
       query.$or = [
@@ -57,14 +85,14 @@ exports.getAllStudents = async (req, res) => {
         { admissionNumber: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Determine sort order
     const sortOptions = {};
     sortOptions[sort] = order === 'desc' ? -1 : 1;
-    
+
     // Execute query with pagination and sorting
     const students = await Student.find(query)
       .sort(sortOptions)
@@ -74,10 +102,10 @@ exports.getAllStudents = async (req, res) => {
       .populate('academicYear', 'name')
       .populate('primaryGuardian', 'firstName lastName phone email')
       .lean();
-    
+
     // Get total count for pagination
     const total = await Student.countDocuments(query);
-    
+
     res.json({
       students,
       pagination: {
