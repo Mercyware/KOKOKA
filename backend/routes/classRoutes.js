@@ -16,7 +16,7 @@ router.use(authMiddleware.protect);
 
 /**
  * @swagger
- * /api/classes:
+ * /classes:
  *   get:
  *     summary: Get all classes
  *     description: Retrieve a list of all classes. Accessible by all authenticated users.

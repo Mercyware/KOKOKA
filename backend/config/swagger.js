@@ -22,11 +22,11 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.API_URL || 'http://localhost:5000/api',
+        url: process.env.API_URL || 'http://localhost:5000',
         description: 'Development server',
       },
       {
-        url: 'https://school-management-api.example.com/api',
+        url: 'https://school-management-api.example.com',
         description: 'Production server',
       },
     ],

@@ -1,4 +1,3 @@
-const express = require('express');
 const {
   getSections,
   getSection,
@@ -7,12 +6,11 @@ const {
   deleteSection
 } = require('../controllers/sectionController');
 
+const express = require('express');
 const router = express.Router();
-
-const { protect } = require('../middlewares/authMiddleware');
-const { restrictTo } = require('../middlewares/roleMiddleware');
-const schoolDataRoutes = require('./schoolDataRoutes');
-
+const authMiddleware = require('../middlewares/authMiddleware');
+const roleMiddleware = require('../middlewares/roleMiddleware');
+const schoolMiddleware = require('../middlewares/schoolMiddleware');
 /**
  * @swagger
  * tags:
@@ -22,7 +20,7 @@ const schoolDataRoutes = require('./schoolDataRoutes');
 
 /**
  * @swagger
- * /api/sections:
+ * /sections:
  *   get:
  *     summary: Get all sections
  *     description: Retrieve a list of all sections for the current school.
@@ -123,7 +121,7 @@ const schoolDataRoutes = require('./schoolDataRoutes');
  *       500:
  *         $ref: '#/components/responses/ServerError'
  *
- * /api/sections/{id}:
+ * /sections/{id}:
  *   get:
  *     summary: Get section by ID
  *     description: Retrieve a specific section and its students by ID.
@@ -279,18 +277,21 @@ const schoolDataRoutes = require('./schoolDataRoutes');
  *         $ref: '#/components/responses/ServerError'
  */
 
-// Apply authentication and school context middleware
-router.use(schoolDataRoutes.filterBySchoolMiddleware);
+// Apply authentication middleware
+router.use(authMiddleware.protect);
+// Note: extractSchoolFromSubdomain is already applied globally in server.js
+// We've updated the controller to handle cases where req.school is not set
+
 
 router
   .route('/')
   .get(getSections)
-  .post(restrictTo('admin', 'teacher'), createSection);
+  .post(roleMiddleware.restrictTo('admin', 'teacher'), createSection);
 
 router
   .route('/:id')
   .get(getSection)
-  .put(restrictTo('admin', 'teacher'), updateSection)
-  .delete(restrictTo('admin'), deleteSection);
+  .put(roleMiddleware.restrictTo('admin', 'teacher'), updateSection)
+  .delete(roleMiddleware.restrictTo('admin'), deleteSection);
 
 module.exports = router;
