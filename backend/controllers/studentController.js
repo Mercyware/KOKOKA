@@ -37,7 +37,7 @@ exports.getAllStudents = async (req, res) => {
     const classHistoryRecords = await StudentClassHistory.find({
       school: req.school,
       academicYear: academicYearId
-    }).select('student');
+    }).select('student class');
 
     const studentIds = classHistoryRecords.map(r => r.student);
 
