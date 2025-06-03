@@ -108,7 +108,7 @@ export interface Subscription {
 }
 
 export interface House {
-  id?: string;
+  id: string;
   _id?: string;
   school: string;
   name: string;

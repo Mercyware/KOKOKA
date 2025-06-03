@@ -651,8 +651,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Status</span>
                           </Label>
                           <Select
-                            value={filterValues.status || ''}
-                            onValueChange={(value) => handleFilterValueChange('status', value || undefined)}
+                            value={filters.status || ''}
+                            onValueChange={(value) => applyFilter('status', value || undefined)}
                           >
                             <SelectTrigger id="status-filter">
                               <SelectValue placeholder="All Statuses" />
@@ -674,8 +674,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Gender</span>
                           </Label>
                           <Select
-                            value={filterValues.gender || ''}
-                            onValueChange={(value) => handleFilterValueChange('gender', value || undefined)}
+                            value={filters.gender || ''}
+                            onValueChange={(value) => applyFilter('gender', value || undefined)}
                           >
                             <SelectTrigger id="gender-filter">
                               <SelectValue placeholder="All Genders" />
@@ -728,8 +728,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                               {houses && houses.length > 0 ? (
                                 houses.map((houseItem) => (
                                   <SelectItem 
-                                    key={houseItem.id || houseItem._id || `house-${houseItem.name}`} 
-                                    value={houseItem.id || houseItem._id || `house-${houseItem.name}`}
+                                    key={houseItem.id} 
+                                    value={houseItem.id}
                                   >
                                     {houseItem.name}
                                   </SelectItem>
