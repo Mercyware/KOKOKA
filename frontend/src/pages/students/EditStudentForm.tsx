@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
 import { Section } from '@/types/Section';
@@ -85,8 +85,8 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
       setInitialLoading(true);
       try {
         const studentResponse = await getStudentById(studentId);
-        if (studentResponse.success && studentResponse.data) {
-          const student = studentResponse.data;
+        if (studentResponse.success && studentResponse.student) {
+          const student = studentResponse.student;
           setFormData({
             firstName: student.firstName || '',
             middleName: student.middleName || '',
@@ -239,29 +239,30 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
           rollNumber: formData.rollNumber || undefined,
           status: formData.status,
           bloodGroup: formData.bloodGroup || undefined,
-          height: formData.height.value ? {
-            value: parseFloat(formData.height.value as string),
+          height: {
+            value: formData.height.value ? parseFloat(formData.height.value as string) : 0,
             unit: formData.height.unit
-          } : undefined,
-          weight: formData.weight.value ? {
-            value: parseFloat(formData.weight.value as string),
+          },
+          weight: {
+            value: formData.weight.value ? parseFloat(formData.weight.value as string) : 0,
             unit: formData.weight.unit
-          } : undefined,
-          healthInfo: (
-            formData.healthInfo.allergies.length > 0 ||
-            formData.healthInfo.medicalConditions.length > 0 ||
-            formData.healthInfo.medications.length > 0 ||
-            formData.healthInfo.dietaryRestrictions.length > 0 ||
-            formData.healthInfo.disabilities.length > 0
-          ) ? formData.healthInfo : undefined,
+          },
+          healthInfo: {
+            allergies: formData.healthInfo.allergies || [],
+            medicalConditions: formData.healthInfo.medicalConditions || [],
+            medications: formData.healthInfo.medications || [],
+            dietaryRestrictions: formData.healthInfo.dietaryRestrictions || [],
+            disabilities: formData.healthInfo.disabilities || [],
+            vaccinationStatus: formData.healthInfo.vaccinationStatus || []
+          },
           contactInfo: {
-            phone: formData.contactInfo.phone || undefined,
-            alternativePhone: formData.contactInfo.alternativePhone || undefined,
-            emergencyContact: (
-              formData.contactInfo.emergencyContact.name ||
-              formData.contactInfo.emergencyContact.relationship ||
-              formData.contactInfo.emergencyContact.phone
-            ) ? formData.contactInfo.emergencyContact : undefined
+            phone: formData.contactInfo.phone || '',
+            alternativePhone: formData.contactInfo.alternativePhone || '',
+            emergencyContact: {
+              name: formData.contactInfo.emergencyContact.name || '',
+              relationship: formData.contactInfo.emergencyContact.relationship || '',
+              phone: formData.contactInfo.emergencyContact.phone || ''
+            }
           },
           address: (
             formData.address.street ||
@@ -283,16 +284,16 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
           });
           setTimeout(() => {
             if (onSave) {
-              onSave(response.data);
+              onSave(response.student);
             } else {
               navigate(`/students/${studentId}`);
             }
           }, 500);
         } else {
-          console.error('Failed to update student:', response.error);
+          console.error('Failed to update student');
           toast({
             title: 'Failed to update student',
-            description: response.message || response.error,
+            description: 'An error occurred while updating the student.',
             variant: 'destructive',
           });
         }

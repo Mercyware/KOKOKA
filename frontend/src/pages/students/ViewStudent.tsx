@@ -25,7 +25,7 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
     setError(null);
     getStudentById(studentId)
       .then((res) => {
-        setStudent(res.data);
+        setStudent(res.student);
         setLoading(false);
       })
       .catch((err) => {

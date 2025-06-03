@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
 import { Section } from '@/types/Section';

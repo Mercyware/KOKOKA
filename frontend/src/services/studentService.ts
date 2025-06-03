@@ -52,17 +52,18 @@ export const getStudents = async (filters: StudentFilters = {}): Promise<Paginat
 };
 
 // Get student by ID
-export const getStudentById = async (id: string): Promise<ApiResponse<Student>> => {
+export const getStudentById = async (id: string): Promise<{ success: boolean; student: Student }> => {
   try {
-    const response = await get<Student>(`/students/${id}`);
-    // If response is the student object (not wrapped), wrap it as { data: ..., success: true }
-    if (response && !('data' in response) && typeof response === 'object') {
-      return { data: response, success: true };
+    const response = await get<{ student: Student }>(`/students/${id}`);
+    if (response && 'student' in response) {
+      return { success: true, student: response.student };
     }
-    return response;
+    if (response && 'data' in response) {
+      return { success: true, student: response.data };
+    }
+    throw new Error('Invalid response shape');
   } catch (error) {
-    console.error(`Error fetching student with ID ${id}:`, error);
-    throw error;
+    return { success: false, student: {} as Student };
   }
 };
 
@@ -77,12 +78,20 @@ export const createStudent = async (studentData: Partial<Student>): Promise<ApiR
 };
 
 // Update student
-export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<ApiResponse<Student>> => {
+export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<{ success: boolean; student: Student }> => {
   try {
-    return await put<Student>(`/students/${id}`, studentData);
-  } catch (error) {
-    console.error(`Error updating student with ID ${id}:`, error);
-    throw error;
+    const response = await put<{ student: Student }>(`/students/${id}`, studentData);
+    // If backend returns { student, success }
+    if (response && 'student' in response) {
+      return { success: true, student: response.student };
+    }
+    // Fallback: if backend returns { data, success }
+    if (response && 'data' in response) {
+      return { success: true, student: response.data };
+    }
+    throw new Error('Invalid response shape');
+  } catch (error: any) {
+    return { success: false, student: {} as Student };
   }
 };
 

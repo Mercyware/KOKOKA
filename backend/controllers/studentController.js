@@ -113,6 +113,7 @@ exports.getAllStudents = async (req, res) => {
     const total = await Student.countDocuments(query);
 
     res.json({
+      success: true,
       students,
       pagination: {
         total,
@@ -122,7 +123,7 @@ exports.getAllStudents = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -142,12 +143,12 @@ exports.getStudentById = async (req, res) => {
       });
     
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
-    res.json(student);
+    res.json({ success: true, student });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -339,7 +340,7 @@ exports.updateStudent = async (req, res) => {
     // Check if student exists
     const existingStudent = await Student.findById(studentId);
     if (!existingStudent) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Extract guardian data if provided
@@ -478,16 +479,17 @@ exports.updateStudent = async (req, res) => {
       .populate('class', 'name level')
       .populate('academicYear', 'name startDate endDate');
     
-    res.json(result);
+    res.json({ success: true, student: result });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ 
+        success: false,
         message: 'Duplicate key error', 
         error: 'A student with this admission number already exists' 
       });
     }
     
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -500,7 +502,7 @@ exports.deleteStudent = async (req, res) => {
     const student = await Student.findById(studentId);
     
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Remove student from guardians' students arrays
@@ -526,9 +528,9 @@ exports.deleteStudent = async (req, res) => {
     // Delete student
     await Student.findByIdAndDelete(studentId);
     
-    res.json({ message: 'Student deleted successfully' });
+    res.json({ success: true, message: 'Student deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -538,12 +540,12 @@ exports.getStudentAttendance = async (req, res) => {
     const student = await Student.findById(req.params.id).select('attendance');
     
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
-    res.json(student.attendance);
+    res.json({ success: true, attendance: student.attendance });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -555,12 +557,12 @@ exports.getStudentGrades = async (req, res) => {
       .populate('grades.exam');
     
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
-    res.json(student.grades);
+    res.json({ success: true, grades: student.grades });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -573,7 +575,7 @@ exports.manageGuardian = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     let guardian;
@@ -624,9 +626,9 @@ exports.manageGuardian = async (req, res) => {
     
     await student.save();
     
-    res.json(guardian);
+    res.json({ success: true, guardian });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -638,13 +640,13 @@ exports.removeGuardian = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Check if guardian exists
     const guardian = await Guardian.findById(guardianId);
     if (!guardian) {
-      return res.status(404).json({ message: 'Guardian not found' });
+      return res.status(404).json({ success: false, message: 'Guardian not found' });
     }
     
     // Remove guardian from student's guardians array
@@ -666,9 +668,9 @@ exports.removeGuardian = async (req, res) => {
     
     await guardian.save();
     
-    res.json({ message: 'Guardian removed from student successfully' });
+    res.json({ success: true, message: 'Guardian removed from student successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -681,7 +683,7 @@ exports.uploadDocument = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Create new document
@@ -707,9 +709,9 @@ exports.uploadDocument = async (req, res) => {
     student.documents.push(document._id);
     await student.save();
     
-    res.status(201).json(document);
+    res.status(201).json({ success: true, document });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -721,7 +723,7 @@ exports.getStudentDocuments = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Get documents
@@ -729,9 +731,9 @@ exports.getStudentDocuments = async (req, res) => {
       .populate('uploadedBy', 'name')
       .populate('verifiedBy', 'name');
     
-    res.json(documents);
+    res.json({ success: true, documents });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -743,18 +745,18 @@ exports.deleteDocument = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Check if document exists
     const document = await Document.findById(documentId);
     if (!document) {
-      return res.status(404).json({ message: 'Document not found' });
+      return res.status(404).json({ success: false, message: 'Document not found' });
     }
     
     // Check if document belongs to student
     if (document.student.toString() !== studentId) {
-      return res.status(403).json({ message: 'Document does not belong to this student' });
+      return res.status(403).json({ success: false, message: 'Document does not belong to this student' });
     }
     
     // Delete document
@@ -767,9 +769,9 @@ exports.deleteDocument = async (req, res) => {
     
     await student.save();
     
-    res.json({ message: 'Document deleted successfully' });
+    res.json({ success: true, message: 'Document deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -781,12 +783,12 @@ exports.verifyDocument = async (req, res) => {
     // Check if document exists
     const document = await Document.findById(documentId);
     if (!document) {
-      return res.status(404).json({ message: 'Document not found' });
+      return res.status(404).json({ success: false, message: 'Document not found' });
     }
     
     // Check if document belongs to student
     if (document.student.toString() !== studentId) {
-      return res.status(403).json({ message: 'Document does not belong to this student' });
+      return res.status(403).json({ success: false, message: 'Document does not belong to this student' });
     }
     
     // Update document
@@ -797,9 +799,9 @@ exports.verifyDocument = async (req, res) => {
     
     await document.save();
     
-    res.json(document);
+    res.json({ success: true, document });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -811,7 +813,7 @@ exports.getStudentClassHistory = async (req, res) => {
     // Check if student exists
     const student = await Student.findById(studentId);
     if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ success: false, message: 'Student not found' });
     }
     
     // Get class history
@@ -822,8 +824,8 @@ exports.getStudentClassHistory = async (req, res) => {
       .sort({ startDate: -1 }) // Sort by start date (newest first)
       .lean();
     
-    res.json(history);
+    res.json({ success: true, history });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
