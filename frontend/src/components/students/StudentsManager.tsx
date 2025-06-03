@@ -14,6 +14,7 @@ import { getStudents, StudentFilters } from '@/services/studentService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { getClasses } from '@/services/classService';
 import { getHouses } from '@/services/houseService';
+import { getSections } from '@/services/sectionService';
 import { Student, Class, House } from '@/types';
 
 interface StudentsManagerProps {
@@ -47,6 +48,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
   const [houses, setHouses] = useState<House[]>([]);
   const [savedFilters, setSavedFilters] = useState<{ name: string, filters: StudentFilters }[]>([]);
   const [academicYears, setAcademicYears] = useState<{ id: string, name: string }[]>([]);
+  const [sections, setSections] = useState<{ id: string, name: string }[]>([]);
   const [newFilterName, setNewFilterName] = useState('');
   const [activeFilterCategory, setActiveFilterCategory] = useState<string>('basic');
   const [filterValues, setFilterValues] = useState<StudentFilters>({}); // New state for filter form values
@@ -83,6 +85,15 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         if (savedFiltersString) {
           setSavedFilters(JSON.parse(savedFiltersString));
         }
+
+        // Fetch sections
+        const sectionsResponse = await getSections();
+        setSections(
+          (sectionsResponse || []).map((s: any) => ({
+            id: s.id || s._id,
+            name: s.name
+          }))
+        );
       } catch (err) {
         console.error('Error fetching filter data:', err);
       }
@@ -711,6 +722,29 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                           </Select>
                         </div>
 
+                        {/* Section Filter */}
+                        <div className="space-y-2">
+                          <Label htmlFor="section-filter" className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-gray-500" />
+                            <span>Section</span>
+                          </Label>
+                          <Select
+                            value={filters.section || ''}
+                            onValueChange={(value) => applyFilter('section', value || undefined)}
+                          >
+                            <SelectTrigger id="section-filter">
+                              <SelectValue placeholder="All Sections" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sections.map((sectionItem) => (
+                                <SelectItem key={sectionItem.id} value={sectionItem.id}>
+                                  {sectionItem.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {/* House Filter */}
                         <div className="space-y-2">
                           <Label htmlFor="house-filter" className="flex items-center gap-2">
@@ -1070,6 +1104,10 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   } else if (filter === 'class' && filters.class) {
                     const classItem = classes.find(c => c.id === filters.class);
                     displayValue = classItem ? classItem.name : filters.class;
+                  } else if (filter === 'section' && filters.section) {
+                    displayName = 'Section';
+                    const sectionItem = sections.find(s => s.id === filters.section);
+                    displayValue = sectionItem ? sectionItem.name : filters.section;
                   } else if (filter === 'house' && filters.house) {
                     const houseItem = houses.find(h => 
                       (h.id && h.id === filters.house) || 

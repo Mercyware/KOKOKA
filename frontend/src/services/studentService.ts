@@ -4,6 +4,7 @@ import api, { get, getPaginated, post, put, del } from './api';
 // Interface for student filter parameters
 export interface StudentFilters {
   academicYear?: string;
+  section?: string;
   page?: number;
   limit?: number;
   sort?: string;

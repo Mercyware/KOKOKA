@@ -15,6 +15,7 @@ exports.getAllStudents = async (req, res) => {
       order = 'asc',
       status,
       class: classId,
+      section,
       search,
       admissionDateFrom,
       admissionDateTo,
@@ -59,6 +60,11 @@ exports.getAllStudents = async (req, res) => {
         }
       }
       query._id = { $in: filteredIds };
+    }
+
+    // Filter by section if provided
+    if (section) {
+      query.section = section;
     }
 
     // Filter by gender if provided
