@@ -7,10 +7,22 @@ import { House } from '../types';
 export const getHouses = async () => {
   try {
     const response = await api.get('/houses');
-    return response.data?.data || [];
+    console.log('Raw houses response:', response);
+    
+    // Check if response.data exists and has a data property
+    if (response.data && response.data.data) {
+      console.log('Houses data from API:', response.data.data);
+      return response.data;
+    } else if (Array.isArray(response.data)) {
+      console.log('Houses array from API:', response.data);
+      return { data: response.data };
+    } else {
+      console.log('No houses data found in response:', response);
+      return { data: [] };
+    }
   } catch (error) {
     console.error('Error fetching houses:', error);
-    return [];
+    return { data: [] };
   }
 };
 

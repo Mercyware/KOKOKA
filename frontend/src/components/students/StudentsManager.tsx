@@ -57,9 +57,18 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
       try {
         const classesResponse = await getClasses();
         setClasses(classesResponse.data || []);
+        console.log('Classes fetched:', classesResponse);
 
         const housesResponse = await getHouses();
-        setHouses(housesResponse.data || []);
+        console.log('Houses response:', housesResponse);
+        // Check if housesResponse is an array or has a data property
+        if (Array.isArray(housesResponse)) {
+          setHouses(housesResponse);
+          console.log('Houses set from array:', housesResponse);
+        } else {
+          setHouses(housesResponse.data || []);
+          console.log('Houses set from data property:', housesResponse.data);
+        }
 
         const academicYearsResponse = await getAllAcademicYears();
         setAcademicYears(
@@ -702,28 +711,37 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                           </Select>
                         </div>
 
-{/* House Filter */}
-<div className="space-y-2">
-  <Label htmlFor="house-filter" className="flex items-center gap-2">
-    <Home className="h-4 w-4 text-gray-500" />
-    <span>House</span>
-  </Label>
-  <Select
-    value={filterValues.house || ''}
-    onValueChange={(value) => handleFilterValueChange('house', value || undefined)}
-  >
-    <SelectTrigger id="house-filter">
-      <SelectValue placeholder="All Houses" />
-    </SelectTrigger>
-    <SelectContent>
-      {houses.map((houseItem) => (
-        <SelectItem key={houseItem.id} value={houseItem.id}>
-          {houseItem.name}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-</div>
+                        {/* House Filter */}
+                        <div className="space-y-2">
+                          <Label htmlFor="house-filter" className="flex items-center gap-2">
+                            <Home className="h-4 w-4 text-gray-500" />
+                            <span>House</span>
+                          </Label>
+                          <Select
+                            value={filters.house || ''}
+                            onValueChange={(value) => applyFilter('house', value || undefined)}
+                          >
+                            <SelectTrigger id="house-filter">
+                              <SelectValue placeholder="All Houses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {houses && houses.length > 0 ? (
+                                houses.map((houseItem) => (
+                                  <SelectItem 
+                                    key={houseItem.id || houseItem._id || `house-${houseItem.name}`} 
+                                    value={houseItem.id || houseItem._id || `house-${houseItem.name}`}
+                                  >
+                                    {houseItem.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-houses" disabled>
+                                  No houses available
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
                       </div>
                     )}
@@ -1053,7 +1071,11 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                     const classItem = classes.find(c => c.id === filters.class);
                     displayValue = classItem ? classItem.name : filters.class;
                   } else if (filter === 'house' && filters.house) {
-                    const houseItem = houses.find(h => h.id === filters.house);
+                    const houseItem = houses.find(h => 
+                      (h.id && h.id === filters.house) || 
+                      (h._id && h._id === filters.house) || 
+                      `house-${h.name}` === filters.house
+                    );
                     displayValue = houseItem ? houseItem.name : filters.house;
                   } else if (filter === 'admissionDateFrom' && filters.admissionDateFrom) {
                     displayName = 'Admission From';
