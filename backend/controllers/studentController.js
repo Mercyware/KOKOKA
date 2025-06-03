@@ -131,7 +131,7 @@ exports.getStudentById = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
       .populate('class', 'name grade')
-      .populate('classArm', 'name')
+      .populate('section', 'name')
       .populate('academicYear', 'name startDate endDate')
       .populate('guardians', 'firstName lastName relationship phone email isEmergencyContact')
       .populate('primaryGuardian', 'firstName lastName relationship phone email')

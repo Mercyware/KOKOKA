@@ -54,7 +54,12 @@ export const getStudents = async (filters: StudentFilters = {}): Promise<Paginat
 // Get student by ID
 export const getStudentById = async (id: string): Promise<ApiResponse<Student>> => {
   try {
-    return await get<Student>(`/students/${id}`);
+    const response = await get<Student>(`/students/${id}`);
+    // If response is the student object (not wrapped), wrap it as { data: ..., success: true }
+    if (response && !('data' in response) && typeof response === 'object') {
+      return { data: response, success: true };
+    }
+    return response;
   } catch (error) {
     console.error(`Error fetching student with ID ${id}:`, error);
     throw error;

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Trash2, Phone, Mail, MapPin, Calendar, GraduationCap, TrendingUp, Camera, Upload, Eye } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import Layout from '@/components/layout/Layout';
+import { getStudentById } from '@/services/studentService';
 
 
 interface ViewStudentProps {
@@ -15,48 +16,58 @@ interface ViewStudentProps {
 
 const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock student data - in real app, fetch by ID
-  const student = {
-    id: studentId,
-    name: 'Emma Johnson',
-    email: 'emma.j@school.edu',
-    phone: '+1 234-567-8901',
-    grade: '10th Grade',
-    class: '10-A',
-    status: 'Active',
-    gpa: 3.8,
-    attendance: 95,
-    address: '123 Main St, City, State 12345',
-    parentName: 'John Johnson',
-    parentPhone: '+1 234-567-8900',
-    enrollmentDate: '2023-09-01',
-    emergencyContact: 'Jane Johnson (+1 234-567-8902)',
-    profileImage: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=400&fit=crop&crop=face',
-    recentGrades: [
-      { subject: 'Mathematics', grade: 'A-', score: 92 },
-      { subject: 'English', grade: 'B+', score: 88 },
-      { subject: 'Science', grade: 'A', score: 95 },
-      { subject: 'History', grade: 'A-', score: 91 }
-    ],
-    attendanceHistory: [
-      { month: 'January', percentage: 98 },
-      { month: 'February', percentage: 95 },
-      { month: 'March', percentage: 92 },
-      { month: 'April', percentage: 97 }
-    ],
-    imageGallery: [
-      { id: 1, url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=200&h=200&fit=crop', date: '2024-01-15', description: 'School sports day' },
-      { id: 2, url: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=200&h=200&fit=crop', date: '2024-02-20', description: 'Science fair presentation' },
-      { id: 3, url: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=200&h=200&fit=crop', date: '2024-03-10', description: 'Achievement ceremony' },
-      { id: 4, url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=200&h=200&fit=crop', date: '2024-04-05', description: 'Class photo' }
-    ]
-  };
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getStudentById(studentId)
+      .then((res) => {
+        setStudent(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError('Failed to load student data.');
+        setLoading(false);
+      });
+  }, [studentId]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: GraduationCap },
     { id: 'gallery', label: 'Photo Gallery', icon: Camera }
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-12">
+          <span className="text-lg">Loading student...</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-12">
+          <span className="text-lg text-red-500">{error}</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!student) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-12">
+          <span className="text-lg text-gray-500">No student data found.</span>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -68,12 +79,21 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
             </Button>
             <div className="flex items-center space-x-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={student.profileImage} alt={student.name} />
-                <AvatarFallback>{student.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                <AvatarImage src={student.profileImage || student.photo || ''} alt={student.name || student.firstName || ''} />
+                <AvatarFallback>
+                  {(student.name || `${student.firstName || ''} ${student.lastName || ''}`)
+                    .split(' ')
+                    .map((n: string) => n?.[0] || '')
+                    .join('')}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{student.name}</h1>
-                <p className="text-gray-600 dark:text-gray-400">{student.grade} - {student.class}</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {student.name || [student.firstName, student.middleName, student.lastName].filter(Boolean).join(' ')}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {(student.grade || '') + (student.class && student.class.name ? ` - ${student.class.name}` : '')}
+                </p>
               </div>
             </div>
           </div>
@@ -127,21 +147,29 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                         <Mail className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                          <p className="font-medium">{student.email}</p>
+                          <p className="font-medium">{student.email || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Phone className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-                          <p className="font-medium">{student.phone}</p>
+                          <p className="font-medium">{student.phone || student.contactInfo?.phone || 'N/A'}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <MapPin className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Address</p>
-                          <p className="font-medium">{student.address}</p>
+                          <p className="font-medium">
+                            {typeof student.address === 'string'
+                              ? student.address
+                              : student.address
+                              ? [student.address.street, student.address.city, student.address.state, student.address.country]
+                                  .filter(Boolean)
+                                  .join(', ')
+                              : 'N/A'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -150,19 +178,27 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                         <Calendar className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400">Enrollment Date</p>
-                          <p className="font-medium">{new Date(student.enrollmentDate).toLocaleDateString()}</p>
+                          <p className="font-medium">
+                            {student.enrollmentDate
+                              ? new Date(student.enrollmentDate).toLocaleDateString()
+                              : 'N/A'}
+                          </p>
                         </div>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                         <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mt-1">
-                          {student.status}
+                          {student.status || 'N/A'}
                         </Badge>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Parent/Guardian</p>
-                        <p className="font-medium">{student.parentName}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{student.parentPhone}</p>
+                        <p className="font-medium">
+                          {student.parentName || student.primaryGuardian?.firstName || 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {student.parentPhone || student.primaryGuardian?.phone || 'N/A'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -179,16 +215,25 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{student.gpa}</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      {student.gpa || student.averageGrade?.toFixed?.(1) || 'N/A'}
+                    </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Current GPA</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{student.attendance}%</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {student.attendance || student.attendancePercentage?.toFixed?.(0) || 'N/A'}%
+                    </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Attendance Rate</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Emergency Contact</p>
-                    <p className="font-medium text-sm">{student.emergencyContact}</p>
+                    <p className="font-medium text-sm">
+                      {student.emergencyContact ||
+                        student.contactInfo?.emergencyContact?.name
+                          ? `${student.contactInfo?.emergencyContact?.name} (${student.contactInfo?.emergencyContact?.phone})`
+                          : 'N/A'}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -201,11 +246,17 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {student.recentGrades.map((grade, index) => (
+                  {(student.recentGrades || student.grades || []).map((grade: any, index: number) => (
                     <div key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-                      <p className="font-medium text-gray-900 dark:text-white">{grade.subject}</p>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{grade.grade}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{grade.score}%</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {grade.subject || grade.exam?.subject || 'N/A'}
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
+                        {grade.grade || grade.score || 'N/A'}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {grade.score !== undefined ? `${grade.score}%` : ''}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -219,10 +270,18 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {student.attendanceHistory.map((record, index) => (
+                  {(student.attendanceHistory || student.attendance || []).map((record: any, index: number) => (
                     <div key={index} className="text-center">
-                      <p className="font-medium text-gray-900 dark:text-white">{record.month}</p>
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">{record.percentage}%</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {record.month || (record.date && new Date(record.date).toLocaleDateString()) || 'N/A'}
+                      </p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {record.percentage !== undefined
+                          ? `${record.percentage}%`
+                          : record.status
+                          ? record.status
+                          : ''}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -247,7 +306,7 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {student.imageGallery.map((image) => (
+                {(student.imageGallery || []).map((image: any) => (
                   <div key={image.id} className="group relative">
                     <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                       <img
