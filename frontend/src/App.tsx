@@ -12,6 +12,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import StudentsManager from "./pages/students/StudentsManager";
 import ViewStudent from "@/pages/students/ViewStudent";
 import AddStudentForm from "./pages/students/AddStudentForm";
+import EditStudentForm from "./pages/students/EditStudentForm";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +24,20 @@ function ViewStudentWrapper() {
     <ViewStudent
       studentId={studentId}
       onBack={() => navigate(-1)}
-      onEdit={() => {}}
+      onEdit={() => navigate(`/students/${studentId}/edit`)}
+    />
+  );
+}
+
+function EditStudentFormWrapper() {
+  const { studentId } = useParams<{ studentId: string }>();
+  const navigate = useNavigate();
+  if (!studentId) return null;
+  return (
+    <EditStudentForm
+      studentId={studentId}
+      onBack={() => navigate(`/students/${studentId}`)}
+      onSave={() => navigate(`/students/${studentId}`)}
     />
   );
 }
@@ -52,6 +66,7 @@ const App = () => (
             <Route path="/students" element={<StudentsManager />} />
             <Route path="/students/add" element={<AddStudentFormWrapper />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
+            <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

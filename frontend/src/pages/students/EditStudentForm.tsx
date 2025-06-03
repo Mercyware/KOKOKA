@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
 import { Section } from '@/types/Section';
-import { createStudent } from '@/services/studentService';
+import { getStudentById, updateStudent } from '@/services/studentService';
 import Layout from '../../components/layout/Layout';
 import { getClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import StudentForm from '@/components/students/StudentForm';
 import { ArrowLeft } from 'lucide-react';
 
-interface AddStudentFormProps {
+interface EditStudentFormProps {
+  studentId: string;
   onBack: () => void;
   onSave?: (student: any) => void;
 }
@@ -68,26 +69,120 @@ const emptyFormData = {
   }]
 };
 
-const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
+const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [sections, setSections] = useState<Section[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [houses, setHouses] = useState<House[]>([]);
+  const [formData, setFormData] = useState(emptyFormData);
 
   useEffect(() => {
     const fetchData = async () => {
+      setInitialLoading(true);
       try {
+        const studentResponse = await getStudentById(studentId);
+        if (studentResponse.success && studentResponse.data) {
+          const student = studentResponse.data;
+          setFormData({
+            firstName: student.firstName || '',
+            middleName: student.middleName || '',
+            lastName: student.lastName || '',
+            email: student.email || '',
+            dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
+            gender: student.gender || '',
+            admissionNumber: student.admissionNumber || '',
+            admissionDate: student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            class: typeof student.class === 'object' && student.class !== null && typeof (student.class as any)._id === 'string'
+              ? (student.class as any)._id
+              : typeof student.class === 'string'
+                ? student.class
+                : '',
+            section: typeof (student as any).section === 'object' && (student as any).section !== null && typeof ((student as any).section as any)._id === 'string'
+              ? ((student as any).section as any)._id
+              : typeof (student as any).section === 'string'
+                ? (student as any).section
+                : '',
+            academicYear: typeof student.academicYear === 'object' && student.academicYear !== null && typeof (student.academicYear as any)._id === 'string'
+              ? (student.academicYear as any)._id
+              : typeof student.academicYear === 'string'
+                ? student.academicYear
+                : '',
+            house: typeof student.house === 'object' && student.house !== null && typeof (student.house as any)._id === 'string'
+              ? (student.house as any)._id
+              : typeof student.house === 'string'
+                ? student.house
+                : '',
+            rollNumber: student.rollNumber || '',
+            status: student.status || 'active',
+            bloodGroup: typeof student.bloodGroup === 'string' && (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown', ''] as const).includes(student.bloodGroup as any)
+              ? (student.bloodGroup as any)
+              : '',
+            height: {
+              value: student.height?.value?.toString() || '',
+              unit: student.height?.unit || 'cm'
+            },
+            weight: {
+              value: student.weight?.value?.toString() || '',
+              unit: student.weight?.unit || 'kg'
+            },
+            healthInfo: {
+              allergies: student.healthInfo?.allergies || [],
+              medicalConditions: student.healthInfo?.medicalConditions || [],
+              medications: student.healthInfo?.medications || [],
+              dietaryRestrictions: student.healthInfo?.dietaryRestrictions || [],
+              disabilities: student.healthInfo?.disabilities || []
+            },
+            contactInfo: {
+              phone: student.contactInfo?.phone || '',
+              alternativePhone: student.contactInfo?.alternativePhone || '',
+              emergencyContact: {
+                name: student.contactInfo?.emergencyContact?.name || '',
+                relationship: student.contactInfo?.emergencyContact?.relationship || '',
+                phone: student.contactInfo?.emergencyContact?.phone || ''
+              }
+            },
+            address: {
+              street: typeof student.address === 'string' ? student.address : student.address?.street || '',
+              city: student.address?.city || '',
+              state: student.address?.state || '',
+              zipCode: student.address?.zipCode || '',
+              country: student.address?.country || ''
+            },
+            guardians: Array.isArray((student as any).guardians) && (student as any).guardians.length > 0
+              ? (student as any).guardians.map((guardian: any) => ({
+                  _id: typeof guardian._id === 'string' ? guardian._id : undefined,
+                  firstName: guardian.firstName || '',
+                  lastName: guardian.lastName || '',
+                  relationship: guardian.relationship || '',
+                  phone: guardian.phone || '',
+                  email: guardian.email || '',
+                  occupation: guardian.occupation || '',
+                  isPrimary:
+                    typeof guardian._id === 'string' &&
+                    (((student as any).primaryGuardian && typeof (student as any).primaryGuardian === 'object' && typeof (student as any).primaryGuardian._id === 'string'
+                      ? guardian._id === (student as any).primaryGuardian._id
+                      : guardian._id === (student as any).primaryGuardian))
+                }))
+              : [{
+                  firstName: '',
+                  lastName: '',
+                  relationship: '',
+                  phone: '',
+                  email: '',
+                  occupation: '',
+                  isPrimary: true
+                }]
+          });
+        }
+
         const sectionsResponse = await fetchSections();
         if (sectionsResponse.success && sectionsResponse.data) {
           setSections(sectionsResponse.data);
         }
-      } catch (error) {
-        console.error('Error fetching sections:', error);
-      }
-      try {
         const classesResponse = await getClasses();
         if (classesResponse.data) {
           setClasses(classesResponse.data);
@@ -96,26 +191,24 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         if (academicYearsResponse.data) {
           setAcademicYears(academicYearsResponse.data);
         }
-      } catch (error) {
-        console.error('Error fetching form data:', error);
-      }
-    };
-
-    fetchData();
-
-    const fetchHousesData = async () => {
-      try {
         const housesResponse = await fetchHouses();
         if (housesResponse.success && housesResponse.data) {
           setHouses(housesResponse.data);
         }
       } catch (error) {
-        console.error('Error fetching houses:', error);
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load student data. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setInitialLoading(false);
       }
     };
 
-    fetchHousesData();
-  }, []);
+    fetchData();
+  }, [studentId, toast]);
 
   const handleSubmit = (formData: any) => {
     setLoading(true);
@@ -180,33 +273,34 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
           guardians: validGuardians.length > 0 ? (validGuardians as any) : undefined
         };
 
-        const response = await createStudent(studentData);
+        const response = await updateStudent(studentId, studentData);
 
         if (response.success) {
           toast({
-            title: 'Student added successfully!',
-            description: 'The student profile has been created.',
+            title: 'Student updated successfully!',
+            description: 'The student profile has been updated.',
             variant: 'default',
           });
           setTimeout(() => {
-            navigate('/students');
+            if (onSave) {
+              onSave(response.data);
+            } else {
+              navigate(`/students/${studentId}`);
+            }
           }, 500);
-          if (onSave && response.data) {
-            onSave(response.data);
-          }
         } else {
-          console.error('Failed to save student:', response.error);
+          console.error('Failed to update student:', response.error);
           toast({
-            title: 'Failed to save student',
+            title: 'Failed to update student',
             description: response.message || response.error,
             variant: 'destructive',
           });
         }
       } catch (error) {
-        console.error('Error saving student:', error);
+        console.error('Error updating student:', error);
         toast({
           title: 'Error',
-          description: 'An error occurred while saving the student. Please try again.',
+          description: 'An error occurred while updating the student. Please try again.',
           variant: 'destructive',
         });
       } finally {
@@ -214,6 +308,16 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
       }
     })();
   };
+
+  if (initialLoading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center py-12">
+          <span className="text-lg">Loading student data...</span>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -227,16 +331,16 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
               </span>
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add New Student</h1>
-              <p className="text-gray-600 dark:text-gray-400">Create a new student profile</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Student</h1>
+              <p className="text-gray-600 dark:text-gray-400">Update student information</p>
             </div>
           </div>
           <StudentForm
-            initialValues={emptyFormData}
+            initialValues={formData}
             onSubmit={handleSubmit}
             onBack={onBack}
             loading={loading}
-            submitLabel="Save Student"
+            submitLabel="Update Student"
             sections={sections}
             classes={classes}
             academicYears={academicYears}
@@ -248,4 +352,4 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
   );
 };
 
-export default AddStudentForm;
+export default EditStudentForm;
