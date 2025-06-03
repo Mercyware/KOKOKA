@@ -30,7 +30,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [houses, setHouses] = useState<House[]>([]);
-  
+
   const [formData, setFormData] = useState({
     // Personal Information
     firstName: '',
@@ -39,7 +39,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     email: '',
     dateOfBirth: '',
     gender: '' as 'male' | 'female' | 'other' | '',
-    
+
     // Academic Information
     admissionNumber: '',
     admissionDate: new Date().toISOString().split('T')[0],
@@ -49,7 +49,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     house: '',
     rollNumber: '',
     status: 'active' as 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled',
-    
+
     // Physical & Medical Information
     bloodGroup: '' as 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown' | '',
     height: {
@@ -67,7 +67,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
       dietaryRestrictions: [] as string[],
       disabilities: [] as string[]
     },
-    
+
     // Contact Information
     contactInfo: {
       phone: '',
@@ -78,7 +78,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         phone: ''
       }
     },
-    
+
     // Address Information
     address: {
       street: '',
@@ -87,7 +87,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
       zipCode: '',
       country: ''
     },
-    
+
     // Guardian Information
     guardians: [{
       firstName: '',
@@ -99,7 +99,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
       isPrimary: true
     }]
   });
-  
+
   // Fetch classes and academic years on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -116,7 +116,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         if (classesResponse.data) {
           setClasses(classesResponse.data);
         }
-        
+
         const academicYearsResponse = await getAllAcademicYears();
         if (academicYearsResponse.data) {
           setAcademicYears(academicYearsResponse.data);
@@ -125,7 +125,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         console.error('Error fetching form data:', error);
       }
     };
-    
+
     fetchData();
 
     const fetchHousesData = async () => {
@@ -145,16 +145,16 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // Filter guardians to only include those with required fields filled
-      const validGuardians = formData.guardians.filter(guardian => 
-        guardian.firstName && 
-        guardian.lastName && 
-        guardian.relationship && 
+      const validGuardians = formData.guardians.filter(guardian =>
+        guardian.firstName &&
+        guardian.lastName &&
+        guardian.relationship &&
         guardian.phone
       );
-      
+
       // Convert string dates to Date objects and ensure proper types
       const studentData = {
         // Personal Information
@@ -163,10 +163,10 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         middleName: formData.middleName || undefined,
         email: formData.email || undefined,
         dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
-        gender: (formData.gender === 'male' || formData.gender === 'female' || formData.gender === 'other') 
-          ? formData.gender 
+        gender: (formData.gender === 'male' || formData.gender === 'female' || formData.gender === 'other')
+          ? formData.gender
           : undefined,
-        
+
         // Academic Information
         admissionNumber: formData.admissionNumber,
         admissionDate: formData.admissionDate ? new Date(formData.admissionDate) : undefined,
@@ -176,7 +176,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         house: formData.house || undefined,
         rollNumber: formData.rollNumber || undefined,
         status: formData.status,
-        
+
         // Physical & Medical Information
         bloodGroup: formData.bloodGroup || undefined,
         height: formData.height.value ? {
@@ -194,7 +194,7 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
           formData.healthInfo.dietaryRestrictions.length > 0 ||
           formData.healthInfo.disabilities.length > 0
         ) ? formData.healthInfo : undefined,
-        
+
         // Contact Information
         contactInfo: {
           phone: formData.contactInfo.phone || undefined,
@@ -205,22 +205,22 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
             formData.contactInfo.emergencyContact.phone
           ) ? formData.contactInfo.emergencyContact : undefined
         },
-        
+
         // Address Information
         address: (
-          formData.address.street || 
-          formData.address.city || 
-          formData.address.state || 
-          formData.address.zipCode || 
+          formData.address.street ||
+          formData.address.city ||
+          formData.address.state ||
+          formData.address.zipCode ||
           formData.address.country
         ) ? formData.address : undefined,
-        
+
         // Guardian Information
         guardiansData: validGuardians.length > 0 ? validGuardians : undefined
       };
-      
+
       const response = await createStudent(studentData);
-      
+
       if (response.success) {
         toast({
           title: 'Student added successfully!',
@@ -235,19 +235,19 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
         }
       } else {
         console.error('Failed to save student:', response.error);
-toast({
-  title: 'Failed to save student',
-  description: response.message || response.error,
-  variant: 'destructive',
-});
+        toast({
+          title: 'Failed to save student',
+          description: response.message || response.error,
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error saving student:', error);
-toast({
-  title: 'Error',
-  description: 'An error occurred while saving the student. Please try again.',
-  variant: 'destructive',
-});
+      toast({
+        title: 'Error',
+        description: 'An error occurred while saving the student. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -274,7 +274,7 @@ toast({
       setFormData(prev => ({ ...prev, [field]: value }));
     }
   };
-  
+
   const handleGuardianChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -374,8 +374,8 @@ toast({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                     <div className="space-y-2">
                       <Label htmlFor="gender">Gender *</Label>
-                      <Select 
-                        onValueChange={(value: 'male' | 'female' | 'other') => handleChange('gender', value)} 
+                      <Select
+                        onValueChange={(value: 'male' | 'female' | 'other') => handleChange('gender', value)}
                         required
                         value={formData.gender}
                       >
@@ -406,7 +406,7 @@ toast({
                         required
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="admissionDate">Admission Date *</Label>
                       <div className="relative">
@@ -420,7 +420,7 @@ toast({
                         <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="academicYear">Academic Year *</Label>
                       <Select onValueChange={(value) => handleChange('academicYear', value)} required>
@@ -436,7 +436,7 @@ toast({
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="class">Class *</Label>
                       <Select onValueChange={(value) => handleChange('class', value)} required>
@@ -452,23 +452,23 @@ toast({
                         </SelectContent>
                       </Select>
                     </div>
-                    
-<div className="space-y-2">
-  <Label htmlFor="section">Section *</Label>
-  <Select onValueChange={(value) => handleChange('section', value)} required>
-    <SelectTrigger id="section">
-      <SelectValue placeholder="Select section" />
-    </SelectTrigger>
-    <SelectContent>
-      {sections.map((section) => (
-        <SelectItem key={section._id} value={section._id}>
-          {section.name}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-</div>
-                    
+
+                    <div className="space-y-2">
+                      <Label htmlFor="section">Section *</Label>
+                      <Select onValueChange={(value) => handleChange('section', value)} required>
+                        <SelectTrigger id="section">
+                          <SelectValue placeholder="Select section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sections.map((section) => (
+                            <SelectItem key={section._id} value={section._id}>
+                              {section.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="house">House</Label>
                       <Select onValueChange={(value) => handleChange('house', value)}>
@@ -487,7 +487,7 @@ toast({
                   </div>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="parent-info">
                 <AccordionTrigger>Parent/Guardian Information</AccordionTrigger>
                 <AccordionContent>
@@ -523,12 +523,12 @@ toast({
                                 onClick={() => {
                                   const newGuardians = [...formData.guardians];
                                   newGuardians.splice(index, 1);
-                                  
+
                                   // If we removed the primary guardian, make the first one primary
                                   if (guardian.isPrimary && newGuardians.length > 0) {
                                     newGuardians[0].isPrimary = true;
                                   }
-                                  
+
                                   setFormData(prev => ({ ...prev, guardians: newGuardians }));
                                 }}
                               >
@@ -537,7 +537,7 @@ toast({
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-firstName`}>First Name *</Label>
@@ -553,7 +553,7 @@ toast({
                               required
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-lastName`}>Last Name *</Label>
                             <Input
@@ -568,10 +568,10 @@ toast({
                               required
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-relationship`}>Relationship *</Label>
-                            <Select 
+                            <Select
                               value={guardian.relationship}
                               onValueChange={(value: 'father' | 'mother' | 'grandfather' | 'grandmother' | 'uncle' | 'aunt' | 'sibling' | 'legal guardian' | 'other') => {
                                 const newGuardians = [...formData.guardians];
@@ -596,7 +596,7 @@ toast({
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-phone`}>Phone Number *</Label>
                             <Input
@@ -611,7 +611,7 @@ toast({
                               required
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-email`}>Email Address</Label>
                             <Input
@@ -626,7 +626,7 @@ toast({
                               placeholder="guardian@example.com"
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label htmlFor={`guardian-${index}-occupation`}>Occupation</Label>
                             <Input
@@ -643,7 +643,7 @@ toast({
                         </div>
                       </div>
                     ))}
-                    
+
                     <Button
                       type="button"
                       variant="outline"
@@ -694,7 +694,7 @@ toast({
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="height">Height</Label>
                         <div className="flex space-x-2">
@@ -706,8 +706,8 @@ toast({
                             placeholder="Height"
                             className="flex-1"
                           />
-                          <Select 
-                            value={formData.height.unit} 
+                          <Select
+                            value={formData.height.unit}
                             onValueChange={(value: 'cm' | 'in') => handleChange('height.unit', value)}
                           >
                             <SelectTrigger className="w-24">
@@ -720,7 +720,7 @@ toast({
                           </Select>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="weight">Weight</Label>
                         <div className="flex space-x-2">
@@ -732,8 +732,8 @@ toast({
                             placeholder="Weight"
                             className="flex-1"
                           />
-                          <Select 
-                            value={formData.weight.unit} 
+                          <Select
+                            value={formData.weight.unit}
                             onValueChange={(value: 'kg' | 'lb') => handleChange('weight.unit', value)}
                           >
                             <SelectTrigger className="w-24">
@@ -747,7 +747,7 @@ toast({
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Medical Information</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -769,7 +769,7 @@ toast({
                             placeholder="List allergies, separated by commas"
                           />
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label htmlFor="medicalConditions">Medical Conditions</Label>
                           <Input
@@ -788,7 +788,7 @@ toast({
                             placeholder="List medical conditions, separated by commas"
                           />
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label htmlFor="medications">Medications</Label>
                           <Input
@@ -807,7 +807,7 @@ toast({
                             placeholder="List medications, separated by commas"
                           />
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
                           <Input
@@ -826,7 +826,7 @@ toast({
                             placeholder="List dietary restrictions, separated by commas"
                           />
                         </div>
-                        
+
                         <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="disabilities">Disabilities</Label>
                           <Input
@@ -850,7 +850,7 @@ toast({
                   </div>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="additional-details">
                 <AccordionTrigger>Address Information</AccordionTrigger>
                 <AccordionContent>
@@ -866,7 +866,7 @@ toast({
                           placeholder="Street address"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
                         <Input
@@ -876,7 +876,7 @@ toast({
                           placeholder="City"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="state">State/Province</Label>
                         <Input
@@ -886,7 +886,7 @@ toast({
                           placeholder="State/Province"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="zipCode">Zip/Postal Code</Label>
                         <Input
@@ -896,7 +896,7 @@ toast({
                           placeholder="Zip/Postal code"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="country">Country</Label>
                         <Input
@@ -908,14 +908,14 @@ toast({
                       </div>
                     </div>
                   </div>
-                  
+
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            
+
             <div className="flex space-x-4 pt-6">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="flex items-center space-x-2"
                 disabled={loading}
               >

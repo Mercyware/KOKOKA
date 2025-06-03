@@ -557,8 +557,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   <Button
                     variant={activeFilters.length > 0 ? "default" : "outline"}
                     className={`flex items-center space-x-2 ${activeFilters.length > 0
-                        ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                        : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
+                      ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                      : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
                       } transition-colors duration-200`}
                     type="button"
                     onClick={() => setFilterMenuOpen(!filterMenuOpen)} // <-- Remove e parameter and preventDefault
@@ -702,28 +702,29 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                           </Select>
                         </div>
 
-                        {/* House Filter */}
-                        <div className="space-y-2">
-                          <Label htmlFor="house-filter" className="flex items-center gap-2">
-                            <Home className="h-4 w-4 text-gray-500" />
-                            <span>House</span>
-                          </Label>
-                          <Select
-                            value={filters.house || ''}
-                            onValueChange={(value) => applyFilter('house', value || undefined)}
-                          >
-                            <SelectTrigger id="house-filter">
-                              <SelectValue placeholder="All Houses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {houses.map((house) => (
-                                <SelectItem key={house.id} value={house.id}>
-                                  {house.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+{/* House Filter */}
+<div className="space-y-2">
+  <Label htmlFor="house-filter" className="flex items-center gap-2">
+    <Home className="h-4 w-4 text-gray-500" />
+    <span>House</span>
+  </Label>
+  <Select
+    value={filterValues.house || ''}
+    onValueChange={(value) => handleFilterValueChange('house', value || undefined)}
+  >
+    <SelectTrigger id="house-filter">
+      <SelectValue placeholder="All Houses" />
+    </SelectTrigger>
+    <SelectContent>
+      {houses.map((houseItem) => (
+        <SelectItem key={houseItem.id} value={houseItem.id}>
+          {houseItem.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
                       </div>
                     )}
 
@@ -992,6 +993,12 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                         )}
                       </div>
                     )}
+                  </div>
+                  {/* Add Apply Filters button at the bottom of the PopoverContent */}
+                  <div className="flex justify-end pt-4">
+                    <Button size="sm" className="w-full" onClick={handleApplyFilters}>
+                      Apply Filters
+                    </Button>
                   </div>
                 </PopoverContent>
               </Popover>
