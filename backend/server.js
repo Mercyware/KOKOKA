@@ -41,6 +41,11 @@ const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
 const houseRoutes = require('./routes/houseRoutes');
 const sectionRoutes = require('./routes/sectionRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
+const gradeRoutes = require('./routes/gradeRoutes');
+const documentRoutes = require('./routes/documentRoutes');
+const parentPortalRoutes = require('./routes/parentPortalRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -147,6 +152,11 @@ app.use('/api/sitting-positions', sittingPositionRoutes);
 app.use('/api/houses', houseRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/assessments', assessmentRoutes);
+app.use('/api/grades', gradeRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/parent-portal', parentPortalRoutes);
 
 // AI routes (conditionally enabled)
 if (env.FEATURE_AI_ENABLED) {

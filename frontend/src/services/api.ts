@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, PaginatedResponse, House } from '../types';
 import { Section } from '../types/Section';
 import { getDevSubdomain, initDevSubdomain } from '../utils/devSubdomain';
+import { API_CONFIG } from '../config/api';
 
 // Get the current subdomain from the hostname or localStorage
 const getSubdomain = (): string | null => {
@@ -31,10 +32,9 @@ const getSubdomain = (): string | null => {
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  headers: API_CONFIG.DEFAULT_HEADERS,
 });
 
 // Add subdomain to headers if available
@@ -111,7 +111,7 @@ export const get = async <T>(
  * @returns {Promise<ApiResponse<House[]>>} A promise resolving to the list of houses
  */
 export const fetchHouses = async (): Promise<ApiResponse<House[]>> => {
-  return get<House[]>('/houses');
+  return get<House[]>(API_CONFIG.ENDPOINTS.HOUSES.BASE);
 };
 
 /**
@@ -119,7 +119,15 @@ export const fetchHouses = async (): Promise<ApiResponse<House[]>> => {
  * @returns {Promise<ApiResponse<Section[]>>} A promise resolving to the list of sections
  */
 export const fetchSections = async (): Promise<ApiResponse<Section[]>> => {
-  return get<Section[]>('/sections');
+  return get<Section[]>(API_CONFIG.ENDPOINTS.SECTIONS.BASE);
+};
+
+/**
+ * Health check to test API connectivity
+ * @returns {Promise<ApiResponse<any>>} A promise resolving to the health status
+ */
+export const healthCheck = async (): Promise<ApiResponse<any>> => {
+  return get<any>('/health');
 };
 
 // Generic GET request for paginated data

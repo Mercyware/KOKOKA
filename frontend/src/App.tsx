@@ -13,6 +13,8 @@ import StudentsManager from "./pages/students/StudentsManager";
 import ViewStudent from "@/pages/students/ViewStudent";
 import AddStudentForm from "./pages/students/AddStudentForm";
 import EditStudentForm from "./pages/students/EditStudentForm";
+import Register from "./pages/auth/Register";
+import RegisterSchool from "./pages/auth/RegisterSchool";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register-school" element={<RegisterSchool />} />
             <Route path="/students" element={<StudentsManager />} />
             <Route path="/students/add" element={<AddStudentFormWrapper />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
