@@ -56,31 +56,34 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
     const newErrors: Record<string, string> = {};
     
     if (!formData.schoolName.trim()) {
-      newErrors.schoolName = 'School name is required';
+      newErrors.schoolName = 'Please enter your school name';
+    } else if (formData.schoolName.trim().length < 3) {
+      newErrors.schoolName = 'School name must be at least 3 characters long';
     }
     
     if (!formData.subdomain.trim()) {
-      newErrors.subdomain = 'Subdomain is required';
+      newErrors.subdomain = 'Please choose a subdomain for your school';
     } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.subdomain)) {
-      newErrors.subdomain = 'Subdomain can only contain lowercase letters, numbers, and hyphens';
+      newErrors.subdomain = 'Subdomain can only contain lowercase letters, numbers, and hyphens (no spaces or special characters)';
     } else if (formData.subdomain.length < 3) {
-      newErrors.subdomain = 'Subdomain must be at least 3 characters';
+      newErrors.subdomain = 'Subdomain must be at least 3 characters long';
     } else if (formData.subdomain.length > 63) {
       newErrors.subdomain = 'Subdomain must be less than 63 characters';
+    } else if (subdomainAvailable === false) {
+      newErrors.subdomain = 'This subdomain is already taken. Please choose another one';
     }
     
     if (!formData.schoolType) {
-      newErrors.schoolType = 'School type is required';
+      newErrors.schoolType = 'Please select your school type';
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Please enter your school email address';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Enter a valid email';
+      newErrors.email = 'Please enter a valid email address (e.g., contact@yourschool.com)';
     }
-    
     if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Enter a valid URL';
+      newErrors.website = 'Please enter a valid website URL (e.g., https://www.yourschool.com)';
     }
     
     setErrors(newErrors);
@@ -91,25 +94,28 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
     const newErrors: Record<string, string> = {};
     
     if (!formData.adminName.trim()) {
-      newErrors.adminName = 'Admin name is required';
+      newErrors.adminName = 'Please enter the admin\'s full name';
+    } else if (formData.adminName.trim().length < 2) {
+      newErrors.adminName = 'Admin name must be at least 2 characters long';
     }
     
     if (!formData.adminEmail.trim()) {
-      newErrors.adminEmail = 'Admin email is required';
+      newErrors.adminEmail = 'Please enter the admin email address';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.adminEmail)) {
-      newErrors.adminEmail = 'Enter a valid email';
+      newErrors.adminEmail = 'Please enter a valid email address for the admin account';
     }
     
     if (!formData.adminPassword) {
-      newErrors.adminPassword = 'Password is required';
-    } else if (formData.adminPassword.length < 6) {
-      newErrors.adminPassword = 'Password should be of minimum 6 characters length';
+      newErrors.adminPassword = 'Please create a password for the admin account';
+    } else if (formData.adminPassword.length < 8) {
+      newErrors.adminPassword = 'Password must be at least 8 characters long for security';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.adminPassword)) {
+      newErrors.adminPassword = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
     }
-    
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Confirm password is required';
+      newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.adminPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords must match';
+      newErrors.confirmPassword = 'Passwords do not match. Please make sure both passwords are the same';
     }
     
     setErrors(newErrors);
@@ -161,21 +167,39 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
       }
       
       console.log('=== MOVING TO STEP 2 ===');
+      // Only move to step 2, don't save data yet
       setCurrentStep(2);
       return;
     }
     
     if (currentStep === 2) {
       console.log('Validating step 2...');
-      const isValid = validateStep2();
-      console.log('Step 2 valid:', isValid);
+      const isValid2 = validateStep2();
+      console.log('Step 2 valid:', isValid2);
       
-      if (!isValid) {
+      if (!isValid2) {
         console.log('Step 2 validation failed');
         return;
       }
       
-      console.log('=== REGISTERING SCHOOL ===');
+      // Re-validate step 1 to ensure all data is still valid
+      console.log('Re-validating step 1...');
+      const isValid1 = validateStep1();
+      console.log('Step 1 re-validation:', isValid1);
+      
+      if (!isValid1) {
+        console.log('Step 1 re-validation failed - returning to step 1');
+        setCurrentStep(1);
+        return;
+      }
+      
+      if (subdomainAvailable === false) {
+        console.log('Subdomain no longer available - returning to step 1');
+        setCurrentStep(1);
+        return;
+      }
+      
+      console.log('=== BOTH STEPS VALID - REGISTERING SCHOOL ===');
       await registerSchool();
     }
   };
@@ -265,39 +289,55 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
 
       const response = await authService.registerSchool(schoolData);
 
-      if (response.success && response.data) {
+      if (response.success) {
         // Store subdomain in localStorage for development environment
         localStorage.setItem('dev_subdomain', formData.subdomain);
 
-        // If token is provided, set it
-        if (response.data.token) {
-          authService.setAuthToken(response.data.token);
-          if (response.data.admin) {
-            authService.setUser({
-              id: response.data.admin.id,
-              name: response.data.admin.name,
-              email: response.data.admin.email,
-              role: 'admin',
-              school: response.data.school.id,
-              isActive: true,
-            });
+        // Get school data from response for success page
+        const responseData = response as any;
+
+        // Prepare school data for the success page
+        const successData = {
+          name: formData.schoolName,
+          subdomain: formData.subdomain,
+          email: formData.email,
+          phone: formData.phone,
+          website: formData.website,
+          type: formData.schoolType,
+          adminName: formData.adminName,
+          adminEmail: formData.adminEmail,
+          schoolId: responseData.school?.id,
+          status: responseData.school?.status || 'PENDING',
+        };
+
+        // Redirect to success page only - no auto login
+        navigate('/registration-success', {
+          state: {
+            schoolData: successData
           }
-          // Redirect to dashboard
-          navigate('/auth/welcome');
-        } else {
-          // Redirect to login with success message
-          navigate('/login', {
-            state: {
-              message: 'School registered successfully! You can now login using your admin credentials.',
-              subdomain: formData.subdomain
-            }
-          });
-        }
+        });
       } else {
-        setRegistrationError(response.message || 'Failed to register school');
+        // More descriptive error message
+        const errorMsg = response.message;
+        if (errorMsg?.includes('already in use') || errorMsg?.includes('already exists')) {
+          if (errorMsg?.includes('email')) {
+            setRegistrationError('This email address is already registered. Please use a different email or try logging in instead.');
+          } else if (errorMsg?.includes('subdomain')) {
+            setRegistrationError('This subdomain is already taken. Please choose a different subdomain for your school.');
+          } else {
+            setRegistrationError('Some of the information you provided is already in use. Please check and try again.');
+          }
+        } else {
+          setRegistrationError(errorMsg || 'We encountered an issue while registering your school. Please try again or contact support if the problem persists.');
+        }
       }
     } catch (error: any) {
-      setRegistrationError(error.message || 'An error occurred during registration');
+      console.error('Registration error:', error);
+      if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        setRegistrationError('Network error: Please check your internet connection and try again.');
+      } else {
+        setRegistrationError('An unexpected error occurred. Please try again in a few moments or contact support if the issue continues.');
+      }
     } finally {
       setRegistrationLoading(false);
     }
@@ -324,7 +364,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           />
         </div>
         {errors.schoolName && (
-          <p className="text-sm text-red-600">{errors.schoolName}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.schoolName}</p>
+          </div>
         )}
       </div>
 
@@ -358,10 +403,20 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           Your school will be accessible at: {formData.subdomain}.schoolmanagement.com
         </p>
         {errors.subdomain && (
-          <p className="text-sm text-red-600">{errors.subdomain}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.subdomain}</p>
+          </div>
         )}
         {subdomainAvailable === false && (
-          <p className="text-sm text-red-600">This subdomain is already taken</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">This subdomain is already taken</p>
+          </div>
         )}
       </div>
 
@@ -506,7 +561,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           />
         </div>
         {errors.adminEmail && (
-          <p className="text-sm text-red-600">{errors.adminEmail}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminEmail}</p>
+          </div>
         )}
       </div>
 
@@ -564,7 +624,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           </button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.confirmPassword}</p>
+          </div>
         )}
       </div>
     </div>
@@ -584,8 +649,8 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           </CardTitle>
           <CardDescription className="text-gray-600 dark:text-gray-400">
             {currentStep === 1 
-              ? "Create your school account to get started with EduManage AI"
-              : "Set up your admin account to manage your school"
+              ? "Enter your school information "
+              : "Create your admin account"
             }
           </CardDescription>
           
@@ -598,10 +663,19 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
         
         <CardContent>
           {registrationError && (
-            <Alert className="mb-4">
-              <AlertDescription>
-                {registrationError}
-              </AlertDescription>
+            <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                    <div className="w-2 h-2 bg-red-600 dark:bg-red-400 rounded-full" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
+                    {registrationError}
+                  </AlertDescription>
+                </div>
+              </div>
             </Alert>
           )}
 
