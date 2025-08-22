@@ -2,6 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Recent Updates (August 2025)
+
+### School Registration Enhancement
+The school registration system has been completely overhauled with improved UX:
+
+- **Two-step Form**: Multi-step registration with proper validation flow
+- **Visual Error Indicators**: Red dot pattern for consistent error messaging
+- **Data Protection**: No data saved until final validation passes
+- **Real-time Validation**: Subdomain availability checking with loading states
+- **Enhanced Success Page**: Redesigned confirmation with better content alignment
+- **Disabled Button Feedback**: Clear reasons shown when buttons are disabled
+
+### Key Files Recently Modified
+- `frontend/src/pages/auth/RegisterSchool.tsx` - Complete registration form overhaul
+- `frontend/src/pages/auth/RegistrationSuccess.tsx` - Enhanced success page design  
+- `backend/controllers/schoolController.js` - Enhanced with slug generation
+- Visual improvements include gradient backgrounds, better spacing, and responsive design
+
+### Development Notes for Registration Flow
+
+- Form uses native React state management (Formik removed)
+- Validation occurs on both steps before data submission  
+- Success page shows comprehensive school details with proper alignment
+- Auto-login functionality removed per security requirements
+- Subdomain format clearly displayed throughout flow
+
 ## Project Overview
 
 KOKOKA is a comprehensive school management system built with Node.js/Express backend and React/TypeScript frontend. The system supports multi-tenant architecture using subdomain-based school isolation.

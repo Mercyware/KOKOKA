@@ -175,4 +175,18 @@ router.get('/me', authMiddleware.protect, authController.getCurrentUser);
  */
 router.post('/logout', authMiddleware.protect, authController.logout);
 
+// Google OAuth routes
+router.get('/google', authController.googleAuth);
+router.get('/google/callback', 
+  require('passport').authenticate('google', { session: false }), 
+  authController.googleCallback
+);
+
+// LinkedIn OAuth routes
+router.get('/linkedin', authController.linkedinAuth);
+router.get('/linkedin/callback', 
+  require('passport').authenticate('linkedin', { session: false }), 
+  authController.linkedinCallback
+);
+
 module.exports = router;

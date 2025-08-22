@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, role: string, school?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<boolean>;
+  handleOAuthSuccess: (token: string, user: User) => void;
 }
 
 // Create the context with a default value
@@ -219,6 +220,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Handle OAuth success
+  const handleOAuthSuccess = (token: string, user: User) => {
+    authService.setAuthToken(token);
+    authService.setUser(user);
+    setAuthState({
+      isAuthenticated: true,
+      user,
+      loading: false,
+      error: null,
+    });
+  };
+
   // Context value
   const contextValue: AuthContextType = {
     authState,
@@ -226,6 +239,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     register,
     logout,
     checkAuth,
+    handleOAuthSuccess,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

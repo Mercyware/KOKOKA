@@ -1,6 +1,7 @@
 const { userHelpers } = require('../utils/prismaHelpers');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
+const passport = require('../config/passport');
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -136,4 +137,78 @@ exports.getCurrentUser = async (req, res) => {
 // Logout user
 exports.logout = (req, res) => {
   res.json({ message: 'User logged out successfully' });
+};
+
+// Google OAuth initiation
+exports.googleAuth = passport.authenticate('google', {
+  scope: ['profile', 'email'],
+});
+
+// Google OAuth callback
+exports.googleCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        role: user.role,
+        school: user.schoolId 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '30d' }
+    );
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage
+    }))}`);
+  } catch (error) {
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
+  }
+};
+
+// LinkedIn OAuth initiation
+exports.linkedinAuth = passport.authenticate('linkedin');
+
+// LinkedIn OAuth callback
+exports.linkedinCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        role: user.role,
+        school: user.schoolId 
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '30d' }
+    );
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage
+    }))}`);
+  } catch (error) {
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
+  }
 };

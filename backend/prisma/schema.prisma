@@ -78,6 +78,11 @@ model User {
   emailVerified Boolean   @default(false)
   lastLogin     DateTime?
   profileData   Json?
+  profileImage  String?
+  
+  // OAuth fields
+  googleId      String?   @unique
+  linkedinId    String?   @unique
   
   // School relationship
   schoolId      String

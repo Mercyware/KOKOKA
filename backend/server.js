@@ -68,6 +68,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Cookie parser
 app.use(cookieParser());
 
+// Passport initialization
+const passport = require('./config/passport');
+app.use(passport.initialize());
+
 // CORS
 app.use(cors({
   origin: '*',  // Allow all origins for development
