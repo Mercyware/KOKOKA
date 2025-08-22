@@ -1,9 +1,10 @@
-const Student = require('../models/Student');
-const Guardian = require('../models/Guardian');
-const Document = require('../models/Document');
-const StudentClassHistory = require('../models/StudentClassHistory');
-const AcademicYear = require('../models/AcademicYear');
-const mongoose = require('mongoose');
+const { 
+  studentHelpers, 
+  guardianHelpers, 
+  documentHelpers, 
+  academicYearHelpers,
+  prisma
+} = require('../utils/prismaHelpers');
 
 // Get all students with pagination, filtering, and sorting via class history and academic year
 exports.getAllStudents = async (req, res) => {
@@ -26,91 +27,96 @@ exports.getAllStudents = async (req, res) => {
     // Determine academic year to use
     let academicYearId = academicYear;
     if (!academicYearId) {
-      // Get active academic year for the school
-      const activeYear = await AcademicYear.findOne({ school: req.school, isActive: true });
+      // Get current academic year for the school
+      const activeYear = await prisma.academicYear.findFirst({
+        where: { 
+          schoolId: req.school.id, 
+          isCurrent: true 
+        }
+      });
       if (!activeYear) {
         return res.status(400).json({ message: 'No active academic year found for this school.' });
       }
-      academicYearId = activeYear._id;
+      academicYearId = activeYear.id;
     }
 
-    // Get student IDs from StudentClassHistory for this school and academic year
-    const classHistoryRecords = await StudentClassHistory.find({
-      school: req.school,
-      academicYear: academicYearId
-    }).select('student class');
-
-    const studentIds = classHistoryRecords.map(r => r.student);
-
-    // Build query for Student
-    const query = { _id: { $in: studentIds } };
+    // Build where clause for filtering
+    const where = {
+      schoolId: req.school.id
+    };
 
     // Filter by status if provided
     if (status) {
-      query.status = status;
+      where.status = status;
     }
 
-    // Filter by class if provided (match class in class history)
+    // Filter by current class if provided
     if (classId) {
-      // Only include students whose class history for this year matches the classId
-      const filteredIds = [];
-      for (const record of classHistoryRecords) {
-        if (record.class && record.class.toString() === classId) {
-          filteredIds.push(record.student);
-        }
-      }
-      query._id = { $in: filteredIds };
+      where.currentClassId = classId;
     }
 
-    // Filter by section if provided
-    if (section) {
-      query.section = section;
-    }
-
-    // Filter by gender if provided
+    // Filter by gender if provided  
     if (gender) {
-      query.gender = gender;
+      where.gender = gender;
     }
 
     // Filter by admission date range if provided
     if (admissionDateFrom || admissionDateTo) {
-      query.admissionDate = {};
+      where.admissionDate = {};
       if (admissionDateFrom) {
-        query.admissionDate.$gte = new Date(admissionDateFrom);
+        where.admissionDate.gte = new Date(admissionDateFrom);
       }
       if (admissionDateTo) {
-        query.admissionDate.$lte = new Date(admissionDateTo);
+        where.admissionDate.lte = new Date(admissionDateTo);
       }
     }
 
     // Search by name or admission number
     if (search) {
-      query.$or = [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { admissionNumber: { $regex: search, $options: 'i' } }
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { admissionNumber: { contains: search, mode: 'insensitive' } }
       ];
     }
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Determine sort order
-    const sortOptions = {};
-    sortOptions[sort] = order === 'desc' ? -1 : 1;
+    
+    // Build order by clause
+    const orderBy = {};
+    orderBy[sort] = order === 'desc' ? 'desc' : 'asc';
 
     // Execute query with pagination and sorting
-    const students = await Student.find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate('class', 'name')
-      .populate('academicYear', 'name')
-      .populate('primaryGuardian', 'firstName lastName phone email')
-      .lean();
-
-    // Get total count for pagination
-    const total = await Student.countDocuments(query);
+    const [students, total] = await Promise.all([
+      prisma.student.findMany({
+        where,
+        orderBy,
+        skip,
+        take: parseInt(limit),
+        include: {
+          school: { select: { name: true } },
+          currentClass: { select: { name: true, grade: true } },
+          academicYear: { select: { name: true } },
+          house: { select: { name: true } },
+          user: { select: { name: true, email: true } },
+          guardianStudents: {
+            where: { isPrimary: true },
+            include: {
+              guardian: { 
+                select: { 
+                  firstName: true, 
+                  lastName: true, 
+                  phone: true, 
+                  email: true 
+                } 
+              }
+            }
+          }
+        }
+      }),
+      prisma.student.count({ where })
+    ]);
 
     res.json({
       success: true,
@@ -130,17 +136,67 @@ exports.getAllStudents = async (req, res) => {
 // Get student by ID with detailed information
 exports.getStudentById = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id)
-      .populate('class', 'name grade')
-      .populate('section', 'name')
-      .populate('academicYear', 'name startDate endDate')
-      .populate('guardians', 'firstName lastName relationship phone email isEmergencyContact')
-      .populate('primaryGuardian', 'firstName lastName relationship phone email')
-      .populate('documents', 'title type fileUrl uploadedAt status')
-      .populate({
-        path: 'grades.exam',
-        select: 'title subject totalMarks date'
-      });
+    const student = await prisma.student.findUnique({
+      where: { id: req.params.id },
+      include: {
+        school: { select: { name: true } },
+        currentClass: { select: { name: true, grade: true } },
+        academicYear: { select: { name: true, startDate: true, endDate: true } },
+        house: { select: { name: true, color: true } },
+        user: { select: { name: true, email: true } },
+        guardianStudents: {
+          include: {
+            guardian: { 
+              select: { 
+                id: true,
+                firstName: true, 
+                lastName: true, 
+                phone: true, 
+                email: true,
+                occupation: true
+              } 
+            }
+          }
+        },
+        documents: { 
+          select: { 
+            id: true,
+            title: true, 
+            category: true,
+            type: true, 
+            fileUrl: true, 
+            createdAt: true, 
+            status: true 
+          } 
+        },
+        grades: {
+          include: {
+            assessment: {
+              select: {
+                id: true,
+                title: true,
+                type: true,
+                totalMarks: true,
+                scheduledDate: true,
+                subject: { select: { name: true } }
+              }
+            }
+          }
+        },
+        attendance: {
+          take: 10,
+          orderBy: { date: 'desc' },
+          select: {
+            id: true,
+            date: true,
+            status: true,
+            period: true,
+            checkInTime: true,
+            checkOutTime: true
+          }
+        }
+      }
+    });
     
     if (!student) {
       return res.status(404).json({ success: false, message: 'Student not found' });

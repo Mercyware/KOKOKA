@@ -31,11 +31,13 @@ KOKOKA is a comprehensive school management system built with Node.js/Express ba
 
 ### Backend Architecture
 - **MVC Pattern**: Controllers handle business logic, routes define endpoints
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT tokens with role-based access control
+- **Database**: PostgreSQL with Prisma ORM (migrated from MongoDB)
+- **Caching & Sessions**: Redis for sessions, caching, pub/sub, and job queues
+- **Authentication**: JWT tokens with role-based access control + Redis sessions
 - **Middleware**: Auth, school context, error handling, rate limiting
 - **Services**: Business logic for AI, grading, timetables
-- **Key Models**: School, User, Student, Teacher, Class, Subject, Exam, Fee
+- **Key Models**: School, User, Student, Teacher, Class, Subject, Assessment, Grade, Attendance
+- **Infrastructure**: Docker containers for PostgreSQL, Redis, and application services
 
 ### Frontend Architecture
 - **React 18** with TypeScript and Vite
@@ -51,14 +53,41 @@ KOKOKA is a comprehensive school management system built with Node.js/Express ba
 4. Controllers filter data by school context
 
 ### Key Directories
-- `backend/models/` - Mongoose schemas with school relationships
-- `backend/controllers/` - Business logic with school filtering
+- `backend/prisma/schema.prisma` - PostgreSQL database schema with relationships
+- `backend/controllers/` - Business logic with school filtering (migrated to Prisma)
+- `backend/config/database.js` - Prisma client and Redis connections
+- `backend/utils/prismaHelpers.js` - Migration utilities and common operations
 - `frontend/src/services/` - API service layers per domain
 - `frontend/src/pages/` - Page components organized by feature
 - `frontend/src/components/ui/` - Reusable Radix UI components
+
+## Database Setup & Migration
+
+### PostgreSQL + Redis Setup
+The system has been migrated from MongoDB to PostgreSQL with Redis for caching and sessions:
+
+1. **Start Services**: `docker-compose up -d` (starts PostgreSQL, Redis, and application)
+2. **Database Migration**: `npm run db:migrate` (creates tables from Prisma schema)
+3. **Generate Client**: `npm run db:generate` (generates Prisma client)
+4. **Seed Database**: `npm run db:seed` (optional - populate with sample data)
+
+### Available Database Commands
+- `npm run db:migrate` - Run Prisma migrations
+- `npm run db:migrate:prod` - Deploy migrations to production
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:studio` - Open Prisma Studio (database GUI)
+- `npm run db:seed` - Seed database with sample data
+- `npm run db:reset` - Reset database (dev only)
+
+### Database Configuration
+- **PostgreSQL**: Primary database with ACID compliance and complex relationships
+- **Redis**: Sessions, caching, pub/sub messaging, and background jobs
+- **Connection**: Environment-based connection strings for Docker and local development
+- **Schema**: 20+ models with proper foreign keys, indexes, and constraints
 
 ### Development Notes
 - API endpoints documented at `/api-docs` (Swagger)
 - Development subdomain defaults to 'demo' 
 - Both frontend and backend use comprehensive error handling
 - All API responses follow standardized format with success flags
+- Database health checks available at `/api/health`

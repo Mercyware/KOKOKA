@@ -1,5 +1,5 @@
-const School = require('../models/School');
-const User = require('../models/User');
+const { prisma } = require('../config/database');
+const { userHelpers } = require('../utils/prismaHelpers');
 const logger = require('../utils/logger');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
@@ -23,11 +23,13 @@ exports.registerSchool = async (req, res) => {
     } = req.body;
 
     // Check if school with same name or subdomain already exists
-    const existingSchool = await School.findOne({
-      $or: [
-        { name },
-        { subdomain }
-      ]
+    const existingSchool = await prisma.school.findFirst({
+      where: {
+        OR: [
+          { name },
+          { subdomain }
+        ]
+      }
     });
 
     if (existingSchool) {
@@ -39,25 +41,56 @@ exports.registerSchool = async (req, res) => {
       });
     }
 
-    // Create new school
-    const school = new School({
-      name,
-      subdomain: subdomain || undefined, // If not provided, it will be generated from name
-      contactInfo,
-      address,
-      description,
-      type,
-      status: 'pending' // New schools start as pending until approved
+    // Generate slug from school name
+    const generateSlug = (name) => {
+      return name
+        .toLowerCase()
+        .replace(/[^\w\s-]/gi, '') // Remove special characters
+        .replace(/\s+/g, '-')      // Replace spaces with hyphens
+        .replace(/-+/g, '-')       // Replace multiple hyphens with single
+        .trim();
+    };
+
+    const slug = generateSlug(name);
+
+    // Check if slug already exists
+    const existingSlug = await prisma.school.findUnique({
+      where: { slug }
     });
 
-    await school.save();
+    if (existingSlug) {
+      return res.status(400).json({
+        success: false,
+        message: 'School name already exists (slug conflict)'
+      });
+    }
+
+    // Create new school
+    const school = await prisma.school.create({
+      data: {
+        name,
+        slug,
+        subdomain: subdomain || undefined,
+        email: contactInfo?.email,
+        phone: contactInfo?.phone,
+        website: contactInfo?.website,
+        streetAddress: address?.street,
+        city: address?.city,
+        state: address?.state,
+        zipCode: address?.zipCode,
+        country: address?.country,
+        description,
+        type: type || 'SECONDARY',
+        status: 'PENDING'
+      }
+    });
     
     // Create admin user for the school
     if (adminInfo) {
       const { name: adminName, email, password } = adminInfo;
       
       // Check if user already exists
-      const existingUser = await User.findOne({ email });
+      const existingUser = await userHelpers.findByEmailWithPassword(email);
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -66,19 +99,17 @@ exports.registerSchool = async (req, res) => {
       }
       
       // Create admin user
-      const admin = new User({
-        school: school._id,
+      const admin = await userHelpers.create({
+        schoolId: school.id,
         name: adminName,
         email,
-        password, // Let the User model handle password hashing
-        role: 'admin'
+        password,
+        role: 'ADMIN'
       });
-      
-      await admin.save();
       
       // Generate JWT token
       const token = jwt.sign(
-        { id: admin._id, role: admin.role, school: school._id },
+        { id: admin.id, role: admin.role, schoolId: school.id },
         JWT_SECRET,
         { expiresIn: '30d' }
       );
@@ -87,13 +118,13 @@ exports.registerSchool = async (req, res) => {
         success: true,
         message: 'School registered successfully and pending approval',
         school: {
-          id: school._id,
+          id: school.id,
           name: school.name,
           subdomain: school.subdomain,
           status: school.status
         },
         admin: {
-          id: admin._id,
+          id: admin.id,
           name: admin.name,
           email: admin.email
         },
@@ -104,7 +135,7 @@ exports.registerSchool = async (req, res) => {
         success: true,
         message: 'School registered successfully and pending approval',
         school: {
-          id: school._id,
+          id: school.id,
           name: school.name,
           subdomain: school.subdomain,
           status: school.status
@@ -145,7 +176,9 @@ exports.checkSubdomainAvailability = async (req, res) => {
     }
     
     // Check if subdomain exists
-    const existingSchool = await School.findOne({ subdomain });
+    const existingSchool = await prisma.school.findFirst({
+      where: { subdomain }
+    });
     
     res.json({
       success: true,

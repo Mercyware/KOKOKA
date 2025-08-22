@@ -10,7 +10,7 @@ const compression = require('compression');
 const path = require('path');
 
 // Import configuration
-const { connectDB } = require('./config/db');
+const { connectDatabase } = require('./config/database');
 const { initJwtConfig } = require('./config/jwt');
 const env = require('./config/env');
 const { setupSwagger } = require('./config/swagger');
@@ -19,33 +19,33 @@ const { setupSwagger } = require('./config/swagger');
 const errorHandler = require('./middlewares/errorHandler');
 const { extractSchoolFromSubdomain } = require('./middlewares/schoolMiddleware');
 
-// Import routes
+// Import routes (temporarily limited for migration)
 const authRoutes = require('./routes/authRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const studentClassHistoryRoutes = require('./routes/studentClassHistoryRoutes');
-const teacherRoutes = require('./routes/teacherRoutes');
-const staffRoutes = require('./routes/staffRoutes');
-const timetableRoutes = require('./routes/timetableRoutes');
-const examRoutes = require('./routes/examRoutes');
-const feeRoutes = require('./routes/feeRoutes');
-const aiRoutes = require('./routes/aiRoutes');
-const academicYearRoutes = require('./routes/academicYearRoutes');
-const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
-const termRoutes = require('./routes/termRoutes');
-const classRoutes = require('./routes/classRoutes');
-const subjectRoutes = require('./routes/subjectRoutes');
-const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
-const classTeacherRoutes = require('./routes/classTeacherRoutes');
-const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
-const houseRoutes = require('./routes/houseRoutes');
-const sectionRoutes = require('./routes/sectionRoutes');
-const departmentRoutes = require('./routes/departmentRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
-const assessmentRoutes = require('./routes/assessmentRoutes');
-const gradeRoutes = require('./routes/gradeRoutes');
-const documentRoutes = require('./routes/documentRoutes');
-const parentPortalRoutes = require('./routes/parentPortalRoutes');
+// const studentRoutes = require('./routes/studentRoutes');
+// const studentClassHistoryRoutes = require('./routes/studentClassHistoryRoutes');
+// const teacherRoutes = require('./routes/teacherRoutes');
+// const staffRoutes = require('./routes/staffRoutes');
+// const timetableRoutes = require('./routes/timetableRoutes');
+// const examRoutes = require('./routes/examRoutes');
+// const feeRoutes = require('./routes/feeRoutes');
+// const aiRoutes = require('./routes/aiRoutes');
+// const academicYearRoutes = require('./routes/academicYearRoutes');
+// const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
+// const termRoutes = require('./routes/termRoutes');
+// const classRoutes = require('./routes/classRoutes');
+// const subjectRoutes = require('./routes/subjectRoutes');
+// const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
+// const classTeacherRoutes = require('./routes/classTeacherRoutes');
+// const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
+// const houseRoutes = require('./routes/houseRoutes');
+// const sectionRoutes = require('./routes/sectionRoutes');
+// const departmentRoutes = require('./routes/departmentRoutes');
+// const attendanceRoutes = require('./routes/attendanceRoutes');
+// const assessmentRoutes = require('./routes/assessmentRoutes');
+// const gradeRoutes = require('./routes/gradeRoutes');
+// const documentRoutes = require('./routes/documentRoutes');
+// const parentPortalRoutes = require('./routes/parentPortalRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -57,8 +57,8 @@ initJwtConfig();
 // Create Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to PostgreSQL and Redis
+connectDatabase();
 
 // Middleware
 // Body parser
@@ -131,37 +131,70 @@ setupSwagger(app);
 // Apply school subdomain middleware to all routes
 app.use(extractSchoolFromSubdomain);
 
-// API routes
-app.use('/api/schools', schoolRoutes);
+// Test endpoint for frontend-backend connection
+app.get('/api/test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Frontend-Backend connection is working!',
+    timestamp: new Date(),
+    subdomain: req.headers['x-school-subdomain'] || 'none'
+  });
+});
+
+// Debug: List all registered routes
+app.get('/api/debug/routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    } else if (middleware.name === 'router') {
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          routes.push({
+            path: handler.route.path,
+            methods: Object.keys(handler.route.methods)
+          });
+        }
+      });
+    }
+  });
+  res.json({ routes });
+});
+
+// API routes (temporarily disabled for migration)
+app.use('/api/schools', schoolRoutes); // School routes enabled
 app.use('/api/auth', authRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/student-class-history', studentClassHistoryRoutes);
-app.use('/api/teachers', teacherRoutes);
-app.use('/api/staff', staffRoutes);
-app.use('/api/timetables', timetableRoutes);
-app.use('/api/exams', examRoutes);
-app.use('/api/fees', feeRoutes);
-app.use('/api/academic-years', academicYearRoutes);
-app.use('/api/academic-calendars', academicCalendarRoutes);
-app.use('/api/terms', termRoutes);
-app.use('/api/classes', classRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
-app.use('/api/class-teachers', classTeacherRoutes);
-app.use('/api/sitting-positions', sittingPositionRoutes);
-app.use('/api/houses', houseRoutes);
-app.use('/api/sections', sectionRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/assessments', assessmentRoutes);
-app.use('/api/grades', gradeRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/parent-portal', parentPortalRoutes);
+// app.use('/api/students', studentRoutes);
+// app.use('/api/student-class-history', studentClassHistoryRoutes);
+// app.use('/api/teachers', teacherRoutes);
+// app.use('/api/staff', staffRoutes);
+// app.use('/api/timetables', timetableRoutes);
+// app.use('/api/exams', examRoutes);
+// app.use('/api/fees', feeRoutes);
+// app.use('/api/academic-years', academicYearRoutes);
+// app.use('/api/academic-calendars', academicCalendarRoutes);
+// app.use('/api/terms', termRoutes);
+// app.use('/api/classes', classRoutes);
+// app.use('/api/subjects', subjectRoutes);
+// app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
+// app.use('/api/class-teachers', classTeacherRoutes);
+// app.use('/api/sitting-positions', sittingPositionRoutes);
+// app.use('/api/houses', houseRoutes);
+// app.use('/api/sections', sectionRoutes);
+// app.use('/api/departments', departmentRoutes);
+// app.use('/api/attendance', attendanceRoutes);
+// app.use('/api/assessments', assessmentRoutes);
+// app.use('/api/grades', gradeRoutes);
+// app.use('/api/documents', documentRoutes);
+// app.use('/api/parent-portal', parentPortalRoutes);
 
 // AI routes (conditionally enabled)
-if (env.FEATURE_AI_ENABLED) {
-  app.use('/api/ai', aiRoutes);
-}
+// if (env.FEATURE_AI_ENABLED) {
+//   app.use('/api/ai', aiRoutes);
+// }
 
 // Serve static assets in production
 if (env.isProduction()) {

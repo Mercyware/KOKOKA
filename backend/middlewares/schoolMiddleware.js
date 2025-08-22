@@ -1,5 +1,4 @@
-const { Console } = require('winston/lib/winston/transports');
-const School = require('../models/School');
+const { prisma } = require('../config/database');
 const logger = require('../utils/logger');
 
 /**
@@ -15,9 +14,11 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
     console.log(`Header subdomain: ${headerSubdomain}`);
     if (headerSubdomain) {
       // Find school by subdomain from header
-      const school = await School.findOne({ 
-        subdomain: headerSubdomain, 
-        status: { $in: ['active', 'pending'] } // Allow both active and pending schools
+      const school = await prisma.school.findFirst({ 
+        where: {
+          subdomain: headerSubdomain,
+          status: { in: ['ACTIVE', 'PENDING'] } // Allow both active and pending schools
+        }
       });
       
       console.log(`Found school from header: ${school ? school.name : 'None'}`);
@@ -48,9 +49,11 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
       const subdomain = hostParts[0].toLowerCase();
       
       // Find school by subdomain
-      const school = await School.findOne({ 
-        subdomain, 
-        status: { $in: ['active', 'pending'] } // Allow both active and pending schools
+      const school = await prisma.school.findFirst({ 
+        where: {
+          subdomain, 
+          status: { in: ['ACTIVE', 'PENDING'] } // Allow both active and pending schools
+        }
       });
       
       if (school) {
@@ -94,7 +97,7 @@ exports.requireSchool = (req, res, next) => {
 exports.scopeToSchool = (req, res, next) => {
   if (req.school && req.body) {
     // Add school ID to request body
-    req.body.school = req.school._id;
+    req.body.schoolId = req.school.id;
   }
   
   next();
@@ -108,7 +111,7 @@ exports.scopeToSchool = (req, res, next) => {
 exports.filterBySchool = (req, res, next) => {
   if (req.school && req.query) {
     // Add school filter to query
-    req.query.school = req.school._id;
+    req.query.schoolId = req.school.id;
   }
   
   next();

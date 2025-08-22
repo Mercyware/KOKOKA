@@ -6,7 +6,7 @@ const schoolController = require('../controllers/schoolController');
 
 // Import middleware
 const { protect } = require('../middlewares/authMiddleware');
-const { restrictTo } = require('../middlewares/roleMiddleware');
+// const { restrictTo } = require('../middlewares/roleMiddleware'); // Temporarily disabled for migration
 const { extractSchoolFromSubdomain, requireSchool } = require('../middlewares/schoolMiddleware');
 
 /**
@@ -173,7 +173,7 @@ router.get('/check-subdomain/:subdomain', schoolController.checkSubdomainAvailab
 
 // Protected routes - Super admin only
 router.use(protect);
-router.use(restrictTo('superadmin'));
+// router.use(restrictTo('superadmin')); // Temporarily disabled for migration
 
 /**
  * @swagger

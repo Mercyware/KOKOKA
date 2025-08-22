@@ -1,0 +1,150 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: kokoka-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kokoka
+      POSTGRES_USER: kokoka_user
+      POSTGRES_PASSWORD: kokoka_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/init:/docker-entrypoint-initdb.d
+    networks:
+      - kokoka-network
+
+  # Redis for sessions and caching
+  redis:
+    image: redis:7-alpine
+    container_name: kokoka-redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_password --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kokoka-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kokoka-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://kokoka_user:kokoka_password@postgres:5432/kokoka
+      REDIS_URL: redis://:redis_password@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRE: 30d
+      JWT_REFRESH_EXPIRE: 7d
+      CORS_ORIGIN: http://localhost:3000
+      # AI Service Configuration
+      AI_API_KEY: your-openai-api-key
+      AI_API_URL: https://api.openai.com/v1
+      AI_MODEL: gpt-4
+      FEATURE_AI_ENABLED: true
+      # File Upload Configuration
+      FILE_BASE_URL: /uploads
+      UPLOAD_MAX_SIZE: 104857600
+      # Email Configuration (optional)
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: your-email@gmail.com
+      SMTP_PASS: your-app-password
+      # Security Configuration
+      HELMET_ENABLED: true
+      XSS_PROTECTION_ENABLED: true
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX: 100
+      MAINTENANCE_MODE: false
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kokoka-network
+
+  # Frontend (Development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kokoka-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+      REACT_APP_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+    networks:
+      - kokoka-network
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: kokoka-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./backend/uploads:/var/www/uploads:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - kokoka-network
+    profiles:
+      - production
+
+  # Database backup service
+  db-backup:
+    image: postgres:15-alpine
+    container_name: kokoka-backup
+    restart: "no"
+    environment:
+      POSTGRES_DB: kokoka
+      POSTGRES_USER: kokoka_user
+      POSTGRES_PASSWORD: kokoka_password
+      PGPASSWORD: kokoka_password
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh
+    entrypoint: ["/backup.sh"]
+    depends_on:
+      - postgres
+    networks:
+      - kokoka-network
+    profiles:
+      - backup
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  kokoka-network:
+    driver: bridge
+
+# Development override
+# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up

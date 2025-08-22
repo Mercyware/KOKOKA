@@ -8,17 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import * as authService from '../../services/authService';
 
 const schoolTypes = [
-  { value: 'primary', label: 'Primary School' },
-  { value: 'secondary', label: 'Secondary School' },
-  { value: 'college', label: 'College' },
-  { value: 'university', label: 'University' },
-  { value: 'vocational', label: 'Vocational School' },
-  { value: 'other', label: 'Other' },
+  { value: 'PRIMARY', label: 'Primary School' },
+  { value: 'SECONDARY', label: 'Secondary School' },
+  { value: 'COLLEGE', label: 'College' },
+  { value: 'UNIVERSITY', label: 'University' },
+  { value: 'VOCATIONAL', label: 'Vocational School' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 interface RegisterSchoolProps {
@@ -36,84 +34,156 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
-  const totalSteps = 2;
-
-  // Validation schema
-  const validationSchema = Yup.object({
-    schoolName: Yup.string().required('School name is required'),
-    subdomain: Yup.string()
-      .required('Subdomain is required')
-      .matches(
-        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-        'Subdomain can only contain lowercase letters, numbers, and hyphens'
-      )
-      .min(3, 'Subdomain must be at least 3 characters')
-      .max(63, 'Subdomain must be less than 63 characters'),
-    schoolType: Yup.string().required('School type is required'),
-    email: Yup.string().email('Enter a valid email').required('Email is required'),
-    phone: Yup.string(),
-    website: Yup.string().url('Enter a valid URL'),
-    adminName: Yup.string().required('Admin name is required'),
-    adminEmail: Yup.string()
-      .email('Enter a valid email')
-      .required('Admin email is required'),
-    adminPassword: Yup.string()
-      .min(6, 'Password should be of minimum 6 characters length')
-      .required('Password is required'),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref('adminPassword'), ""], 'Passwords must match')
-      .required('Confirm password is required'),
+  // Form data state
+  const [formData, setFormData] = useState({
+    schoolName: '',
+    subdomain: '',
+    schoolType: 'SECONDARY',
+    email: '',
+    phone: '',
+    website: '',
+    adminName: '',
+    adminEmail: '',
+    adminPassword: '',
+    confirmPassword: '',
   });
 
-  // Formik form handling
-  const formik = useFormik({
-    initialValues: {
-      schoolName: '',
-      subdomain: '',
-      schoolType: 'secondary',
-      email: '',
-      phone: '',
-      website: '',
-      adminName: '',
-      adminEmail: '',
-      adminPassword: '',
-      confirmPassword: '',
-    },
-    validationSchema,
-    validateOnChange: true,
-    validateOnBlur: true,
-    onSubmit: async (values) => {
-      if (currentStep === 1) {
-        // Validate step 1 fields before proceeding
-        const step1Fields = ['schoolName', 'subdomain', 'schoolType', 'email'];
-        const step1Errors = await formik.validateForm();
-        const hasStep1Errors = step1Fields.some(field => step1Errors[field]);
-        
-        if (hasStep1Errors || subdomainAvailable === false) {
-          // Mark all step 1 fields as touched to show validation errors
-          const touchedFields = step1Fields.reduce((acc, field) => {
-            acc[field] = true;
-            return acc;
-          }, {} as Record<string, boolean>);
-          formik.setTouched(touchedFields);
-          return;
-        }
-        
-        setCurrentStep(2);
+  // Form errors state
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Validation functions
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.schoolName.trim()) {
+      newErrors.schoolName = 'School name is required';
+    }
+    
+    if (!formData.subdomain.trim()) {
+      newErrors.subdomain = 'Subdomain is required';
+    } else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.subdomain)) {
+      newErrors.subdomain = 'Subdomain can only contain lowercase letters, numbers, and hyphens';
+    } else if (formData.subdomain.length < 3) {
+      newErrors.subdomain = 'Subdomain must be at least 3 characters';
+    } else if (formData.subdomain.length > 63) {
+      newErrors.subdomain = 'Subdomain must be less than 63 characters';
+    }
+    
+    if (!formData.schoolType) {
+      newErrors.schoolType = 'School type is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Enter a valid email';
+    }
+    
+    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+      newErrors.website = 'Enter a valid URL';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.adminName.trim()) {
+      newErrors.adminName = 'Admin name is required';
+    }
+    
+    if (!formData.adminEmail.trim()) {
+      newErrors.adminEmail = 'Admin email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.adminEmail)) {
+      newErrors.adminEmail = 'Enter a valid email';
+    }
+    
+    if (!formData.adminPassword) {
+      newErrors.adminPassword = 'Password is required';
+    } else if (formData.adminPassword.length < 6) {
+      newErrors.adminPassword = 'Password should be of minimum 6 characters length';
+    }
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Confirm password is required';
+    } else if (formData.adminPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords must match';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form input changes
+  const handleInputChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Handle next button click
+  const handleNext = async () => {
+    console.log('=== NEXT BUTTON CLICKED ===');
+    console.log('Current step:', currentStep);
+    console.log('Form data:', formData);
+    
+    if (currentStep === 1) {
+      console.log('Validating step 1...');
+      const isValid = validateStep1();
+      console.log('Step 1 valid:', isValid);
+      console.log('Subdomain available:', subdomainAvailable);
+      console.log('Subdomain checking:', subdomainChecking);
+      
+      if (!isValid) {
+        console.log('Step 1 validation failed');
         return;
       }
       
-      if (currentStep === 2) {
-        await registerSchool(values);
+      if (subdomainAvailable === false) {
+        console.log('Subdomain not available');
+        return;
       }
-    },
-  });
-
+      
+      if (subdomainChecking) {
+        console.log('Still checking subdomain');
+        return;
+      }
+      
+      console.log('=== MOVING TO STEP 2 ===');
+      setCurrentStep(2);
+      return;
+    }
+    
+    if (currentStep === 2) {
+      console.log('Validating step 2...');
+      const isValid = validateStep2();
+      console.log('Step 2 valid:', isValid);
+      
+      if (!isValid) {
+        console.log('Step 2 validation failed');
+        return;
+      }
+      
+      console.log('=== REGISTERING SCHOOL ===');
+      await registerSchool();
+    }
+  };
 
   // Check subdomain availability when subdomain changes
   useEffect(() => {
     const checkSubdomain = async () => {
-      const subdomain = formik.values.subdomain;
+      const subdomain = formData.subdomain;
       if (subdomain && subdomain.length >= 3 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subdomain)) {
         setSubdomainChecking(true);
         try {
@@ -135,24 +205,31 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
 
     const debounceTimer = setTimeout(checkSubdomain, 500);
     return () => clearTimeout(debounceTimer);
-  }, [formik.values.subdomain]);
+  }, [formData.subdomain]);
 
   // Generate subdomain from school name
   useEffect(() => {
-    if (formik.values.schoolName && !formik.values.subdomain) {
-      const generatedSubdomain = formik.values.schoolName
+    if (formData.schoolName && !formData.subdomain) {
+      const generatedSubdomain = formData.schoolName
         .toLowerCase()
         .replace(/[^\w\s]/gi, '')
         .replace(/\s+/g, '')
         .substring(0, 63);
 
-      formik.setFieldValue('subdomain', generatedSubdomain);
+      handleInputChange('subdomain', generatedSubdomain);
     }
-  }, [formik.values.schoolName]);
+  }, [formData.schoolName]);
+
+  // Debug currentStep changes
+  useEffect(() => {
+    console.log('=== CURRENT STEP CHANGED ===');
+    console.log('New currentStep:', currentStep);
+  }, [currentStep]);
 
   // Handle back step
   const handleBack = () => {
     setCurrentStep(1);
+    setRegistrationError(null); // Clear any registration errors when going back
   };
 
   // Toggle password visibility
@@ -165,24 +242,24 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
   };
 
   // Register school
-  const registerSchool = async (values: any) => {
+  const registerSchool = async () => {
     setRegistrationLoading(true);
     setRegistrationError(null);
 
     try {
       const schoolData = {
-        name: values.schoolName,
-        subdomain: values.subdomain,
-        type: values.schoolType,
+        name: formData.schoolName,
+        subdomain: formData.subdomain,
+        type: formData.schoolType,
         contactInfo: {
-          email: values.email,
-          phone: values.phone,
-          website: values.website,
+          email: formData.email,
+          phone: formData.phone,
+          website: formData.website,
         },
         adminInfo: {
-          name: values.adminName,
-          email: values.adminEmail,
-          password: values.adminPassword,
+          name: formData.adminName,
+          email: formData.adminEmail,
+          password: formData.adminPassword,
         },
       };
 
@@ -190,7 +267,7 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
 
       if (response.success && response.data) {
         // Store subdomain in localStorage for development environment
-        localStorage.setItem('dev_subdomain', values.subdomain);
+        localStorage.setItem('dev_subdomain', formData.subdomain);
 
         // If token is provided, set it
         if (response.data.token) {
@@ -206,13 +283,13 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
             });
           }
           // Redirect to dashboard
-navigate('/auth/welcome');
+          navigate('/auth/welcome');
         } else {
           // Redirect to login with success message
           navigate('/login', {
             state: {
               message: 'School registered successfully! You can now login using your admin credentials.',
-              subdomain: values.subdomain
+              subdomain: formData.subdomain
             }
           });
         }
@@ -239,16 +316,15 @@ navigate('/auth/welcome');
             id="schoolName"
             name="schoolName"
             type="text"
-            value={formik.values.schoolName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.schoolName}
+            onChange={(e) => handleInputChange('schoolName', e.target.value)}
             className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="Enter your school name"
             required
           />
         </div>
-        {formik.touched.schoolName && formik.errors.schoolName && (
-          <p className="text-sm text-red-600">{formik.errors.schoolName}</p>
+        {errors.schoolName && (
+          <p className="text-sm text-red-600">{errors.schoolName}</p>
         )}
       </div>
 
@@ -262,9 +338,8 @@ navigate('/auth/welcome');
             id="subdomain"
             name="subdomain"
             type="text"
-            value={formik.values.subdomain}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.subdomain}
+            onChange={(e) => handleInputChange('subdomain', e.target.value)}
             className="pl-10 pr-20 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="your-school"
             required
@@ -280,10 +355,10 @@ navigate('/auth/welcome');
           </div>
         </div>
         <p className="text-xs text-gray-500">
-          Your school will be accessible at: {formik.values.subdomain}.schoolmanagement.com
+          Your school will be accessible at: {formData.subdomain}.schoolmanagement.com
         </p>
-        {formik.touched.subdomain && formik.errors.subdomain && (
-          <p className="text-sm text-red-600">{formik.errors.subdomain}</p>
+        {errors.subdomain && (
+          <p className="text-sm text-red-600">{errors.subdomain}</p>
         )}
         {subdomainAvailable === false && (
           <p className="text-sm text-red-600">This subdomain is already taken</p>
@@ -294,7 +369,7 @@ navigate('/auth/welcome');
         <Label htmlFor="schoolType" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           School Type
         </Label>
-        <Select value={formik.values.schoolType} onValueChange={(value) => formik.setFieldValue('schoolType', value)}>
+        <Select value={formData.schoolType} onValueChange={(value) => handleInputChange('schoolType', value)}>
           <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400">
             <SelectValue placeholder="Select school type" />
           </SelectTrigger>
@@ -306,8 +381,8 @@ navigate('/auth/welcome');
             ))}
           </SelectContent>
         </Select>
-        {formik.touched.schoolType && formik.errors.schoolType && (
-          <p className="text-sm text-red-600">{formik.errors.schoolType}</p>
+        {errors.schoolType && (
+          <p className="text-sm text-red-600">{errors.schoolType}</p>
         )}
       </div>
 
@@ -321,16 +396,15 @@ navigate('/auth/welcome');
             id="email"
             name="email"
             type="email"
-            value={formik.values.email}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
             className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="school@example.com"
             required
           />
         </div>
-        {formik.touched.email && formik.errors.email && (
-          <p className="text-sm text-red-600">{formik.errors.email}</p>
+        {errors.email && (
+          <p className="text-sm text-red-600">{errors.email}</p>
         )}
       </div>
 
@@ -345,15 +419,14 @@ navigate('/auth/welcome');
               id="phone"
               name="phone"
               type="tel"
-              value={formik.values.phone}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
               placeholder="+1 (555) 123-4567"
             />
           </div>
-          {formik.touched.phone && formik.errors.phone && (
-            <p className="text-sm text-red-600">{formik.errors.phone}</p>
+          {errors.phone && (
+            <p className="text-sm text-red-600">{errors.phone}</p>
           )}
         </div>
 
@@ -367,15 +440,14 @@ navigate('/auth/welcome');
               id="website"
               name="website"
               type="url"
-              value={formik.values.website}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              value={formData.website}
+              onChange={(e) => handleInputChange('website', e.target.value)}
               className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
               placeholder="https://school.com"
             />
           </div>
-          {formik.touched.website && formik.errors.website && (
-            <p className="text-sm text-red-600">{formik.errors.website}</p>
+          {errors.website && (
+            <p className="text-sm text-red-600">{errors.website}</p>
           )}
         </div>
       </div>
@@ -404,16 +476,15 @@ navigate('/auth/welcome');
             id="adminName"
             name="adminName"
             type="text"
-            value={formik.values.adminName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.adminName}
+            onChange={(e) => handleInputChange('adminName', e.target.value)}
             className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="Enter admin full name"
             required
           />
         </div>
-        {formik.touched.adminName && formik.errors.adminName && (
-          <p className="text-sm text-red-600">{formik.errors.adminName}</p>
+        {errors.adminName && (
+          <p className="text-sm text-red-600">{errors.adminName}</p>
         )}
       </div>
 
@@ -427,16 +498,15 @@ navigate('/auth/welcome');
             id="adminEmail"
             name="adminEmail"
             type="email"
-            value={formik.values.adminEmail}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.adminEmail}
+            onChange={(e) => handleInputChange('adminEmail', e.target.value)}
             className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="admin@school.com"
             required
           />
         </div>
-        {formik.touched.adminEmail && formik.errors.adminEmail && (
-          <p className="text-sm text-red-600">{formik.errors.adminEmail}</p>
+        {errors.adminEmail && (
+          <p className="text-sm text-red-600">{errors.adminEmail}</p>
         )}
       </div>
 
@@ -450,9 +520,8 @@ navigate('/auth/welcome');
             id="adminPassword"
             name="adminPassword"
             type={showPassword ? 'text' : 'password'}
-            value={formik.values.adminPassword}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.adminPassword}
+            onChange={(e) => handleInputChange('adminPassword', e.target.value)}
             className="pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="Enter password"
             required
@@ -465,8 +534,8 @@ navigate('/auth/welcome');
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        {formik.touched.adminPassword && formik.errors.adminPassword && (
-          <p className="text-sm text-red-600">{formik.errors.adminPassword}</p>
+        {errors.adminPassword && (
+          <p className="text-sm text-red-600">{errors.adminPassword}</p>
         )}
       </div>
 
@@ -480,9 +549,8 @@ navigate('/auth/welcome');
             id="confirmPassword"
             name="confirmPassword"
             type={showConfirmPassword ? 'text' : 'password'}
-            value={formik.values.confirmPassword}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
+            value={formData.confirmPassword}
+            onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
             className="pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
             placeholder="Confirm password"
             required
@@ -495,13 +563,12 @@ navigate('/auth/welcome');
             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        {formik.touched.confirmPassword && formik.errors.confirmPassword && (
-          <p className="text-sm text-red-600">{formik.errors.confirmPassword}</p>
+        {errors.confirmPassword && (
+          <p className="text-sm text-red-600">{errors.confirmPassword}</p>
         )}
       </div>
     </div>
   );
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 dark:from-blue-950 dark:via-purple-950 dark:to-blue-900 flex items-center justify-center p-4">
@@ -538,7 +605,7 @@ navigate('/auth/welcome');
             </Alert>
           )}
 
-          <form onSubmit={formik.handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             {currentStep === 1 ? renderSchoolInfoForm() : renderAdminForm()}
             
             <div className="flex justify-between mt-6">
@@ -554,21 +621,26 @@ navigate('/auth/welcome');
               ) : <div />}
               
               <Button
-                type="submit"
+                type="button"
+                onClick={handleNext}
                 disabled={
                   registrationLoading ||
                   (currentStep === 1 && (
                     subdomainAvailable === false ||
-                    !formik.values.schoolName ||
-                    !formik.values.subdomain ||
-                    !formik.values.email ||
-                    !!formik.errors.schoolName ||
-                    !!formik.errors.subdomain ||
-                    !!formik.errors.email ||
-                    !!formik.errors.schoolType
+                    !formData.schoolName?.trim() ||
+                    !formData.subdomain?.trim() ||
+                    !formData.email?.trim() ||
+                    subdomainChecking
+                  )) ||
+                  (currentStep === 2 && (
+                    !formData.adminName?.trim() ||
+                    !formData.adminEmail?.trim() ||
+                    !formData.adminPassword ||
+                    !formData.confirmPassword ||
+                    formData.adminPassword !== formData.confirmPassword
                   ))
                 }
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registrationLoading ? (
                   <div className="flex items-center space-x-2">
@@ -582,13 +654,14 @@ navigate('/auth/welcome');
                 )}
               </Button>
             </div>
-          </form>
+          </div>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have a school account?{' '}
               {onSwitchToLogin ? (
                 <button
+                  type="button"
                   onClick={onSwitchToLogin}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                 >

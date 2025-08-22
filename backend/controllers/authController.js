@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const { userHelpers } = require('../utils/prismaHelpers');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
 
@@ -8,13 +8,13 @@ exports.register = async (req, res) => {
     const { name, email, password, role } = req.body;
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await userHelpers.findByEmailWithPassword(email);
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
     
     // Get school from request (set by school middleware) or from request body
-    const schoolId = req.school ? req.school._id : req.body.school;
+    const schoolId = req.school ? req.school.id : req.body.school;
     
     if (!schoolId) {
       return res.status(400).json({ 
@@ -23,23 +23,21 @@ exports.register = async (req, res) => {
       });
     }
     
-    // Create new user
-    const user = new User({
-      school: schoolId,
+    // Create new user (password will be hashed automatically)
+    const user = await userHelpers.create({
+      schoolId,
       name,
       email,
       password,
       role
     });
     
-    await user.save();
-    
     // Generate JWT token
     const token = jwt.sign(
       { 
-        id: user._id, 
+        id: user.id, 
         role: user.role,
-        school: user.school 
+        school: user.schoolId 
       }, 
       JWT_SECRET, 
       { expiresIn: '30d' }
@@ -49,7 +47,7 @@ exports.register = async (req, res) => {
       success: true,
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -70,26 +68,29 @@ exports.login = async (req, res) => {
     
     // Check if user exists
     const logger = require('../utils/logger');
-    const user = await User.findOne({ email }).select('+password');
-    logger.info('Retrieved user:', { email, user: JSON.stringify(user) });
+    const user = await userHelpers.findByEmailWithPassword(email);
+    logger.info('Retrieved user:', { email, userId: user?.id });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
     // Check password
-    const isMatch = await user.matchPassword(password);
+    const isMatch = await userHelpers.comparePassword(password, user.passwordHash);
     logger.info('Password match:', { isMatch });
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
+    // Update last login
+    await userHelpers.update(user.id, { lastLogin: new Date() });
+    
     // Generate JWT token
-    logger.info('JWT_SECRET:', JWT_SECRET);
+    logger.info('JWT_SECRET configured');
     const token = jwt.sign(
       { 
-        id: user._id, 
+        id: user.id, 
         role: user.role,
-        school: user.school 
+        school: user.schoolId 
       }, 
       JWT_SECRET, 
       { expiresIn: '30d' }
@@ -100,7 +101,7 @@ exports.login = async (req, res) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
@@ -116,7 +117,16 @@ exports.login = async (req, res) => {
 // Get current user
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const { prisma } = require('../utils/prismaHelpers');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        school: true,
+        student: true,
+        teacher: true,
+        guardian: true
+      }
+    });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

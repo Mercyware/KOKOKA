@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(npm start)",
-      "Bash(cmd //c:*)"
+      "Bash(cmd //c:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose:*)",
+      "Bash(npm install)",
+      "Bash(cp:*)",
+      "Bash(npm run:*)",
+      "Bash(npx prisma:*)",
+      "Bash(touch:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(timeout 5 npm run dev)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": [],

@@ -1,0 +1,29 @@
+# Development Dockerfile for Frontend
+FROM node:18-alpine
+
+# Install dumb-init
+RUN apk add --no-cache dumb-init
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Change ownership
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Copy package files
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy application code
+COPY --chown=nodejs:nodejs . .
+
+EXPOSE 3000
+
+ENTRYPOINT ["dumb-init", "--"]
+
+CMD ["npm", "run", "dev"]

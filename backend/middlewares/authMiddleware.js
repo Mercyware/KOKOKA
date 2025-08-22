@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
-const User = require('../models/User');
+const { prisma } = require('../config/database');
 const { JWT_SECRET } = require('../config/jwt');
 
 // Protect routes
@@ -32,7 +32,9 @@ exports.protect = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, JWT_SECRET);
     
     // Check if user still exists
-    const user = await User.findById(decoded.id);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -49,20 +51,22 @@ exports.protect = async (req, res, next) => {
     }
     
     // Update last login time
-    user.lastLogin = Date.now();
-    await user.save({ validateBeforeSave: false });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
     
     // Set user in request
     req.user = {
-      id: user._id,
+      id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      school: user.school
+      schoolId: user.schoolId
     };
     
     // If token has school info but user doesn't match, reject
-    if (decoded.school && user.school && decoded.school.toString() !== user.school.toString()) {
+    if (decoded.schoolId && user.schoolId && decoded.schoolId !== user.schoolId) {
       return res.status(401).json({
         success: false,
         message: 'User does not belong to the specified school'
@@ -119,7 +123,9 @@ exports.refreshToken = async (req, res, next) => {
     );
     
     // Check if user exists
-    const user = await User.findById(decoded.id);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -129,7 +135,7 @@ exports.refreshToken = async (req, res, next) => {
     
     // Generate new access token
     const token = jwt.sign(
-      { id: user._id, role: user.role, school: user.school },
+      { id: user.id, role: user.role, schoolId: user.schoolId },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
