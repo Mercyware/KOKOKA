@@ -15,7 +15,8 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "Bash(timeout 5 npm run dev)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": [],

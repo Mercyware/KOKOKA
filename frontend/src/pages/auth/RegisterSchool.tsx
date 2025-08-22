@@ -256,6 +256,29 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
     setRegistrationError(null); // Clear any registration errors when going back
   };
 
+  // Get submit button disabled reason
+  const getSubmitDisabledReason = () => {
+    if (currentStep === 1) {
+      if (!formData.schoolName?.trim()) return "Please enter your school name";
+      if (!formData.subdomain?.trim()) return "Please choose a subdomain for your school";
+      if (!formData.email?.trim()) return "Please enter your school email address";
+      if (subdomainAvailable === false) return "The chosen subdomain is not available";
+      if (subdomainChecking) return "Checking subdomain availability...";
+      return null;
+    }
+    
+    if (currentStep === 2) {
+      if (!formData.adminName?.trim()) return "Please enter the admin's full name";
+      if (!formData.adminEmail?.trim()) return "Please enter the admin email address";
+      if (!formData.adminPassword) return "Please create a password for the admin account";
+      if (!formData.confirmPassword) return "Please confirm your password";
+      if (formData.adminPassword !== formData.confirmPassword) return "Passwords do not match";
+      return null;
+    }
+    
+    return null;
+  };
+
   // Toggle password visibility
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -539,7 +562,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           />
         </div>
         {errors.adminName && (
-          <p className="text-sm text-red-600">{errors.adminName}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminName}</p>
+          </div>
         )}
       </div>
 
@@ -595,7 +623,12 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           </button>
         </div>
         {errors.adminPassword && (
-          <p className="text-sm text-red-600">{errors.adminPassword}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminPassword}</p>
+          </div>
         )}
       </div>
 
@@ -694,39 +727,51 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
                 </Button>
               ) : <div />}
               
-              <Button
-                type="button"
-                onClick={handleNext}
-                disabled={
-                  registrationLoading ||
-                  (currentStep === 1 && (
-                    subdomainAvailable === false ||
-                    !formData.schoolName?.trim() ||
-                    !formData.subdomain?.trim() ||
-                    !formData.email?.trim() ||
-                    subdomainChecking
-                  )) ||
-                  (currentStep === 2 && (
-                    !formData.adminName?.trim() ||
-                    !formData.adminEmail?.trim() ||
-                    !formData.adminPassword ||
-                    !formData.confirmPassword ||
-                    formData.adminPassword !== formData.confirmPassword
-                  ))
-                }
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {registrationLoading ? (
+              <div className="flex flex-col items-end space-y-2">
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={
+                    registrationLoading ||
+                    (currentStep === 1 && (
+                      subdomainAvailable === false ||
+                      !formData.schoolName?.trim() ||
+                      !formData.subdomain?.trim() ||
+                      !formData.email?.trim() ||
+                      subdomainChecking
+                    )) ||
+                    (currentStep === 2 && (
+                      !formData.adminName?.trim() ||
+                      !formData.adminEmail?.trim() ||
+                      !formData.adminPassword ||
+                      !formData.confirmPassword ||
+                      formData.adminPassword !== formData.confirmPassword
+                    ))
+                  }
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {registrationLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Registering...</span>
+                    </div>
+                  ) : currentStep === 1 ? (
+                    'Next'
+                  ) : (
+                    'Register School'
+                  )}
+                </Button>
+                
+                {/* Show disabled reason if button is disabled */}
+                {getSubmitDisabledReason() && (
                   <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Registering...</span>
+                    <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                      <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
+                    </div>
+                    <p className="text-xs text-red-700 dark:text-red-300 font-medium">{getSubmitDisabledReason()}</p>
                   </div>
-                ) : currentStep === 1 ? (
-                  'Next'
-                ) : (
-                  'Register School'
                 )}
-              </Button>
+              </div>
             </div>
           </div>
           
