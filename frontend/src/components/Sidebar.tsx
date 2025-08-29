@@ -17,6 +17,7 @@ import {
   Home,
   FileText,
   Calendar,
+  CalendarDays,
   Trophy,
   ClipboardList,
   PieChart,
@@ -64,6 +65,8 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       icon: BookOpen,
       hasSubmenu: true,
       submenu: [
+        { id: 'academic-years', label: 'Academic Years', icon: CalendarDays },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
         { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
         { id: 'report-templates', label: 'Report Cards', icon: FileText },
         { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
@@ -220,6 +223,12 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             onTabChange(subItem.id);
                             
                             // Navigate to appropriate route based on menu item
+                            if (subItem.id === 'academic-years') {
+                              navigate('/academics/academic-years');
+                            }
+                            if (subItem.id === 'academic-calendar') {
+                              navigate('/academics/academic-calendars');
+                            }
                             if (subItem.id === 'students-list') {
                               navigate('/students');
                             }

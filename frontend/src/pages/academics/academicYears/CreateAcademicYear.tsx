@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  Divider,
-  FormControlLabel,
-  Switch,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Chip,
-  FormHelperText,
-} from '@mui/material';
+import { format } from 'date-fns';
+import { Save, ArrowLeft, CalendarDays, Loader2, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { post } from '../../../services/api';
 
 interface FormData {
@@ -37,6 +35,7 @@ interface FormData {
 const CreateAcademicYear: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [showActiveWarning, setShowActiveWarning] = useState(false);
@@ -49,13 +48,7 @@ const CreateAcademicYear: React.FC = () => {
     schoolId: authState.user?.school,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
 
-  // Auto-generate academic year name when dates change
   useEffect(() => {
     if (formData.startDate && formData.endDate) {
       const startYear = new Date(formData.startDate).getFullYear();
@@ -138,7 +131,6 @@ const CreateAcademicYear: React.FC = () => {
       [name]: value,
     }));
 
-    // Auto-set end date when start date is selected (1 year later)
     if (name === 'startDate' && value && !formData.endDate) {
       const startDate = new Date(value);
       const endDate = new Date(startDate);
@@ -150,7 +142,6 @@ const CreateAcademicYear: React.FC = () => {
       }));
     }
 
-    // Clear date-related errors
     setErrors(prev => ({
       ...prev,
       [name]: '',
@@ -166,7 +157,6 @@ const CreateAcademicYear: React.FC = () => {
       [name]: value,
     }));
 
-    // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -175,18 +165,15 @@ const CreateAcademicYear: React.FC = () => {
     }
   };
 
-  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-
-    // Show warning if user is trying to set as current
-    if (name === 'isCurrent' && checked) {
+  const handleSwitchChange = (checked: boolean) => {
+    if (checked) {
       setShowActiveWarning(true);
       return;
     }
 
     setFormData(prev => ({
       ...prev,
-      [name]: checked,
+      isCurrent: checked,
     }));
   };
 
@@ -209,18 +196,15 @@ const CreateAcademicYear: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Required fields validation
     if (!formData.name?.trim()) newErrors.name = 'Academic year name is required';
     if (!formData.startDate) newErrors.startDate = 'Start date is required';
     if (!formData.endDate) newErrors.endDate = 'End date is required';
 
-    // Date validation
     if (formData.startDate && formData.endDate) {
       if (formData.startDate >= formData.endDate) {
         newErrors.endDate = 'End date must be after start date';
       }
 
-      // Check duration
       const durationInMonths = calculateDurationInMonths(formData.startDate, formData.endDate);
       if (durationInMonths < 6) {
         newErrors.dateRange = 'Academic year must be at least 6 months long';
@@ -228,7 +212,6 @@ const CreateAcademicYear: React.FC = () => {
         newErrors.dateRange = 'Academic year cannot be longer than 2 years';
       }
 
-      // Check if dates are reasonable (not too far in the past or future)
       const now = new Date();
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.endDate);
@@ -246,12 +229,10 @@ const CreateAcademicYear: React.FC = () => {
       }
     }
 
-    // Name validation
     if (formData.name && formData.name.length > 100) {
       newErrors.name = 'Academic year name cannot exceed 100 characters';
     }
 
-    // Description validation
     if (formData.description && formData.description.length > 500) {
       newErrors.description = 'Description cannot exceed 500 characters';
     }
@@ -264,19 +245,19 @@ const CreateAcademicYear: React.FC = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      setSnackbar({
-        open: true,
-        message: 'Please fix the errors in the form',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'Please fix the errors in the form',
+        variant: "destructive",
       });
       return;
     }
 
     if (isDuplicate) {
-      setSnackbar({
-        open: true,
-        message: 'Please choose a different academic year name',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'Please choose a different academic year name',
+        variant: "destructive",
       });
       return;
     }
@@ -296,40 +277,31 @@ const CreateAcademicYear: React.FC = () => {
       const response = await post('/academic-years', dataToSubmit);
 
       if (response.success) {
-        setSnackbar({
-          open: true,
-          message: 'Academic year created successfully',
-          severity: 'success',
+        toast({
+          title: "Success",
+          description: 'Academic year created successfully',
         });
 
-        // Redirect to academic years list after successful creation
         setTimeout(() => {
           navigate('/academics/academic-years');
         }, 2000);
       } else {
-        setSnackbar({
-          open: true,
-          message: response.message || 'Failed to create academic year',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: response.message || 'Failed to create academic year',
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Error creating academic year:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while creating the academic year',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'An error occurred while creating the academic year',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({
-      ...prev,
-      open: false,
-    }));
   };
 
   const getDurationInfo = () => {
@@ -342,179 +314,207 @@ const CreateAcademicYear: React.FC = () => {
 
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    try {
+      return format(new Date(dateString), 'MMM yyyy');
+    } catch (error) {
+      return '';
+    }
   };
 
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Create New Academic Year
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <CalendarDays className="h-8 w-8 text-blue-600" />
+              Create New Academic Year
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Set up a new academic year with dates and settings
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate('/academics/academic-years')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to List
+          </Button>
+        </div>
 
-        <Paper sx={{ p: 3 }}>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Academic Year Name"
+        <Card>
+          <CardHeader>
+            <CardTitle>Academic Year Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Academic Year Name *</Label>
+                <Input
+                  id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleNameChange}
-                  error={!!errors.name || isDuplicate}
-                  helperText={errors.name || (isDuplicate && 'This name already exists')}
-                  required
                   placeholder="e.g., 2023-2024"
+                  className={errors.name || isDuplicate ? "border-red-500" : ""}
                 />
-              </Grid>
+                {(errors.name || isDuplicate) && (
+                  <p className="text-sm text-red-500">{errors.name || 'This name already exists'}</p>
+                )}
+              </div>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Start Date"
-                  name="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={handleDateChange}
-                  error={!!errors.startDate}
-                  helperText={errors.startDate}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Input
+                    id="startDate"
+                    name="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={handleDateChange}
+                    className={errors.startDate ? "border-red-500" : ""}
+                  />
+                  {errors.startDate && (
+                    <p className="text-sm text-red-500">{errors.startDate}</p>
+                  )}
+                </div>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="End Date"
-                  name="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={handleDateChange}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                  inputProps={{
-                    min: formData.startDate || undefined
-                  }}
-                />
-              </Grid>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date *</Label>
+                  <Input
+                    id="endDate"
+                    name="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={handleDateChange}
+                    min={formData.startDate || undefined}
+                    className={errors.endDate ? "border-red-500" : ""}
+                  />
+                  {errors.endDate && (
+                    <p className="text-sm text-red-500">{errors.endDate}</p>
+                  )}
+                </div>
+              </div>
 
               {(formData.startDate && formData.endDate) && (
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Chip 
-                      label={getDurationInfo()} 
-                      color="primary" 
-                      variant="outlined" 
-                      size="small"
-                    />
-                    <Chip 
-                      label={`${formatDateForDisplay(formData.startDate)} - ${formatDateForDisplay(formData.endDate)}`}
-                      color="secondary" 
-                      variant="outlined" 
-                      size="small"
-                    />
-                  </Box>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-blue-600 border-blue-300">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {getDurationInfo()}
+                    </Badge>
+                    <Badge variant="outline" className="text-purple-600 border-purple-300">
+                      <CalendarDays className="h-3 w-3 mr-1" />
+                      {formatDateForDisplay(formData.startDate)} - {formatDateForDisplay(formData.endDate)}
+                    </Badge>
+                  </div>
                   {errors.dateRange && (
-                    <FormHelperText error>{errors.dateRange}</FormHelperText>
+                    <p className="text-sm text-red-500">{errors.dateRange}</p>
                   )}
-                </Grid>
+                </div>
               )}
 
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isCurrent}
-                      onChange={handleSwitchChange}
-                      name="isCurrent"
-                      color="primary"
-                    />
-                  }
-                  label="Set as Current Academic Year"
-                />
-                <FormHelperText>
-                  Setting this as current will deactivate all other academic years for your school
-                </FormHelperText>
-              </Grid>
+              <Separator />
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="isCurrent">Set as Current Academic Year</Label>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Setting this as current will deactivate all other academic years for your school
+                    </p>
+                  </div>
+                  <Switch
+                    id="isCurrent"
+                    checked={formData.isCurrent}
+                    onCheckedChange={handleSwitchChange}
+                  />
+                </div>
+
+                {formData.isCurrent && (
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">This will be set as the current academic year</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleTextFieldChange}
-                  error={!!errors.description}
-                  helperText={errors.description || `${formData.description.length}/500 characters`}
-                  multiline
-                  rows={4}
                   placeholder="Optional description for this academic year..."
+                  rows={4}
+                  className={errors.description ? "border-red-500" : ""}
                 />
-              </Grid>
+                <div className="flex justify-between items-center">
+                  {errors.description && (
+                    <p className="text-sm text-red-500">{errors.description}</p>
+                  )}
+                  <p className="text-sm text-gray-500 ml-auto">
+                    {formData.description.length}/500 characters
+                  </p>
+                </div>
+              </div>
 
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/academics/academic-years')}
-                    sx={{ mr: 2 }}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={loading || isDuplicate}
-                    startIcon={loading ? <CircularProgress size={20} /> : null}
-                  >
-                    {loading ? 'Creating...' : 'Create Academic Year'}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </form>
-        </Paper>
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/academics/academic-years')}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading || isDuplicate}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Create Academic Year
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Active Academic Year Warning Dialog */}
-        <Dialog open={showActiveWarning} onClose={() => setShowActiveWarning(false)}>
-          <DialogTitle>Set as Current Academic Year?</DialogTitle>
+        <Dialog open={showActiveWarning} onOpenChange={setShowActiveWarning}>
           <DialogContent>
-            <DialogContentText>
-              Setting this academic year as current will automatically deactivate all other academic years for your school. 
-              Only one academic year can be current at a time. Are you sure you want to continue?
-            </DialogContentText>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Set as Current Academic Year?
+              </DialogTitle>
+              <DialogDescription>
+                Setting this academic year as current will automatically deactivate all other academic years for your school. 
+                Only one academic year can be current at a time. Are you sure you want to continue?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowActiveWarning(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleActiveConfirm} className="bg-blue-600 hover:bg-blue-700">
+                Continue
+              </Button>
+            </DialogFooter>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowActiveWarning(false)}>Cancel</Button>
-            <Button onClick={handleActiveConfirm} variant="contained" color="primary">
-              Continue
-            </Button>
-          </DialogActions>
         </Dialog>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+      </div>
     </Layout>
   );
 };

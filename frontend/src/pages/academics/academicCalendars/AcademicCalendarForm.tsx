@@ -1,39 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  SelectChangeEvent,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
+import { Save, ArrowLeft, Plus, Trash2, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { get } from '../../../services/api';
 import {
   getAcademicCalendarById,
@@ -52,6 +46,7 @@ interface AcademicYear {
 
 const AcademicCalendarForm: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
 
@@ -70,11 +65,6 @@ const AcademicCalendarForm: React.FC = () => {
     date: '',
     description: '',
   });
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null);
 
   useEffect(() => {
@@ -90,18 +80,18 @@ const AcademicCalendarForm: React.FC = () => {
       if (response.success && response.data) {
         setAcademicYears(response.data);
       } else {
-        setSnackbar({
-          open: true,
-          message: response.message || 'Failed to fetch academic years',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: response.message || 'Failed to fetch academic years',
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Error fetching academic years:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while fetching academic years',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'An error occurred while fetching academic years',
+        variant: "destructive",
       });
     }
   };
@@ -121,7 +111,6 @@ const AcademicCalendarForm: React.FC = () => {
             : calendar.academicYear._id,
         });
 
-        // Find the selected academic year
         if (typeof calendar.academicYear !== 'string') {
           const yearId = calendar.academicYear._id;
           const year = academicYears.find(y => y._id === yearId);
@@ -130,19 +119,19 @@ const AcademicCalendarForm: React.FC = () => {
           }
         }
       } else {
-        setSnackbar({
-          open: true,
-          message: response.message || 'Failed to fetch academic calendar',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: response.message || 'Failed to fetch academic calendar',
+          variant: "destructive",
         });
         navigate('/academics/academic-calendars');
       }
     } catch (error) {
       console.error('Error fetching academic calendar:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while fetching the academic calendar',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'An error occurred while fetching the academic calendar',
+        variant: "destructive",
       });
       navigate('/academics/academic-calendars');
     } finally {
@@ -150,62 +139,53 @@ const AcademicCalendarForm: React.FC = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent<any>) => {
-    const { name, value } = e.target;
-    if (name) {
-      setFormData(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = (field: keyof AcademicCalendar, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
 
-      // If academic year changes, update the selected academic year
-      if (name === 'academicYear') {
-        const year = academicYears.find(y => y._id === value);
-        setSelectedAcademicYear(year || null);
-      }
+    if (field === 'academicYear') {
+      const year = academicYears.find(y => y._id === value);
+      setSelectedAcademicYear(year || null);
     }
   };
 
-  const handleHolidayInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewHoliday(prev => ({ ...prev, [name]: value }));
+  const handleHolidayInputChange = (field: keyof Holiday, value: string) => {
+    setNewHoliday(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddHoliday = () => {
     if (!newHoliday.name || !newHoliday.date) {
-      setSnackbar({
-        open: true,
-        message: 'Holiday name and date are required',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'Holiday name and date are required',
+        variant: "destructive",
       });
       return;
     }
 
-    // Check if the holiday date is within the calendar period
     if (formData.startDate && formData.endDate) {
       const holidayDate = new Date(newHoliday.date);
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.endDate);
 
       if (holidayDate < startDate || holidayDate > endDate) {
-        setSnackbar({
-          open: true,
-          message: 'Holiday date must be within the calendar period',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: 'Holiday date must be within the calendar period',
+          variant: "destructive",
         });
         return;
       }
     }
 
-    // Add the new holiday to the form data
     const updatedHolidays = [...(formData.holidays || []), newHoliday as Holiday];
     setFormData(prev => ({ ...prev, holidays: updatedHolidays }));
 
-    // Reset the new holiday form
     setNewHoliday({
       name: '',
       date: '',
       description: '',
     });
 
-    // Close the dialog
     setHolidayDialogOpen(false);
   };
 
@@ -218,39 +198,36 @@ const AcademicCalendarForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form data
     if (!formData.academicYear || !formData.term || !formData.startDate || !formData.endDate) {
-      setSnackbar({
-        open: true,
-        message: 'Please fill in all required fields',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'Please fill in all required fields',
+        variant: "destructive",
       });
       return;
     }
 
-    // Validate dates
     const startDate = new Date(formData.startDate);
     const endDate = new Date(formData.endDate);
 
     if (startDate > endDate) {
-      setSnackbar({
-        open: true,
-        message: 'Start date cannot be after end date',
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: 'Start date cannot be after end date',
+        variant: "destructive",
       });
       return;
     }
 
-    // Validate that dates are within academic year if selected
     if (selectedAcademicYear) {
       const academicYearStartDate = new Date(selectedAcademicYear.startDate);
       const academicYearEndDate = new Date(selectedAcademicYear.endDate);
 
       if (startDate < academicYearStartDate || endDate > academicYearEndDate) {
-        setSnackbar({
-          open: true,
-          message: 'Calendar dates must be within the academic year period',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: 'Calendar dates must be within the academic year period',
+          variant: "destructive",
         });
         return;
       }
@@ -258,15 +235,14 @@ const AcademicCalendarForm: React.FC = () => {
 
     setLoading(true);
     try {
-      // Get the current user's school from localStorage
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const schoolId = user.school;
 
       if (!schoolId) {
-        setSnackbar({
-          open: true,
-          message: 'School information not found',
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: 'School information not found',
+          variant: "destructive",
         });
         return;
       }
@@ -284,37 +260,31 @@ const AcademicCalendarForm: React.FC = () => {
       }
 
       if (response.success) {
-        setSnackbar({
-          open: true,
-          message: `Academic calendar ${isEditMode ? 'updated' : 'created'} successfully`,
-          severity: 'success',
+        toast({
+          title: "Success",
+          description: `Academic calendar ${isEditMode ? 'updated' : 'created'} successfully`,
         });
         
-        // Navigate back to the list after a short delay
         setTimeout(() => {
           navigate('/academics/academic-calendars');
         }, 1500);
       } else {
-        setSnackbar({
-          open: true,
-          message: response.message || `Failed to ${isEditMode ? 'update' : 'create'} academic calendar`,
-          severity: 'error',
+        toast({
+          title: "Error",
+          description: response.message || `Failed to ${isEditMode ? 'update' : 'create'} academic calendar`,
+          variant: "destructive",
         });
       }
     } catch (error) {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} academic calendar:`, error);
-      setSnackbar({
-        open: true,
-        message: `An error occurred while ${isEditMode ? 'updating' : 'creating'} the academic calendar`,
-        severity: 'error',
+      toast({
+        title: "Error",
+        description: `An error occurred while ${isEditMode ? 'updating' : 'creating'} the academic calendar`,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   const formatDate = (dateString: string) => {
@@ -325,7 +295,6 @@ const AcademicCalendarForm: React.FC = () => {
     }
   };
 
-  // Helper function to format date for input fields
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return '';
     try {
@@ -338,214 +307,219 @@ const AcademicCalendarForm: React.FC = () => {
 
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">
-            {isEditMode ? 'Edit Academic Calendar' : 'Create Academic Calendar'}
-          </Typography>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <CalendarIcon className="h-8 w-8 text-blue-600" />
+              {isEditMode ? 'Edit Academic Calendar' : 'Create Academic Calendar'}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              {isEditMode ? 'Update calendar information' : 'Add a new academic calendar with schedules and holidays'}
+            </p>
+          </div>
           <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
+            variant="outline"
             onClick={() => navigate('/academics/academic-calendars')}
           >
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to List
           </Button>
-        </Box>
+        </div>
 
-        <Paper sx={{ p: 3 }}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="academic-year-label">Academic Year</InputLabel>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-lg">Loading...</span>
+          </div>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Calendar Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="academicYear">Academic Year *</Label>
                     <Select
-                      labelId="academic-year-label"
-                      id="academicYear"
-                      name="academicYear"
-                      value={formData.academicYear || ''}
-                      label="Academic Year"
-                      onChange={handleInputChange}
+                      value={typeof formData.academicYear === 'string' ? formData.academicYear : formData.academicYear?._id || ''}
+                      onValueChange={(value) => handleInputChange('academicYear', value)}
                     >
-                      {academicYears.map((year) => (
-                        <MenuItem key={year._id} value={year._id}>
-                          {year.name}
-                        </MenuItem>
-                      ))}
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select academic year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {academicYears.map((year) => (
+                          <SelectItem key={year._id} value={year._id}>
+                            {year.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="term-label">Term</InputLabel>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="term">Term *</Label>
                     <Select
-                      labelId="term-label"
-                      id="term"
-                      name="term"
                       value={formData.term || 'First'}
-                      label="Term"
-                      onChange={handleInputChange}
+                      onValueChange={(value) => handleInputChange('term', value)}
                     >
-                      <MenuItem value="First">First Term</MenuItem>
-                      <MenuItem value="Second">Second Term</MenuItem>
-                      <MenuItem value="Third">Third Term</MenuItem>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="First">First Term</SelectItem>
+                        <SelectItem value="Second">Second Term</SelectItem>
+                        <SelectItem value="Third">Third Term</SelectItem>
+                      </SelectContent>
                     </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Start Date"
-                    name="startDate"
-                    type="date"
-                    value={formatDateForInput(formData.startDate || '')}
-                    onChange={handleInputChange}
-                    required
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="End Date"
-                    name="endDate"
-                    type="date"
-                    value={formatDateForInput(formData.endDate || '')}
-                    onChange={handleInputChange}
-                    required
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
+                  </div>
 
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">Holidays</Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<AddIcon />}
-                      onClick={() => setHolidayDialogOpen(true)}
-                    >
-                      Add Holiday
-                    </Button>
-                  </Box>
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Start Date *</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={formatDateForInput(formData.startDate || '')}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      required
+                    />
+                  </div>
 
-                  <List>
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">End Date *</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={formatDateForInput(formData.endDate || '')}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Holidays</h3>
+                    <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="outline">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Holiday
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Holiday</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="holidayName">Holiday Name *</Label>
+                            <Input
+                              id="holidayName"
+                              value={newHoliday.name || ''}
+                              onChange={(e) => handleHolidayInputChange('name', e.target.value)}
+                              placeholder="Enter holiday name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="holidayDate">Holiday Date *</Label>
+                            <Input
+                              id="holidayDate"
+                              type="date"
+                              value={formatDateForInput(newHoliday.date || '')}
+                              onChange={(e) => handleHolidayInputChange('date', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="holidayDescription">Description (Optional)</Label>
+                            <Input
+                              id="holidayDescription"
+                              value={newHoliday.description || ''}
+                              onChange={(e) => handleHolidayInputChange('description', e.target.value)}
+                              placeholder="Enter description"
+                            />
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setHolidayDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="button" onClick={handleAddHoliday}>
+                              Add Holiday
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  <div className="space-y-2">
                     {formData.holidays && formData.holidays.length > 0 ? (
                       formData.holidays.map((holiday, index) => (
-                        <ListItem key={index} divider>
-                          <ListItemText
-                            primary={holiday.name}
-                            secondary={`${formatDate(holiday.date)}${holiday.description ? ` - ${holiday.description}` : ''}`}
-                          />
-                          <ListItemSecondaryAction>
-                            <IconButton edge="end" onClick={() => handleRemoveHoliday(index)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{holiday.name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {formatDate(holiday.date)}
+                              {holiday.description && ` - ${holiday.description}`}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleRemoveHoliday(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       ))
                     ) : (
-                      <ListItem>
-                        <ListItemText primary="No holidays added yet" />
-                      </ListItem>
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <CalendarIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No holidays added yet</p>
+                        <p className="text-sm">Click "Add Holiday" to get started</p>
+                      </div>
                     )}
-                  </List>
-                </Grid>
+                  </div>
+                </div>
 
-                <Grid item xs={12} sx={{ mt: 2 }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    startIcon={<SaveIcon />}
-                    disabled={loading}
-                    sx={{ mr: 1 }}
-                  >
-                    {isEditMode ? 'Update' : 'Create'} Academic Calendar
+                <div className="flex space-x-4">
+                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {isEditMode ? 'Updating...' : 'Creating...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        {isEditMode ? 'Update Calendar' : 'Create Calendar'}
+                      </>
+                    )}
                   </Button>
                   <Button
-                    variant="outlined"
+                    type="button"
+                    variant="outline"
                     onClick={() => navigate('/academics/academic-calendars')}
                     disabled={loading}
                   >
                     Cancel
                   </Button>
-                </Grid>
-              </Grid>
-            </form>
-          )}
-        </Paper>
-
-        {/* Holiday Dialog */}
-        <Dialog open={holidayDialogOpen} onClose={() => setHolidayDialogOpen(false)}>
-          <DialogTitle>Add Holiday</DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField
-                  name="name"
-                  label="Holiday Name"
-                  fullWidth
-                  required
-                  value={newHoliday.name}
-                  onChange={handleHolidayInputChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Holiday Date"
-                  name="date"
-                  type="date"
-                  value={formatDateForInput(newHoliday.date || '')}
-                  onChange={handleHolidayInputChange}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  name="description"
-                  label="Description (Optional)"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={newHoliday.description}
-                  onChange={handleHolidayInputChange}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setHolidayDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddHoliday} color="primary">
-              Add
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Snackbar for notifications */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </Layout>
   );
 };

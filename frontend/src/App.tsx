@@ -19,8 +19,6 @@ import RegistrationSuccess from "./pages/auth/RegistrationSuccess";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 // Academic Year Components
 import AcademicYearsList from "./pages/academics/academicYears/AcademicYearsList";
-import CreateAcademicYear from "./pages/academics/academicYears/CreateAcademicYear";
-import EditAcademicYear from "./pages/academics/academicYears/EditAcademicYear";
 // Academic Calendar Components
 import AcademicCalendarsList from "./pages/academics/academicCalendars/AcademicCalendarsList";
 import CreateAcademicCalendar from "./pages/academics/academicCalendars/CreateAcademicCalendar";
@@ -85,8 +83,6 @@ const App = () => (
             <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
             {/* Academic Years Routes */}
             <Route path="/academics/academic-years" element={<AcademicYearsList />} />
-            <Route path="/academics/academic-years/create" element={<CreateAcademicYear />} />
-            <Route path="/academics/academic-years/edit/:id" element={<EditAcademicYear />} />
             {/* Academic Calendar Routes */}
             <Route path="/academics/academic-calendars" element={<AcademicCalendarsList />} />
             <Route path="/academics/academic-calendars/create" element={<CreateAcademicCalendar />} />
