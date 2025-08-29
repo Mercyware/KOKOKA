@@ -492,7 +492,15 @@ const AcademicCalendarForm: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex space-x-4">
+                <div className="flex justify-end space-x-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/academics/academic-calendars')}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
                   <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
                     {loading ? (
                       <>
@@ -505,14 +513,6 @@ const AcademicCalendarForm: React.FC = () => {
                         {isEditMode ? 'Update Calendar' : 'Create Calendar'}
                       </>
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/academics/academic-calendars')}
-                    disabled={loading}
-                  >
-                    Cancel
                   </Button>
                 </div>
               </form>

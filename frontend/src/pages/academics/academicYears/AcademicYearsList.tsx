@@ -76,9 +76,9 @@ const AcademicYearsList: React.FC = () => {
     fetchAcademicYears();
   }, []);
 
-  // Auto-generate academic year name when dates change
+  // Auto-generate academic year name when dates change (only in create mode)
   useEffect(() => {
-    if (formData.startDate && formData.endDate) {
+    if (formData.startDate && formData.endDate && !editingYear) {
       const startYear = new Date(formData.startDate).getFullYear();
       const endYear = new Date(formData.endDate).getFullYear();
       
@@ -94,7 +94,7 @@ const AcademicYearsList: React.FC = () => {
         }));
       }
     }
-  }, [formData.startDate, formData.endDate]);
+  }, [formData.startDate, formData.endDate, editingYear]);
 
   const resetForm = () => {
     setFormData({
@@ -117,14 +117,17 @@ const AcademicYearsList: React.FC = () => {
   };
 
   const openEditModal = (year: AcademicYear) => {
-    setEditingYear(year);
+    // Find the most current data for this year from state
+    const currentYear = academicYears.find(y => y.id === year.id) || year;
+    
+    setEditingYear(currentYear);
     setFormData({
-      name: year.name,
-      startDate: new Date(year.startDate).toISOString().split('T')[0],
-      endDate: new Date(year.endDate).toISOString().split('T')[0],
-      isCurrent: year.isCurrent,
-      description: year.description || '',
-      schoolId: year.schoolId,
+      name: currentYear.name,
+      startDate: new Date(currentYear.startDate).toISOString().split('T')[0],
+      endDate: new Date(currentYear.endDate).toISOString().split('T')[0],
+      isCurrent: currentYear.isCurrent,
+      description: currentYear.description || '',
+      schoolId: currentYear.schoolId,
     });
     setErrors({});
     setIsDuplicate(false);
@@ -380,7 +383,35 @@ const AcademicYearsList: React.FC = () => {
           description: `Academic year ${editingYear ? 'updated' : 'created'} successfully`,
         });
 
-        await fetchAcademicYears();
+        // Update local state immediately to prevent stale data issues
+        if (editingYear) {
+          // Update the existing year in the local state
+          const updatedYear = {
+            ...editingYear,
+            ...dataToSubmit,
+            id: editingYear.id,
+            // Use server response data if available
+            ...(response.data || {}),
+          };
+          
+          setAcademicYears(prevYears =>
+            prevYears.map(year =>
+              year.id === editingYear.id ? updatedYear : year
+            )
+          );
+          
+          // Also update the editing year reference
+          setEditingYear(updatedYear);
+        } else {
+          // For create, we still need to fetch to get the new ID and any server-generated data
+          await fetchAcademicYears();
+        }
+        
+        // Refresh from server to ensure data consistency (but local state is already updated)
+        if (editingYear) {
+          fetchAcademicYears(); // Don't await this for edit operations
+        }
+        
         closeModals();
       } else {
         toast({
