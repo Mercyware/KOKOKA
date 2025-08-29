@@ -17,6 +17,14 @@ import Register from "./pages/auth/Register";
 import RegisterSchool from "./pages/auth/RegisterSchool";
 import RegistrationSuccess from "./pages/auth/RegistrationSuccess";
 import OAuthCallback from "./pages/auth/OAuthCallback";
+// Academic Year Components
+import AcademicYearsList from "./pages/academics/academicYears/AcademicYearsList";
+import CreateAcademicYear from "./pages/academics/academicYears/CreateAcademicYear";
+import EditAcademicYear from "./pages/academics/academicYears/EditAcademicYear";
+// Academic Calendar Components
+import AcademicCalendarsList from "./pages/academics/academicCalendars/AcademicCalendarsList";
+import CreateAcademicCalendar from "./pages/academics/academicCalendars/CreateAcademicCalendar";
+import EditAcademicCalendar from "./pages/academics/academicCalendars/EditAcademicCalendar";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +83,14 @@ const App = () => (
             <Route path="/students/add" element={<AddStudentFormWrapper />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
             <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
+            {/* Academic Years Routes */}
+            <Route path="/academics/academic-years" element={<AcademicYearsList />} />
+            <Route path="/academics/academic-years/create" element={<CreateAcademicYear />} />
+            <Route path="/academics/academic-years/edit/:id" element={<EditAcademicYear />} />
+            {/* Academic Calendar Routes */}
+            <Route path="/academics/academic-calendars" element={<AcademicCalendarsList />} />
+            <Route path="/academics/academic-calendars/create" element={<CreateAcademicCalendar />} />
+            <Route path="/academics/academic-calendars/edit/:id" element={<EditAcademicCalendar />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -21,6 +21,7 @@ export interface User {
   email: string;
   role: UserRole;
   school: string;
+  schoolStatus?: SchoolStatus;
   profileImage?: string;
   lastLogin?: Date;
   isActive: boolean;
@@ -479,15 +480,21 @@ export interface Subject {
 
 export interface AcademicYear {
   id: string;
-  school: string;
+  schoolId: string;
   name: string;
-  startDate: Date;
-  endDate: Date;
-  isActive: boolean;
+  startDate: Date | string;
+  endDate: Date | string;
+  isCurrent: boolean;
   description?: string;
-  createdBy?: string;
-  terms?: string[];
-  isCurrent?: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  school?: {
+    id: string;
+    name: string;
+    slug: string;
+    subdomain: string;
+  };
+  terms?: any[];
 }
 
 export interface Term {

@@ -74,15 +74,16 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
 };
 
 /**
- * Middleware to require a valid school
+ * Middleware to require a valid and approved school
  * This middleware will check if the request has a school attached
+ * and if the school is approved (status === 'ACTIVE')
  * and return an error if not
  */
 exports.requireSchool = (req, res, next) => {
-  if (!req.school) {
-    return res.status(404).json({
+  if (!req.school || req.school.status !== 'ACTIVE') {
+    return res.status(403).json({
       success: false,
-      message: 'School not found or inactive'
+      message: 'School not approved. Access denied.'
     });
   }
   

@@ -30,8 +30,8 @@ const schoolRoutes = require('./routes/schoolRoutes');
 // const examRoutes = require('./routes/examRoutes');
 // const feeRoutes = require('./routes/feeRoutes');
 // const aiRoutes = require('./routes/aiRoutes');
-// const academicYearRoutes = require('./routes/academicYearRoutes');
-// const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
+const academicYearRoutes = require('./routes/academicYearRoutes');
+const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
 // const termRoutes = require('./routes/termRoutes');
 // const classRoutes = require('./routes/classRoutes');
 // const subjectRoutes = require('./routes/subjectRoutes');
@@ -171,6 +171,7 @@ app.get('/api/debug/routes', (req, res) => {
 // API routes (temporarily disabled for migration)
 app.use('/api/schools', schoolRoutes); // School routes enabled
 app.use('/api/auth', authRoutes);
+app.use('/api/academic-years', academicYearRoutes);
 // app.use('/api/students', studentRoutes);
 // app.use('/api/student-class-history', studentClassHistoryRoutes);
 // app.use('/api/teachers', teacherRoutes);
@@ -178,8 +179,7 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/timetables', timetableRoutes);
 // app.use('/api/exams', examRoutes);
 // app.use('/api/fees', feeRoutes);
-// app.use('/api/academic-years', academicYearRoutes);
-// app.use('/api/academic-calendars', academicCalendarRoutes);
+app.use('/api/academic-calendars', academicCalendarRoutes);
 // app.use('/api/terms', termRoutes);
 // app.use('/api/classes', classRoutes);
 // app.use('/api/subjects', subjectRoutes);

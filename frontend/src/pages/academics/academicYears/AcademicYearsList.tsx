@@ -129,11 +129,11 @@ const AcademicYearsList: React.FC = () => {
           message: 'Academic year set as active successfully',
           severity: 'success',
         });
-        // Update the active status in the state
+        // Update the current status in the state
         setAcademicYears(prevYears =>
           prevYears.map(year => ({
             ...year,
-            isActive: year.id === id,
+            isCurrent: year.id === id,
           }))
         );
       } else {
@@ -204,9 +204,9 @@ const AcademicYearsList: React.FC = () => {
                         <TableCell>{formatDate(year.startDate)}</TableCell>
                         <TableCell>{formatDate(year.endDate)}</TableCell>
                         <TableCell>
-                          {year.isActive ? (
+                          {year.isCurrent ? (
                             <Chip
-                              label="Active"
+                              label="Current"
                               color="success"
                               size="small"
                               icon={<CheckCircleIcon />}
@@ -217,7 +217,7 @@ const AcademicYearsList: React.FC = () => {
                               size="small"
                               onClick={() => handleSetActive(year.id)}
                             >
-                              Set Active
+                              Set Current
                             </Button>
                           )}
                         </TableCell>
@@ -231,7 +231,7 @@ const AcademicYearsList: React.FC = () => {
                           <Tooltip title="Delete">
                             <IconButton 
                               onClick={() => handleDeleteClick(year.id)}
-                              disabled={year.isActive} // Prevent deleting active academic year
+                              disabled={year.isCurrent} // Prevent deleting current academic year
                             >
                               <DeleteIcon />
                             </IconButton>

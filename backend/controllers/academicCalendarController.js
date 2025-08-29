@@ -1,22 +1,34 @@
-const AcademicCalendar = require('../models/AcademicCalendar');
-const AcademicYear = require('../models/AcademicYear');
+const { prisma } = require('../config/database');
+const AppError = require('../utils/appError');
 
 // Get all academic calendars
 exports.getAllAcademicCalendars = async (req, res) => {
   try {
-    const academicCalendars = await AcademicCalendar.find()
-      .populate('academicYear', 'name')
-      .sort({ createdAt: -1 });
+    const schoolId = req.school.id;
     
-    res.json({
+    const academicCalendars = await prisma.academicCalendar.findMany({
+      where: { schoolId },
+      include: {
+        academicYear: {
+          select: { id: true, name: true, startDate: true, endDate: true }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.status(200).json({
       success: true,
+      count: academicCalendars.length,
       data: academicCalendars
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -24,25 +36,40 @@ exports.getAllAcademicCalendars = async (req, res) => {
 // Get academic calendar by ID
 exports.getAcademicCalendarById = async (req, res) => {
   try {
-    const academicCalendar = await AcademicCalendar.findById(req.params.id)
-      .populate('academicYear', 'name');
-    
+    const { id } = req.params;
+    const schoolId = req.school.id;
+
+    const academicCalendar = await prisma.academicCalendar.findFirst({
+      where: { 
+        id,
+        schoolId 
+      },
+      include: {
+        academicYear: {
+          select: { id: true, name: true, startDate: true, endDate: true }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
     if (!academicCalendar) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Academic calendar not found' 
+        message: 'Academic calendar not found'
       });
     }
-    
-    res.json({
+
+    res.status(200).json({
       success: true,
       data: academicCalendar
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -50,56 +77,66 @@ exports.getAcademicCalendarById = async (req, res) => {
 // Create new academic calendar
 exports.createAcademicCalendar = async (req, res) => {
   try {
-    // Add the current user as creator
-    req.body.createdBy = req.user.id;
-    
-    // Verify that the academic year exists
-    const academicYear = await AcademicYear.findById(req.body.academicYear);
+    const schoolId = req.school.id;
+    const userId = req.user.id;
+    const { academicYearId, term, startDate, endDate, holidays = [] } = req.body;
+
+    // Verify that the academic year exists and belongs to the school
+    const academicYear = await prisma.academicYear.findFirst({
+      where: { 
+        id: academicYearId,
+        schoolId 
+      }
+    });
+
     if (!academicYear) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Academic year not found' 
+        message: 'Academic year not found'
       });
     }
-    
+
     // Check if calendar already exists for this school, academic year, and term
-    const existingCalendar = await AcademicCalendar.findOne({
-      school: req.body.school,
-      academicYear: req.body.academicYear,
-      term: req.body.term
+    const existingCalendar = await prisma.academicCalendar.findFirst({
+      where: {
+        schoolId,
+        academicYearId,
+        term: term.toUpperCase()
+      }
     });
-    
+
     if (existingCalendar) {
       return res.status(400).json({
         success: false,
         message: 'Academic calendar already exists for this school, academic year, and term'
       });
     }
-    
+
     // Validate dates
-    const startDate = new Date(req.body.startDate);
-    const endDate = new Date(req.body.endDate);
-    
-    if (startDate > endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const academicStart = new Date(academicYear.startDate);
+    const academicEnd = new Date(academicYear.endDate);
+
+    if (start > end) {
       return res.status(400).json({
         success: false,
         message: 'Start date cannot be after end date'
       });
     }
-    
-    // Validate that dates are within academic year
-    if (startDate < academicYear.startDate || endDate > academicYear.endDate) {
+
+    if (start < academicStart || end > academicEnd) {
       return res.status(400).json({
         success: false,
         message: 'Calendar dates must be within the academic year period'
       });
     }
-    
+
     // Validate holidays
-    if (req.body.holidays) {
-      for (const holiday of req.body.holidays) {
+    if (holidays && holidays.length > 0) {
+      for (const holiday of holidays) {
         const holidayDate = new Date(holiday.date);
-        if (holidayDate < startDate || holidayDate > endDate) {
+        if (holidayDate < start || holidayDate > end) {
           return res.status(400).json({
             success: false,
             message: `Holiday "${holiday.name}" date is outside the calendar period`
@@ -107,20 +144,37 @@ exports.createAcademicCalendar = async (req, res) => {
         }
       }
     }
-    
-    const academicCalendar = new AcademicCalendar(req.body);
-    await academicCalendar.save();
-    
+
+    const academicCalendar = await prisma.academicCalendar.create({
+      data: {
+        schoolId,
+        academicYearId,
+        term: term.toUpperCase(),
+        startDate: start,
+        endDate: end,
+        holidays: holidays || [],
+        createdById: userId
+      },
+      include: {
+        academicYear: {
+          select: { id: true, name: true, startDate: true, endDate: true }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
     res.status(201).json({
       success: true,
       message: 'Academic calendar created successfully',
       data: academicCalendar
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -128,71 +182,95 @@ exports.createAcademicCalendar = async (req, res) => {
 // Update academic calendar
 exports.updateAcademicCalendar = async (req, res) => {
   try {
+    const { id } = req.params;
+    const schoolId = req.school.id;
+    const { academicYearId, term, startDate, endDate, holidays } = req.body;
+
+    // Check if calendar exists and belongs to school
+    const existingCalendar = await prisma.academicCalendar.findFirst({
+      where: { 
+        id,
+        schoolId 
+      }
+    });
+
+    if (!existingCalendar) {
+      return res.status(404).json({
+        success: false,
+        message: 'Academic calendar not found'
+      });
+    }
+
     // If academic year is being updated, verify it exists
-    if (req.body.academicYear) {
-      const academicYear = await AcademicYear.findById(req.body.academicYear);
+    if (academicYearId) {
+      const academicYear = await prisma.academicYear.findFirst({
+        where: { 
+          id: academicYearId,
+          schoolId 
+        }
+      });
+
       if (!academicYear) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: 'Academic year not found' 
+          message: 'Academic year not found'
         });
       }
-      
+
       // Validate that dates are within academic year
-      if (req.body.startDate || req.body.endDate) {
-        const startDate = new Date(req.body.startDate || (await AcademicCalendar.findById(req.params.id)).startDate);
-        const endDate = new Date(req.body.endDate || (await AcademicCalendar.findById(req.params.id)).endDate);
-        
-        if (startDate < academicYear.startDate || endDate > academicYear.endDate) {
-          return res.status(400).json({
-            success: false,
-            message: 'Calendar dates must be within the academic year period'
-          });
-        }
+      const start = new Date(startDate || existingCalendar.startDate);
+      const end = new Date(endDate || existingCalendar.endDate);
+      const academicStart = new Date(academicYear.startDate);
+      const academicEnd = new Date(academicYear.endDate);
+
+      if (start < academicStart || end > academicEnd) {
+        return res.status(400).json({
+          success: false,
+          message: 'Calendar dates must be within the academic year period'
+        });
       }
     }
-    
+
     // Validate dates if both are provided
-    if (req.body.startDate && req.body.endDate) {
-      const startDate = new Date(req.body.startDate);
-      const endDate = new Date(req.body.endDate);
-      
-      if (startDate > endDate) {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (start > end) {
         return res.status(400).json({
           success: false,
           message: 'Start date cannot be after end date'
         });
       }
     }
-    
+
     // Check for duplicate calendar
-    if (req.body.school || req.body.academicYear || req.body.term) {
-      const currentCalendar = await AcademicCalendar.findById(req.params.id);
-      
-      const existingCalendar = await AcademicCalendar.findOne({
-        school: req.body.school || currentCalendar.school,
-        academicYear: req.body.academicYear || currentCalendar.academicYear,
-        term: req.body.term || currentCalendar.term,
-        _id: { $ne: req.params.id } // Exclude the current calendar
+    if (academicYearId || term) {
+      const duplicateCalendar = await prisma.academicCalendar.findFirst({
+        where: {
+          schoolId,
+          academicYearId: academicYearId || existingCalendar.academicYearId,
+          term: term ? term.toUpperCase() : existingCalendar.term,
+          id: { not: id }
+        }
       });
-      
-      if (existingCalendar) {
+
+      if (duplicateCalendar) {
         return res.status(400).json({
           success: false,
           message: 'Academic calendar already exists for this school, academic year, and term'
         });
       }
     }
-    
+
     // Validate holidays if provided
-    if (req.body.holidays) {
-      const calendar = await AcademicCalendar.findById(req.params.id);
-      const startDate = new Date(req.body.startDate || calendar.startDate);
-      const endDate = new Date(req.body.endDate || calendar.endDate);
-      
-      for (const holiday of req.body.holidays) {
+    if (holidays) {
+      const start = new Date(startDate || existingCalendar.startDate);
+      const end = new Date(endDate || existingCalendar.endDate);
+
+      for (const holiday of holidays) {
         const holidayDate = new Date(holiday.date);
-        if (holidayDate < startDate || holidayDate > endDate) {
+        if (holidayDate < start || holidayDate > end) {
           return res.status(400).json({
             success: false,
             message: `Holiday "${holiday.name}" date is outside the calendar period`
@@ -200,30 +278,38 @@ exports.updateAcademicCalendar = async (req, res) => {
         }
       }
     }
-    
-    const academicCalendar = await AcademicCalendar.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('academicYear', 'name');
-    
-    if (!academicCalendar) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Academic calendar not found' 
-      });
-    }
-    
-    res.json({
+
+    // Prepare update data
+    const updateData = {};
+    if (academicYearId) updateData.academicYearId = academicYearId;
+    if (term) updateData.term = term.toUpperCase();
+    if (startDate) updateData.startDate = new Date(startDate);
+    if (endDate) updateData.endDate = new Date(endDate);
+    if (holidays) updateData.holidays = holidays;
+
+    const academicCalendar = await prisma.academicCalendar.update({
+      where: { id },
+      data: updateData,
+      include: {
+        academicYear: {
+          select: { id: true, name: true, startDate: true, endDate: true }
+        },
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
+    res.status(200).json({
       success: true,
       message: 'Academic calendar updated successfully',
       data: academicCalendar
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -231,24 +317,36 @@ exports.updateAcademicCalendar = async (req, res) => {
 // Delete academic calendar
 exports.deleteAcademicCalendar = async (req, res) => {
   try {
-    const academicCalendar = await AcademicCalendar.findByIdAndDelete(req.params.id);
-    
+    const { id } = req.params;
+    const schoolId = req.school.id;
+
+    const academicCalendar = await prisma.academicCalendar.findFirst({
+      where: { 
+        id,
+        schoolId 
+      }
+    });
+
     if (!academicCalendar) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Academic calendar not found' 
+        message: 'Academic calendar not found'
       });
     }
-    
-    res.json({ 
+
+    await prisma.academicCalendar.delete({
+      where: { id }
+    });
+
+    res.status(200).json({
       success: true,
-      message: 'Academic calendar deleted successfully' 
+      message: 'Academic calendar deleted successfully'
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -256,126 +354,31 @@ exports.deleteAcademicCalendar = async (req, res) => {
 // Get academic calendars by academic year
 exports.getAcademicCalendarsByAcademicYear = async (req, res) => {
   try {
-    const academicCalendars = await AcademicCalendar.find({ 
-      academicYear: req.params.academicYearId 
-    }).populate('academicYear', 'name');
-    
-    res.json({
+    const { academicYearId } = req.params;
+    const schoolId = req.school.id;
+
+    const academicCalendars = await prisma.academicCalendar.findMany({
+      where: { 
+        academicYearId,
+        schoolId 
+      },
+      include: {
+        academicYear: {
+          select: { id: true, name: true, startDate: true, endDate: true }
+        }
+      },
+      orderBy: { term: 'asc' }
+    });
+
+    res.status(200).json({
       success: true,
       data: academicCalendars
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
-    });
-  }
-};
-
-// Add holiday to academic calendar
-exports.addHoliday = async (req, res) => {
-  try {
-    const { name, date, description } = req.body;
-    
-    if (!name || !date) {
-      return res.status(400).json({
-        success: false,
-        message: 'Holiday name and date are required'
-      });
-    }
-    
-    const academicCalendar = await AcademicCalendar.findById(req.params.id);
-    
-    if (!academicCalendar) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Academic calendar not found' 
-      });
-    }
-    
-    // Validate holiday date is within calendar period
-    const holidayDate = new Date(date);
-    if (holidayDate < academicCalendar.startDate || holidayDate > academicCalendar.endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Holiday date must be within the calendar period'
-      });
-    }
-    
-    // Check if holiday already exists on the same date
-    const existingHoliday = academicCalendar.holidays.find(h => {
-      const existingDate = new Date(h.date);
-      existingDate.setHours(0, 0, 0, 0);
-      
-      const newDate = new Date(date);
-      newDate.setHours(0, 0, 0, 0);
-      
-      return existingDate.getTime() === newDate.getTime();
-    });
-    
-    if (existingHoliday) {
-      return res.status(400).json({
-        success: false,
-        message: 'A holiday already exists on this date'
-      });
-    }
-    
-    academicCalendar.holidays.push({ name, date, description });
-    await academicCalendar.save();
-    
-    res.json({
-      success: true,
-      message: 'Holiday added successfully',
-      data: academicCalendar
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error', 
-      error: error.message 
-    });
-  }
-};
-
-// Remove holiday from academic calendar
-exports.removeHoliday = async (req, res) => {
-  try {
-    const academicCalendar = await AcademicCalendar.findById(req.params.id);
-    
-    if (!academicCalendar) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Academic calendar not found' 
-      });
-    }
-    
-    const holidayId = req.params.holidayId;
-    
-    // Check if holiday exists
-    const holidayIndex = academicCalendar.holidays.findIndex(h => h._id.toString() === holidayId);
-    
-    if (holidayIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        message: 'Holiday not found'
-      });
-    }
-    
-    // Remove the holiday
-    academicCalendar.holidays.splice(holidayIndex, 1);
-    await academicCalendar.save();
-    
-    res.json({
-      success: true,
-      message: 'Holiday removed successfully',
-      data: academicCalendar
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -383,18 +386,45 @@ exports.removeHoliday = async (req, res) => {
 // Get working days (excluding holidays)
 exports.getWorkingDays = async (req, res) => {
   try {
-    const academicCalendar = await AcademicCalendar.findById(req.params.id);
-    
+    const { id } = req.params;
+    const schoolId = req.school.id;
+
+    const academicCalendar = await prisma.academicCalendar.findFirst({
+      where: { 
+        id,
+        schoolId 
+      }
+    });
+
     if (!academicCalendar) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Academic calendar not found' 
+        message: 'Academic calendar not found'
       });
     }
-    
-    const workingDays = academicCalendar.getWorkingDays();
-    
-    res.json({
+
+    const workingDays = [];
+    const currentDate = new Date(academicCalendar.startDate);
+    const endDate = new Date(academicCalendar.endDate);
+    const holidays = academicCalendar.holidays || [];
+
+    while (currentDate <= endDate) {
+      const currentDateStr = currentDate.toISOString().split('T')[0];
+      
+      // Check if current date is a holiday
+      const isHoliday = holidays.some(holiday => {
+        const holidayDate = new Date(holiday.date);
+        return holidayDate.toISOString().split('T')[0] === currentDateStr;
+      });
+
+      if (!isHoliday) {
+        workingDays.push(currentDateStr);
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    res.status(200).json({
       success: true,
       data: {
         totalDays: workingDays.length,
@@ -402,10 +432,10 @@ exports.getWorkingDays = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -413,61 +443,63 @@ exports.getWorkingDays = async (req, res) => {
 // Check if a date is a holiday
 exports.checkHoliday = async (req, res) => {
   try {
+    const { id } = req.params;
     const { date } = req.query;
-    
+    const schoolId = req.school.id;
+
     if (!date) {
       return res.status(400).json({
         success: false,
         message: 'Date parameter is required'
       });
     }
-    
-    const academicCalendar = await AcademicCalendar.findById(req.params.id);
-    
-    if (!academicCalendar) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Academic calendar not found' 
-      });
-    }
-    
-    const dateToCheck = new Date(date);
-    const isHoliday = academicCalendar.isHoliday(dateToCheck);
-    
-    let holidayInfo = null;
-    if (isHoliday) {
-      const holiday = academicCalendar.holidays.find(h => {
-        const holidayDate = new Date(h.date);
-        holidayDate.setHours(0, 0, 0, 0);
-        
-        const checkDate = new Date(dateToCheck);
-        checkDate.setHours(0, 0, 0, 0);
-        
-        return holidayDate.getTime() === checkDate.getTime();
-      });
-      
-      if (holiday) {
-        holidayInfo = {
-          name: holiday.name,
-          date: holiday.date,
-          description: holiday.description
-        };
+
+    const academicCalendar = await prisma.academicCalendar.findFirst({
+      where: { 
+        id,
+        schoolId 
       }
+    });
+
+    if (!academicCalendar) {
+      return res.status(404).json({
+        success: false,
+        message: 'Academic calendar not found'
+      });
     }
-    
-    res.json({
+
+    const dateToCheck = new Date(date);
+    const dateToCheckStr = dateToCheck.toISOString().split('T')[0];
+    const holidays = academicCalendar.holidays || [];
+
+    let holidayInfo = null;
+    const holiday = holidays.find(h => {
+      const holidayDate = new Date(h.date);
+      return holidayDate.toISOString().split('T')[0] === dateToCheckStr;
+    });
+
+    const isHoliday = !!holiday;
+    if (isHoliday) {
+      holidayInfo = {
+        name: holiday.name,
+        date: holiday.date,
+        description: holiday.description || null
+      };
+    }
+
+    res.status(200).json({
       success: true,
       data: {
-        date: dateToCheck,
+        date: dateToCheckStr,
         isHoliday,
         holidayInfo
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };

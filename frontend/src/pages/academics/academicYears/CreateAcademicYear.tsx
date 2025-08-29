@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
@@ -14,32 +14,39 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Chip,
+  FormHelperText,
 } from '@mui/material';
 import Layout from '../../../components/layout/Layout';
 import { post } from '../../../services/api';
-import * as authService from '../../../services/authService';
 
 interface FormData {
   name: string;
   startDate: string;
   endDate: string;
-  isActive: boolean;
+  isCurrent: boolean;
   description: string;
-  school?: string;
+  schoolId?: string;
 }
 
 const CreateAcademicYear: React.FC = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [isDuplicate, setIsDuplicate] = useState(false); // Track duplicate name
+  const [isDuplicate, setIsDuplicate] = useState(false);
+  const [showActiveWarning, setShowActiveWarning] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     startDate: '',
     endDate: '',
-    isActive: false,
+    isCurrent: false,
     description: '',
-    school: authState.user?.school,
+    schoolId: authState.user?.school,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbar, setSnackbar] = useState({
@@ -48,7 +55,29 @@ const CreateAcademicYear: React.FC = () => {
     severity: 'success' as 'success' | 'error',
   });
 
+  // Auto-generate academic year name when dates change
+  useEffect(() => {
+    if (formData.startDate && formData.endDate) {
+      const startYear = new Date(formData.startDate).getFullYear();
+      const endYear = new Date(formData.endDate).getFullYear();
+      
+      if (startYear === endYear) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${startYear}`
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          name: `${startYear}-${endYear}`
+        }));
+      }
+    }
+  }, [formData.startDate, formData.endDate]);
+
   const checkDuplicateName = async (name: string): Promise<boolean> => {
+    if (!name.trim()) return false;
+    
     try {
       const token = localStorage.getItem('token');
       const school = authState.user?.school;
@@ -70,32 +99,76 @@ const CreateAcademicYear: React.FC = () => {
     }
   };
 
-  const handleTextFieldChange = async (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
+  const handleNameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      name: value,
     }));
 
-    if (name === 'name' && value) {
+    if (value.trim()) {
       const isDuplicate = await checkDuplicateName(value);
-      setIsDuplicate(isDuplicate); // Update duplicate state
+      setIsDuplicate(isDuplicate);
+      
       if (isDuplicate) {
-        setErrors((prev) => ({
+        setErrors(prev => ({
           ...prev,
           name: 'Academic year name already exists',
         }));
       } else {
-        setErrors((prev) => ({
+        setErrors(prev => ({
           ...prev,
           name: '',
         }));
       }
     } else {
-      setErrors((prev) => ({
+      setErrors(prev => ({
+        ...prev,
+        name: '',
+      }));
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Auto-set end date when start date is selected (1 year later)
+    if (name === 'startDate' && value && !formData.endDate) {
+      const startDate = new Date(value);
+      const endDate = new Date(startDate);
+      endDate.setFullYear(startDate.getFullYear() + 1);
+      
+      setFormData(prev => ({
+        ...prev,
+        endDate: endDate.toISOString().split('T')[0],
+      }));
+    }
+
+    // Clear date-related errors
+    setErrors(prev => ({
+      ...prev,
+      [name]: '',
+      dateRange: '',
+    }));
+  };
+
+  const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors(prev => ({
         ...prev,
         [name]: '',
       }));
@@ -105,23 +178,82 @@ const CreateAcademicYear: React.FC = () => {
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
 
-    setFormData((prev) => ({
+    // Show warning if user is trying to set as current
+    if (name === 'isCurrent' && checked) {
+      setShowActiveWarning(true);
+      return;
+    }
+
+    setFormData(prev => ({
       ...prev,
       [name]: checked,
     }));
+  };
+
+  const handleActiveConfirm = () => {
+    setFormData(prev => ({
+      ...prev,
+      isCurrent: true,
+    }));
+    setShowActiveWarning(false);
+  };
+
+  const calculateDurationInMonths = (startDate: string, endDate: string): number => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44));
+    return diffMonths;
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    if (!formData.name) newErrors.name = 'Academic year name is required';
+    if (!formData.name?.trim()) newErrors.name = 'Academic year name is required';
     if (!formData.startDate) newErrors.startDate = 'Start date is required';
     if (!formData.endDate) newErrors.endDate = 'End date is required';
 
     // Date validation
-    if (formData.startDate && formData.endDate && formData.startDate > formData.endDate) {
-      newErrors.endDate = 'End date must be after start date';
+    if (formData.startDate && formData.endDate) {
+      if (formData.startDate >= formData.endDate) {
+        newErrors.endDate = 'End date must be after start date';
+      }
+
+      // Check duration
+      const durationInMonths = calculateDurationInMonths(formData.startDate, formData.endDate);
+      if (durationInMonths < 6) {
+        newErrors.dateRange = 'Academic year must be at least 6 months long';
+      } else if (durationInMonths > 24) {
+        newErrors.dateRange = 'Academic year cannot be longer than 2 years';
+      }
+
+      // Check if dates are reasonable (not too far in the past or future)
+      const now = new Date();
+      const startDate = new Date(formData.startDate);
+      const endDate = new Date(formData.endDate);
+      const twoYearsAgo = new Date();
+      twoYearsAgo.setFullYear(now.getFullYear() - 2);
+      const fiveYearsFromNow = new Date();
+      fiveYearsFromNow.setFullYear(now.getFullYear() + 5);
+
+      if (startDate < twoYearsAgo) {
+        newErrors.startDate = 'Start date cannot be more than 2 years in the past';
+      }
+      
+      if (endDate > fiveYearsFromNow) {
+        newErrors.endDate = 'End date cannot be more than 5 years in the future';
+      }
+    }
+
+    // Name validation
+    if (formData.name && formData.name.length > 100) {
+      newErrors.name = 'Academic year name cannot exceed 100 characters';
+    }
+
+    // Description validation
+    if (formData.description && formData.description.length > 500) {
+      newErrors.description = 'Description cannot exceed 500 characters';
     }
 
     setErrors(newErrors);
@@ -140,13 +272,25 @@ const CreateAcademicYear: React.FC = () => {
       return;
     }
 
+    if (isDuplicate) {
+      setSnackbar({
+        open: true,
+        message: 'Please choose a different academic year name',
+        severity: 'error',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Ensure school ID is included in the request
       const dataToSubmit = {
-        ...formData,
-        school: authState.user?.school,
+        name: formData.name?.trim(),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        isCurrent: formData.isCurrent,
+        description: formData.description?.trim() || '',
+        schoolId: authState.user?.school,
       };
 
       const response = await post('/academic-years', dataToSubmit);
@@ -182,10 +326,24 @@ const CreateAcademicYear: React.FC = () => {
   };
 
   const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({
+    setSnackbar(prev => ({
       ...prev,
       open: false,
     }));
+  };
+
+  const getDurationInfo = () => {
+    if (formData.startDate && formData.endDate) {
+      const months = calculateDurationInMonths(formData.startDate, formData.endDate);
+      return `Duration: ${months} months`;
+    }
+    return '';
+  };
+
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
   };
 
   return (
@@ -205,13 +363,14 @@ const CreateAcademicYear: React.FC = () => {
                   label="Academic Year Name"
                   name="name"
                   value={formData.name}
-                  onChange={handleTextFieldChange}
-                  error={!!errors.name}
-                  helperText={errors.name}
+                  onChange={handleNameChange}
+                  error={!!errors.name || isDuplicate}
+                  helperText={errors.name || (isDuplicate && 'This name already exists')}
                   required
                   placeholder="e.g., 2023-2024"
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -219,13 +378,14 @@ const CreateAcademicYear: React.FC = () => {
                   name="startDate"
                   type="date"
                   value={formData.startDate}
-                  onChange={handleTextFieldChange}
+                  onChange={handleDateChange}
                   error={!!errors.startDate}
                   helperText={errors.startDate}
                   required
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -233,26 +393,56 @@ const CreateAcademicYear: React.FC = () => {
                   name="endDate"
                   type="date"
                   value={formData.endDate}
-                  onChange={handleTextFieldChange}
+                  onChange={handleDateChange}
                   error={!!errors.endDate}
                   helperText={errors.endDate}
                   required
                   InputLabelProps={{ shrink: true }}
+                  inputProps={{
+                    min: formData.startDate || undefined
+                  }}
                 />
               </Grid>
+
+              {(formData.startDate && formData.endDate) && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Chip 
+                      label={getDurationInfo()} 
+                      color="primary" 
+                      variant="outlined" 
+                      size="small"
+                    />
+                    <Chip 
+                      label={`${formatDateForDisplay(formData.startDate)} - ${formatDateForDisplay(formData.endDate)}`}
+                      color="secondary" 
+                      variant="outlined" 
+                      size="small"
+                    />
+                  </Box>
+                  {errors.dateRange && (
+                    <FormHelperText error>{errors.dateRange}</FormHelperText>
+                  )}
+                </Grid>
+              )}
+
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={formData.isActive}
+                      checked={formData.isCurrent}
                       onChange={handleSwitchChange}
-                      name="isActive"
+                      name="isCurrent"
                       color="primary"
                     />
                   }
-                  label="Set as Active Academic Year"
+                  label="Set as Current Academic Year"
                 />
+                <FormHelperText>
+                  Setting this as current will deactivate all other academic years for your school
+                </FormHelperText>
               </Grid>
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -260,10 +450,14 @@ const CreateAcademicYear: React.FC = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleTextFieldChange}
+                  error={!!errors.description}
+                  helperText={errors.description || `${formData.description.length}/500 characters`}
                   multiline
                   rows={4}
+                  placeholder="Optional description for this academic year..."
                 />
               </Grid>
+
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                   <Button
@@ -278,8 +472,8 @@ const CreateAcademicYear: React.FC = () => {
                     type="submit"
                     variant="contained"
                     color="primary"
-                    disabled={loading || isDuplicate} // Disable if loading or duplicate
-                    startIcon={loading && <CircularProgress size={20} />}
+                    disabled={loading || isDuplicate}
+                    startIcon={loading ? <CircularProgress size={20} /> : null}
                   >
                     {loading ? 'Creating...' : 'Create Academic Year'}
                   </Button>
@@ -288,6 +482,23 @@ const CreateAcademicYear: React.FC = () => {
             </Grid>
           </form>
         </Paper>
+
+        {/* Active Academic Year Warning Dialog */}
+        <Dialog open={showActiveWarning} onClose={() => setShowActiveWarning(false)}>
+          <DialogTitle>Set as Current Academic Year?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Setting this academic year as current will automatically deactivate all other academic years for your school. 
+              Only one academic year can be current at a time. Are you sure you want to continue?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowActiveWarning(false)}>Cancel</Button>
+            <Button onClick={handleActiveConfirm} variant="contained" color="primary">
+              Continue
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={snackbar.open}

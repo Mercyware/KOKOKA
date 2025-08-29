@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
 
   // State for nested menu items
   const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({
-    academics: false,
+    academics: true,
     students: false,
     staff: false,
     assignments: false,
@@ -139,46 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
           </ListItem>
           <Collapse in={openMenus.academics} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-                  <ListItemButton
-                    component={Link}
-                    to="/academics/class-arms"
-                    sx={{ pl: 4 }}
-                  >
-                    <ListItemIcon>
-                      <SchoolIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Class Arms" />
-                  </ListItemButton>
-                  <ListItemButton
-                    component={Link}
-                    to="/academics/departments"
-                    sx={{ pl: 4 }}
-                  >
-                    <ListItemIcon>
-                      <BusinessIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Departments" />
-                  </ListItemButton>
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={isActive('/academics/subjects')}
-                onClick={() => handleNavigate('/academics/subjects')}
-              >
-                <ListItemIcon>
-                  <SubjectIcon color={isActive('/academics/subjects') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Subjects" />
-              </ListItemButton>
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={isActive('/academics/timetable')}
-                onClick={() => handleNavigate('/academics/timetable')}
-              >
-                <ListItemIcon>
-                  <EventIcon color={isActive('/academics/timetable') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Timetable" />
-              </ListItemButton>
+              {/* Academic Years - Main focus */}
               <ListItemButton
                 sx={{ pl: 4 }}
                 selected={isActive('/academics/academic-years')}
@@ -189,6 +150,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Academic Years" />
               </ListItemButton>
+              
+              {/* Academic Calendars */}
               <ListItemButton
                 sx={{ pl: 4 }}
                 selected={isActive('/academics/academic-calendars')}
@@ -199,6 +162,44 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Academic Calendars" />
               </ListItemButton>
+              
+              {/* Subjects */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/subjects')}
+                onClick={() => handleNavigate('/academics/subjects')}
+              >
+                <ListItemIcon>
+                  <SubjectIcon color={isActive('/academics/subjects') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Subjects" />
+              </ListItemButton>
+              
+              {/* Classes */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/classes')}
+                onClick={() => handleNavigate('/academics/classes')}
+              >
+                <ListItemIcon>
+                  <ClassIcon color={isActive('/academics/classes') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Classes" />
+              </ListItemButton>
+              
+              {/* Departments */}
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={isActive('/academics/departments')}
+                onClick={() => handleNavigate('/academics/departments')}
+              >
+                <ListItemIcon>
+                  <WorkIcon color={isActive('/academics/departments') ? 'primary' : undefined} />
+                </ListItemIcon>
+                <ListItemText primary="Departments" />
+              </ListItemButton>
+              
+              {/* Houses */}
               <ListItemButton
                 sx={{ pl: 4 }}
                 selected={isActive('/academics/houses')}
@@ -209,25 +210,17 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose, drawerWidth }) => {
                 </ListItemIcon>
                 <ListItemText primary="Houses" />
               </ListItemButton>
+              
+              {/* Timetable */}
               <ListItemButton
                 sx={{ pl: 4 }}
-                selected={isActive('/academics/class-arms')}
-                onClick={() => handleNavigate('/academics/class-arms')}
+                selected={isActive('/academics/timetable')}
+                onClick={() => handleNavigate('/academics/timetable')}
               >
                 <ListItemIcon>
-                  <ClassIcon color={isActive('/academics/class-arms') ? 'primary' : undefined} />
+                  <EventIcon color={isActive('/academics/timetable') ? 'primary' : undefined} />
                 </ListItemIcon>
-                <ListItemText primary="Class Arms" />
-              </ListItemButton>
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={isActive('/academics/departments')}
-                onClick={() => handleNavigate('/academics/departments')}
-              >
-                <ListItemIcon>
-                  <WorkIcon color={isActive('/academics/departments') ? 'primary' : undefined} />
-                </ListItemIcon>
-                <ListItemText primary="Departments" />
+                <ListItemText primary="Timetable" />
               </ListItemButton>
             </List>
           </Collapse>

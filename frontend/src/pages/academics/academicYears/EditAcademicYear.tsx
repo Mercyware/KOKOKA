@@ -23,9 +23,9 @@ interface FormData {
   name: string;
   startDate: string;
   endDate: string;
-  isActive: boolean;
+  isCurrent: boolean;
   description: string;
-  school?: string;
+  schoolId?: string;
 }
 
 const EditAcademicYear: React.FC = () => {
@@ -38,9 +38,9 @@ const EditAcademicYear: React.FC = () => {
     name: '',
     startDate: '',
     endDate: '',
-    isActive: false,
+    isCurrent: false,
     description: '',
-    school: authState.user?.school,
+    schoolId: authState.user?.school,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [snackbar, setSnackbar] = useState({
@@ -61,9 +61,9 @@ const EditAcademicYear: React.FC = () => {
             name: academicYear.name,
             startDate: new Date(academicYear.startDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
             endDate: new Date(academicYear.endDate).toISOString().split('T')[0], // Format as YYYY-MM-DD
-            isActive: academicYear.isActive,
+            isCurrent: academicYear.isCurrent,
             description: academicYear.description || '',
-            school: academicYear.school || authState.user?.school,
+            schoolId: academicYear.schoolId || authState.user?.school,
           });
         }
       } catch (error) {
@@ -145,7 +145,7 @@ const EditAcademicYear: React.FC = () => {
       // Ensure school ID is included in the request
       const dataToSubmit = {
         ...formData,
-        school: authState.user?.school,
+        schoolId: authState.user?.school,
       };
       
       const response = await put(`/academic-years/${id}`, dataToSubmit);
@@ -252,13 +252,13 @@ const EditAcademicYear: React.FC = () => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={formData.isActive}
+                      checked={formData.isCurrent}
                       onChange={handleSwitchChange}
-                      name="isActive"
+                      name="isCurrent"
                       color="primary"
                     />
                   }
-                  label="Set as Active Academic Year"
+                  label="Set as Current Academic Year"
                 />
               </Grid>
               <Grid item xs={12}>

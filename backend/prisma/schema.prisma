@@ -64,6 +64,7 @@ model School {
   classTeachers        ClassTeacher[]
   sittingPositions     SittingPosition[]
   studentClassHistory  StudentClassHistory[]
+  academicCalendars    AcademicCalendar[]
 
   @@map("schools")
 }
@@ -104,6 +105,7 @@ model User {
   createdAssessments  Assessment[]
   gradedAssessments   Grade[] @relation("GradedBy")
   verifiedGuardians   Guardian[] @relation("GuardianVerifiedBy")
+  createdAcademicCalendars AcademicCalendar[] @relation("AcademicCalendarCreatedBy")
 
   @@map("users")
 }
@@ -130,6 +132,7 @@ model AcademicYear {
   students            Student[]
   assessments         Assessment[]
   studentClassHistory StudentClassHistory[]
+  academicCalendars   AcademicCalendar[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -155,6 +158,27 @@ model Term {
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
+}
+
+model AcademicCalendar {
+  id        String @id @default(uuid())
+  term      AcademicTerm
+  startDate DateTime
+  endDate   DateTime
+  holidays  Json? // Array of holiday objects: { name, date, description }
+  
+  schoolId       String
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  createdById    String?
+  createdBy      User?        @relation("AcademicCalendarCreatedBy", fields: [createdById], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, academicYearId, term])
+  @@map("academic_calendars")
 }
 
 model Department {
@@ -969,6 +993,12 @@ enum AttendanceMethod {
   BIOMETRIC
   GEOFENCING
   BULK
+}
+
+enum AcademicTerm {
+  FIRST
+  SECOND
+  THIRD
 }
 
 enum DocumentCategory {

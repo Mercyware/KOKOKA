@@ -5,6 +5,8 @@ const Redis = require('ioredis');
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
   errorFormat: 'pretty',
+  // Add explicit configuration to resolve version compatibility issues
+  datasourceUrl: process.env.DATABASE_URL,
 });
 
 // Redis Configuration

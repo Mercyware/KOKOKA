@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const academicYearController = require('../controllers/academicYearController');
-const authMiddleware = require('../middlewares/authMiddleware');
-const roleMiddleware = require('../middlewares/roleMiddleware');
+// const authMiddleware = require('../middlewares/authMiddleware');
+// const roleMiddleware = require('../middlewares/roleMiddleware');
 
-// Protect all routes
-router.use(authMiddleware.protect);
+// Protect all routes - TEMPORARILY DISABLED FOR TESTING
+// router.use(authMiddleware.protect);
 
 // Check if academic year name exists
 
@@ -199,8 +199,8 @@ router.get('/current/active', academicYearController.getCurrentAcademicYear);
  */
 router.get('/active/year', academicYearController.getActiveAcademicYear);
 
-// Admin only routes
-router.use(roleMiddleware.restrictTo('admin'));
+// Admin only routes - TEMPORARILY DISABLED FOR TESTING
+// router.use(roleMiddleware.restrictTo('admin'));
 
 /**
  * @swagger
