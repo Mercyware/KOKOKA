@@ -405,6 +405,7 @@ model Staff {
   
   // Professional Information
   position      String
+  staffType     StaffType @default(GENERAL)
   joiningDate   DateTime  @default(now())
   salary        Decimal?
   status        StaffStatus @default(ACTIVE)
@@ -896,12 +897,17 @@ enum TeacherStatus {
   RETIRED
 }
 
-enum StaffStatus {
-  ACTIVE
-  INACTIVE
-  ON_LEAVE
-  TERMINATED
-  RETIRED
+enum StaffType {
+  TEACHER
+  ADMINISTRATOR
+  LIBRARIAN
+  ACCOUNTANT
+  RECEPTIONIST
+  SECURITY
+  MAINTENANCE
+  COUNSELOR
+  NURSE
+  GENERAL
 }
 
 enum GuardianStatus {

@@ -30,6 +30,11 @@ import SectionsList from "./pages/school-settings/sections/SectionsList";
 import SectionForm from "./pages/school-settings/sections/SectionForm";
 import DepartmentsList from "./pages/school-settings/departments/DepartmentsList";
 import HousesList from "./pages/school-settings/houses/HousesList";
+// Staff Components
+import StaffList from "./pages/staff/StaffList";
+import CreateStaff from "./pages/staff/CreateStaff";
+import EditStaff from "./pages/staff/EditStaff";
+import StaffDetails from "./pages/staff/StaffDetails";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +107,13 @@ const App = () => (
             
             {/* School Settings - Houses Routes */}
             <Route path="/school-settings/houses" element={<HousesList />} />
+            
+            {/* Staff Routes */}
+            <Route path="/staff" element={<StaffList />} />
+            <Route path="/staff/create" element={<CreateStaff />} />
+            <Route path="/staff/edit/:id" element={<EditStaff />} />
+            <Route path="/staff/:id" element={<StaffDetails />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

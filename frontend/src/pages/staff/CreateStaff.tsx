@@ -1,771 +1,567 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  CircularProgress,
-  Snackbar,
-  Alert,
-  Divider,
-  Stepper,
-  Step,
-  StepLabel,
-  SelectChangeEvent,
-  Autocomplete,
-} from '@mui/material';
-// Removed date picker imports to fix dependency issues
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { 
+  Save, 
+  ArrowLeft, 
+  User, 
+  Mail, 
+  Phone,
+  Calendar,
+  Briefcase,
+  Building2,
+  MapPin,
+  UserCheck,
+  Loader2,
+  UserPlus
+} from 'lucide-react';
 import Layout from '../../components/layout/Layout';
-import { createStaffMember } from '../../services/staffService';
-import { getDepartments, Department } from '../../services/departmentService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import * as staffService from '../../services/staffService';
+import * as departmentService from '../../services/departmentService';
 
-interface UserFormData {
+interface Department {
+  id: string;
   name: string;
-  email: string;
-  role: string;
 }
 
 interface StaffFormData {
   employeeId: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
   staffType: string;
-  dateOfBirth: Date | null;
+  dateOfBirth: string;
   gender: string;
-  nationalId: string;
-  department: string;
-  position: string;
   phone: string;
-  alternatePhone: string;
-  street: string;
+  streetAddress: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
-  emergencyContactName: string;
-  emergencyContactRelationship: string;
-  emergencyContactPhone: string;
+  department: string;
+  position: string;
+  status: string;
 }
 
 const CreateStaff: React.FC = () => {
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState<number>(0);
-  const [generatedPassword, setGeneratedPassword] = useState<string>('');
-  const [userFormData, setUserFormData] = useState<UserFormData>({
-    name: '',
-    email: '',
-    role: 'teacher',
-  });
-  const [staffFormData, setStaffFormData] = useState<StaffFormData>({
+  const { toast } = useToast();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  
+  // Data for dropdowns
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  // Form data
+  const [formData, setFormData] = useState<StaffFormData>({
     employeeId: '',
-    staffType: 'teacher',
-    dateOfBirth: null,
+    firstName: '',
+    lastName: '',
+    middleName: '',
+    staffType: '',
+    dateOfBirth: '',
     gender: '',
-    nationalId: '',
-    department: '',
-    position: '',
     phone: '',
-    alternatePhone: '',
-    street: '',
+    streetAddress: '',
     city: '',
     state: '',
     zipCode: '',
     country: '',
-    emergencyContactName: '',
-    emergencyContactRelationship: '',
-    emergencyContactPhone: '',
+    department: '',
+    position: '',
+    status: 'ACTIVE',
   });
-  const [userErrors, setUserErrors] = useState<Record<string, string>>({});
-  const [staffErrors, setStaffErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState<boolean>(false);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
-
-  // Function to generate a random password
-  const generatePassword = (): string => {
-    const length = 10;
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
-    }
-    return password;
-  };
-
+  
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getDepartments();
-        setDepartments(response.departments || []);
-      } catch (error) {
-        console.error('Error fetching departments:', error);
-        setSnackbar({
-          open: true,
-          message: 'Failed to load departments',
-          severity: 'error',
+        setLoading(true);
+        
+        // Fetch departments
+        const departmentsResponse = await departmentService.getDepartments();
+        setDepartments(departmentsResponse.departments || []);
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        toast({
+          title: "Error",
+          description: "Failed to fetch departments",
+          variant: "destructive",
         });
+        setLoading(false);
       }
     };
-
-    fetchDepartments();
     
-    // Generate password when component mounts
-    const password = generatePassword();
-    setGeneratedPassword(password);
-  }, []);
-
-  const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    if (!name) return;
-
-    setUserFormData((prev) => ({
+    fetchData();
+  }, [toast]);
+  
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [field]: value
     }));
-
-    // Clear error when field is edited
-    if (userErrors[name]) {
-      setUserErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
   };
-
-  const handleUserSelectChange = (e: SelectChangeEvent) => {
-    const { name, value } = e.target;
+  
+  const validateForm = (): boolean => {
+    if (!formData.employeeId.trim()) {
+      toast({
+        title: "Error",
+        description: "Employee ID is required",
+        variant: "destructive",
+      });
+      return false;
+    }
     
-    if (!name) return;
-
-    setUserFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when field is edited
-    if (userErrors[name]) {
-      setUserErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+    if (!formData.firstName.trim()) {
+      toast({
+        title: "Error", 
+        description: "First name is required",
+        variant: "destructive",
+      });
+      return false;
     }
-  };
-
-  const handleStaffInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
     
-    if (!name) return;
-
-    setStaffFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when field is edited
-    if (staffErrors[name]) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+    if (!formData.lastName.trim()) {
+      toast({
+        title: "Error",
+        description: "Last name is required", 
+        variant: "destructive",
+      });
+      return false;
     }
-  };
-
-  const handleStaffSelectChange = (e: SelectChangeEvent) => {
-    const { name, value } = e.target;
     
-    if (!name) return;
-
-    setStaffFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when field is edited
-    if (staffErrors[name]) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
+    if (!formData.staffType) {
+      toast({
+        title: "Error",
+        description: "Staff type is required",
+        variant: "destructive",
+      });
+      return false;
     }
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
     
-    setStaffFormData((prev) => ({
-      ...prev,
-      dateOfBirth: value ? new Date(value) : null,
-    }));
-
-    // Clear error when field is edited
-    if (staffErrors.dateOfBirth) {
-      setStaffErrors((prev) => ({
-        ...prev,
-        dateOfBirth: '',
-      }));
+    if (!formData.dateOfBirth) {
+      toast({
+        title: "Error",
+        description: "Date of birth is required",
+        variant: "destructive",
+      });
+      return false;
     }
-  };
-
-  const validateUserForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!userFormData.name) newErrors.name = 'Name is required';
-    if (!userFormData.email) newErrors.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(userFormData.email)) newErrors.email = 'Invalid email format';
     
-    if (!userFormData.role) newErrors.role = 'Role is required';
-
-    setUserErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const validateStaffForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!staffFormData.employeeId) newErrors.employeeId = 'Employee ID is required';
-    if (!staffFormData.staffType) newErrors.staffType = 'Staff type is required';
-    if (!staffFormData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!staffFormData.gender) newErrors.gender = 'Gender is required';
-    if (!staffFormData.nationalId) newErrors.nationalId = 'National ID is required';
-    if (!staffFormData.department) newErrors.department = 'Department is required';
-    if (!staffFormData.position) newErrors.position = 'Position is required';
-    if (!staffFormData.phone) newErrors.phone = 'Phone number is required';
-
-    setStaffErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
-    if (activeStep === 0) {
-      if (validateUserForm()) {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'Please fix the errors in the form',
-          severity: 'error',
-        });
-      }
+    if (!formData.gender) {
+      toast({
+        title: "Error",
+        description: "Gender is required",
+        variant: "destructive",
+      });
+      return false;
     }
-  };
-
-  const handleBack = () => {
-    if (activeStep === 0) {
-      navigate('/staff/list');
-    } else {
-      setActiveStep((prevActiveStep) => prevActiveStep - 1);
+    
+    if (!formData.department) {
+      toast({
+        title: "Error",
+        description: "Department is required",
+        variant: "destructive",
+      });
+      return false;
     }
+    
+    if (!formData.position.trim()) {
+      toast({
+        title: "Error",
+        description: "Position is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!formData.phone.trim()) {
+      toast({
+        title: "Error",
+        description: "Phone number is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateStaffForm()) {
-      setSnackbar({
-        open: true,
-        message: 'Please fix the errors in the form',
-        severity: 'error',
-      });
+    
+    if (!validateForm()) {
       return;
     }
-
-    setLoading(true);
-
+    
     try {
-      // Combine user and staff data
-      const staffData = {
-        user: {
-          name: userFormData.name,
-          email: userFormData.email,
-          password: generatedPassword,
-          role: userFormData.role,
-        },
-        employeeId: staffFormData.employeeId,
-        staffType: staffFormData.staffType,
-        dateOfBirth: staffFormData.dateOfBirth,
-        gender: staffFormData.gender,
-        nationalId: staffFormData.nationalId,
-        department: staffFormData.department,
-        position: staffFormData.position,
-        contactInfo: {
-          phone: staffFormData.phone,
-          alternatePhone: staffFormData.alternatePhone,
-          emergencyContact: {
-            name: staffFormData.emergencyContactName,
-            relationship: staffFormData.emergencyContactRelationship,
-            phone: staffFormData.emergencyContactPhone,
-          },
-        },
-        address: {
-          street: staffFormData.street,
-          city: staffFormData.city,
-          state: staffFormData.state,
-          zipCode: staffFormData.zipCode,
-          country: staffFormData.country,
-        },
+      setSaving(true);
+      
+      // Convert formData to StaffCreateData format
+      const createData: staffService.StaffCreateData = {
+        employeeId: formData.employeeId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        middleName: formData.middleName,
+        staffType: formData.staffType as any,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender as any,
+        phone: formData.phone,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        departmentId: formData.department,
+        position: formData.position,
+        status: formData.status as any,
       };
-
-      // Create the staff member using the API
-      const response = await createStaffMember(staffData);
-
-      setSnackbar({
-        open: true,
-        message: 'Staff member created successfully',
-        severity: 'success',
+      
+      const response = await staffService.createStaffMember(createData);
+      
+      toast({
+        title: "Success",
+        description: "Staff member created successfully",
       });
-
-      // Redirect to staff list after successful creation
+      
+      // Redirect after a short delay
       setTimeout(() => {
-        navigate('/staff/list');
+        navigate(`/staff/${response.data.id}`);
       }, 1500);
-    } catch (error) {
-      console.error('Error creating staff member:', error);
-      setSnackbar({
-        open: true,
-        message: 'An error occurred while creating the staff member',
-        severity: 'error',
+    } catch (err: any) {
+      console.error('Error creating staff:', err);
+      const errorMessage = err?.response?.data?.message || 'Failed to create staff member';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({
-      ...prev,
-      open: false,
-    }));
-  };
-
-  const steps = ['User Account Information', 'Staff Details'];
-
+  
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-lg">Loading departments...</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+  
   return (
     <Layout>
-      <Container maxWidth="md">
-        <Box sx={{ mt: 4, mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={handleBack}
-              sx={{ mr: 2 }}
-              variant="outlined"
-              size="small"
-            >
-              Back
-            </Button>
-            <Typography variant="h4" component="h1">
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <UserPlus className="h-8 w-8 text-blue-600" />
               Create Staff Member
-            </Typography>
-          </Box>
-
-          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-
-          <Paper sx={{ p: 3, mb: 3 }}>
-            {activeStep === 0 ? (
-              // User Account Information Form
-              <form>
-                <Typography variant="h6" gutterBottom>
-                  User Account Information
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Create a user account for the staff member. This account will be used for login.
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Full Name"
-                      name="name"
-                      value={userFormData.name}
-                      onChange={handleUserInputChange}
-                      error={!!userErrors.name}
-                      helperText={userErrors.name}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      name="email"
-                      type="email"
-                      value={userFormData.email}
-                      onChange={handleUserInputChange}
-                      error={!!userErrors.email}
-                      helperText={userErrors.email}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" color="primary">
-                      A password will be automatically generated for this staff member.
-                    </Typography>
-                    <Box sx={{ mt: 1, p: 2, bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                      <Typography variant="body2">
-                        <strong>Generated Password:</strong> {generatedPassword}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                        Please save this password. It will be needed for the staff member's first login.
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControl fullWidth required error={!!userErrors.role}>
-                      <InputLabel>Role</InputLabel>
-                      <Select
-                        name="role"
-                        value={userFormData.role}
-                        onChange={handleUserSelectChange}
-                        label="Role"
-                      >
-                        <MenuItem value="teacher">Teacher</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
-                        <MenuItem value="cashier">Cashier</MenuItem>
-                        <MenuItem value="librarian">Librarian</MenuItem>
-                        <MenuItem value="counselor">Counselor</MenuItem>
-                        <MenuItem value="nurse">Nurse</MenuItem>
-                        <MenuItem value="security">Security</MenuItem>
-                        <MenuItem value="maintenance">Maintenance</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
-                      </Select>
-                      {userErrors.role && <FormHelperText>{userErrors.role}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sx={{ mt: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleNext}
-                      >
-                        Next
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </form>
-            ) : (
-              // Staff Details Form
-              <form onSubmit={handleSubmit}>
-                <Typography variant="h6" gutterBottom>
-                  Staff Details
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Enter the staff member's personal and employment details.
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Employee ID"
-                      name="employeeId"
-                      value={staffFormData.employeeId}
-                      onChange={handleStaffInputChange}
-                      error={!!staffErrors.employeeId}
-                      helperText={staffErrors.employeeId}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth required error={!!staffErrors.staffType}>
-                      <InputLabel>Staff Type</InputLabel>
-                      <Select
-                        name="staffType"
-                        value={staffFormData.staffType}
-                        onChange={handleStaffSelectChange}
-                        label="Staff Type"
-                      >
-                        <MenuItem value="teacher">Teacher</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
-                        <MenuItem value="cashier">Cashier</MenuItem>
-                        <MenuItem value="librarian">Librarian</MenuItem>
-                        <MenuItem value="counselor">Counselor</MenuItem>
-                        <MenuItem value="nurse">Nurse</MenuItem>
-                        <MenuItem value="security">Security</MenuItem>
-                        <MenuItem value="maintenance">Maintenance</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
-                      </Select>
-                      {staffErrors.staffType && <FormHelperText>{staffErrors.staffType}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Date of Birth"
-                      name="dateOfBirth"
-                      type="date"
-                      value={staffFormData.dateOfBirth ? new Date(staffFormData.dateOfBirth.getTime() - staffFormData.dateOfBirth.getTimezoneOffset() * 60000).toISOString().split('T')[0] : ''}
-                      onChange={handleDateChange}
-                      error={!!staffErrors.dateOfBirth}
-                      helperText={staffErrors.dateOfBirth}
-                      required
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth required error={!!staffErrors.gender}>
-                      <InputLabel>Gender</InputLabel>
-                      <Select
-                        name="gender"
-                        value={staffFormData.gender}
-                        onChange={handleStaffSelectChange}
-                        label="Gender"
-                      >
-                        <MenuItem value="male">Male</MenuItem>
-                        <MenuItem value="female">Female</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
-                      </Select>
-                      {staffErrors.gender && <FormHelperText>{staffErrors.gender}</FormHelperText>}
-                    </FormControl>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="National ID"
-                      name="nationalId"
-                      value={staffFormData.nationalId}
-                      onChange={handleStaffInputChange}
-                      error={!!staffErrors.nationalId}
-                      helperText={staffErrors.nationalId}
-                      required
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                      Employment Information
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <Autocomplete
-                      options={departments}
-                      getOptionLabel={(option) => option.name}
-                      onChange={(event, value) => {
-                        setStaffFormData((prev) => ({
-                          ...prev,
-                          department: value ? value.id : '',
-                        }));
-                        
-                        // Clear error when field is edited
-                        if (staffErrors.department) {
-                          setStaffErrors((prev) => ({
-                            ...prev,
-                            department: '',
-                          }));
-                        }
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Department"
-                          error={!!staffErrors.department}
-                          helperText={staffErrors.department}
-                          required
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Position"
-                      name="position"
-                      value={staffFormData.position}
-                      onChange={handleStaffInputChange}
-                      error={!!staffErrors.position}
-                      helperText={staffErrors.position}
-                      required
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                      Contact Information
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Phone Number"
-                      name="phone"
-                      value={staffFormData.phone}
-                      onChange={handleStaffInputChange}
-                      error={!!staffErrors.phone}
-                      helperText={staffErrors.phone}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Alternative Phone Number"
-                      name="alternatePhone"
-                      value={staffFormData.alternatePhone}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                      Address
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Street Address"
-                      name="street"
-                      value={staffFormData.street}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="City"
-                      name="city"
-                      value={staffFormData.city}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="State/Province"
-                      name="state"
-                      value={staffFormData.state}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Zip/Postal Code"
-                      name="zipCode"
-                      value={staffFormData.zipCode}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Country"
-                      name="country"
-                      value={staffFormData.country}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                      Emergency Contact
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Name"
-                      name="emergencyContactName"
-                      value={staffFormData.emergencyContactName}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Relationship"
-                      name="emergencyContactRelationship"
-                      value={staffFormData.emergencyContactRelationship}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Phone Number"
-                      name="emergencyContactPhone"
-                      value={staffFormData.emergencyContactPhone}
-                      onChange={handleStaffInputChange}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sx={{ mt: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Button
-                        variant="outlined"
-                        onClick={handleBack}
-                        disabled={loading}
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={loading}
-                        startIcon={loading && <CircularProgress size={20} />}
-                      >
-                        {loading ? 'Creating...' : 'Create Staff Member'}
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </form>
-            )}
-          </Paper>
-        </Box>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Add a new staff member to your school
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/staff')}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Container>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Staff List
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-blue-600" />
+                Personal Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="middleName">Middle Name</Label>
+                  <Input
+                    id="middleName"
+                    value={formData.middleName}
+                    onChange={(e) => handleInputChange('middleName', e.target.value)}
+                    placeholder="Enter middle name (optional)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="employeeId">Employee ID *</Label>
+                  <Input
+                    id="employeeId"
+                    value={formData.employeeId}
+                    onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                    placeholder="e.g., EMP2024001"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                  <div className="relative">
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                      required
+                    />
+                    <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender *</Label>
+                  <Select
+                    value={formData.gender}
+                    onValueChange={(value) => handleInputChange('gender', value)}
+                    required
+                  >
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <div className="relative">
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="+1 234-567-8900"
+                    required
+                  />
+                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employment Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-blue-600" />
+                Employment Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="staffType">Staff Type *</Label>
+                  <Select
+                    value={formData.staffType}
+                    onValueChange={(value) => handleInputChange('staffType', value)}
+                    required
+                  >
+                    <SelectTrigger id="staffType">
+                      <SelectValue placeholder="Select staff type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="ADMINISTRATOR">Administrator</SelectItem>
+                      <SelectItem value="LIBRARIAN">Librarian</SelectItem>
+                      <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                      <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
+                      <SelectItem value="SECURITY">Security</SelectItem>
+                      <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                      <SelectItem value="COUNSELOR">Counselor</SelectItem>
+                      <SelectItem value="NURSE">Nurse</SelectItem>
+                      <SelectItem value="GENERAL">General</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department *</Label>
+                  <Select
+                    value={formData.department}
+                    onValueChange={(value) => handleInputChange('department', value)}
+                    required
+                  >
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position *</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) => handleInputChange('position', e.target.value)}
+                    placeholder="e.g., Math Teacher, Principal"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => handleInputChange('status', value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="ON_LEAVE">On Leave</SelectItem>
+                    <SelectItem value="TERMINATED">Terminated</SelectItem>
+                    <SelectItem value="RETIRED">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Address Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                Address Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="streetAddress">Street Address</Label>
+                <Input
+                  id="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={(e) => handleInputChange('streetAddress', e.target.value)}
+                  placeholder="Street address"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="City"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State/Province</Label>
+                  <Input
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    placeholder="State/Province"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="zipCode">Zip/Postal Code</Label>
+                  <Input
+                    id="zipCode"
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                    placeholder="Zip/Postal code"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="Country"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/staff')}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={saving} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Staff Member...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Create Staff Member
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </Layout>
   );
 };

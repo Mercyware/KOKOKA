@@ -1,65 +1,82 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  CircularProgress,
-  Alert,
-  Divider,
-  SelectChangeEvent,
-} from '@mui/material';
+import { 
+  Save, 
+  ArrowLeft, 
+  User, 
+  Mail, 
+  Phone,
+  Calendar,
+  Briefcase,
+  Building2,
+  MapPin,
+  UserCheck,
+  Loader2,
+  Edit3
+} from 'lucide-react';
 import Layout from '../../components/layout/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import * as staffService from '../../services/staffService';
 import * as departmentService from '../../services/departmentService';
 
 interface Department {
-  _id: string;
+  id: string;
   name: string;
+}
+
+interface StaffFormData {
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  staffType: string;
+  dateOfBirth: string;
+  gender: string;
+  phone: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  department: string;
+  position: string;
+  status: string;
 }
 
 const EditStaff: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
   
   // Data for dropdowns
   const [departments, setDepartments] = useState<Department[]>([]);
   
   // Form data
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StaffFormData>({
+    employeeId: '',
     firstName: '',
     lastName: '',
-    email: '',
-    phone: '',
+    middleName: '',
+    staffType: '',
+    dateOfBirth: '',
     gender: '',
-    address: '',
+    phone: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
     department: '',
     position: '',
-    employmentDate: '',
-    employeeId: '',
-    isTeacher: false,
-    qualifications: '',
-    emergencyContact: {
-      name: '',
-      relationship: '',
-      phone: '',
-    },
+    status: '',
   });
-  
-  // Form errors
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
   useEffect(() => {
     const fetchData = async () => {
@@ -72,128 +89,134 @@ const EditStaff: React.FC = () => {
           const staffData = staffResponse.data;
           
           setFormData({
+            employeeId: staffData.employeeId || '',
             firstName: staffData.firstName || '',
             lastName: staffData.lastName || '',
-            email: staffData.email || '',
-            phone: staffData.phone || '',
+            middleName: staffData.middleName || '',
+            staffType: staffData.staffType || '',
+            dateOfBirth: staffData.dateOfBirth ? new Date(staffData.dateOfBirth).toISOString().split('T')[0] : '',
             gender: staffData.gender || '',
-            address: staffData.address || '',
-            department: staffData.department?._id || '',
+            phone: staffData.phone || '',
+            streetAddress: staffData.streetAddress || '',
+            city: staffData.city || '',
+            state: staffData.state || '',
+            zipCode: staffData.zipCode || '',
+            country: staffData.country || '',
+            department: staffData.department?.id || '',
             position: staffData.position || '',
-            employmentDate: staffData.employmentDate ? new Date(staffData.employmentDate).toISOString().split('T')[0] : '',
-            employeeId: staffData.employeeId || '',
-            isTeacher: staffData.isTeacher || false,
-            qualifications: staffData.qualifications || '',
-            emergencyContact: {
-              name: staffData.emergencyContact?.name || '',
-              relationship: staffData.emergencyContact?.relationship || '',
-              phone: staffData.emergencyContact?.phone || '',
-            },
+            status: staffData.status || '',
           });
         }
         
         // Fetch departments
         const departmentsResponse = await departmentService.getDepartments();
-        setDepartments(departmentsResponse.data);
+        setDepartments(departmentsResponse.departments || []);
         
         setLoading(false);
       } catch (err) {
-        setError('Failed to fetch data');
+        console.error('Error fetching data:', err);
+        toast({
+          title: "Error",
+          description: "Failed to fetch staff data",
+          variant: "destructive",
+        });
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [id]);
+  }, [id, toast]);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-      if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      if (parent === 'emergencyContact') {
-        setFormData((prev) => ({
-          ...prev,
-          emergencyContact: {
-            ...prev.emergencyContact,
-            [child]: value,
-          },
-        }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-    
-    // Clear error when field is edited
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-  
-  const handleSelectChange = (e: SelectChangeEvent) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear error when field is edited
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-  
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: checked }));
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
   
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    let isValid = true;
+    if (!formData.employeeId.trim()) {
+      toast({
+        title: "Error",
+        description: "Employee ID is required",
+        variant: "destructive",
+      });
+      return false;
+    }
     
     if (!formData.firstName.trim()) {
-      errors.firstName = 'First name is required';
-      isValid = false;
+      toast({
+        title: "Error", 
+        description: "First name is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
     if (!formData.lastName.trim()) {
-      errors.lastName = 'Last name is required';
-      isValid = false;
+      toast({
+        title: "Error",
+        description: "Last name is required", 
+        variant: "destructive",
+      });
+      return false;
     }
     
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
-      isValid = false;
+    if (!formData.staffType) {
+      toast({
+        title: "Error",
+        description: "Staff type is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
-    if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required';
-      isValid = false;
+    if (!formData.dateOfBirth) {
+      toast({
+        title: "Error",
+        description: "Date of birth is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
     if (!formData.gender) {
-      errors.gender = 'Gender is required';
-      isValid = false;
+      toast({
+        title: "Error",
+        description: "Gender is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
     if (!formData.department) {
-      errors.department = 'Department is required';
-      isValid = false;
+      toast({
+        title: "Error",
+        description: "Department is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
     if (!formData.position.trim()) {
-      errors.position = 'Position is required';
-      isValid = false;
+      toast({
+        title: "Error",
+        description: "Position is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
-    if (!formData.employeeId.trim()) {
-      errors.employeeId = 'Employee ID is required';
-      isValid = false;
+    if (!formData.phone.trim()) {
+      toast({
+        title: "Error",
+        description: "Phone number is required",
+        variant: "destructive",
+      });
+      return false;
     }
     
-    setFormErrors(errors);
-    return isValid;
+    return true;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,29 +228,34 @@ const EditStaff: React.FC = () => {
     
     try {
       setSaving(true);
-      setError(null);
       
       if (id) {
         // Convert formData to StaffUpdateData format
         const updateData: staffService.StaffUpdateData = {
           employeeId: formData.employeeId,
-          gender: formData.gender,
-          department: formData.department,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          middleName: formData.middleName,
+          staffType: formData.staffType as any,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender as any,
+          phone: formData.phone,
+          streetAddress: formData.streetAddress,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country,
+          departmentId: formData.department,
           position: formData.position,
-          contactInfo: {
-            phone: formData.phone,
-            emergencyContact: formData.emergencyContact
-          },
-          // Only add address if it's not empty
-          ...(formData.address ? {
-            address: {
-              street: formData.address
-            }
-          } : {})
+          status: formData.status as any,
         };
         
         await staffService.updateStaffMember(id, updateData);
-        setSuccess(true);
+        
+        toast({
+          title: "Success",
+          description: "Staff member updated successfully",
+        });
         
         // Redirect after a short delay
         setTimeout(() => {
@@ -235,11 +263,13 @@ const EditStaff: React.FC = () => {
         }, 1500);
       }
     } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('Failed to update staff');
-      }
+      console.error('Error updating staff:', err);
+      const errorMessage = err?.response?.data?.message || 'Failed to update staff member';
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -248,274 +278,318 @@ const EditStaff: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
+        <div className="container mx-auto p-6">
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-lg">Loading staff details...</span>
+          </div>
+        </div>
       </Layout>
     );
   }
   
   return (
     <Layout>
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Edit Staff
-        </Typography>
-        
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>Staff updated successfully!</Alert>}
-        
-        <Paper sx={{ p: 3 }}>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Personal Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  error={!!formErrors.firstName}
-                  helperText={formErrors.firstName}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Last Name"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  error={!!formErrors.lastName}
-                  helperText={formErrors.lastName}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={!!formErrors.email}
-                  helperText={formErrors.email}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  error={!!formErrors.phone}
-                  helperText={formErrors.phone}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth error={!!formErrors.gender} required>
-                  <InputLabel id="gender-label">Gender</InputLabel>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Edit3 className="h-8 w-8 text-blue-600" />
+              Edit Staff Member
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Update staff member information
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/staff/${id}`)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Details
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5 text-blue-600" />
+                Personal Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    placeholder="Enter first name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="middleName">Middle Name</Label>
+                  <Input
+                    id="middleName"
+                    value={formData.middleName}
+                    onChange={(e) => handleInputChange('middleName', e.target.value)}
+                    placeholder="Enter middle name (optional)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    placeholder="Enter last name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="employeeId">Employee ID *</Label>
+                  <Input
+                    id="employeeId"
+                    value={formData.employeeId}
+                    onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                    placeholder="e.g., EMP2024001"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                  <div className="relative">
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                      required
+                    />
+                    <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender *</Label>
                   <Select
-                    labelId="gender-label"
-                    name="gender"
                     value={formData.gender}
-                    label="Gender"
-                    onChange={handleSelectChange}
+                    onValueChange={(value) => handleInputChange('gender', value)}
+                    required
                   >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
                   </Select>
-                  {formErrors.gender && <FormHelperText>{formErrors.gender}</FormHelperText>}
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  multiline
-                  rows={2}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Employment Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth error={!!formErrors.department} required>
-                  <InputLabel id="department-label">Department</InputLabel>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <div className="relative">
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="+1 234-567-8900"
+                    required
+                  />
+                  <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employment Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-blue-600" />
+                Employment Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="staffType">Staff Type *</Label>
                   <Select
-                    labelId="department-label"
-                    name="department"
+                    value={formData.staffType}
+                    onValueChange={(value) => handleInputChange('staffType', value)}
+                    required
+                  >
+                    <SelectTrigger id="staffType">
+                      <SelectValue placeholder="Select staff type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="ADMINISTRATOR">Administrator</SelectItem>
+                      <SelectItem value="LIBRARIAN">Librarian</SelectItem>
+                      <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                      <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
+                      <SelectItem value="SECURITY">Security</SelectItem>
+                      <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                      <SelectItem value="COUNSELOR">Counselor</SelectItem>
+                      <SelectItem value="NURSE">Nurse</SelectItem>
+                      <SelectItem value="GENERAL">General</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department *</Label>
+                  <Select
                     value={formData.department}
-                    label="Department"
-                    onChange={handleSelectChange}
+                    onValueChange={(value) => handleInputChange('department', value)}
+                    required
                   >
-                    {departments.map((dept) => (
-                      <MenuItem key={dept._id} value={dept._id}>
-                        {dept.name}
-                      </MenuItem>
-                    ))}
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map(dept => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
-                  {formErrors.department && <FormHelperText>{formErrors.department}</FormHelperText>}
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Position"
-                  name="position"
-                  value={formData.position}
-                  onChange={handleChange}
-                  error={!!formErrors.position}
-                  helperText={formErrors.position}
-                  required
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position *</Label>
+                  <Input
+                    id="position"
+                    value={formData.position}
+                    onChange={(e) => handleInputChange('position', e.target.value)}
+                    placeholder="e.g., Math Teacher, Principal"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => handleInputChange('status', value)}
+                >
+                  <SelectTrigger id="status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="ON_LEAVE">On Leave</SelectItem>
+                    <SelectItem value="TERMINATED">Terminated</SelectItem>
+                    <SelectItem value="RETIRED">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Address Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                Address Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="streetAddress">Street Address</Label>
+                <Input
+                  id="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={(e) => handleInputChange('streetAddress', e.target.value)}
+                  placeholder="Street address"
                 />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Employment Date"
-                  name="employmentDate"
-                  type="date"
-                  value={formData.employmentDate}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Employee ID"
-                  name="employeeId"
-                  value={formData.employeeId}
-                  onChange={handleChange}
-                  error={!!formErrors.employeeId}
-                  helperText={formErrors.employeeId}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="is-teacher-label">Is Teacher</InputLabel>
-                  <Select
-                    labelId="is-teacher-label"
-                    name="isTeacher"
-                    value={formData.isTeacher ? 'true' : 'false'}
-                    label="Is Teacher"
-                    onChange={(e) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        isTeacher: e.target.value === 'true',
-                      }));
-                    }}
-                  >
-                    <MenuItem value="true">Yes</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Qualifications"
-                  name="qualifications"
-                  value={formData.qualifications}
-                  onChange={handleChange}
-                  multiline
-                  rows={3}
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Emergency Contact
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Contact Name"
-                  name="emergencyContact.name"
-                  value={formData.emergencyContact.name}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Relationship"
-                  name="emergencyContact.relationship"
-                  value={formData.emergencyContact.relationship}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Contact Phone"
-                  name="emergencyContact.phone"
-                  value={formData.emergencyContact.phone}
-                  onChange={handleChange}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sx={{ mt: 3 }}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate(`/staff/${id}`)}
-                    disabled={saving}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={saving}
-                  >
-                    {saving ? <CircularProgress size={24} /> : 'Update Staff'}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </form>
-        </Paper>
-      </Box>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="City"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State/Province</Label>
+                  <Input
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    placeholder="State/Province"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="zipCode">Zip/Postal Code</Label>
+                  <Input
+                    id="zipCode"
+                    value={formData.zipCode}
+                    onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                    placeholder="Zip/Postal code"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="Country"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate(`/staff/${id}`)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={saving} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating Staff Member...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Staff Member
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </Layout>
   );
 };

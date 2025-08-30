@@ -21,10 +21,10 @@ const { extractSchoolFromSubdomain } = require('./middlewares/schoolMiddleware')
 // Import routes (temporarily limited for migration)
 const authRoutes = require('./routes/authRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
-// const studentRoutes = require('./routes/studentRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 // const studentClassHistoryRoutes = require('./routes/studentClassHistoryRoutes');
 // const teacherRoutes = require('./routes/teacherRoutes');
-// const staffRoutes = require('./routes/staffRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 // const timetableRoutes = require('./routes/timetableRoutes');
 // const examRoutes = require('./routes/examRoutes');
 // const feeRoutes = require('./routes/feeRoutes');
@@ -168,10 +168,10 @@ app.get('/api/debug/routes', (req, res) => {
 app.use('/api/schools', schoolRoutes); // School routes enabled
 app.use('/api/auth', authRoutes);
 app.use('/api/academic-years', academicYearRoutes);
-// app.use('/api/students', studentRoutes);
+app.use('/api/students', studentRoutes);
 // app.use('/api/student-class-history', studentClassHistoryRoutes);
 // app.use('/api/teachers', teacherRoutes);
-// app.use('/api/staff', staffRoutes);
+app.use('/api/staff', staffRoutes);
 // app.use('/api/timetables', timetableRoutes);
 // app.use('/api/exams', examRoutes);
 // app.use('/api/fees', feeRoutes);

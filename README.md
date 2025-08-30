@@ -1,133 +1,252 @@
-# School Management System
+# KOKOKA School Management System
 
-A comprehensive school management system with features for students, teachers, and administrators.
+A comprehensive, AI-powered school management system designed to streamline educational operations while enhancing learning outcomes through intelligent features. The system supports multi-tenant architecture using subdomain-based school isolation and provides robust tools for students, teachers, administrators, and parents.
 
 ## Features
 
-- **User Management**: Authentication and role-based access control
+### Core Management Systems
+- **Multi-Tenant Architecture**: Subdomain-based school isolation (`school1.kokoka.com`)
+- **User Management**: Authentication and role-based access control (Admin, Teacher, Student, Parent, Staff)
 - **Student Management**: Enrollment, attendance, grades, and performance tracking
 - **Teacher Management**: Scheduling, class assignments, and performance evaluation
+- **Academic Structure**: Academic years, terms, classes, subjects, sections, and departments
 - **Timetable Management**: Class scheduling and optimization
-- **Exam Management**: Creation, grading, and result analysis
-- **Fee Management**: Invoicing, payment tracking, and reporting
+- **Staff Management**: Comprehensive staff directory and role management
+
+### Advanced Features
 - **AI Integration**: AI-powered assistance, content generation, and analytics
+  - 24/7 AI tutoring chatbot
+  - Automated essay grading with feedback
+  - AI-powered lesson plan generation
+  - Student performance analysis and recommendations
+  - Personalized learning path creation
+- **Attendance Management**: Digital attendance with QR codes, analytics, and parent notifications
+- **Assessment & Grading**: Flexible grading systems, rubric-based assessments, and automated grading
+- **Document Management**: Secure file upload, organization, and access control
+- **Parent Portal**: Real-time dashboard, progress monitoring, and communication
+- **Fee Management**: Invoicing, payment tracking, and financial reporting
+- **Exam Management**: Creation, grading, and result analysis
+- **House System**: Student house assignments and competitions
+- **Sitting Position Management**: Classroom seating arrangements
 
 ## Tech Stack
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB with Mongoose
-- JWT Authentication
-- RESTful API
+- **Runtime**: Node.js (v18+)
+- **Framework**: Express.js
+- **Database**: PostgreSQL (primary), Redis (caching/sessions)
+- **ORM**: Prisma
+- **Authentication**: JWT with refresh tokens
+- **File Storage**: Local storage with secure access
+- **AI Integration**: OpenAI API, Claude API
+- **Real-time**: Socket.io ready
+- **Email**: Nodemailer (SendGrid/AWS SES ready)
+- **Security**: Helmet, CORS, XSS protection, rate limiting
+- **Documentation**: Swagger/OpenAPI
+- **Logging**: Winston with Morgan
+- **Validation**: Joi
+- **File Upload**: Multer
 
-### Frontend (Planned)
-- React.js
-- Redux for state management
-- Material-UI components
-- Responsive design
+### Frontend
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **UI Components**: Radix UI + Material-UI
+- **State Management**: React Context + TanStack Query
+- **Forms**: React Hook Form + Zod validation
+- **Routing**: React Router v6
+- **Charts**: Recharts + Chart.js
+- **Icons**: Lucide React
+- **Themes**: Dark/Light mode support
+- **Drag & Drop**: @hello-pangea/dnd
+
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Database**: PostgreSQL with Prisma migrations
+- **Caching**: Redis for sessions and caching
+- **Reverse Proxy**: Nginx (production ready)
+- **Development**: Hot reload, ESLint, Prettier
+- **Testing**: Jest, Supertest (backend)
 
 ## Project Structure
 
 ```
-root/
-├── backend/                  --> Node.js + Express + MongoDB API
-│   ├── controllers/          --> All controller logic
+kokoka/
+├── backend/                          # Node.js + Express + PostgreSQL API
+│   ├── controllers/                  # All controller logic
+│   │   ├── academicCalendarController.js
+│   │   ├── academicYearController.js
+│   │   ├── aiController.js
+│   │   ├── assessmentController.js
+│   │   ├── attendanceController.js
 │   │   ├── authController.js
-│   │   ├── studentController.js
-│   │   ├── teacherController.js
-│   │   ├── timetableController.js
+│   │   ├── classController.js
+│   │   ├── classTeacherController.js
+│   │   ├── departmentController.js
+│   │   ├── documentController.js
 │   │   ├── examController.js
 │   │   ├── feeController.js
-│   │   └── aiController.js
-│   ├── models/               --> Mongoose schemas
-│   │   ├── User.js
-│   │   ├── Student.js
-│   │   ├── Teacher.js
-│   │   ├── Timetable.js
-│   │   ├── Exam.js
-│   │   ├── Fee.js
-│   │   └── Message.js
-│   ├── routes/               --> Express route definitions
-│   │   ├── authRoutes.js
-│   │   ├── studentRoutes.js
-│   │   ├── teacherRoutes.js
-│   │   ├── timetableRoutes.js
-│   │   ├── examRoutes.js
-│   │   ├── feeRoutes.js
-│   │   └── aiRoutes.js
-│   ├── middlewares/          --> Auth, error handling
-│   │   ├── authMiddleware.js
-│   │   ├── errorHandler.js
-│   │   └── roleMiddleware.js
-│   ├── services/             --> Business logic, AI integration
-│   │   ├── aiService.js
-│   │   ├── gradingService.js
-│   │   └── timetableService.js
-│   ├── utils/                --> Utilities like email, SMS
-│   │   ├── email.js
-│   │   ├── sms.js
-│   │   └── logger.js
-│   ├── config/               --> MongoDB, JWT, environment settings
-│   │   ├── db.js
-│   │   ├── jwt.js
-│   │   └── env.js
-│   └── server.js             --> Main entry point
-├── frontend/                 --> React App (to be implemented)
+│   │   ├── gradeController.js
+│   │   ├── houseController.js
+│   │   ├── parentPortalController.js
+│   │   ├── schoolController.js
+│   │   ├── sectionController.js
+│   │   ├── sittingPositionController.js
+│   │   ├── staffController.js
+│   │   ├── studentClassHistoryController.js
+│   │   ├── studentController.js
+│   │   ├── subjectController.js
+│   │   ├── teacherController.js
+│   │   ├── teacherSubjectAssignmentController.js
+│   │   ├── termController.js
+│   │   └── timetableController.js
+│   ├── models/                       # Legacy models (migrating to Prisma)
+│   ├── prisma/                       # Prisma ORM configuration
+│   │   ├── schema.prisma            # Database schema
+│   │   └── migrations/              # Database migrations
+│   ├── routes/                       # Express route definitions
+│   ├── middlewares/                  # Auth, error handling, validation
+│   ├── services/                     # Business logic, AI integration
+│   ├── utils/                        # Utilities (email, SMS, logger)
+│   ├── config/                       # Database, JWT, environment settings
+│   ├── uploads/                      # File upload directory
+│   ├── logs/                         # Application logs
+│   ├── scripts/                      # Database scripts and utilities
+│   ├── test-utils.js                 # Testing utilities
+│   ├── server.js                     # Main entry point
+│   └── package.json
+├── frontend/                         # React + TypeScript + Vite App
+│   ├── public/                       # Static assets
 │   ├── src/
-│   │   ├── components/       --> UI components
-│   │   ├── pages/            --> Page-level views
-│   │   ├── hooks/            --> Custom React hooks
-│   │   ├── services/         --> API handlers
-│   │   ├── utils/            --> Formatters, access control
-│   │   ├── context/          --> Auth & global state providers
-│   │   ├── App.js
-│   │   └── index.js
-├── README.md
-└── .env
+│   │   ├── components/               # Reusable UI components
+│   │   ├── pages/                    # Page-level views
+│   │   ├── hooks/                    # Custom React hooks
+│   │   ├── services/                 # API service functions
+│   │   ├── utils/                    # Utility functions
+│   │   ├── context/                  # React Context providers
+│   │   ├── types/                    # TypeScript type definitions
+│   │   ├── App.tsx                   # Main App component
+│   │   └── main.tsx                  # Application entry point
+│   ├── index.html                    # HTML template
+│   ├── vite.config.ts                # Vite configuration
+│   ├── tailwind.config.ts            # Tailwind CSS configuration
+│   ├── tsconfig.json                 # TypeScript configuration
+│   └── package.json
+├── docker-compose.yml                # Production Docker setup
+├── docker-compose.dev.yml            # Development Docker setup
+├── README.md                         # Project documentation
+├── CHANGELOG.md                      # Version history and updates
+├── PLAN.md                           # Technical specification
+├── CLAUDE.md                         # AI assistant documentation
+└── OAUTH_SETUP.md                    # OAuth configuration guide
 ```
 
 ## Installation
 
+### Prerequisites
+- Node.js (v18 or higher)
+- PostgreSQL (v14 or higher)
+- Redis (for caching and sessions)
+- Docker & Docker Compose (recommended)
+
+### Quick Start with Docker
+
 1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/school-management-system.git
-   cd school-management-system
+   ```bash
+   git clone https://github.com/Mercyware/KOKOKA.git
+   cd KOKOKA
    ```
 
-2. Install backend dependencies:
+2. Create environment files:
+   ```bash
+   # Copy environment templates
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
    ```
+
+3. Start the development environment:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+4. The application will be available at:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+   - API Documentation: http://localhost:5000/api-docs
+
+### Manual Installation
+
+1. **Backend Setup**:
+   ```bash
    cd backend
    npm install
-   ```
-
-3. Create a `.env` file in the root directory with the following variables:
-   ```
-   NODE_ENV=development
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/school-management
-   JWT_SECRET=your_jwt_secret
-   JWT_EXPIRE=30d
-   ```
-
-4. Start the backend server:
-   ```
+   # Set up PostgreSQL and Redis
+   npm run db:migrate
+   npm run db:generate
    npm run dev
    ```
 
+2. **Frontend Setup**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+### Environment Configuration
+
+Create `.env` files in both backend and frontend directories:
+
+**Backend (.env)**:
+```env
+NODE_ENV=development
+PORT=5000
+DATABASE_URL="postgresql://username:password@localhost:5432/kokoka"
+REDIS_URL="redis://localhost:6379"
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRE=30d
+OPENAI_API_KEY=your_openai_key
+```
+
+**Frontend (.env)**:
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_APP_NAME=KOKOKA
+```
+
 ## API Documentation
 
-The API is documented using Swagger/OpenAPI. When the server is running, you can access the interactive API documentation at:
+The API is fully documented using Swagger/OpenAPI. When the server is running, you can access the interactive API documentation at:
 
-```
-http://localhost:5000/api-docs
-```
+**http://localhost:5000/api-docs**
 
-This documentation provides:
-- Detailed information about all available endpoints
-- Request and response schemas
-- Authentication requirements
-- The ability to test API endpoints directly from the browser
+### Key API Endpoints
+
+#### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/refresh` - Refresh JWT token
+- `POST /api/auth/logout` - User logout
+
+#### Core Management
+- `/api/schools/*` - School management
+- `/api/users/*` - User management
+- `/api/students/*` - Student CRUD operations
+- `/api/teachers/*` - Teacher management
+- `/api/staff/*` - Staff management
+- `/api/classes/*` - Class management
+- `/api/subjects/*` - Subject management
+- `/api/academic-years/*` - Academic year management
+
+#### Advanced Features
+- `/api/attendance/*` - Attendance tracking and analytics
+- `/api/assessments/*` - Assessment creation and grading
+- `/api/grades/*` - Grade management and analytics
+- `/api/documents/*` - Document upload and management
+- `/api/parent-portal/*` - Parent portal functionality
+- `/api/ai/*` - AI-powered educational features
+- `/api/timetable/*` - Timetable scheduling
+- `/api/fee/*` - Fee management and invoicing
 
 ### Using the API Documentation
 
@@ -140,10 +259,104 @@ This documentation provides:
    - Enter your token in the format: `Bearer your_token_here`
    - Now you can test authenticated endpoints
 
-## License
+## Development
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Available Scripts
+
+**Backend Scripts:**
+```bash
+npm run dev          # Start development server with hot reload
+npm run start        # Start production server
+npm run test         # Run tests
+npm run db:migrate   # Run database migrations
+npm run db:generate  # Generate Prisma client
+npm run db:studio    # Open Prisma Studio
+npm run lint         # Run ESLint
+npm run format       # Format code with Prettier
+```
+
+**Frontend Scripts:**
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
+
+### Database Management
+
+The project uses Prisma ORM with PostgreSQL:
+
+- **Schema**: `backend/prisma/schema.prisma`
+- **Migrations**: `backend/prisma/migrations/`
+- **Studio**: Run `npm run db:studio` to open the database GUI
+
+### Docker Development
+
+```bash
+# Start all services
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.dev.yml down
+```
+
+## User Roles & Permissions
+
+### Super Admin
+- Platform-wide management
+- Tenant creation and configuration
+- System monitoring and analytics
+- Global AI model management
+
+### School Admin
+- School-wide configuration
+- User management within school
+- Academic structure setup
+- Reports and analytics
+- AI feature configuration
+
+### Principal/Vice Principal
+- Academic oversight
+- Teacher performance monitoring
+- Student disciplinary actions
+- Parent communication
+- AI-powered insights dashboard
+
+### Teacher
+- Class management
+- Lesson planning with AI assistance
+- Student assessment and grading
+- Parent communication
+- AI-powered teaching recommendations
+
+### Student
+- Course enrollment
+- Assignment submission
+- Grade viewing
+- AI-powered learning assistance
+- Progress tracking
+
+### Parent/Guardian
+- Child's academic progress monitoring
+- Communication with teachers
+- Event notifications
+- AI-generated progress reports
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Guidelines
+- Follow the existing code style and conventions
+- Write tests for new features
+- Update documentation as needed
+- Use conventional commit messages
+- Ensure all tests pass before submitting PR
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

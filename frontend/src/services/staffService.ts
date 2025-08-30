@@ -4,109 +4,91 @@ import api from './api';
 export interface StaffMember {
   id: string;
   employeeId: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  dateOfBirth?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  phone?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  photo?: string;
+  position: string;
+  staffType: 'TEACHER' | 'ADMINISTRATOR' | 'LIBRARIAN' | 'ACCOUNTANT' | 'RECEPTIONIST' | 'SECURITY' | 'MAINTENANCE' | 'COUNSELOR' | 'NURSE' | 'GENERAL';
+  joiningDate: string;
+  salary: number | null;
+  status: 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'RETIRED';
   user: {
     name: string;
     email: string;
     role: string;
+    profileImage?: string;
   };
-  staffType: string;
-  department: {
+  department?: {
     id: string;
     name: string;
     description?: string;
   };
-  position: string;
-  gender: string;
-  dateOfBirth: Date | null;
-  nationalId: string;
-  phone: string;
-  alternatePhone?: string;
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  emergencyContact?: {
-    name: string;
-    relationship: string;
-    phone: string;
-  };
-  status: string;
-  joinDate?: string;
-  qualifications?: Array<{
-    degree: string;
-    institution: string;
-    year: string;
-  }>;
-  subjects?: string[];
-  classes?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StaffCreateData {
-  user: {
+  userId?: string;
+  user?: {
     name: string;
     email: string;
     password: string;
-    role: string;
+    role?: string;
   };
   employeeId: string;
-  staffType: string;
-  dateOfBirth: Date | null;
-  gender: string;
-  nationalId: string;
-  department: string; // Department ID
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  dateOfBirth?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  phone?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  photo?: string;
   position: string;
-  contactInfo: {
-    phone: string;
-    alternatePhone?: string;
-    emergencyContact?: {
-      name: string;
-      relationship: string;
-      phone: string;
-    };
-  };
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
+  staffType: 'TEACHER' | 'ADMINISTRATOR' | 'LIBRARIAN' | 'ACCOUNTANT' | 'RECEPTIONIST' | 'SECURITY' | 'MAINTENANCE' | 'COUNSELOR' | 'NURSE' | 'GENERAL';
+  departmentId?: string;
+  salary?: number;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'RETIRED';
 }
 
 export interface StaffUpdateData {
   employeeId?: string;
-  staffType?: string;
-  dateOfBirth?: Date | null;
-  gender?: string;
-  nationalId?: string;
-  department?: string; // Department ID
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  dateOfBirth?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  phone?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  photo?: string;
   position?: string;
-  contactInfo?: {
-    phone?: string;
-    alternatePhone?: string;
-    emergencyContact?: {
-      name?: string;
-      relationship?: string;
-      phone?: string;
-    };
-  };
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-  status?: string;
+  staffType?: 'TEACHER' | 'ADMINISTRATOR' | 'LIBRARIAN' | 'ACCOUNTANT' | 'RECEPTIONIST' | 'SECURITY' | 'MAINTENANCE' | 'COUNSELOR' | 'NURSE' | 'GENERAL';
+  departmentId?: string;
+  salary?: number;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE' | 'TERMINATED' | 'RETIRED';
 }
 
 export interface StaffFilterOptions {
-  staffType?: string;
   department?: string;
   status?: string;
+  staffType?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -185,7 +167,7 @@ export const getStaffByType = async (type: string) => {
 // Get teachers (convenience method)
 export const getTeachers = async () => {
   try {
-    return await getStaffByType('teacher');
+    return await getStaffByType('TEACHER');
   } catch (error) {
     throw error;
   }
@@ -194,7 +176,7 @@ export const getTeachers = async () => {
 // Get admin staff (convenience method)
 export const getAdminStaff = async () => {
   try {
-    return await getStaffByType('admin');
+    return await getStaffByType('ADMINISTRATOR');
   } catch (error) {
     throw error;
   }

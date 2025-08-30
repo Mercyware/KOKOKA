@@ -77,15 +77,14 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     {
-      id: 'teachers',
-      label: 'Teachers',
+      id: 'staff',
+      label: 'Staff',
       icon: GraduationCap,
       hasSubmenu: true,
       submenu: [
-        { id: 'teachers-list', label: 'All Teachers', icon: GraduationCap },
-        { id: 'teachers-add', label: 'Add Teacher', icon: Plus },
-        { id: 'teachers-schedule', label: 'Schedules', icon: Calendar },
-        { id: 'teachers-performance', label: 'Performance', icon: Trophy },
+        { id: 'staff-list', label: 'All Staff', icon: GraduationCap },
+        { id: 'staff-add', label: 'Add Staff', icon: Plus },
+        { id: 'staff-reports', label: 'Reports', icon: FileText },
       ]
     },
     {
@@ -258,11 +257,11 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             if (subItem.id === 'houses') {
                               navigate('/school-settings/houses');
                             }
-                            if (subItem.id === 'students-list') {
-                              navigate('/students');
+                            if (subItem.id === 'staff-list') {
+                              navigate('/staff');
                             }
-                            if (subItem.id === 'students-add') {
-                              navigate('/students/add');
+                            if (subItem.id === 'staff-add') {
+                              navigate('/staff/create');
                             }
                           }}
                         >

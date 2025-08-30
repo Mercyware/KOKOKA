@@ -7,8 +7,8 @@ const {
   updateStaff,
   deleteStaff,
   getStaffByUserId,
-  getStaffByType,
   getStaffByDepartment,
+  getStaffByType,
   addStaffAttendance,
   addStaffLeave,
   updateLeaveStatus,
@@ -17,12 +17,213 @@ const {
 } = require('../controllers/staffController');
 
 const { protect } = require('../middlewares/authMiddleware');
-const { 
-  isAdmin, 
-  isStaff, 
-  hasStaffManagementAccess, 
-  restrictToOwnerOrRoles 
+const {
+  isAdmin,
+  hasStaffManagementAccess,
+  restrictToOwnerOrRoles,
+  isStaff
 } = require('../middlewares/roleMiddleware');
+
+/**
+ * @swagger
+ * tags:
+ *   name: Staff
+ *   description: Staff management endpoints
+ */
+
+/**
+ * @swagger
+ * /api/staff:
+ *   get:
+ *     summary: Get all staff
+ *     description: Retrieve a list of all staff members
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of staff members
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ *   post:
+ *     summary: Create a new staff member
+ *     description: Create a new staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - employeeId
+ *               - position
+ *             properties:
+ *               userId:
+ *                 type: string
+ *               employeeId:
+ *                 type: string
+ *               position:
+ *                 type: string
+ *               department:
+ *                 type: string
+ *               salary:
+ *                 type: number
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, ON_LEAVE, TERMINATED, RETIRED]
+ *     responses:
+ *       201:
+ *         description: Staff created successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.route('/')
+  .get(protect, hasStaffManagementAccess, getAllStaff)
+  .post(protect, hasStaffManagementAccess, createStaff);
+
+/**
+ * @swagger
+ * /api/staff/{id}:
+ *   get:
+ *     summary: Get staff by ID
+ *     description: Retrieve a staff member by ID
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Staff details
+ *       404:
+ *         description: Staff not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ *   put:
+ *     summary: Update staff
+ *     description: Update a staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               employeeId:
+ *                 type: string
+ *               position:
+ *                 type: string
+ *               department:
+ *                 type: string
+ *               salary:
+ *                 type: number
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE, ON_LEAVE, TERMINATED, RETIRED]
+ *     responses:
+ *       200:
+ *         description: Staff updated successfully
+ *       404:
+ *         description: Staff not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ *   delete:
+ *     summary: Delete staff
+ *     description: Delete a staff member
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Staff deleted successfully
+ *       404:
+ *         description: Staff not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.route('/:id')
+  .get(protect, restrictToOwnerOrRoles('staff', ['admin']), getStaffById)
+  .put(protect, hasStaffManagementAccess, updateStaff)
+  .delete(protect, isAdmin, deleteStaff);
+
+/**
+ * @swagger
+ * /api/staff/user/{userId}:
+ *   get:
+ *     summary: Get staff by user ID
+ *     description: Retrieve a staff member by user ID
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Staff details
+ *       404:
+ *         description: Staff not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get('/user/:userId', protect, restrictToOwnerOrRoles('user', ['admin']), getStaffByUserId);
+
+/**
+ * @swagger
+ * /api/staff/department/{departmentId}:
+ *   get:
+ *     summary: Get staff by department
+ *     description: Retrieve staff members by department
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of staff members in the department
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get('/department/:departmentId', protect, hasStaffManagementAccess, getStaffByDepartment);
+
+module.exports = router;
 
 /**
  * @swagger
