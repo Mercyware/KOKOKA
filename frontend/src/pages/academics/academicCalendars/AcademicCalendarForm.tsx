@@ -38,7 +38,7 @@ import {
 } from '../../../services/academicCalendarService';
 
 interface AcademicYear {
-  _id: string;
+  id: string;
   name: string;
   startDate: string;
   endDate: string;
@@ -54,7 +54,7 @@ const AcademicCalendarForm: React.FC = () => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [formData, setFormData] = useState<Partial<AcademicCalendar>>({
     academicYear: '',
-    term: 'First',
+    term: 'FIRST',
     startDate: '',
     endDate: '',
     holidays: [],
@@ -74,12 +74,20 @@ const AcademicCalendarForm: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    console.log('Academic years state updated:', academicYears);
+  }, [academicYears]);
+
   const fetchAcademicYears = async () => {
     try {
+      console.log('Fetching academic years...');
       const response = await get<AcademicYear[]>('/academic-years');
+      console.log('Academic years response:', response);
       if (response.success && response.data) {
+        console.log('Academic years loaded:', response.data);
         setAcademicYears(response.data);
       } else {
+        console.log('Failed to fetch academic years:', response.message);
         toast({
           title: "Error",
           description: response.message || 'Failed to fetch academic years',
@@ -108,12 +116,12 @@ const AcademicCalendarForm: React.FC = () => {
           ...calendar,
           academicYear: typeof calendar.academicYear === 'string' 
             ? calendar.academicYear 
-            : calendar.academicYear._id,
+            : calendar.academicYear.id,
         });
 
         if (typeof calendar.academicYear !== 'string') {
-          const yearId = calendar.academicYear._id;
-          const year = academicYears.find(y => y._id === yearId);
+          const yearId = calendar.academicYear.id;
+          const year = academicYears.find(y => y.id === yearId);
           if (year) {
             setSelectedAcademicYear(year);
           }
@@ -140,10 +148,16 @@ const AcademicCalendarForm: React.FC = () => {
   };
 
   const handleInputChange = (field: keyof AcademicCalendar, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    console.log(`handleInputChange called: ${field} = ${value}`);
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      console.log('Updated form data:', newData);
+      return newData;
+    });
 
     if (field === 'academicYear') {
-      const year = academicYears.find(y => y._id === value);
+      const year = academicYears.find(y => y.id === value);
+      console.log('Selected academic year:', year);
       setSelectedAcademicYear(year || null);
     }
   };
@@ -197,8 +211,16 @@ const AcademicCalendarForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called');
+    console.log('Form data:', formData);
+    console.log('Is edit mode:', isEditMode);
 
-    if (!formData.academicYear || !formData.term || !formData.startDate || !formData.endDate) {
+    if (!formData.academicYear || formData.academicYear === '' || !formData.term || !formData.startDate || !formData.endDate) {
+      console.log('Validation failed: Missing required fields');
+      console.log('academicYear:', formData.academicYear);
+      console.log('term:', formData.term);
+      console.log('startDate:', formData.startDate);
+      console.log('endDate:', formData.endDate);
       toast({
         title: "Error",
         description: 'Please fill in all required fields',
@@ -247,27 +269,34 @@ const AcademicCalendarForm: React.FC = () => {
         return;
       }
 
+      // Transform the data to match the backend expectations
       const calendarData = {
-        ...formData,
-        school: schoolId,
-      } as AcademicCalendar;
+        academicYearId: formData.academicYear as string,
+        term: formData.term as string,
+        startDate: formData.startDate as string,
+        endDate: formData.endDate as string,
+        holidays: formData.holidays || [],
+      };
+
+      console.log('Calendar data to be sent:', calendarData);
 
       let response;
       if (isEditMode && id) {
+        console.log('Calling updateAcademicCalendar API');
         response = await updateAcademicCalendar(id, calendarData);
       } else {
+        console.log('Calling createAcademicCalendar API');
         response = await createAcademicCalendar(calendarData);
       }
+
+      console.log('API response:', response);
 
       if (response.success) {
         toast({
           title: "Success",
           description: `Academic calendar ${isEditMode ? 'updated' : 'created'} successfully`,
         });
-        
-        setTimeout(() => {
-          navigate('/academics/academic-calendars');
-        }, 1500);
+        navigate('/academics/academic-calendars');
       } else {
         toast({
           title: "Error",
@@ -343,7 +372,7 @@ const AcademicCalendarForm: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="academicYear">Academic Year *</Label>
                     <Select
-                      value={typeof formData.academicYear === 'string' ? formData.academicYear : formData.academicYear?._id || ''}
+                      value={typeof formData.academicYear === 'string' ? formData.academicYear : formData.academicYear?.id || ''}
                       onValueChange={(value) => handleInputChange('academicYear', value)}
                     >
                       <SelectTrigger>
@@ -351,7 +380,7 @@ const AcademicCalendarForm: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {academicYears.map((year) => (
-                          <SelectItem key={year._id} value={year._id}>
+                          <SelectItem key={year.id} value={year.id}>
                             {year.name}
                           </SelectItem>
                         ))}
@@ -362,16 +391,16 @@ const AcademicCalendarForm: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="term">Term *</Label>
                     <Select
-                      value={formData.term || 'First'}
+                      value={formData.term || 'FIRST'}
                       onValueChange={(value) => handleInputChange('term', value)}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select term" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="First">First Term</SelectItem>
-                        <SelectItem value="Second">Second Term</SelectItem>
-                        <SelectItem value="Third">Third Term</SelectItem>
+                        <SelectItem value="FIRST">First Term</SelectItem>
+                        <SelectItem value="SECOND">Second Term</SelectItem>
+                        <SelectItem value="THIRD">Third Term</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -2,17 +2,17 @@ import { get, post, put, del } from './api';
 import { ApiResponse } from '../types';
 
 export interface Holiday {
-  _id?: string;
+  id?: string;
   name: string;
   date: string;
   description?: string;
 }
 
 export interface AcademicCalendar {
-  _id?: string;
-  school: string;
-  academicYear: string | { _id: string; name: string };
-  term: 'First' | 'Second' | 'Third';
+  id?: string;
+  schoolId: string;
+  academicYear: string | { id: string; name: string };
+  term: 'FIRST' | 'SECOND' | 'THIRD';
   startDate: string;
   endDate: string;
   holidays: Holiday[];
@@ -48,12 +48,12 @@ export const getAcademicCalendarsByAcademicYear = async (academicYearId: string)
 };
 
 // Create new academic calendar
-export const createAcademicCalendar = async (academicCalendar: Omit<AcademicCalendar, '_id'>): Promise<ApiResponse<AcademicCalendar>> => {
+export const createAcademicCalendar = async (academicCalendar: any): Promise<ApiResponse<AcademicCalendar>> => {
   return await post<AcademicCalendar>('/academic-calendars', academicCalendar);
 };
 
 // Update academic calendar
-export const updateAcademicCalendar = async (id: string, academicCalendar: Partial<AcademicCalendar>): Promise<ApiResponse<AcademicCalendar>> => {
+export const updateAcademicCalendar = async (id: string, academicCalendar: any): Promise<ApiResponse<AcademicCalendar>> => {
   return await put<AcademicCalendar>(`/academic-calendars/${id}`, academicCalendar);
 };
 

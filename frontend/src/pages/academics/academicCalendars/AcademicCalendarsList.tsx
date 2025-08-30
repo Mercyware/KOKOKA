@@ -107,7 +107,7 @@ const AcademicCalendarsList: React.FC = () => {
     }
   };
 
-  const getAcademicYearName = (academicYear: string | { _id: string; name: string }) => {
+  const getAcademicYearName = (academicYear: string | { id: string; name: string }) => {
     if (typeof academicYear === 'string') {
       return academicYear;
     }
@@ -181,7 +181,7 @@ const AcademicCalendarsList: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {academicCalendars.map((calendar) => (
-                    <TableRow key={calendar._id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <TableRow key={calendar.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <TableCell className="font-medium">
                         {getAcademicYearName(calendar.academicYear)}
                       </TableCell>
@@ -202,7 +202,7 @@ const AcademicCalendarsList: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditCalendar(calendar._id || '')}
+                            onClick={() => handleEditCalendar(calendar.id || '')}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -212,7 +212,7 @@ const AcademicCalendarsList: React.FC = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="text-red-600 hover:text-red-700"
-                                onClick={() => setCalendarToDelete(calendar._id || '')}
+                                onClick={() => setCalendarToDelete(calendar.id || '')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

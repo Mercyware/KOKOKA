@@ -22,7 +22,10 @@ import {
   ClipboardList,
   PieChart,
   Brain,
-  Globe
+  Globe,
+  Building2,
+  School,
+  Layers
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -65,8 +68,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       icon: BookOpen,
       hasSubmenu: true,
       submenu: [
-        { id: 'academic-years', label: 'Academic Years', icon: CalendarDays },
-        { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
         { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
         { id: 'report-templates', label: 'Report Cards', icon: FileText },
         { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
@@ -131,6 +132,18 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'analytics-performance', label: 'Performance', icon: Trophy },
         { id: 'analytics-attendance', label: 'Attendance', icon: UserCheck },
         { id: 'analytics-financial', label: 'Financial', icon: PieChart },
+      ]
+    },
+    {
+      id: 'school-settings',
+      label: 'School Settings',
+      icon: Building2,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'academic-years', label: 'Academic Years', icon: CalendarDays },
+        { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
+        { id: 'classes', label: 'Classes', icon: School },
+        { id: 'sections', label: 'Arms/Sections', icon: Layers },
       ]
     },
     { id: 'ai-insights', label: 'AI Insights', icon: Brain, hasSubmenu: false },
@@ -228,6 +241,12 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             }
                             if (subItem.id === 'academic-calendar') {
                               navigate('/academics/academic-calendars');
+                            }
+                            if (subItem.id === 'classes') {
+                              navigate('/school-settings/classes');
+                            }
+                            if (subItem.id === 'sections') {
+                              navigate('/school-settings/sections');
                             }
                             if (subItem.id === 'students-list') {
                               navigate('/students');
