@@ -454,6 +454,8 @@ export interface Class {
   school: string;
   name: string;
   level: number;
+  grade?: string | number;
+  capacity?: number;
   description?: string;
   subjects?: string[];
   createdBy?: string;

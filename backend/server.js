@@ -11,6 +11,7 @@ const path = require('path');
 
 // Import configuration
 const { connectDatabase } = require('./config/database');
+const { connectDB } = require('./config/db'); // MongoDB connection
 const { initJwtConfig } = require('./config/jwt');
 const env = require('./config/env');
 const { setupSwagger } = require('./config/swagger');
@@ -33,13 +34,13 @@ const schoolRoutes = require('./routes/schoolRoutes');
 const academicYearRoutes = require('./routes/academicYearRoutes');
 const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
 // const termRoutes = require('./routes/termRoutes');
-// const classRoutes = require('./routes/classRoutes');
+const classRoutes = require('./routes/classRoutes');
 // const subjectRoutes = require('./routes/subjectRoutes');
 // const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 // const classTeacherRoutes = require('./routes/classTeacherRoutes');
 // const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
 // const houseRoutes = require('./routes/houseRoutes');
-// const sectionRoutes = require('./routes/sectionRoutes');
+const sectionRoutes = require('./routes/sectionRoutes');
 // const departmentRoutes = require('./routes/departmentRoutes');
 // const attendanceRoutes = require('./routes/attendanceRoutes');
 // const assessmentRoutes = require('./routes/assessmentRoutes');
@@ -57,8 +58,9 @@ initJwtConfig();
 // Create Express app
 const app = express();
 
-// Connect to PostgreSQL and Redis
-connectDatabase();
+// Connect to databases
+connectDatabase(); // PostgreSQL and Redis
+connectDB(); // MongoDB
 
 // Middleware
 // Body parser
@@ -181,13 +183,13 @@ app.use('/api/academic-years', academicYearRoutes);
 // app.use('/api/fees', feeRoutes);
 app.use('/api/academic-calendars', academicCalendarRoutes);
 // app.use('/api/terms', termRoutes);
-// app.use('/api/classes', classRoutes);
+app.use('/api/classes', classRoutes);
 // app.use('/api/subjects', subjectRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/class-teachers', classTeacherRoutes);
 // app.use('/api/sitting-positions', sittingPositionRoutes);
 // app.use('/api/houses', houseRoutes);
-// app.use('/api/sections', sectionRoutes);
+app.use('/api/sections', sectionRoutes);
 // app.use('/api/departments', departmentRoutes);
 // app.use('/api/attendance', attendanceRoutes);
 // app.use('/api/assessments', assessmentRoutes);

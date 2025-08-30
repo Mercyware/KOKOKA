@@ -5,7 +5,7 @@ import { House } from '@/types';
 import { Section } from '@/types/Section';
 import { getStudentById, updateStudent } from '@/services/studentService';
 import Layout from '../../components/layout/Layout';
-import { getClasses } from '@/services/classService';
+import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { useNavigate } from 'react-router-dom';
 import StudentForm from '@/components/students/StudentForm';
@@ -183,7 +183,7 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
         if (sectionsResponse.success && sectionsResponse.data) {
           setSections(sectionsResponse.data);
         }
-        const classesResponse = await getClasses();
+        const classesResponse = await getAllClasses();
         if (classesResponse.data) {
           setClasses(classesResponse.data);
         }

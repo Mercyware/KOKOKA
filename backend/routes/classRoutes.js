@@ -3,9 +3,13 @@ const router = express.Router();
 const classController = require('../controllers/classController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
+const schoolMiddleware = require('../middlewares/schoolMiddleware');
 
 // Protect all routes
 router.use(authMiddleware.protect);
+
+// Apply school middleware to all routes
+router.use(schoolMiddleware.extractSchoolFromSubdomain);
 
 /**
  * @swagger
@@ -192,7 +196,7 @@ router.get('/:id', classController.getClassById);
 router.get('/academic-year/:academicYearId', classController.getClassesByAcademicYear);
 
 // Admin and teacher routes
-router.use(roleMiddleware.restrictTo('admin', 'teacher'));
+//router.use(roleMiddleware.restrictTo('admin', 'teacher'));
 
 /**
  * @swagger
@@ -320,8 +324,74 @@ router.post('/:id/subjects', classController.addSubjectToClass);
  */
 router.delete('/:id/subjects', classController.removeSubjectFromClass);
 
+/*
 // Admin only routes
 router.use(roleMiddleware.restrictTo('admin'));
+*/
+
+/**
+ * @swagger
+ * /api/classes/bulk-update-grades:
+ *   put:
+ *     summary: Bulk update class grades
+ *     description: Update grades for multiple classes at once. Used for drag and drop grade organization.
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - updates
+ *             properties:
+ *               updates:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id
+ *                     - grade
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: Class ID
+ *                     grade:
+ *                       type: string
+ *                       description: New grade level
+ *     responses:
+ *       200:
+ *         description: Classes updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       grade:
+ *                         type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.put('/bulk-update-grades', classController.bulkUpdateGrades);
 
 /**
  * @swagger

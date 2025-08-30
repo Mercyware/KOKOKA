@@ -23,6 +23,11 @@ import AcademicYearsList from "./pages/academics/academicYears/AcademicYearsList
 import AcademicCalendarsList from "./pages/academics/academicCalendars/AcademicCalendarsList";
 import CreateAcademicCalendar from "./pages/academics/academicCalendars/CreateAcademicCalendar";
 import EditAcademicCalendar from "./pages/academics/academicCalendars/EditAcademicCalendar";
+// School Settings Components
+import ClassesList from "./pages/school-settings/classes/ClassesList";
+import ClassForm from "./pages/school-settings/classes/ClassForm";
+import SectionsList from "./pages/school-settings/sections/SectionsList";
+import SectionForm from "./pages/school-settings/sections/SectionForm";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +92,16 @@ const App = () => (
             <Route path="/academics/academic-calendars" element={<AcademicCalendarsList />} />
             <Route path="/academics/academic-calendars/create" element={<CreateAcademicCalendar />} />
             <Route path="/academics/academic-calendars/edit/:id" element={<EditAcademicCalendar />} />
+            
+            {/* School Settings - Classes Routes */}
+            <Route path="/school-settings/classes" element={<ClassesList />} />
+            <Route path="/school-settings/classes/create" element={<ClassForm />} />
+            <Route path="/school-settings/classes/edit/:id" element={<ClassForm />} />
+            
+            {/* School Settings - Sections Routes */}
+            <Route path="/school-settings/sections" element={<SectionsList />} />
+            <Route path="/school-settings/sections/create" element={<SectionForm />} />
+            <Route path="/school-settings/sections/edit/:id" element={<SectionForm />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

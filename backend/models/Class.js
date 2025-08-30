@@ -1,49 +1,66 @@
-const mongoose = require('mongoose');
+// Class data access using Prisma (PostgreSQL)
 
-const ClassSchema = new mongoose.Schema({
-  school: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'School',
-    required: [true, 'School is required']
-  },
-  name: {
-    type: String,
-    required: [true, 'Please provide class name'],
-    trim: true
-  },
-  level: {
-    type: Number,
-    required: [true, 'Please provide class level'],
-    min: 1
-  },
-  description: {
-    type: String,
-    trim: true
-  },
-  subjects: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject'
-  }],
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+const { prisma } = require('../config/database');
 
-// Compound index to ensure unique class names within a school
-ClassSchema.index({ name: 1, school: 1 }, { unique: true });
+// Create a new class
+async function createClass(data) {
+  return await prisma.class.create({
+    data: {
+      schoolId: data.schoolId,
+      name: data.name,
+      grade: data.grade ? data.grade.toString() : data.level ? data.level.toString() : '1',
+      description: data.description,
+      capacity: data.capacity
+    }
+  });
+}
 
+// Get class by ID
+async function getClassById(id) {
+  return await prisma.class.findUnique({
+    where: { id },
+    include: {
+      students: true,
+      school: true,
+      createdBy: true
+    }
+  });
+}
 
-// Virtual for students in this class (across all arms)
-ClassSchema.virtual('students', {
-  ref: 'Student',
-  localField: '_id',
-  foreignField: 'class',
-  justOne: false
-});
+// Get all classes for a school
+async function getClassesBySchool(schoolId) {
+  return await prisma.class.findMany({
+    where: { schoolId },
+    include: {
+      students: true
+    }
+  });
+}
 
-module.exports = mongoose.model('Class', ClassSchema);
+// Update class
+async function updateClass(id, data) {
+  return await prisma.class.update({
+    where: { id },
+    data: {
+      name: data.name,
+      grade: data.grade ? data.grade.toString() : data.level ? data.level.toString() : undefined,
+      description: data.description,
+      capacity: data.capacity
+    }
+  });
+}
+
+// Delete class
+async function deleteClass(id) {
+  return await prisma.class.delete({
+    where: { id }
+  });
+}
+
+module.exports = {
+  createClass,
+  getClassById,
+  getClassesBySchool,
+  updateClass,
+  deleteClass
+};

@@ -1,16 +1,5 @@
 import { get, post, put, del } from './api';
-import { ApiResponse } from '../types';
-
-export interface Class {
-  id?: string;
-  name: string;
-  grade: number;
-  description?: string;
-  capacity?: number;
-  schoolId: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { ApiResponse, Class } from '../types';
 
 // Get all classes
 export const getAllClasses = async (): Promise<ApiResponse<Class[]>> => {
@@ -35,4 +24,9 @@ export const updateClass = async (id: string, classData: Partial<Omit<Class, 'id
 // Delete class
 export const deleteClass = async (id: string): Promise<ApiResponse<null>> => {
   return await del<null>(`/classes/${id}`);
+};
+
+// Bulk update class grades
+export const bulkUpdateClassGrades = async (updates: { id: string; grade: string }[]): Promise<ApiResponse<Class[]>> => {
+  return await put<Class[]>('/classes/bulk-update-grades', { updates });
 };

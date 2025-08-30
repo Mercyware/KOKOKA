@@ -12,9 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { getStudents, StudentFilters } from '@/services/studentService';
 import { getAllAcademicYears } from '@/services/academicYearService';
-import { getClasses } from '@/services/classService';
+import { getAllClasses } from '@/services/classService';
 import { getHouses } from '@/services/houseService';
-import { getSections } from '@/services/sectionService';
+import { getAllSections } from '@/services/sectionService';
 import { Student, Class, House } from '@/types';
 
 interface StudentsManagerProps {
@@ -57,7 +57,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const classesResponse = await getClasses();
+        const classesResponse = await getAllClasses();
         setClasses(classesResponse.data || []);
         console.log('Classes fetched:', classesResponse);
 
@@ -87,9 +87,9 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         }
 
         // Fetch sections
-        const sectionsResponse = await getSections();
+        const sectionsResponse = await getAllSections();
         setSections(
-          (sectionsResponse || []).map((s: any) => ({
+          (sectionsResponse.data || []).map((s: any) => ({
             id: s.id || s._id,
             name: s.name
           }))
