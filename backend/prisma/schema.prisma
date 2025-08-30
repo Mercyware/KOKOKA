@@ -910,6 +910,14 @@ enum StaffType {
   GENERAL
 }
 
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+  RETIRED
+}
+
 enum GuardianStatus {
   ACTIVE
   INACTIVE

@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "public"."StaffType" AS ENUM ('TEACHER', 'ADMINISTRATOR', 'LIBRARIAN', 'ACCOUNTANT', 'RECEPTIONIST', 'SECURITY', 'MAINTENANCE', 'COUNSELOR', 'NURSE', 'GENERAL');
+
+-- AlterTable
+ALTER TABLE "public"."staff" ADD COLUMN     "staffType" "public"."StaffType" NOT NULL DEFAULT 'GENERAL';

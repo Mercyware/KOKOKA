@@ -46,6 +46,10 @@ interface StaffFormData {
   department: string;
   position: string;
   status: string;
+  // User account fields
+  email: string;
+  password: string;
+  confirmPassword: string;
 }
 
 const CreateStaff: React.FC = () => {
@@ -75,6 +79,10 @@ const CreateStaff: React.FC = () => {
     department: '',
     position: '',
     status: 'ACTIVE',
+    // User account fields
+    email: '',
+    password: '',
+    confirmPassword: '',
   });
   
   useEffect(() => {
@@ -84,7 +92,7 @@ const CreateStaff: React.FC = () => {
         
         // Fetch departments
         const departmentsResponse = await departmentService.getDepartments();
-        setDepartments(departmentsResponse.departments || []);
+        setDepartments(departmentsResponse.data || []);
         
         setLoading(false);
       } catch (err) {
@@ -190,21 +198,61 @@ const CreateStaff: React.FC = () => {
       return false;
     }
     
+    if (!formData.email.trim()) {
+      toast({
+        title: "Error",
+        description: "Email is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!formData.password.trim()) {
+      toast({
+        title: "Error",
+        description: "Password is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
     return true;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted', formData);
     
     if (!validateForm()) {
+      console.log('Validation failed');
       return;
     }
+    
+    console.log('Validation passed, creating staff member');
     
     try {
       setSaving(true);
       
       // Convert formData to StaffCreateData format
-      const createData: staffService.StaffCreateData = {
+      const createData: any = {
         employeeId: formData.employeeId,
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -221,6 +269,13 @@ const CreateStaff: React.FC = () => {
         departmentId: formData.department,
         position: formData.position,
         status: formData.status as any,
+        // User details for account creation
+        user: {
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          password: formData.password,
+          role: 'STAFF'
+        }
       };
       
       const response = await staffService.createStaffMember(createData);
@@ -379,6 +434,57 @@ const CreateStaff: React.FC = () => {
                   />
                   <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* User Account Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                User Account Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="Enter email address"
+                      required
+                    />
+                    <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder="Enter password (min 6 characters)"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  placeholder="Confirm password"
+                  required
+                />
               </div>
             </CardContent>
           </Card>

@@ -110,7 +110,7 @@ const EditStaff: React.FC = () => {
         
         // Fetch departments
         const departmentsResponse = await departmentService.getDepartments();
-        setDepartments(departmentsResponse.departments || []);
+        setDepartments(departmentsResponse.data || []);
         
         setLoading(false);
       } catch (err) {
