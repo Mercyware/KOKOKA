@@ -1,17 +1,67 @@
-const Department = require('../models/Department');
-const Staff = require('../models/Staff');
+const { prisma } = require('../config/database');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get all departments
 // @route   GET /api/departments
 // @access  Private/Admin
 exports.getAllDepartments = asyncHandler(async (req, res) => {
-  const departments = await Department.find({ school: req.school.id }).populate('head', 'name position');
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  // Extract pagination parameters from query
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
   
+  // Extract search parameter
+  const search = req.query.search || '';
+  
+  // Build where clause
+  const whereClause = {
+    schoolId: req.school.id,
+    ...(search && {
+      name: { contains: search, mode: 'insensitive' }
+    })
+  };
+
+  // Get total count for pagination
+  const totalDepartments = await prisma.department.count({
+    where: whereClause
+  });
+
+  // Get paginated departments
+  const departments = await prisma.department.findMany({
+    where: whereClause,
+    orderBy: {
+      name: 'asc'
+    },
+    skip,
+    take: limit
+  });
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalDepartments / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
   res.status(200).json({
     success: true,
     count: departments.length,
-    departments
+    total: totalDepartments,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      nextPage: hasNextPage ? page + 1 : null,
+      prevPage: hasPrevPage ? page - 1 : null
+    },
+    data: departments
   });
 });
 
@@ -19,10 +69,20 @@ exports.getAllDepartments = asyncHandler(async (req, res) => {
 // @route   GET /api/departments/:id
 // @access  Private/Admin
 exports.getDepartmentById = asyncHandler(async (req, res) => {
-  const department = await Department.findOne({
-    _id: req.params.id,
-    school: req.school.id
-  }).populate('head', 'name position');
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  const department = await prisma.department.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
+  });
   
   if (!department) {
     res.status(404);
@@ -31,7 +91,7 @@ exports.getDepartmentById = asyncHandler(async (req, res) => {
   
   res.status(200).json({
     success: true,
-    department
+    data: department
   });
 });
 
@@ -39,41 +99,42 @@ exports.getDepartmentById = asyncHandler(async (req, res) => {
 // @route   POST /api/departments
 // @access  Private/Admin
 exports.createDepartment = asyncHandler(async (req, res) => {
-  const { name, description, headId, status } = req.body;
-  
-  // Check if department with this name already exists in this school
-  const departmentExists = await Department.findOne({ 
-    name,
-    school: req.school.id
-  });
-  if (departmentExists) {
-    res.status(400);
-    throw new Error('Department with this name already exists');
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
   }
+
+  const { name, code, description, headOfDept } = req.body;
   
-  // Create department
-  const departmentData = {
-    school: req.school.id,
-    name,
-    description,
-    status: status || 'active'
-  };
-  
-  // If headId is provided, check if staff exists
-  if (headId) {
-    const staff = await Staff.findById(headId);
-    if (!staff) {
-      res.status(404);
-      throw new Error('Staff not found');
+  // Check if department with this code already exists in this school
+  const existingDepartment = await prisma.department.findFirst({
+    where: {
+      code: code,
+      schoolId: req.school.id
     }
-    departmentData.head = headId;
+  });
+
+  if (existingDepartment) {
+    res.status(400);
+    throw new Error('A department with this code already exists');
   }
   
-  const department = await Department.create(departmentData);
+  const department = await prisma.department.create({
+    data: {
+      name,
+      code,
+      description,
+      headOfDept,
+      schoolId: req.school.id
+    }
+  });
   
   res.status(201).json({
     success: true,
-    department
+    data: department
   });
 });
 
@@ -81,44 +142,55 @@ exports.createDepartment = asyncHandler(async (req, res) => {
 // @route   PUT /api/departments/:id
 // @access  Private/Admin
 exports.updateDepartment = asyncHandler(async (req, res) => {
-  let department = await Department.findById(req.params.id);
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  const department = await prisma.department.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
+  });
   
   if (!department) {
     res.status(404);
     throw new Error('Department not found');
   }
   
-  // If name is being updated, check if it already exists in this school
-  if (req.body.name && req.body.name !== department.name) {
-    const departmentWithName = await Department.findOne({ 
-      name: req.body.name,
-      school: req.school.id
+  // Check if another department with the same code exists (excluding this one)
+  if (req.body.code) {
+    const existingDepartment = await prisma.department.findFirst({
+      where: {
+        code: req.body.code,
+        schoolId: req.school.id,
+        id: { not: req.params.id }
+      }
     });
-    if (departmentWithName) {
+
+    if (existingDepartment) {
       res.status(400);
-      throw new Error('Department with this name already exists');
+      throw new Error('A department with this code already exists');
     }
   }
   
-  // If headId is provided, check if staff exists
-  if (req.body.headId) {
-    const staff = await Staff.findById(req.body.headId);
-    if (!staff) {
-      res.status(404);
-      throw new Error('Staff not found');
+  const updatedDepartment = await prisma.department.update({
+    where: { id: req.params.id },
+    data: {
+      ...(req.body.name && { name: req.body.name }),
+      ...(req.body.code && { code: req.body.code }),
+      ...(req.body.description !== undefined && { description: req.body.description }),
+      ...(req.body.headOfDept !== undefined && { headOfDept: req.body.headOfDept })
     }
-    req.body.head = req.body.headId;
-    delete req.body.headId;
-  }
-  
-  department = await Department.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  }).populate('head', 'name position');
+  });
   
   res.status(200).json({
     success: true,
-    department
+    data: updatedDepartment
   });
 });
 
@@ -126,21 +198,46 @@ exports.updateDepartment = asyncHandler(async (req, res) => {
 // @route   DELETE /api/departments/:id
 // @access  Private/Admin
 exports.deleteDepartment = asyncHandler(async (req, res) => {
-  const department = await Department.findById(req.params.id);
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  const department = await prisma.department.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
+  });
   
   if (!department) {
     res.status(404);
     throw new Error('Department not found');
   }
   
-  // Check if any staff are assigned to this department
-  const staffInDepartment = await Staff.countDocuments({ department: department.name });
-  if (staffInDepartment > 0) {
+  // Check if any staff or teachers are assigned to this department
+  const [staffCount, teacherCount, subjectCount] = await Promise.all([
+    prisma.staff.count({ where: { departmentId: department.id } }),
+    prisma.teacher.count({ where: { departmentId: department.id } }),
+    prisma.subject.count({ where: { departmentId: department.id } })
+  ]);
+  
+  if (staffCount > 0 || teacherCount > 0) {
     res.status(400);
-    throw new Error('Cannot delete department with assigned staff. Please reassign staff first.');
+    throw new Error('Cannot delete department with assigned staff or teachers. Please reassign them first.');
   }
   
-  await department.remove();
+  if (subjectCount > 0) {
+    res.status(400);
+    throw new Error('Cannot delete department with assigned subjects. Please reassign them first.');
+  }
+  
+  await prisma.department.delete({
+    where: { id: req.params.id }
+  });
   
   res.status(200).json({
     success: true,
@@ -152,9 +249,19 @@ exports.deleteDepartment = asyncHandler(async (req, res) => {
 // @route   GET /api/departments/:id/staff
 // @access  Private/Admin
 exports.getStaffByDepartment = asyncHandler(async (req, res) => {
-  const department = await Department.findOne({
-    _id: req.params.id,
-    school: req.school.id
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  const department = await prisma.department.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
   
   if (!department) {
@@ -162,15 +269,46 @@ exports.getStaffByDepartment = asyncHandler(async (req, res) => {
     throw new Error('Department not found');
   }
   
-  const staff = await Staff.find({ 
-    department: department._id,
-    school: req.school.id
-  }).populate('user', 'name email role');
+  const [staff, teachers] = await Promise.all([
+    prisma.staff.findMany({ 
+      where: { 
+        departmentId: department.id,
+        schoolId: req.school.id 
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            role: true
+          }
+        }
+      }
+    }),
+    prisma.teacher.findMany({ 
+      where: { 
+        departmentId: department.id,
+        schoolId: req.school.id 
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            role: true
+          }
+        }
+      }
+    })
+  ]);
   
   res.status(200).json({
     success: true,
-    count: staff.length,
-    staff
+    data: {
+      staff,
+      teachers,
+      totalCount: staff.length + teachers.length
+    }
   });
 });
 
@@ -178,32 +316,40 @@ exports.getStaffByDepartment = asyncHandler(async (req, res) => {
 // @route   PUT /api/departments/:id/head
 // @access  Private/Admin
 exports.assignDepartmentHead = asyncHandler(async (req, res) => {
-  const { staffId } = req.body;
+  // Check if req.school exists
+  if (!req.school) {
+    return res.status(404).json({
+      success: false,
+      message: 'School not found or inactive'
+    });
+  }
+
+  const { headOfDept } = req.body;
   
-  if (!staffId) {
+  if (!headOfDept) {
     res.status(400);
-    throw new Error('Staff ID is required');
+    throw new Error('Head of department name is required');
   }
   
-  const department = await Department.findById(req.params.id);
+  const department = await prisma.department.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
+  });
+
   if (!department) {
     res.status(404);
     throw new Error('Department not found');
   }
   
-  const staff = await Staff.findById(staffId);
-  if (!staff) {
-    res.status(404);
-    throw new Error('Staff not found');
-  }
-  
-  department.head = staffId;
-  await department.save();
-  
-  const updatedDepartment = await Department.findById(req.params.id).populate('head', 'name position');
+  const updatedDepartment = await prisma.department.update({
+    where: { id: req.params.id },
+    data: { headOfDept }
+  });
   
   res.status(200).json({
     success: true,
-    department: updatedDepartment
+    data: updatedDepartment
   });
 });

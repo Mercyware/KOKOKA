@@ -14,7 +14,7 @@ import { getStudents, StudentFilters } from '@/services/studentService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { getAllClasses } from '@/services/classService';
 import { getHouses } from '@/services/houseService';
-import { getAllSections } from '@/services/sectionService';
+import { getSections } from '@/services/sectionService';
 import { Student, Class, House } from '@/types';
 
 interface StudentsManagerProps {
@@ -87,13 +87,15 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         }
 
         // Fetch sections
-        const sectionsResponse = await getAllSections();
-        setSections(
-          (sectionsResponse.data || []).map((s: any) => ({
-            id: s.id || s._id,
-            name: s.name
-          }))
-        );
+        const sectionsResponse = await getSections();
+        if (sectionsResponse.success && sectionsResponse.data) {
+          setSections(
+            sectionsResponse.data.data.map((s: any) => ({
+              id: s.id || s._id,
+              name: s.name
+            }))
+          );
+        }
       } catch (err) {
         console.error('Error fetching filter data:', err);
       }

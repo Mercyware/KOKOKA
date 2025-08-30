@@ -10,8 +10,14 @@ export interface PaginatedResponse<T> {
   success: boolean;
   count: number;
   total: number;
-  pages: number;
-  currentPage: number;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
   data: T[];
 }
 
@@ -110,14 +116,14 @@ export interface Subscription {
 
 export interface House {
   id: string;
-  _id?: string;
-  school: string;
   name: string;
+  code: string;
   color?: string;
-  houseHead?: string;
   description?: string;
-  createdBy?: string;
-  students?: string[];
+  schoolId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  students?: Student[];
   studentCount?: number;
 }
 
@@ -125,10 +131,15 @@ export interface House {
  * @deprecated Use ClassArm instead. This interface is kept for backward compatibility.
  */
 export interface Section {
-  id: string;
-  school: string;
+  id?: string;
+  school?: string;
+  schoolId?: string;
   name: string;
+  code?: string;
+  capacity?: number;
   description?: string;
+  createdAt?: string;
+  updatedAt?: string;
   createdBy?: string;
   students?: string[];
   studentCount?: number;

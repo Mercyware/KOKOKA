@@ -1,12 +1,13 @@
-const User = require('../models/User');
-const Student = require('../models/Student');
-const Teacher = require('../models/Teacher');
-const Staff = require('../models/Staff');
+const { prisma } = require('../config/database');
 
 // Restrict access to specific roles
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    // Convert both user role and expected roles to lowercase for case-insensitive comparison
+    const userRole = req.user.role.toLowerCase();
+    const allowedRoles = roles.map(role => role.toLowerCase());
+    
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to perform this action'
@@ -22,8 +23,10 @@ exports.restrictToOwnerOrRoles = (ownerType, roles = []) => {
     try {
       const resourceId = req.params.id || req.params.studentId || req.params.teacherId || req.params.staffId || req.params.userId;
       
-      // If user has one of the specified roles, allow access
-      if (roles.includes(req.user.role)) {
+      // If user has one of the specified roles, allow access (case-insensitive)
+      const userRole = req.user.role.toLowerCase();
+      const allowedRoles = roles.map(role => role.toLowerCase());
+      if (allowedRoles.includes(userRole)) {
         return next();
       }
       
@@ -33,24 +36,30 @@ exports.restrictToOwnerOrRoles = (ownerType, roles = []) => {
       switch (ownerType) {
         case 'student':
           // Check if the logged-in user is the student
-          const student = await Student.findById(resourceId);
-          if (student && student.user.toString() === req.user.id) {
+          const student = await prisma.student.findUnique({
+            where: { id: resourceId }
+          });
+          if (student && student.userId === req.user.id) {
             isOwner = true;
           }
           break;
           
         case 'teacher':
           // Check if the logged-in user is the teacher
-          const teacher = await Teacher.findById(resourceId);
-          if (teacher && teacher.user.toString() === req.user.id) {
+          const teacher = await prisma.teacher.findUnique({
+            where: { id: resourceId }
+          });
+          if (teacher && teacher.userId === req.user.id) {
             isOwner = true;
           }
           break;
           
         case 'staff':
           // Check if the logged-in user is the staff member
-          const staff = await Staff.findById(resourceId);
-          if (staff && staff.user.toString() === req.user.id) {
+          const staff = await prisma.staff.findUnique({
+            where: { id: resourceId }
+          });
+          if (staff && staff.userId === req.user.id) {
             isOwner = true;
           }
           break;
@@ -87,7 +96,7 @@ exports.restrictToOwnerOrRoles = (ownerType, roles = []) => {
 
 // Check if user is admin
 exports.isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role.toLowerCase() !== 'admin') {
     return res.status(403).json({
       success: false,
       message: 'Admin access required'
@@ -120,7 +129,8 @@ exports.isStudent = (req, res, next) => {
 
 // Check if user is admin or teacher
 exports.isAdminOrTeacher = (req, res, next) => {
-  if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+  const userRole = req.user.role.toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'teacher') {
     return res.status(403).json({
       success: false,
       message: 'Admin or teacher access required'
@@ -176,7 +186,8 @@ exports.isNurse = (req, res, next) => {
 // Check if user is staff (any staff type)
 exports.isStaff = (req, res, next) => {
   const staffRoles = ['teacher', 'admin', 'cashier', 'librarian', 'counselor', 'nurse', 'security', 'maintenance', 'other'];
-  if (!staffRoles.includes(req.user.role)) {
+  const userRole = req.user.role.toLowerCase();
+  if (!staffRoles.includes(userRole)) {
     return res.status(403).json({
       success: false,
       message: 'Staff access required'
@@ -188,7 +199,8 @@ exports.isStaff = (req, res, next) => {
 // Check if user has financial access
 exports.hasFinancialAccess = (req, res, next) => {
   const financialRoles = ['admin', 'cashier'];
-  if (!financialRoles.includes(req.user.role)) {
+  const userRole = req.user.role.toLowerCase();
+  if (!financialRoles.includes(userRole)) {
     return res.status(403).json({
       success: false,
       message: 'Financial access required'
@@ -200,7 +212,8 @@ exports.hasFinancialAccess = (req, res, next) => {
 // Check if user has student management access
 exports.hasStudentManagementAccess = (req, res, next) => {
   const studentManagementRoles = ['admin', 'teacher', 'counselor'];
-  if (!studentManagementRoles.includes(req.user.role)) {
+  const userRole = req.user.role.toLowerCase();
+  if (!studentManagementRoles.includes(userRole)) {
     return res.status(403).json({
       success: false,
       message: 'Student management access required'
@@ -211,7 +224,7 @@ exports.hasStudentManagementAccess = (req, res, next) => {
 
 // Check if user has staff management access
 exports.hasStaffManagementAccess = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role.toLowerCase() !== 'admin') {
     return res.status(403).json({
       success: false,
       message: 'Staff management access required'

@@ -286,12 +286,12 @@ router.use(authMiddleware.protect);
 router
   .route('/')
   .get(getSections)
-  .post(roleMiddleware.restrictTo('admin', 'teacher'), createSection);
+  .post(createSection);
 
 router
   .route('/:id')
   .get(getSection)
-  .put(roleMiddleware.restrictTo('admin', 'teacher'), updateSection)
-  .delete(roleMiddleware.restrictTo('admin'), deleteSection);
+  .put(updateSection)
+  .delete(deleteSection);
 
 module.exports = router;

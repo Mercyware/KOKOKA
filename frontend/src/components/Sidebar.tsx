@@ -25,7 +25,9 @@ import {
   Globe,
   Building2,
   School,
-  Layers
+  Layers,
+  Building,
+  Home as HomeIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,7 +41,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
   if (!user) return null;
   
   const navigate = useNavigate();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['students']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['students', 'school-settings']);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev => 
@@ -144,6 +146,8 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
         { id: 'classes', label: 'Classes', icon: School },
         { id: 'sections', label: 'Arms/Sections', icon: Layers },
+        { id: 'departments', label: 'Departments', icon: Building },
+        { id: 'houses', label: 'Houses', icon: HomeIcon },
       ]
     },
     { id: 'ai-insights', label: 'AI Insights', icon: Brain, hasSubmenu: false },
@@ -237,16 +241,22 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                             
                             // Navigate to appropriate route based on menu item
                             if (subItem.id === 'academic-years') {
-                              navigate('/academics/academic-years');
+                              navigate('/school-settings/academic-years');
                             }
                             if (subItem.id === 'academic-calendar') {
-                              navigate('/academics/academic-calendars');
+                              navigate('/school-settings/academic-calendars');
                             }
                             if (subItem.id === 'classes') {
                               navigate('/school-settings/classes');
                             }
                             if (subItem.id === 'sections') {
                               navigate('/school-settings/sections');
+                            }
+                            if (subItem.id === 'departments') {
+                              navigate('/school-settings/departments');
+                            }
+                            if (subItem.id === 'houses') {
+                              navigate('/school-settings/houses');
                             }
                             if (subItem.id === 'students-list') {
                               navigate('/students');

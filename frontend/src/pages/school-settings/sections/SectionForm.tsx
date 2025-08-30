@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { getSectionById, createSection, updateSection } from '../../../services/sectionService';
-import { getAllClasses, Class } from '../../../services/classService';
+import { getSection, createSection, updateSection } from '../../../services/sectionService';
 
 const SectionForm: React.FC = () => {
   const navigate = useNavigate();
@@ -19,43 +17,28 @@ const SectionForm: React.FC = () => {
   const isEditMode = !!id;
 
   const [loading, setLoading] = useState(false);
-  const [classes, setClasses] = useState<Class[]>([]);
   const [formData, setFormData] = useState({
     name: '',
-    classId: '',
     description: '',
     capacity: '',
   });
 
   useEffect(() => {
-    fetchClasses();
     if (isEditMode && id) {
       fetchSection();
     }
   }, [id]);
-
-  const fetchClasses = async () => {
-    try {
-      const response = await getAllClasses();
-      if (response.success && response.data) {
-        setClasses(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching classes:', error);
-    }
-  };
 
   const fetchSection = async () => {
     if (!id) return;
 
     setLoading(true);
     try {
-      const response = await getSectionById(id);
+      const response = await getSection(id);
       if (response.success && response.data) {
         const section = response.data;
         setFormData({
           name: section.name,
-          classId: section.classId,
           description: section.description || '',
           capacity: section.capacity ? section.capacity.toString() : '',
         });
@@ -96,20 +79,12 @@ const SectionForm: React.FC = () => {
       return;
     }
 
-    if (!formData.classId) {
-      toast({
-        title: "Error",
-        description: 'Please select a class for this section',
-        variant: "destructive",
-      });
-      return;
-    }
+    // Validation passed, proceed with submission
 
     setLoading(true);
     try {
       const sectionData = {
         name: formData.name.trim(),
-        classId: formData.classId,
         description: formData.description.trim() || undefined,
         capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
       };
@@ -184,25 +159,6 @@ const SectionForm: React.FC = () => {
                     placeholder="e.g., A, B, Blue, Red, Alpha"
                     required
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="classId">Class *</Label>
-                  <Select
-                    value={formData.classId}
-                    onValueChange={(value) => handleInputChange('classId', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id!}>
-                          {cls.name} (Grade {cls.grade})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="space-y-2">

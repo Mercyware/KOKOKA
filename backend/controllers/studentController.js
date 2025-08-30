@@ -218,173 +218,171 @@ exports.createStudent = async (req, res) => {
       email,
       admissionNumber,
       admissionDate,
-      academicYear,
+      academicYear: academicYearId,
       class: classId,
-      classArm,
-      rollNumber,
-      house,
+      house: houseId,
       dateOfBirth,
       gender,
-      bloodGroup,
-      height,
-      weight,
-      address,
-      contactInfo,
+      phone,
+      streetAddress,
+      city,
+      state,
+      zipCode,
+      country,
       guardians: guardiansData,
-      healthInfo,
-      previousSchool,
-      nationality,
-      religion,
-      languages,
-      notes,
       status,
       photo
     } = req.body;
+
+    // Convert gender to uppercase if provided
+    const normalizedGender = gender ? gender.toUpperCase() : null;
+    
+    // Convert status to uppercase if provided
+    const normalizedStatus = status ? status.toUpperCase() : 'ACTIVE';
     
     // Process photo if provided as base64
     let photoUrl = photo;
     if (photo && photo.startsWith('data:image')) {
-      // Extract file extension and create a unique filename
-      const fileExtension = photo.split(';')[0].split('/')[1];
-      const fileName = `student_${Date.now()}.${fileExtension}`;
-      
-      // In a real implementation, you would save this file to a storage service
-      // For now, we'll just use the base64 data directly
-      photoUrl = photo;
-      
-      // Example code for saving to disk (commented out)
-      /*
-      const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-      const filePath = path.join(__dirname, '../uploads/students', fileName);
-      
-      // Ensure directory exists
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      
-      // Write file
-      fs.writeFileSync(filePath, buffer);
-      photoUrl = `/uploads/students/${fileName}`;
-      */
+      photoUrl = photo; // For now, store base64 directly
     }
     
-    // Create student
+    // Create student data object
     const studentData = {
+      admissionNumber,
       firstName,
       lastName,
-      middleName,
-      email,
-      admissionNumber,
-      admissionDate: admissionDate || new Date(),
-      academicYear,
-      class: classId,
-      classArm,
-      rollNumber,
-      house,
-      dateOfBirth,
-      gender,
-      bloodGroup,
-      height,
-      weight,
-      address,
-      contactInfo,
-      healthInfo,
-      previousSchool,
-      nationality,
-      religion,
-      languages,
-      notes,
-      status: status || 'active',
+      middleName: middleName || undefined,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      gender: normalizedGender,
       photo: photoUrl,
-      school: req.school // From middleware
+      email: email || undefined,
+      phone: phone || undefined,
+      streetAddress: streetAddress || undefined,
+      city: city || undefined,
+      state: state || undefined,
+      zipCode: zipCode || undefined,
+      country: country || undefined,
+      admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
+      status: normalizedStatus,
+      schoolId: req.school.id,
+      currentClassId: classId || undefined,
+      academicYearId: academicYearId || undefined,
+      houseId: houseId || undefined
     };
     
-    // Create and save student first to get a valid _id
-    const student = new Student(studentData);
-    await student.save();
+    // Create student using Prisma
+    const student = await prisma.student.create({
+      data: studentData,
+      include: {
+        school: { select: { name: true } },
+        currentClass: { select: { name: true, grade: true } },
+        academicYear: { select: { name: true } },
+        house: { select: { name: true } }
+      }
+    });
     
     // Process guardians if provided
     if (guardiansData && guardiansData.length > 0) {
-      const guardianIds = [];
-      let primaryGuardianId = null;
-      
-      // Process each guardian
       for (const guardianData of guardiansData) {
-        // Check if guardian already exists by email or phone
-        let guardian;
-        
-        if (guardianData.email) {
-          guardian = await Guardian.findOne({ email: guardianData.email });
-        }
-        
-        if (!guardian && guardianData.phone) {
-          guardian = await Guardian.findOne({ phone: guardianData.phone });
-        }
-        
-        // If guardian doesn't exist, create new one
-        if (!guardian) {
-          guardian = new Guardian(guardianData);
-          await guardian.save();
-        }
-        
-        // Add student to guardian's students array if not already there
-        if (!guardian.students.includes(student._id)) {
-          guardian.students.push(student._id);
-          await guardian.save();
-        }
-        
-        guardianIds.push(guardian._id);
-        
-        // Set as primary guardian if specified or if it's the first guardian
-        if (guardianData.isPrimary || !primaryGuardianId) {
-          primaryGuardianId = guardian._id;
+        if (guardianData.firstName && guardianData.lastName && guardianData.phone) {
+          // Check if guardian already exists by phone
+          let guardian = await prisma.guardian.findFirst({
+            where: {
+              schoolId: req.school.id,
+              phone: guardianData.phone
+            }
+          });
+          
+          // If guardian doesn't exist, create new one
+          if (!guardian) {
+            guardian = await prisma.guardian.create({
+              data: {
+                firstName: guardianData.firstName,
+                lastName: guardianData.lastName,
+                middleName: guardianData.middleName || undefined,
+                phone: guardianData.phone,
+                email: guardianData.email || undefined,
+                occupation: guardianData.occupation || undefined,
+                schoolId: req.school.id,
+                status: 'ACTIVE'
+              }
+            });
+          }
+          
+          // Create guardian-student relationship
+          await prisma.guardianStudent.create({
+            data: {
+              guardianId: guardian.id,
+              studentId: student.id,
+              relationship: guardianData.relationship.toUpperCase(),
+              isPrimary: guardianData.isPrimary || false,
+              emergencyContact: guardianData.emergencyContact || false,
+              authorizedPickup: guardianData.authorizedPickup || false,
+              financialResponsibility: guardianData.financialResponsibility || false
+            }
+          });
         }
       }
-      
-      // Update student with guardian information in a separate operation
-      await Student.findByIdAndUpdate(student._id, {
-        guardians: guardianIds,
-        primaryGuardian: primaryGuardianId
-      });
     }
     
-    // Create initial class history entry
-    if (classId && academicYear) {
-      const classHistory = new StudentClassHistory({
-        student: student._id,
-        class: classId,
-        classArm: classArm || null,
-        academicYear: academicYear,
-        school: student.school,
-        startDate: admissionDate || new Date(),
-        status: 'active',
-        remarks: 'Initial class assignment',
-        photo: photo
+    // Create initial class history entry if class and academic year are provided
+    if (classId && academicYearId) {
+      await prisma.studentClassHistory.create({
+        data: {
+          studentId: student.id,
+          classId: classId,
+          schoolId: req.school.id,
+          academicYearId: academicYearId,
+          startDate: new Date(),
+          status: 'active'
+        }
       });
-      
-      await classHistory.save();
     }
     
     // Return student with populated references
-    const result = await Student.findById(student._id)
-      .populate('class', 'name')
-      .populate('academicYear', 'name')
-      .populate('primaryGuardian', 'firstName lastName');
+    const result = await prisma.student.findUnique({
+      where: { id: student.id },
+      include: {
+        school: { select: { name: true } },
+        currentClass: { select: { name: true, grade: true } },
+        academicYear: { select: { name: true } },
+        house: { select: { name: true } },
+        guardianStudents: {
+          include: {
+            guardian: { 
+              select: { 
+                firstName: true, 
+                lastName: true, 
+                phone: true, 
+                email: true 
+              } 
+            }
+          }
+        }
+      }
+    });
     
     res.status(201).json({
       success: true,
       message: 'Student created successfully',
-      student: result
+      data: result
     });
   } catch (error) {
-    if (error.code === 11000) {
+    console.error('Error creating student:', error);
+    
+    if (error.code === 'P2002') {
       return res.status(400).json({ 
         success: false,
-        message: 'A student with this admission number already exists', 
-        error: 'Duplicate key error' 
+        message: 'A student with this admission number already exists',
+        error: 'Duplicate admission number' 
       });
     }
     
-    res.status(500).json({ success:false, message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 

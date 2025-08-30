@@ -4,27 +4,26 @@ import api from './api';
 export interface Department {
   id: string;
   name: string;
-  description: string;
-  head?: {
-    id: string;
-    name: string;
-    position: string;
-  };
-  status: string;
+  code: string;
+  description?: string;
+  headOfDept?: string;
+  schoolId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface DepartmentCreateData {
   name: string;
-  description: string;
-  headId?: string;
-  status?: string;
+  code: string;
+  description?: string;
+  headOfDept?: string;
 }
 
 export interface DepartmentUpdateData {
   name?: string;
+  code?: string;
   description?: string;
-  headId?: string;
-  status?: string;
+  headOfDept?: string;
 }
 
 // Get all departments

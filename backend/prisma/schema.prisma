@@ -247,10 +247,10 @@ model House {
 }
 
 model Section {
-  id        String  @id @default(uuid())
-  name      String
-  code      String
-  capacity  Int?
+  id          String  @id @default(uuid())
+  name        String
+  capacity    Int?
+  description String?
   
   schoolId  String
   school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
@@ -258,7 +258,7 @@ model Section {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([schoolId, code])
+  @@unique([schoolId, name])
   @@map("sections")
 }
 

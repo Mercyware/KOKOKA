@@ -1,40 +1,49 @@
 import { get, post, put, del } from './api';
-import { ApiResponse } from '../types';
+import { ApiResponse, PaginatedResponse } from '../types';
 
 export interface Section {
-  id?: string;
+  id: string;
   name: string;
-  classId: string;
-  capacity?: number;
+  capacity?: number | null;
   description?: string;
   schoolId: string;
-  className?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Get all sections
-export const getAllSections = async (): Promise<ApiResponse<Section[]>> => {
-  return await get<Section[]>('/sections');
+export interface SectionQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+// Get all sections with pagination
+export const getSections = async (params?: SectionQueryParams): Promise<ApiResponse<PaginatedResponse<Section>>> => {
+  const queryParams = new URLSearchParams();
+  if (params?.page) queryParams.append('page', params.page.toString());
+  if (params?.limit) queryParams.append('limit', params.limit.toString());
+  if (params?.search) queryParams.append('search', params.search);
+
+  const url = queryParams.toString() ? `/sections?${queryParams}` : '/sections';
+  console.log('Making sections API call to:', url);
+  
+  const response = await get<PaginatedResponse<Section>>(url);
+  console.log('Sections API response:', response);
+  return response;
 };
 
 // Get section by ID
-export const getSectionById = async (id: string): Promise<ApiResponse<Section>> => {
+export const getSection = async (id: string): Promise<ApiResponse<Section>> => {
   return await get<Section>(`/sections/${id}`);
 };
 
-// Get sections by class ID
-export const getSectionsByClass = async (classId: string): Promise<ApiResponse<Section[]>> => {
-  return await get<Section[]>(`/sections/class/${classId}`);
-};
-
 // Create new section
-export const createSection = async (sectionData: Omit<Section, 'id' | 'schoolId' | 'className' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Section>> => {
+export const createSection = async (sectionData: Omit<Section, 'id' | 'schoolId' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Section>> => {
   return await post<Section>('/sections', sectionData);
 };
 
 // Update section
-export const updateSection = async (id: string, sectionData: Partial<Omit<Section, 'id' | 'schoolId' | 'className' | 'createdAt' | 'updatedAt'>>): Promise<ApiResponse<Section>> => {
+export const updateSection = async (id: string, sectionData: Partial<Omit<Section, 'id' | 'schoolId' | 'createdAt' | 'updatedAt'>>): Promise<ApiResponse<Section>> => {
   return await put<Section>(`/sections/${id}`, sectionData);
 };
 

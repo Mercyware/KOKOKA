@@ -39,8 +39,10 @@ const api = axios.create({
 
 // Add subdomain to headers if available
 const subdomain = getSubdomain();
+console.log('Current subdomain:', subdomain);
 if (subdomain) {
   api.defaults.headers.common['X-School-Subdomain'] = subdomain;
+  console.log('Set X-School-Subdomain header to:', subdomain);
 }
 
 // Export a function to update the subdomain header

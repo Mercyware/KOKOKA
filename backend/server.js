@@ -5,13 +5,11 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const xss = require('xss-clean');
-const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
 const path = require('path');
 
 // Import configuration
 const { connectDatabase } = require('./config/database');
-const { connectDB } = require('./config/db'); // MongoDB connection
 const { initJwtConfig } = require('./config/jwt');
 const env = require('./config/env');
 const { setupSwagger } = require('./config/swagger');
@@ -39,9 +37,9 @@ const classRoutes = require('./routes/classRoutes');
 // const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 // const classTeacherRoutes = require('./routes/classTeacherRoutes');
 // const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
-// const houseRoutes = require('./routes/houseRoutes');
+const houseRoutes = require('./routes/houseRoutes');
 const sectionRoutes = require('./routes/sectionRoutes');
-// const departmentRoutes = require('./routes/departmentRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
 // const attendanceRoutes = require('./routes/attendanceRoutes');
 // const assessmentRoutes = require('./routes/assessmentRoutes');
 // const gradeRoutes = require('./routes/gradeRoutes');
@@ -58,9 +56,8 @@ initJwtConfig();
 // Create Express app
 const app = express();
 
-// Connect to databases
-connectDatabase(); // PostgreSQL and Redis
-connectDB(); // MongoDB
+// Connect to PostgreSQL and Redis
+connectDatabase();
 
 // Middleware
 // Body parser
@@ -91,9 +88,6 @@ if (env.HELMET_ENABLED) {
 if (env.XSS_PROTECTION_ENABLED) {
   app.use(xss());
 }
-
-// Sanitize data to prevent NoSQL injection
-app.use(mongoSanitize());
 
 // Compress responses
 app.use(compression());
@@ -188,9 +182,9 @@ app.use('/api/classes', classRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/class-teachers', classTeacherRoutes);
 // app.use('/api/sitting-positions', sittingPositionRoutes);
-// app.use('/api/houses', houseRoutes);
+app.use('/api/houses', houseRoutes);
 app.use('/api/sections', sectionRoutes);
-// app.use('/api/departments', departmentRoutes);
+app.use('/api/departments', departmentRoutes);
 // app.use('/api/attendance', attendanceRoutes);
 // app.use('/api/assessments', assessmentRoutes);
 // app.use('/api/grades', gradeRoutes);

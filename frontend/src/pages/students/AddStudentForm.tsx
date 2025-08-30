@@ -133,51 +133,21 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
           lastName: formData.lastName,
           middleName: formData.middleName || undefined,
           email: formData.email || undefined,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
-          gender: (formData.gender === 'male' || formData.gender === 'female' || formData.gender === 'other')
-            ? formData.gender
-            : undefined,
+          dateOfBirth: formData.dateOfBirth || undefined,
+          gender: formData.gender || undefined,
           admissionNumber: formData.admissionNumber,
-          admissionDate: formData.admissionDate ? new Date(formData.admissionDate) : undefined,
+          admissionDate: formData.admissionDate || undefined,
           class: formData.class,
-          section: formData.section || undefined,
           academicYear: formData.academicYear || undefined,
           house: formData.house || undefined,
-          rollNumber: formData.rollNumber || undefined,
           status: formData.status,
-          bloodGroup: formData.bloodGroup || undefined,
-          height: formData.height.value ? {
-            value: parseFloat(formData.height.value as string),
-            unit: formData.height.unit
-          } : undefined,
-          weight: formData.weight.value ? {
-            value: parseFloat(formData.weight.value as string),
-            unit: formData.weight.unit
-          } : undefined,
-          healthInfo: (
-            formData.healthInfo.allergies.length > 0 ||
-            formData.healthInfo.medicalConditions.length > 0 ||
-            formData.healthInfo.medications.length > 0 ||
-            formData.healthInfo.dietaryRestrictions.length > 0 ||
-            formData.healthInfo.disabilities.length > 0
-          ) ? formData.healthInfo : undefined,
-          contactInfo: {
-            phone: formData.contactInfo.phone || undefined,
-            alternativePhone: formData.contactInfo.alternativePhone || undefined,
-            emergencyContact: (
-              formData.contactInfo.emergencyContact.name ||
-              formData.contactInfo.emergencyContact.relationship ||
-              formData.contactInfo.emergencyContact.phone
-            ) ? formData.contactInfo.emergencyContact : undefined
-          },
-          address: (
-            formData.address.street ||
-            formData.address.city ||
-            formData.address.state ||
-            formData.address.zipCode ||
-            formData.address.country
-          ) ? formData.address : undefined,
-          guardians: validGuardians.length > 0 ? (validGuardians as any) : undefined
+          phone: formData.contactInfo.phone || undefined,
+          streetAddress: formData.address.street || undefined,
+          city: formData.address.city || undefined,
+          state: formData.address.state || undefined,
+          zipCode: formData.address.zipCode || undefined,
+          country: formData.address.country || undefined,
+          guardians: validGuardians.length > 0 ? validGuardians : undefined
         };
 
         const response = await createStudent(studentData);

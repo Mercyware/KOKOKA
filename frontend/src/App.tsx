@@ -11,23 +11,25 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
 import StudentsManager from "./pages/students/StudentsManager";
 import ViewStudent from "@/pages/students/ViewStudent";
-import AddStudentForm from "./pages/students/AddStudentForm";
+import CreateStudent from "./pages/students/CreateStudent";
 import EditStudentForm from "./pages/students/EditStudentForm";
 import Register from "./pages/auth/Register";
 import RegisterSchool from "./pages/auth/RegisterSchool";
 import RegistrationSuccess from "./pages/auth/RegistrationSuccess";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 // Academic Year Components
-import AcademicYearsList from "./pages/academics/academicYears/AcademicYearsList";
+import AcademicYearsList from "./pages/school-settings/academicYears/AcademicYearsList";
 // Academic Calendar Components
-import AcademicCalendarsList from "./pages/academics/academicCalendars/AcademicCalendarsList";
-import CreateAcademicCalendar from "./pages/academics/academicCalendars/CreateAcademicCalendar";
-import EditAcademicCalendar from "./pages/academics/academicCalendars/EditAcademicCalendar";
+import AcademicCalendarsList from "./pages/school-settings/academicCalendars/AcademicCalendarsList";
+import CreateAcademicCalendar from "./pages/school-settings/academicCalendars/CreateAcademicCalendar";
+import EditAcademicCalendar from "./pages/school-settings/academicCalendars/EditAcademicCalendar";
 // School Settings Components
 import ClassesList from "./pages/school-settings/classes/ClassesList";
 import ClassForm from "./pages/school-settings/classes/ClassForm";
 import SectionsList from "./pages/school-settings/sections/SectionsList";
 import SectionForm from "./pages/school-settings/sections/SectionForm";
+import DepartmentsList from "./pages/school-settings/departments/DepartmentsList";
+import HousesList from "./pages/school-settings/houses/HousesList";
 
 const queryClient = new QueryClient();
 
@@ -57,15 +59,7 @@ function EditStudentFormWrapper() {
   );
 }
 
-function AddStudentFormWrapper() {
-  const navigate = useNavigate();
-  return (
-    <AddStudentForm
-      onBack={() => navigate(-1)}
-      onSave={() => navigate("/students")}
-    />
-  );
-}
+// No wrapper needed for CreateStudent as it handles navigation internally
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -83,15 +77,15 @@ const App = () => (
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/students" element={<StudentsManager />} />
-            <Route path="/students/add" element={<AddStudentFormWrapper />} />
+            <Route path="/students/add" element={<CreateStudent />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
             <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
-            {/* Academic Years Routes */}
-            <Route path="/academics/academic-years" element={<AcademicYearsList />} />
-            {/* Academic Calendar Routes */}
-            <Route path="/academics/academic-calendars" element={<AcademicCalendarsList />} />
-            <Route path="/academics/academic-calendars/create" element={<CreateAcademicCalendar />} />
-            <Route path="/academics/academic-calendars/edit/:id" element={<EditAcademicCalendar />} />
+            {/* School Settings - Academic Years Routes */}
+            <Route path="/school-settings/academic-years" element={<AcademicYearsList />} />
+            {/* School Settings - Academic Calendar Routes */}
+            <Route path="/school-settings/academic-calendars" element={<AcademicCalendarsList />} />
+            <Route path="/school-settings/academic-calendars/create" element={<CreateAcademicCalendar />} />
+            <Route path="/school-settings/academic-calendars/edit/:id" element={<EditAcademicCalendar />} />
             
             {/* School Settings - Classes Routes */}
             <Route path="/school-settings/classes" element={<ClassesList />} />
@@ -102,6 +96,12 @@ const App = () => (
             <Route path="/school-settings/sections" element={<SectionsList />} />
             <Route path="/school-settings/sections/create" element={<SectionForm />} />
             <Route path="/school-settings/sections/edit/:id" element={<SectionForm />} />
+            
+            {/* School Settings - Departments Routes */}
+            <Route path="/school-settings/departments" element={<DepartmentsList />} />
+            
+            {/* School Settings - Houses Routes */}
+            <Route path="/school-settings/houses" element={<HousesList />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

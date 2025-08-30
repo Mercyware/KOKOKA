@@ -1,12 +1,11 @@
-const Section = require('../models/Section');
-const Student = require('../models/Student');
+const { prisma } = require('../config/database');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Get all sections
 // @route   GET /api/sections
 // @access  Private
 exports.getSections = asyncHandler(async (req, res) => {
-  // Check if req.school exists before accessing _id
+  // Check if req.school exists
   if (!req.school) {
     return res.status(404).json({
       success: false,
@@ -14,15 +13,54 @@ exports.getSections = asyncHandler(async (req, res) => {
     });
   }
 
-  const filter = { school: req.school._id };
+  // Extract pagination parameters from query
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  
+  // Extract search parameter
+  const search = req.query.search || '';
+  
+  // Build where clause
+  const whereClause = {
+    schoolId: req.school.id,
+    ...(search && {
+      name: { contains: search, mode: 'insensitive' }
+    })
+  };
 
-  console.log('Filter for sections:', filter);
-  const sections = await Section.find(filter)
-    .sort({ name: 1 });
+  // Get total count for pagination
+  const totalSections = await prisma.section.count({
+    where: whereClause
+  });
+
+  // Get paginated sections
+  const sections = await prisma.section.findMany({
+    where: whereClause,
+    orderBy: {
+      name: 'asc'
+    },
+    skip,
+    take: limit
+  });
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalSections / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
 
   res.status(200).json({
     success: true,
     count: sections.length,
+    total: totalSections,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      nextPage: hasNextPage ? page + 1 : null,
+      prevPage: hasPrevPage ? page - 1 : null
+    },
     data: sections
   });
 });
@@ -31,7 +69,7 @@ exports.getSections = asyncHandler(async (req, res) => {
 // @route   GET /api/sections/:id
 // @access  Private
 exports.getSection = asyncHandler(async (req, res) => {
-  // Check if req.school exists before accessing _id
+  // Check if req.school exists
   if (!req.school) {
     return res.status(404).json({
       success: false,
@@ -39,9 +77,11 @@ exports.getSection = asyncHandler(async (req, res) => {
     });
   }
 
-  const section = await Section.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const section = await prisma.section.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!section) {
@@ -49,18 +89,9 @@ exports.getSection = asyncHandler(async (req, res) => {
     throw new Error('Section not found');
   }
 
-  // Get students in this section
-  const students = await Student.find({
-    section: section._id,
-    school: req.school._id
-  }).select('firstName lastName admissionNumber class');
-
   res.status(200).json({
     success: true,
-    data: {
-      ...section.toObject(),
-      students
-    }
+    data: section
   });
 });
 
@@ -68,7 +99,7 @@ exports.getSection = asyncHandler(async (req, res) => {
 // @route   POST /api/sections
 // @access  Private
 exports.createSection = asyncHandler(async (req, res) => {
-  // Check if req.school exists before accessing _id
+  // Check if req.school exists
   if (!req.school) {
     return res.status(404).json({
       success: false,
@@ -76,13 +107,12 @@ exports.createSection = asyncHandler(async (req, res) => {
     });
   }
 
-  req.body.school = req.school._id;
-  req.body.createdBy = req.user._id;
-
   // Check if section with same name already exists in this school
-  const existingSection = await Section.findOne({
-    name: req.body.name,
-    school: req.school._id
+  const existingSection = await prisma.section.findFirst({
+    where: {
+      name: req.body.name,
+      schoolId: req.school.id
+    }
   });
 
   if (existingSection) {
@@ -90,7 +120,14 @@ exports.createSection = asyncHandler(async (req, res) => {
     throw new Error('A section with this name already exists');
   }
 
-  const section = await Section.create(req.body);
+  const section = await prisma.section.create({
+    data: {
+      name: req.body.name,
+      capacity: req.body.capacity,
+      description: req.body.description,
+      schoolId: req.school.id
+    }
+  });
 
   res.status(201).json({
     success: true,
@@ -102,7 +139,7 @@ exports.createSection = asyncHandler(async (req, res) => {
 // @route   PUT /api/sections/:id
 // @access  Private
 exports.updateSection = asyncHandler(async (req, res) => {
-  // Check if req.school exists before accessing _id
+  // Check if req.school exists
   if (!req.school) {
     return res.status(404).json({
       success: false,
@@ -110,9 +147,11 @@ exports.updateSection = asyncHandler(async (req, res) => {
     });
   }
 
-  let section = await Section.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const section = await prisma.section.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!section) {
@@ -121,11 +160,13 @@ exports.updateSection = asyncHandler(async (req, res) => {
   }
 
   // Check if another section with the same name exists (excluding this one)
-  if (req.body.name && req.body.name !== section.name) {
-    const existingSection = await Section.findOne({
-      name: req.body.name,
-      school: req.school._id,
-      _id: { $ne: req.params.id }
+  if (req.body.name) {
+    const existingSection = await prisma.section.findFirst({
+      where: {
+        name: req.body.name,
+        schoolId: req.school.id,
+        id: { not: req.params.id }
+      }
     });
 
     if (existingSection) {
@@ -134,18 +175,18 @@ exports.updateSection = asyncHandler(async (req, res) => {
     }
   }
 
-  section = await Section.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    {
-      new: true,
-      runValidators: true
+  const updatedSection = await prisma.section.update({
+    where: { id: req.params.id },
+    data: {
+      ...(req.body.name && { name: req.body.name }),
+      ...(req.body.capacity && { capacity: req.body.capacity }),
+      ...(req.body.description !== undefined && { description: req.body.description })
     }
-  );
+  });
 
   res.status(200).json({
     success: true,
-    data: section
+    data: updatedSection
   });
 });
 
@@ -153,7 +194,7 @@ exports.updateSection = asyncHandler(async (req, res) => {
 // @route   DELETE /api/sections/:id
 // @access  Private
 exports.deleteSection = asyncHandler(async (req, res) => {
-  // Check if req.school exists before accessing _id
+  // Check if req.school exists
   if (!req.school) {
     return res.status(404).json({
       success: false,
@@ -161,9 +202,11 @@ exports.deleteSection = asyncHandler(async (req, res) => {
     });
   }
 
-  const section = await Section.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const section = await prisma.section.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!section) {
@@ -171,14 +214,9 @@ exports.deleteSection = asyncHandler(async (req, res) => {
     throw new Error('Section not found');
   }
 
-  // Check if there are students in this section
-  const studentCount = await Student.countDocuments({ section: section._id });
-  if (studentCount > 0) {
-    res.status(400);
-    throw new Error('Cannot delete section with students. Please reassign students first.');
-  }
-
-  await section.deleteOne();
+  await prisma.section.delete({
+    where: { id: req.params.id }
+  });
 
   res.status(200).json({
     success: true,
