@@ -65,6 +65,11 @@ model School {
   sittingPositions     SittingPosition[]
   studentClassHistory  StudentClassHistory[]
   academicCalendars    AcademicCalendar[]
+  
+  // Notification relationships
+  notifications        Notification[]
+  notificationTemplates NotificationTemplate[]
+  webhookSubscriptions WebhookSubscription[]
 
   @@map("schools")
 }
@@ -106,6 +111,14 @@ model User {
   gradedAssessments   Grade[] @relation("GradedBy")
   verifiedGuardians   Guardian[] @relation("GuardianVerifiedBy")
   createdAcademicCalendars AcademicCalendar[] @relation("AcademicCalendarCreatedBy")
+  
+  // Notification relationships
+  createdNotifications     Notification[] @relation("NotificationCreatedBy")
+  createdNotificationTemplates NotificationTemplate[] @relation("NotificationTemplateCreatedBy")
+  userNotifications        UserNotification[]
+  notificationPreferences  UserNotificationPreferences?
+  deviceTokens             DeviceToken[]
+  webhookSubscriptions     WebhookSubscription[]
 
   @@map("users")
 }
@@ -840,6 +853,248 @@ model Document {
 }
 
 // ================================
+// NOTIFICATIONS
+// ================================
+
+model Notification {
+  id        String    @id @default(uuid())
+  title     String
+  message   String
+  type      NotificationType
+  priority  NotificationPriority @default(NORMAL)
+  category  NotificationCategory @default(GENERAL)
+  
+  // Delivery Options
+  channels  NotificationChannel[] // Multiple channels can be selected
+  
+  // Content and Templates
+  templateId   String?
+  template     NotificationTemplate? @relation(fields: [templateId], references: [id])
+  templateData Json? // Dynamic data for template variables
+  
+  // Targeting
+  targetType   NotificationTargetType
+  targetUsers  String[]? // Array of user IDs when targeting specific users
+  targetRoles  UserRole[]? // Array of roles when targeting roles
+  targetClasses String[]? // Array of class IDs when targeting classes
+  
+  // Scheduling
+  scheduledAt  DateTime?
+  expiresAt    DateTime?
+  
+  // Status and Tracking
+  status       NotificationStatus @default(PENDING)
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readCount    Int @default(0)
+  totalTargets Int @default(0)
+  
+  // Metadata
+  metadata     Json? // Additional data like attachments, images, etc.
+  
+  // Relationships
+  schoolId     String
+  school       School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User   @relation("NotificationCreatedBy", fields: [createdById], references: [id])
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  deliveryLogs NotificationDeliveryLog[]
+  userNotifications UserNotification[]
+
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  id          String @id @default(uuid())
+  name        String
+  description String?
+  type        NotificationType
+  category    NotificationCategory
+  
+  // Template Content for different channels
+  emailSubject    String?
+  emailContent    String?
+  emailHtml       String?
+  smsContent      String?
+  pushTitle       String?
+  pushContent     String?
+  inAppContent    String?
+  
+  // Template Variables
+  variables       Json? // Array of available variables like {name}, {date}, etc.
+  
+  // Configuration
+  isActive        Boolean @default(true)
+  isSystem        Boolean @default(false) // System templates can't be deleted
+  
+  // Relationships
+  schoolId        String?
+  school          School? @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdById     String
+  createdBy       User    @relation("NotificationTemplateCreatedBy", fields: [createdById], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  notifications   Notification[]
+
+  @@unique([schoolId, name])
+  @@map("notification_templates")
+}
+
+model UserNotification {
+  id             String @id @default(uuid())
+  
+  // Relationships
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  // Delivery Status
+  isRead         Boolean @default(false)
+  readAt         DateTime?
+  isDelivered    Boolean @default(false)
+  deliveredAt    DateTime?
+  
+  // Channel specific data
+  channelData    Json? // Store channel-specific delivery info
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, notificationId])
+  @@map("user_notifications")
+}
+
+model NotificationDeliveryLog {
+  id             String @id @default(uuid())
+  
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  
+  // Delivery Details
+  channel        NotificationChannel
+  recipient      String // Email, phone, or user ID
+  status         DeliveryStatus
+  
+  // Provider Response
+  providerId     String? // Message ID from email/SMS provider
+  providerResponse Json? // Full response from provider
+  
+  // Error Details
+  errorCode      String?
+  errorMessage   String?
+  retryCount     Int @default(0)
+  
+  // Timing
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  failedAt       DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("notification_delivery_logs")
+}
+
+model UserNotificationPreferences {
+  id       String @id @default(uuid())
+  
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Global Preferences
+  isEnabled Boolean @default(true)
+  
+  // Channel Preferences
+  emailEnabled     Boolean @default(true)
+  smsEnabled       Boolean @default(true)
+  pushEnabled      Boolean @default(true)
+  inAppEnabled     Boolean @default(true)
+  
+  // Category Preferences
+  preferences      Json? // Detailed preferences per category and type
+  
+  // Quiet Hours
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart   String? // Time in HH:MM format
+  quietHoursEnd     String? // Time in HH:MM format
+  quietHoursDays    String[]? // Array of days: ['MON', 'TUE', etc.]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_notification_preferences")
+}
+
+model DeviceToken {
+  id         String  @id @default(uuid())
+  
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token      String  @unique
+  platform   Platform
+  deviceInfo Json?
+  isActive   Boolean @default(true)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("device_tokens")
+}
+
+model WebhookSubscription {
+  id          String  @id @default(uuid())
+  
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolId    String
+  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  url         String
+  method      String  @default("POST")
+  headers     String? // JSON string
+  events      String[] // Array of event names
+  description String?
+  isActive    Boolean @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  deliveryLogs WebhookDeliveryLog[]
+
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDeliveryLog {
+  id           String @id @default(uuid())
+  
+  webhookSubscriptionId String
+  webhookSubscription   WebhookSubscription @relation(fields: [webhookSubscriptionId], references: [id], onDelete: Cascade)
+  
+  payload      String // JSON payload sent
+  status       WebhookDeliveryStatus
+  statusCode   Int?
+  responseData String? // Response from webhook endpoint
+  errorMessage String?
+  attempts     Int     @default(1)
+  responseTime Int?    // Response time in milliseconds
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("webhook_delivery_logs")
+}
+
+// ================================
 // ENUMS
 // ================================
 
@@ -1063,4 +1318,99 @@ enum DocumentStatus {
   PENDING_VERIFICATION
   ARCHIVED
   DELETED
+}
+
+enum NotificationType {
+  SYSTEM
+  ACADEMIC
+  ATTENDANCE
+  EXAM_RESULT
+  FEE_REMINDER
+  ANNOUNCEMENT
+  EVENT
+  EMERGENCY
+  WELCOME
+  PASSWORD_RESET
+  GRADE_UPDATE
+  ASSIGNMENT
+  TIMETABLE_CHANGE
+  DISCIPLINARY
+  HEALTH
+  TRANSPORT
+  LIBRARY
+  CUSTOM
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum NotificationCategory {
+  GENERAL
+  ACADEMIC
+  ADMINISTRATIVE
+  FINANCIAL
+  HEALTH
+  SAFETY
+  EVENTS
+  SYSTEM
+  PERSONAL
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+  WEBHOOK
+}
+
+enum NotificationTargetType {
+  ALL_USERS
+  SPECIFIC_USERS
+  ROLE_BASED
+  CLASS_BASED
+  COMBINED
+}
+
+enum NotificationStatus {
+  DRAFT
+  PENDING
+  SCHEDULED
+  SENDING
+  SENT
+  PARTIALLY_SENT
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  REJECTED
+  RETRYING
+}
+
+enum Platform {
+  ANDROID
+  IOS
+  WEB
+  WINDOWS
+  MACOS
+  LINUX
+}
+
+enum WebhookDeliveryStatus {
+  SUCCESS
+  FAILED
+  PENDING
+  RETRYING
 }

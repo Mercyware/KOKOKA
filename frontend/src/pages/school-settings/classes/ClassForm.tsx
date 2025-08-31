@@ -40,7 +40,7 @@ const ClassForm: React.FC = () => {
         const cls = response.data;
         setFormData({
           name: cls.name,
-          grade: cls.grade,
+          grade: typeof cls.grade === 'string' ? parseInt(cls.grade) || 1 : cls.grade || 1,
           description: cls.description || '',
           capacity: cls.capacity ? cls.capacity.toString() : '',
         });
@@ -94,10 +94,10 @@ const ClassForm: React.FC = () => {
     try {
       const classData = {
         name: formData.name.trim(),
-        grade: formData.grade,
+        grade: formData.grade.toString(),
         description: formData.description.trim() || undefined,
         capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-      };
+      } as any;
 
       let response;
       if (isEditMode && id) {

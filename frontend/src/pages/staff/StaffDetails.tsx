@@ -85,7 +85,7 @@ const StaffDetails: React.FC = () => {
             message: 'Staff member not found',
             severity: 'error',
           });
-          navigate('/staff/list');
+          navigate('/staff');
         }
       } catch (error) {
         console.error('Error fetching staff member:', error);
@@ -109,7 +109,7 @@ const StaffDetails: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate('/staff/list');
+    navigate('/staff');
   };
 
   const handleEdit = () => {

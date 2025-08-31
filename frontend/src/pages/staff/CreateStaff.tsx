@@ -287,7 +287,7 @@ const CreateStaff: React.FC = () => {
       
       // Redirect after a short delay
       setTimeout(() => {
-        navigate(`/staff/${response.data.id}`);
+        navigate('/staff');
       }, 1500);
     } catch (err: any) {
       console.error('Error creating staff:', err);

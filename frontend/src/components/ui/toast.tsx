@@ -30,6 +30,24 @@ const toastVariants = cva(
         default: "border bg-background text-foreground",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
+        success: [
+          "border-green-200 bg-gradient-to-r from-green-50 to-emerald-50",
+          "text-green-900 shadow-lg shadow-green-500/20",
+          "dark:border-green-800 dark:from-green-950 dark:to-emerald-950",
+          "dark:text-green-100 dark:shadow-green-500/10"
+        ],
+        warning: [
+          "border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50", 
+          "text-amber-900 shadow-lg shadow-amber-500/20",
+          "dark:border-amber-800 dark:from-amber-950 dark:to-orange-950",
+          "dark:text-amber-100 dark:shadow-amber-500/10"
+        ],
+        info: [
+          "border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50",
+          "text-blue-900 shadow-lg shadow-blue-500/20", 
+          "dark:border-blue-800 dark:from-blue-950 dark:to-cyan-950",
+          "dark:text-blue-100 dark:shadow-blue-500/10"
+        ],
       },
     },
     defaultVariants: {
@@ -75,7 +93,11 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+      "group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "group-[.success]:text-green-600 group-[.success]:hover:text-green-700 group-[.success]:focus:ring-green-400",
+      "group-[.warning]:text-amber-600 group-[.warning]:hover:text-amber-700 group-[.warning]:focus:ring-amber-400", 
+      "group-[.info]:text-blue-600 group-[.info]:hover:text-blue-700 group-[.info]:focus:ring-blue-400",
       className
     )}
     toast-close=""

@@ -33,7 +33,7 @@ const academicYearRoutes = require('./routes/academicYearRoutes');
 const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
 // const termRoutes = require('./routes/termRoutes');
 const classRoutes = require('./routes/classRoutes');
-// const subjectRoutes = require('./routes/subjectRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
 // const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 // const classTeacherRoutes = require('./routes/classTeacherRoutes');
 // const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
@@ -45,9 +45,14 @@ const departmentRoutes = require('./routes/departmentRoutes');
 // const gradeRoutes = require('./routes/gradeRoutes');
 // const documentRoutes = require('./routes/documentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
+
+// Import services
+const socketService = require('./services/socketService');
+const templateService = require('./services/templateService');
 
 // Initialize environment and JWT configuration
 env.initEnvConfig();
@@ -178,7 +183,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/academic-calendars', academicCalendarRoutes);
 // app.use('/api/terms', termRoutes);
 app.use('/api/classes', classRoutes);
-// app.use('/api/subjects', subjectRoutes);
+app.use('/api/subjects', subjectRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/class-teachers', classTeacherRoutes);
 // app.use('/api/sitting-positions', sittingPositionRoutes);
@@ -190,6 +195,9 @@ app.use('/api/departments', departmentRoutes);
 // app.use('/api/grades', gradeRoutes);
 // app.use('/api/documents', documentRoutes);
 // app.use('/api/parent-portal', parentPortalRoutes);
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes);
 
 // AI routes (conditionally enabled)
 // if (env.FEATURE_AI_ENABLED) {
@@ -220,8 +228,28 @@ app.use('*', (req, res) => {
 
 // Start server
 const PORT = env.PORT;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   logger.info(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
+  
+  // Initialize Socket.IO if notifications are enabled
+  if (process.env.WEBSOCKET_NOTIFICATIONS_ENABLED === 'true') {
+    try {
+      socketService.initialize(server);
+      logger.info('Socket.IO initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize Socket.IO:', error);
+    }
+  }
+  
+  // Create default notification templates for schools
+  if (process.env.TEMPLATES_AUTO_CREATE === 'true') {
+    try {
+      logger.info('Auto-creating default notification templates...');
+      // This would be handled by school creation process
+    } catch (error) {
+      logger.error('Failed to create default templates:', error);
+    }
+  }
 });
 
 // Handle unhandled promise rejections

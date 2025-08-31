@@ -166,6 +166,39 @@ function toast({ ...props }: Toast) {
   };
 }
 
+// Convenience functions for common toast types
+toast.success = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "success",
+  });
+};
+
+toast.error = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "destructive",
+  });
+};
+
+toast.warning = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "warning",
+  });
+};
+
+toast.info = (title: string, description?: string) => {
+  return toast({
+    title,
+    description,
+    variant: "info",
+  });
+};
+
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 

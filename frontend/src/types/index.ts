@@ -475,20 +475,19 @@ export interface Class {
 
 export interface Subject {
   id: string;
-  school: string;
   name: string;
   code: string;
   description?: string;
-  academicYear: string | { name: string; id?: string };
-  department?: string;
-  creditHours: number;
-  isElective: boolean;
-  classes?: string[];
-  numberOfTests: number;
-  testPercentage: number;
-  examPercentage: number;
-  createdBy?: string;
-  teachers?: string[];
+  credits?: number;
+  schoolId: string;
+  departmentId?: string;
+  department?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AcademicYear {

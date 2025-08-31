@@ -62,11 +62,11 @@ const AcademicCalendarsList: React.FC = () => {
   };
 
   const handleCreateCalendar = () => {
-    navigate('/academics/academic-calendars/create');
+    navigate('/school-settings/academic-calendars/create');
   };
 
   const handleEditCalendar = (id: string) => {
-    navigate(`/academics/academic-calendars/edit/${id}`);
+    navigate(`/school-settings/academic-calendars/edit/${id}`);
   };
 
   const handleDeleteConfirm = async () => {

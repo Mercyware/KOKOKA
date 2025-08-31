@@ -174,7 +174,7 @@ const ClassesList: React.FC = () => {
 
       const classData = {
         name: formData.name.trim(),
-        grade: gradeToUse,
+        grade: gradeToUse.toString(),
         level: gradeToUse, // Add level for compatibility
         school: '', // Will be set by backend
         description: formData.description.trim() || undefined,

@@ -33,6 +33,7 @@ import {
   getAcademicCalendarById,
   createAcademicCalendar,
   updateAcademicCalendar,
+  getAcademicCalendarsByAcademicYear,
   AcademicCalendar,
   Holiday,
 } from '../../../services/academicCalendarService';
@@ -132,7 +133,7 @@ const AcademicCalendarForm: React.FC = () => {
           description: response.message || 'Failed to fetch academic calendar',
           variant: "destructive",
         });
-        navigate('/academics/academic-calendars');
+        navigate('/school-settings/academic-calendars');
       }
     } catch (error) {
       console.error('Error fetching academic calendar:', error);
@@ -141,7 +142,7 @@ const AcademicCalendarForm: React.FC = () => {
         description: 'An error occurred while fetching the academic calendar',
         variant: "destructive",
       });
-      navigate('/academics/academic-calendars');
+      navigate('/school-settings/academic-calendars');
     } finally {
       setLoading(false);
     }
@@ -152,6 +153,31 @@ const AcademicCalendarForm: React.FC = () => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       console.log('Updated form data:', newData);
+      
+      // If changing dates, validate existing holidays
+      if ((field === 'startDate' || field === 'endDate') && newData.startDate && newData.endDate) {
+        const startDate = new Date(newData.startDate);
+        const endDate = new Date(newData.endDate);
+        
+        // Filter out holidays that are outside the new date range
+        const validHolidays = (newData.holidays || []).filter(holiday => {
+          const holidayDate = new Date(holiday.date);
+          return holidayDate >= startDate && holidayDate <= endDate;
+        });
+        
+        // Show warning if holidays were removed
+        const removedHolidays = (newData.holidays || []).length - validHolidays.length;
+        if (removedHolidays > 0) {
+          toast({
+            title: "Warning",
+            description: `${removedHolidays} holiday(s) were removed because they fall outside the new calendar period.`,
+            variant: "destructive",
+          });
+        }
+        
+        newData.holidays = validHolidays;
+      }
+      
       return newData;
     });
 
@@ -176,6 +202,7 @@ const AcademicCalendarForm: React.FC = () => {
       return;
     }
 
+    // Check if holiday date is within calendar period
     if (formData.startDate && formData.endDate) {
       const holidayDate = new Date(newHoliday.date);
       const startDate = new Date(formData.startDate);
@@ -184,11 +211,22 @@ const AcademicCalendarForm: React.FC = () => {
       if (holidayDate < startDate || holidayDate > endDate) {
         toast({
           title: "Error",
-          description: 'Holiday date must be within the calendar period',
+          description: `Holiday date must be within the calendar period (${formatDate(formData.startDate)} - ${formatDate(formData.endDate)})`,
           variant: "destructive",
         });
         return;
       }
+    }
+
+    // Check for duplicate holiday dates
+    const existingHoliday = formData.holidays?.find(holiday => holiday.date === newHoliday.date);
+    if (existingHoliday) {
+      toast({
+        title: "Error",
+        description: `A holiday already exists on ${formatDate(newHoliday.date)}. Please choose a different date.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     const updatedHolidays = [...(formData.holidays || []), newHoliday as Holiday];
@@ -248,7 +286,61 @@ const AcademicCalendarForm: React.FC = () => {
       if (startDate < academicYearStartDate || endDate > academicYearEndDate) {
         toast({
           title: "Error",
-          description: 'Calendar dates must be within the academic year period',
+          description: `Calendar dates must be within the academic year period (${formatDate(selectedAcademicYear.startDate)} - ${formatDate(selectedAcademicYear.endDate)})`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for conflicts with existing calendars
+      try {
+        const existingCalendarsResponse = await getAcademicCalendarsByAcademicYear(formData.academicYear as string);
+        if (existingCalendarsResponse.success && existingCalendarsResponse.data) {
+          const existingCalendars = existingCalendarsResponse.data;
+          
+          // Check for duplicate term in the same academic year
+          const duplicateTerm = existingCalendars.find(calendar => 
+            calendar.term === formData.term && 
+            (!isEditMode || calendar.id !== id) // Exclude current calendar when editing
+          );
+          
+          if (duplicateTerm) {
+            toast({
+              title: "Error",
+              description: `A calendar for ${formData.term} term already exists for this academic year. Each term can only be created once per academic year.`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Check for date overlaps with other terms
+          const overlappingCalendar = existingCalendars.find(calendar => {
+            if (isEditMode && calendar.id === id) return false; // Skip current calendar when editing
+            
+            const existingStart = new Date(calendar.startDate);
+            const existingEnd = new Date(calendar.endDate);
+            
+            return (
+              (startDate >= existingStart && startDate <= existingEnd) ||
+              (endDate >= existingStart && endDate <= existingEnd) ||
+              (startDate <= existingStart && endDate >= existingEnd)
+            );
+          });
+
+          if (overlappingCalendar) {
+            toast({
+              title: "Error",
+              description: `The selected dates overlap with an existing ${overlappingCalendar.term} term calendar (${formatDate(overlappingCalendar.startDate)} - ${formatDate(overlappingCalendar.endDate)}). Calendar periods cannot overlap.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for calendar conflicts:', error);
+        toast({
+          title: "Error",
+          description: 'Unable to verify calendar conflicts. Please try again.',
           variant: "destructive",
         });
         return;
@@ -296,7 +388,7 @@ const AcademicCalendarForm: React.FC = () => {
           title: "Success",
           description: `Academic calendar ${isEditMode ? 'updated' : 'created'} successfully`,
         });
-        navigate('/academics/academic-calendars');
+        navigate('/school-settings/academic-calendars');
       } else {
         toast({
           title: "Error",
@@ -349,7 +441,7 @@ const AcademicCalendarForm: React.FC = () => {
           </div>
           <Button
             variant="outline"
-            onClick={() => navigate('/academics/academic-calendars')}
+            onClick={() => navigate('/school-settings/academic-calendars')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to List
@@ -386,6 +478,11 @@ const AcademicCalendarForm: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {selectedAcademicYear && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Academic year period: {formatDate(selectedAcademicYear.startDate)} - {formatDate(selectedAcademicYear.endDate)}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -412,8 +509,15 @@ const AcademicCalendarForm: React.FC = () => {
                       type="date"
                       value={formatDateForInput(formData.startDate || '')}
                       onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      min={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.startDate) : undefined}
+                      max={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.endDate) : undefined}
                       required
                     />
+                    {selectedAcademicYear && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Must be within academic year period
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -423,8 +527,15 @@ const AcademicCalendarForm: React.FC = () => {
                       type="date"
                       value={formatDateForInput(formData.endDate || '')}
                       onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      min={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.startDate) : undefined}
+                      max={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.endDate) : undefined}
                       required
                     />
+                    {selectedAcademicYear && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Must be within academic year period
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -461,7 +572,14 @@ const AcademicCalendarForm: React.FC = () => {
                               type="date"
                               value={formatDateForInput(newHoliday.date || '')}
                               onChange={(e) => handleHolidayInputChange('date', e.target.value)}
+                              min={formData.startDate ? formatDateForInput(formData.startDate) : undefined}
+                              max={formData.endDate ? formatDateForInput(formData.endDate) : undefined}
                             />
+                            {formData.startDate && formData.endDate && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Must be within calendar period ({formatDate(formData.startDate)} - {formatDate(formData.endDate)})
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="holidayDescription">Description (Optional)</Label>
@@ -480,7 +598,11 @@ const AcademicCalendarForm: React.FC = () => {
                             >
                               Cancel
                             </Button>
-                            <Button type="button" onClick={handleAddHoliday}>
+                            <Button 
+                              type="button" 
+                              intent="primary"
+                              onClick={handleAddHoliday}
+                            >
                               Add Holiday
                             </Button>
                           </div>
@@ -525,7 +647,7 @@ const AcademicCalendarForm: React.FC = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/academics/academic-calendars')}
+                    onClick={() => navigate('/school-settings/academic-calendars')}
                     disabled={loading}
                   >
                     Cancel

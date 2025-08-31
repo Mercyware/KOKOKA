@@ -80,6 +80,7 @@ export const useFormErrors = (): UseFormErrorsReturn => {
     toast({
       title,
       description: message,
+      variant: "success",
     });
   }, [toast]);
 
@@ -87,7 +88,7 @@ export const useFormErrors = (): UseFormErrorsReturn => {
     toast({
       title,
       description: message,
-      variant: "default", // Using default for warnings since there's no warning variant
+      variant: "warning",
     });
   }, [toast]);
 
@@ -95,7 +96,7 @@ export const useFormErrors = (): UseFormErrorsReturn => {
     toast({
       title,
       description: message,
-      variant: "default",
+      variant: "info",
     });
   }, [toast]);
 

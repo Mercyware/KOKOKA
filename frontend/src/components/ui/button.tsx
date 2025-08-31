@@ -9,43 +9,78 @@ import { normalizeIcon, iconPatterns, type IconSize } from "@/lib/icon-utils";
 const buttonVariants = cva(
   [
     "group relative inline-flex items-center justify-center",
-    "font-medium transition-all duration-200 ease-out",
+    "font-medium transition-colors duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-    "disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none",
-    "active:scale-[0.98] active:transition-transform active:duration-75",
+    "disabled:pointer-events-none disabled:opacity-60",
   ],
   {
     variants: {
+      variant: {
+        default: [
+          "bg-blue-600 text-white border border-blue-600",
+          "hover:bg-blue-700 hover:border-blue-700 hover:text-white",
+          "focus-visible:ring-blue-500",
+          "dark:bg-blue-600 dark:text-white dark:hover:text-white",
+          "!text-white hover:!text-white dark:!text-white dark:hover:!text-white",
+        ],
+        outline: [
+          "bg-transparent border border-gray-300 text-gray-700",
+          "hover:bg-gray-50 hover:border-gray-400",
+          "dark:border-gray-600 dark:text-gray-200",
+          "dark:hover:bg-gray-800 dark:hover:border-gray-500",
+        ],
+        ghost: [
+          "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+          "dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+        ],
+        link: [
+          "text-blue-600 underline-offset-4 hover:underline",
+          "dark:text-blue-400",
+        ],
+      },
       intent: {
         primary: [
-          "bg-gradient-to-b from-blue-500 to-blue-600",
-          "text-white shadow-md shadow-blue-500/25",
-          "hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:shadow-blue-500/30",
-          "border border-blue-600/20",
+          "bg-blue-600 text-white border border-blue-600",
+          "hover:bg-blue-700 hover:border-blue-700 hover:text-white",
+          "focus-visible:ring-blue-500",
+          "dark:bg-blue-600 dark:text-white dark:hover:text-white",
+          "!text-white hover:!text-white dark:!text-white dark:hover:!text-white",
         ],
         secondary: [
-          "bg-white border border-gray-200 text-gray-900",
-          "shadow-sm hover:bg-gray-50 hover:border-gray-300",
-          "dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100",
-          "dark:hover:bg-gray-800 dark:hover:border-gray-700",
+          "bg-white border border-gray-300 text-gray-700",
+          "hover:bg-gray-50 hover:border-gray-400",
+          "dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200",
+          "dark:hover:bg-gray-700 dark:hover:border-gray-500",
+        ],
+        cancel: [
+          "bg-gray-200 border border-gray-300 text-gray-700",
+          "hover:bg-gray-300 hover:border-gray-400 hover:text-gray-800",
+          "dark:bg-gray-600 dark:border-gray-500 dark:text-gray-200",
+          "dark:hover:bg-gray-500 dark:hover:border-gray-400 dark:hover:text-gray-100",
+        ],
+        action: [
+          "bg-indigo-600 border border-indigo-600 !text-white",
+          "hover:bg-indigo-700 hover:border-indigo-700 hover:!text-white",
+          "dark:bg-indigo-500 dark:border-indigo-500 dark:!text-white",
+          "dark:hover:bg-indigo-600 dark:hover:border-indigo-600 dark:hover:!text-white",
         ],
         success: [
-          "bg-gradient-to-b from-green-500 to-green-600",
-          "text-white shadow-md shadow-green-500/25",
-          "hover:from-green-600 hover:to-green-700 hover:shadow-lg hover:shadow-green-500/30",
-          "border border-green-600/20",
+          "bg-green-600 !text-white border border-green-600",
+          "hover:bg-green-700 hover:border-green-700 hover:!text-white",
+          "focus-visible:ring-green-500",
+          "dark:!text-white dark:hover:!text-white",
         ],
         danger: [
-          "bg-gradient-to-b from-red-500 to-red-600",
-          "text-white shadow-md shadow-red-500/25",
-          "hover:from-red-600 hover:to-red-700 hover:shadow-lg hover:shadow-red-500/30",
-          "border border-red-600/20",
+          "bg-red-600 !text-white border border-red-600",
+          "hover:bg-red-700 hover:border-red-700 hover:!text-white",
+          "focus-visible:ring-red-500",
+          "dark:!text-white dark:hover:!text-white",
         ],
         warning: [
-          "bg-gradient-to-b from-amber-500 to-amber-600",
-          "text-white shadow-md shadow-amber-500/25",
-          "hover:from-amber-600 hover:to-amber-700 hover:shadow-lg hover:shadow-amber-500/30",
-          "border border-amber-600/20",
+          "bg-amber-600 !text-white border border-amber-600",
+          "hover:bg-amber-700 hover:border-amber-700 hover:!text-white",
+          "focus-visible:ring-amber-500",
+          "dark:!text-white dark:hover:!text-white",
         ],
         ghost: [
           "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
@@ -95,8 +130,9 @@ const buttonVariants = cva(
       },
     ],
     defaultVariants: {
-      intent: "primary",
-      size: "md",
+      variant: "default",
+      intent: "secondary",
+      size: "md", 
       width: "auto",
       iconOnly: false,
     },
@@ -105,7 +141,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+    Omit<VariantProps<typeof buttonVariants>, 'iconOnly'> {
   asChild?: boolean;
   loading?: boolean;
   loadingText?: string;
@@ -118,6 +154,7 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ 
     className, 
+    variant,
     intent, 
     size, 
     width,
@@ -144,6 +181,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           buttonVariants({ 
+            variant,
             intent, 
             size, 
             width,

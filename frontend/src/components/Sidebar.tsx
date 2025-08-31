@@ -50,7 +50,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
   if (!user) return null;
   
   const navigate = useNavigate();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['students', 'school-settings']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev => 
@@ -155,6 +155,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'classes', label: 'Classes', icon: School },
         { id: 'sections', label: 'Arms/Sections', icon: Layers },
         { id: 'departments', label: 'Departments', icon: Building },
+        { id: 'subjects', label: 'Subjects', icon: BookOpen },
         { id: 'houses', label: 'Houses', icon: HomeIcon },
       ]
     },
@@ -242,6 +243,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                           }
                           if (subItem.id === 'departments') {
                             navigate('/school-settings/departments');
+                          }
+                          if (subItem.id === 'subjects') {
+                            navigate('/school-settings/subjects');
                           }
                           if (subItem.id === 'houses') {
                             navigate('/school-settings/houses');
