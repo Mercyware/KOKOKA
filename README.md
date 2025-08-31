@@ -4,6 +4,14 @@ A comprehensive, AI-powered school management system designed to streamline educ
 
 ## Features
 
+### Modern UI/UX System
+- **Unified Component Architecture**: Next-generation design system with consistent styling and behavior
+- **Icon Alignment System**: Advanced icon normalization for perfect alignment across all components  
+- **Modern Navigation**: Professional sidebar and top navigation with proper styling (no button-like appearance)
+- **Component Composition**: Tree-shakeable exports with compound components for maximum flexibility
+- **Design Token System**: Comprehensive color palettes, typography scales, and spacing consistency
+- **Dark Mode Support**: Full theme switching with user preferences across all components
+
 ### Core Management Systems
 - **Multi-Tenant Architecture**: Subdomain-based school isolation (`school1.kokoka.com`)
 - **User Management**: Authentication and role-based access control (Admin, Teacher, Student, Parent, Staff)
@@ -51,12 +59,13 @@ A comprehensive, AI-powered school management system designed to streamline educ
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS
-- **UI Components**: Radix UI + Material-UI
+- **UI Components**: Modern Design System with Radix UI
+- **Component Architecture**: Unified component system with tree-shakeable exports
 - **State Management**: React Context + TanStack Query
 - **Forms**: React Hook Form + Zod validation
 - **Routing**: React Router v6
 - **Charts**: Recharts + Chart.js
-- **Icons**: Lucide React
+- **Icons**: Lucide React with advanced alignment system
 - **Themes**: Dark/Light mode support
 - **Drag & Drop**: @hello-pangea/dnd
 
@@ -119,6 +128,18 @@ kokoka/
 │   ├── public/                       # Static assets
 │   ├── src/
 │   │   ├── components/               # Reusable UI components
+│   │   │   └── ui/                   # Modern design system components
+│   │   │       ├── index.ts          # Unified component exports
+│   │   │       ├── button.tsx        # Next-gen button system
+│   │   │       ├── form.tsx          # Comprehensive form components
+│   │   │       ├── navigation.tsx    # Sidebar navigation system
+│   │   │       ├── top-navigation.tsx # Top navigation & header system
+│   │   │       ├── status.tsx        # Status & feedback components
+│   │   │       ├── modern-card.tsx   # Modern card system
+│   │   │       └── ...               # Other design system components
+│   │   ├── lib/                      # Library utilities
+│   │   │   ├── design-system.ts      # Design tokens & color system
+│   │   │   └── icon-utils.tsx        # Icon alignment utilities
 │   │   ├── pages/                    # Page-level views
 │   │   ├── hooks/                    # Custom React hooks
 │   │   ├── services/                 # API service functions

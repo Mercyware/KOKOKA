@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from '@/components/ui/navigation-menu';
+  TopNavigation as TopNav,
+  TopNavigationList,
+  TopNavigationItem,
+  TopNavigationDropdown,
+  TopNavigationDropdownItem,
+} from '@/components/ui/top-navigation';
 import { 
   Users, 
   UserCheck, 
@@ -31,6 +30,8 @@ interface TopNavigationProps {
 
 const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
   const navigate = useNavigate();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  
   const navigationItems = [
     {
       title: 'Students',
@@ -76,90 +77,92 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
     }
   ];
 
+  const handleDropdownToggle = (sectionTitle: string) => {
+    setOpenDropdown(openDropdown === sectionTitle ? null : sectionTitle);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-      <div className="px-4 py-3">
-        <NavigationMenu>
-          <NavigationMenuList className="space-x-2">
-            <NavigationMenuItem>
-              <Button
-                variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-                onClick={() => {
-                  onTabChange('dashboard');
-                  navigate('/dashboard');
-                }}
-                className="h-9"
-              >
-                Dashboard
-              </Button>
-            </NavigationMenuItem>
+    <TopNav>
+      <TopNavigationList>
+        {/* Dashboard */}
+        <TopNavigationItem
+          active={activeTab === 'dashboard'}
+          onClick={() => {
+            onTabChange('dashboard');
+            navigate('/dashboard');
+            setOpenDropdown(null);
+          }}
+        >
+          Dashboard
+        </TopNavigationItem>
 
-            {navigationItems.map((section) => (
-              <NavigationMenuItem key={section.title}>
-                <NavigationMenuTrigger className="h-9">
-                  {section.title}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid gap-3 p-6 w-[400px] lg:w-[500px] lg:grid-cols-2">
-                    {section.items.map((item) => {
-                      const IconComponent = item.icon;
-                      return (
-                        <div
-                          key={item.id}
-                          className="group relative flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                          onClick={() => onTabChange(item.id)}
-                        >
-                          <div className="flex-shrink-0">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-                              <IconComponent className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {item.label}
-                              </p>
-                              {activeTab === item.id && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Active
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            ))}
+        {/* Dropdown sections */}
+        {navigationItems.map((section) => (
+          <div key={section.title} className="relative">
+            <TopNavigationItem
+              hasDropdown
+              active={section.items.some(item => item.id === activeTab)}
+              onClick={() => handleDropdownToggle(section.title)}
+            >
+              {section.title}
+            </TopNavigationItem>
 
-            <NavigationMenuItem>
-              <Button
-                variant={activeTab === 'ai-insights' ? 'default' : 'ghost'}
-                onClick={() => onTabChange('ai-insights')}
-                className="h-9"
-              >
-                AI Insights
-              </Button>
-            </NavigationMenuItem>
+            <TopNavigationDropdown
+              open={openDropdown === section.title}
+              align="left"
+            >
+              <div className="grid gap-1 p-2 w-[400px] lg:w-[500px] lg:grid-cols-2">
+                {section.items.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <TopNavigationDropdownItem
+                      key={item.id}
+                      icon={<IconComponent className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
+                      description={item.description}
+                      active={activeTab === item.id}
+                      onClick={() => {
+                        onTabChange(item.id);
+                        setOpenDropdown(null);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {item.label}
+                        {activeTab === item.id && (
+                          <Badge variant="secondary" className="text-xs">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                    </TopNavigationDropdownItem>
+                  );
+                })}
+              </div>
+            </TopNavigationDropdown>
+          </div>
+        ))}
 
-            <NavigationMenuItem>
-              <Button
-                variant={activeTab === 'marketing' ? 'default' : 'ghost'}
-                onClick={() => onTabChange('marketing')}
-                className="h-9"
-              >
-                About
-              </Button>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
-      </div>
-    </div>
+        {/* Single items */}
+        <TopNavigationItem
+          active={activeTab === 'ai-insights'}
+          onClick={() => {
+            onTabChange('ai-insights');
+            setOpenDropdown(null);
+          }}
+        >
+          AI Insights
+        </TopNavigationItem>
+
+        <TopNavigationItem
+          active={activeTab === 'marketing'}
+          onClick={() => {
+            onTabChange('marketing');
+            setOpenDropdown(null);
+          }}
+        >
+          About
+        </TopNavigationItem>
+      </TopNavigationList>
+    </TopNav>
   );
 };
 

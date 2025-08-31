@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { 
+  Navigation,
+  NavigationHeader,
+  NavigationContent,
+  NavigationFooter,
+  NavigationGroup,
+  NavigationItem,
+  NavigationSubmenu,
+  NavigationSubitem,
+  NavigationProfile,
+} from '@/components/ui/navigation';
 import ThemeToggle from './ThemeToggle';
 import {
   Users,
@@ -155,37 +164,29 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-900 w-72 h-screen border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <Navigation width="md">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">EduManage Pro</h1>
+      <NavigationHeader>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">KOKOKA</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">School Management System</p>
-      </div>
+      </NavigationHeader>
 
-      {/* User Info */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3 mb-3">
+      {/* User Profile */}
+      <NavigationProfile
+        name={user.name}
+        email={user.email}
+        role={user.role}
+        avatar={
           <Avatar className="h-10 w-10">
             <AvatarImage src="/api/placeholder/40/40" alt={user.name} />
             <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {user.name}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {user.email}
-            </p>
-          </div>
-        </div>
-        <Badge variant="secondary" className="text-xs">
-          {user.role}
-        </Badge>
-      </div>
+        }
+      />
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        <div className="px-3 space-y-1">
+      {/* Navigation Content */}
+      <NavigationContent>
+        <NavigationGroup>
           {menuItems.map((item) => {
             const IconComponent = item.icon;
             const isExpanded = expandedMenus.includes(item.id);
@@ -193,12 +194,11 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
 
             return (
               <div key={item.id}>
-                <Button
-                  variant={isActive && !item.hasSubmenu ? "secondary" : "ghost"}
-                  className={`w-full justify-start text-left h-10 px-3 ${
-                    isActive ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 
-                    'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
+                <NavigationItem
+                  icon={<IconComponent />}
+                  active={isActive && !item.hasSubmenu}
+                  hasSubmenu={item.hasSubmenu}
+                  expanded={isExpanded}
                   onClick={() => {
                     if (item.hasSubmenu) {
                       toggleMenu(item.id);
@@ -212,77 +212,64 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                     }
                   }}
                 >
-                  <IconComponent className="mr-3 h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1">{item.label}</span>
-                  {item.hasSubmenu && (
-                    isExpanded ? 
-                      <ChevronDown className="h-4 w-4 flex-shrink-0" /> : 
-                      <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  )}
-                </Button>
+                  {item.label}
+                </NavigationItem>
 
                 {/* Submenu */}
-                {item.hasSubmenu && isExpanded && item.submenu && (
-                  <div className="ml-6 mt-1 space-y-1">
-                    {item.submenu.map((subItem) => {
-                      const SubIconComponent = subItem.icon;
-                      return (
-                        <Button
-                          key={subItem.id}
-                          variant={activeTab === subItem.id ? "secondary" : "ghost"}
-                          className={`w-full justify-start text-left h-9 px-3 text-sm ${
-                            activeTab === subItem.id ? 
-                            'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 
-                            'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                          onClick={() => {
-                            onTabChange(subItem.id);
-                            
-                            // Navigate to appropriate route based on menu item
-                            if (subItem.id === 'academic-years') {
-                              navigate('/school-settings/academic-years');
-                            }
-                            if (subItem.id === 'academic-calendar') {
-                              navigate('/school-settings/academic-calendars');
-                            }
-                            if (subItem.id === 'classes') {
-                              navigate('/school-settings/classes');
-                            }
-                            if (subItem.id === 'sections') {
-                              navigate('/school-settings/sections');
-                            }
-                            if (subItem.id === 'departments') {
-                              navigate('/school-settings/departments');
-                            }
-                            if (subItem.id === 'houses') {
-                              navigate('/school-settings/houses');
-                            }
-                            if (subItem.id === 'staff-list') {
-                              navigate('/staff');
-                            }
-                            if (subItem.id === 'staff-add') {
-                              navigate('/staff/create');
-                            }
-                          }}
-                        >
-                          <SubIconComponent className="mr-3 h-3 w-3 flex-shrink-0" />
-                          <span>{subItem.label}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
+                <NavigationSubmenu open={item.hasSubmenu && isExpanded}>
+                  {item.submenu?.map((subItem) => {
+                    const SubIconComponent = subItem.icon;
+                    return (
+                      <NavigationSubitem
+                        key={subItem.id}
+                        icon={<SubIconComponent />}
+                        active={activeTab === subItem.id}
+                        onClick={() => {
+                          onTabChange(subItem.id);
+                          
+                          // Navigate to appropriate route based on menu item
+                          if (subItem.id === 'academic-years') {
+                            navigate('/school-settings/academic-years');
+                          }
+                          if (subItem.id === 'academic-calendar') {
+                            navigate('/school-settings/academic-calendars');
+                          }
+                          if (subItem.id === 'classes') {
+                            navigate('/school-settings/classes');
+                          }
+                          if (subItem.id === 'sections') {
+                            navigate('/school-settings/sections');
+                          }
+                          if (subItem.id === 'departments') {
+                            navigate('/school-settings/departments');
+                          }
+                          if (subItem.id === 'houses') {
+                            navigate('/school-settings/houses');
+                          }
+                          if (subItem.id === 'staff-list') {
+                            navigate('/staff');
+                          }
+                          if (subItem.id === 'staff-add') {
+                            navigate('/staff/create');
+                          }
+                        }}
+                      >
+                        {subItem.label}
+                      </NavigationSubitem>
+                    );
+                  })}
+                </NavigationSubmenu>
               </div>
             );
           })}
-        </div>
-      </nav>
+        </NavigationGroup>
+      </NavigationContent>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <NavigationFooter>
         <ThemeToggle />
-      </div>
-    </div>
+      </NavigationFooter>
+    </Navigation>
   );
 };
 

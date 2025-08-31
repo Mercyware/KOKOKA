@@ -1,7 +1,12 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, Menu, LayoutGrid, Navigation } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {
+  HeaderBar,
+  HeaderContent,
+  HeaderUserInfo,
+  HeaderAction,
+} from '@/components/ui/top-navigation';
 import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
@@ -17,59 +22,35 @@ const Header = ({ user, onToggleSidebar, navigationMode, onToggleNavigation }: H
   if (!user) return null;
   
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <HeaderBar>
+      <HeaderContent align="left">
         {navigationMode === 'sidebar' && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <HeaderAction
+            icon={<Menu />}
             onClick={onToggleSidebar}
             className="md:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+            showLabel={false}
+          />
         )}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Welcome back, {user.name}
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{user.role}</p>
-        </div>
-      </div>
+        <HeaderUserInfo name={user.name} role={user.role} />
+      </HeaderContent>
       
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="outline"
-          size="sm"
+      <HeaderContent align="right">
+        <HeaderAction
+          icon={navigationMode === 'sidebar' ? <Navigation /> : <LayoutGrid />}
+          label={navigationMode === 'sidebar' ? 'Top Nav' : 'Sidebar'}
           onClick={onToggleNavigation}
-          className="flex items-center space-x-2"
-        >
-          {navigationMode === 'sidebar' ? (
-            <>
-              <Navigation className="h-4 w-4" />
-              <span className="hidden sm:inline">Top Nav</span>
-            </>
-          ) : (
-            <>
-              <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Sidebar</span>
-            </>
-          )}
-        </Button>
+        />
         
         <ThemeToggle />
         
-        <Button
+        <HeaderAction
+          icon={<LogOut />}
+          label="Sign Out"
           onClick={logout}
-          variant="outline"
-          size="sm"
-          className="flex items-center space-x-2"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Sign Out</span>
-        </Button>
-      </div>
-    </header>
+        />
+      </HeaderContent>
+    </HeaderBar>
   );
 };
 
