@@ -489,3 +489,4 @@ QUIET_HOURS_ENABLED=true
 7. **Analytics and delivery logs** are automatically tracked for all notifications
 
 - "Always use descriptive names"
+- - "Always make a todo of work items before implementation"

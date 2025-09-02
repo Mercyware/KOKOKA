@@ -20,7 +20,8 @@
       "Bash(PORT=5001 npm run dev)",
       "Bash(npm install:*)",
       "Bash(node server.js)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(wmic process where processid=43112 delete:*)"
     ],
     "deny": [],
     "ask": [],

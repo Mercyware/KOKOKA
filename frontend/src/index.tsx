@@ -7,9 +7,13 @@ import reportWebVitals from './reportWebVitals';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+import { AuthProvider } from './contexts/AuthContext';
+
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </React.StrictMode>
 );
 

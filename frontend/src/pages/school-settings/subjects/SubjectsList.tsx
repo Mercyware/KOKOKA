@@ -245,10 +245,12 @@ const SubjectsList: React.FC = () => {
               </p>
             </div>
           </div>
-          <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add Subject
-          </Button>
+          <div className="flex items-center gap-2">
+<Button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+  <Plus className="h-4 w-4" />
+  Add Subject
+</Button>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -267,6 +269,44 @@ const SubjectsList: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Quick Stats */}
+        {subjects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {subjects.length}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Subjects</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {subjects.filter(subject => subject.departmentId).length}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">With Department</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {subjects.filter(subject => !subject.departmentId).length}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Independent</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                  {new Set(subjects.filter(subject => subject.departmentId).map(subject => subject.departmentId)).size}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Departments</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Subjects Table */}
         <Card>
@@ -320,13 +360,13 @@ const SubjectsList: React.FC = () => {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleOpenModal(subject)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+<Button
+  variant="ghost"
+  size="sm"
+  onClick={() => handleOpenModal(subject)}
+>
+  <Edit className="h-4 w-4" />
+</Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button variant="ghost" size="sm">
@@ -411,14 +451,13 @@ const SubjectsList: React.FC = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Select a department (optional)" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Department</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+<SelectContent>
+  {departments.map((dept) => (
+    <SelectItem key={dept.id} value={dept.id}>
+      {dept.name} ({dept.code})
+    </SelectItem>
+  ))}
+</SelectContent>
               </Select>
             </div>
             <div>

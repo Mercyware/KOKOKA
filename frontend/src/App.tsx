@@ -30,6 +30,8 @@ import SectionsList from "./pages/school-settings/sections/SectionsList";
 import SectionForm from "./pages/school-settings/sections/SectionForm";
 import DepartmentsList from "./pages/school-settings/departments/DepartmentsList";
 import SubjectsList from "./pages/school-settings/subjects/SubjectsList";
+import CreateSubject from "./pages/school-settings/subjects/CreateSubject";
+import EditSubject from "./pages/school-settings/subjects/EditSubject";
 import HousesList from "./pages/school-settings/houses/HousesList";
 // Staff Components
 import StaffList from "./pages/staff/StaffList";
@@ -108,6 +110,8 @@ const App = () => (
             
             {/* School Settings - Subjects Routes */}
             <Route path="/school-settings/subjects" element={<SubjectsList />} />
+            <Route path="/school-settings/subjects/create" element={<CreateSubject />} />
+            <Route path="/school-settings/subjects/edit/:id" element={<EditSubject />} />
             
             {/* School Settings - Houses Routes */}
             <Route path="/school-settings/houses" element={<HousesList />} />
