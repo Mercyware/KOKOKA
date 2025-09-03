@@ -63,6 +63,7 @@ model School {
   teacherSubjects      TeacherSubject[]
   classTeachers        ClassTeacher[]
   sittingPositions     SittingPosition[]
+  curricula            Curriculum[]
   studentClassHistory  StudentClassHistory[]
   academicCalendars    AcademicCalendar[]
   
@@ -70,6 +71,9 @@ model School {
   notifications        Notification[]
   notificationTemplates NotificationTemplate[]
   webhookSubscriptions WebhookSubscription[]
+  
+  // Grade Management relationships
+  gradeBooks           GradeBook[]
 
   @@map("schools")
 }
@@ -111,6 +115,7 @@ model User {
   gradedAssessments   Grade[] @relation("GradedBy")
   verifiedGuardians   Guardian[] @relation("GuardianVerifiedBy")
   createdAcademicCalendars AcademicCalendar[] @relation("AcademicCalendarCreatedBy")
+  createdCurricula    Curriculum[]
   
   // Notification relationships
   createdNotifications     Notification[] @relation("NotificationCreatedBy")
@@ -146,6 +151,10 @@ model AcademicYear {
   assessments         Assessment[]
   studentClassHistory StudentClassHistory[]
   academicCalendars   AcademicCalendar[]
+  classCurricula      ClassCurriculum[]
+  curriculumProgressTrackers CurriculumProgressTracker[]
+  gradeBooks          GradeBook[]
+  gradeReports        GradeReport[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -168,6 +177,8 @@ model Term {
 
   // Relationships
   assessments Assessment[]
+  gradeBooks  GradeBook[]
+  gradeReports GradeReport[]
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
@@ -232,11 +243,467 @@ model Subject {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  teacherSubjects TeacherSubject[]
-  assessments     Assessment[]
+  teacherSubjects      TeacherSubject[]
+  assessments          Assessment[]
+  curriculumSubjects   CurriculumSubject[]
+  gradeBooks           GradeBook[]
 
   @@unique([schoolId, code])
   @@map("subjects")
+}
+
+// Central Curriculum Registry - Global curriculum templates
+model GlobalCurriculum {
+  id              String     @id @default(uuid())
+  name            String     @unique
+  description     String?
+  version         String?
+  type            CurriculumType @default(STANDARD)
+  provider        String     // e.g., "Cambridge", "IB", "National Board"
+  country         String?
+  language        String     @default("en")
+  
+  // Grade Range
+  minGrade        Int        @default(1)
+  maxGrade        Int        @default(12)
+  
+  // Curriculum Details
+  framework       Json?      // Detailed framework structure
+  standards       Json?      // Learning standards and benchmarks
+  assessmentTypes Json?      // Supported assessment methods
+  
+  // Status and Licensing
+  status          CurriculumStatus @default(ACTIVE)
+  isOfficial      Boolean    @default(false) // Official curriculum vs custom
+  licenseType     String     @default("FREE") // FREE, PREMIUM, SUBSCRIPTION
+  adoptionCount   Int        @default(0) // Number of schools using this
+  
+  // Metadata
+  tags            String[]   // Search tags
+  difficulty      String     @default("STANDARD") // BEGINNER, STANDARD, ADVANCED
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Relationships
+  globalSubjects      GlobalCurriculumSubject[]
+  schoolCurricula     Curriculum[] // Schools that adopted this template
+  curriculumProgressTracker CurriculumProgressTracker[]
+
+  @@map("global_curricula")
+}
+
+model GlobalCurriculumSubject {
+  id                    String           @id @default(uuid())
+  
+  globalCurriculumId    String
+  globalCurriculum      GlobalCurriculum @relation(fields: [globalCurriculumId], references: [id], onDelete: Cascade)
+  
+  // Subject Details
+  name                  String
+  code                  String
+  description           String?
+  
+  // Grade and Term Configuration
+  gradeLevel            Int
+  term                  Int?
+  recommendedHours      Int?
+  
+  // Classification
+  isCore                Boolean          @default(true)
+  isOptional            Boolean          @default(false)
+  category              String?          // e.g., "Mathematics", "Sciences", "Languages"
+  
+  // Learning Framework
+  learningOutcomes      Json?            // Expected learning outcomes
+  keyTopics             Json?            // Core topics to cover
+  skillsFramework       Json?            // Skills development framework
+  
+  // Prerequisites and Progressions
+  prerequisites         String[]         // Array of subject codes
+  followUpSubjects      String[]         // Subjects that follow this one
+  
+  // Assessment Guidelines
+  assessmentWeights     Json?            // How different assessment types are weighted
+  gradingScale          Json?            // Grading scale specifications
+  
+  displayOrder          Int              @default(0)
+  
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@unique([globalCurriculumId, code, gradeLevel])
+  @@map("global_curriculum_subjects")
+}
+
+model Curriculum {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  version     String?
+  type        CurriculumType @default(STANDARD)
+  status      CurriculumStatus @default(DRAFT)
+  
+  schoolId    String
+  school      School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  // Global Curriculum Template Reference
+  globalCurriculumId String?
+  globalCurriculum   GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
+  
+  // Customization Level
+  customizationLevel CustomizationLevel @default(FULL) // MINIMAL, MODERATE, FULL
+  originalTemplate   Json?              // Store original template for comparison
+  
+  // Academic Year Integration
+  startYear   Int?
+  endYear     Int?
+  
+  // Implementation Status
+  implementationStatus ImplementationStatus @default(PLANNED)
+  adoptionDate        DateTime?
+  
+  // Analytics and Tracking
+  analytics           Json?              // Performance analytics
+  lastReviewDate      DateTime?
+  nextReviewDate      DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  user        User?    @relation(fields: [createdBy], references: [id])
+
+  // Relationships
+  curriculumSubjects CurriculumSubject[]
+  classCurricula     ClassCurriculum[]
+  progressTrackers   CurriculumProgressTracker[]
+
+  @@unique([schoolId, name, version])
+  @@map("curricula")
+}
+
+model CurriculumSubject {
+  id                String     @id @default(uuid())
+  
+  curriculumId      String
+  curriculum        Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  
+  subjectId         String
+  subject           Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  // Subject Configuration within Curriculum
+  gradeLevel        Int
+  term              Int?       // Optional term specification
+  hoursPerWeek      Int?
+  isCore            Boolean    @default(true)
+  isOptional        Boolean    @default(false)
+  prerequisites     String[]   // Array of subject IDs
+  
+  // Ordering and Display
+  displayOrder      Int        @default(0)
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relationships
+  learningObjectives LearningObjective[]
+  contentModules     ContentModule[]
+
+  @@unique([curriculumId, subjectId, gradeLevel])
+  @@map("curriculum_subjects")
+}
+
+model LearningObjective {
+  id                    String            @id @default(uuid())
+  title                 String
+  description           String?
+  type                  ObjectiveType     @default(KNOWLEDGE)
+  bloomLevel            BloomLevel        @default(REMEMBER)
+  
+  curriculumSubjectId   String
+  curriculumSubject     CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
+  
+  // Objective Details
+  expectedOutcome       String?
+  assessmentCriteria    String?
+  displayOrder          Int               @default(0)
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@map("learning_objectives")
+}
+
+model ContentModule {
+  id                    String            @id @default(uuid())
+  title                 String
+  description           String?
+  content               String?           // Rich text content
+  duration              Int?              // Duration in hours
+  
+  curriculumSubjectId   String
+  curriculumSubject     CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
+  
+  // Module Organization
+  unit                  String?
+  chapter               String?
+  displayOrder          Int               @default(0)
+  
+  // Resources and Materials
+  resources             Json?             // URLs, documents, etc.
+  activities            Json?             // Learning activities
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@map("content_modules")
+}
+
+model ClassCurriculum {
+  id           String     @id @default(uuid())
+  
+  classId      String
+  class        Class      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  curriculumId String
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  
+  // Implementation Status
+  status       ImplementationStatus @default(PLANNED)
+  startDate    DateTime?
+  endDate      DateTime?
+  
+  // Progress Tracking
+  completionPercentage Float @default(0.0) // Overall completion percentage
+  milestones          Json?               // Key milestones and their completion status
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([classId, curriculumId, academicYearId])
+  @@map("class_curricula")
+}
+
+// Comprehensive Progress Tracking System
+model CurriculumProgressTracker {
+  id                    String    @id @default(uuid())
+  
+  // Curriculum Reference
+  curriculumId          String?
+  curriculum            Curriculum? @relation(fields: [curriculumId], references: [id])
+  globalCurriculumId    String?
+  globalCurriculum      GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
+  
+  // Student Reference
+  studentId             String
+  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  // Academic Context
+  academicYearId        String
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  classId               String
+  class                 Class     @relation(fields: [classId], references: [id])
+  
+  // Progress Metrics
+  overallProgress       Float     @default(0.0)     // 0-100 percentage
+  subjectProgress       Json?                       // Progress per subject
+  skillsDevelopment     Json?                       // Skills development tracking
+  learningOutcomes      Json?                       // Achievement of learning outcomes
+  
+  // Grade Progression
+  currentGrade          String?                     // Current academic grade/level
+  expectedProgression   String?                     // Expected next grade
+  progressionStatus     ProgressionStatus @default(ON_TRACK)
+  
+  // Performance Analytics
+  strengths             String[]                    // Areas of strength
+  weaknesses            String[]                    // Areas needing improvement
+  recommendations       Json?                       // Personalized recommendations
+  
+  // Timestamps and Tracking
+  lastAssessmentDate    DateTime?
+  nextMilestoneDate     DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([studentId, curriculumId, academicYearId])
+  @@map("curriculum_progress_trackers")
+}
+
+// Grade Book Management - Enhanced
+model GradeBook {
+  id                    String    @id @default(uuid())
+  
+  // Context
+  schoolId              String
+  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherId             String
+  teacher               Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classId               String
+  class                 Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId             String
+  subject               Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academicYearId        String
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  termId                String?
+  term                  Term?     @relation(fields: [termId], references: [id])
+  
+  // Grade Book Configuration
+  name                  String                      // e.g., "Math Grade 9A Term 1"
+  gradingScale          Json                        // Grading scale configuration
+  weightingScheme       Json?                       // How different assessments are weighted
+  
+  // Progress Tracking
+  totalStudents         Int       @default(0)
+  averageGrade          Float?
+  progressSummary       Json?                       // Class progress summary
+  
+  // Status
+  status                GradeBookStatus @default(ACTIVE)
+  isLocked              Boolean   @default(false)   // Prevent further modifications
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relationships
+  gradeEntries          GradeEntry[]
+  gradeReports          GradeReport[]
+
+  @@unique([teacherId, classId, subjectId, academicYearId, termId])
+  @@map("grade_books")
+}
+
+// Individual Grade Entries
+model GradeEntry {
+  id                    String    @id @default(uuid())
+  
+  gradeBookId           String
+  gradeBook             GradeBook @relation(fields: [gradeBookId], references: [id], onDelete: Cascade)
+  studentId             String
+  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assessmentId          String?
+  assessment            Assessment? @relation(fields: [assessmentId], references: [id])
+  
+  // Grade Information
+  rawScore              Float?                      // Raw score obtained
+  maxScore              Float?                      // Maximum possible score
+  percentage            Float?                      // Percentage score
+  letterGrade           String?                     // A, B, C, D, F
+  gradePoint            Float?                      // GPA point value
+  weightedScore         Float?                      // Score after applying weights
+  
+  // Additional Context
+  category              String?                     // "Quiz", "Test", "Assignment", etc.
+  weight                Float     @default(1.0)     // Weight of this grade
+  isExcused             Boolean   @default(false)   // Excused from this assessment
+  
+  // Feedback and Notes
+  feedback              String?
+  teacherNotes          String?                     // Private teacher notes
+  
+  // Tracking
+  submittedAt           DateTime?
+  gradedAt              DateTime?
+  lastModified          DateTime  @default(now())
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([gradeBookId, studentId, assessmentId])
+  @@map("grade_entries")
+}
+
+// Multi-Level Grade Reporting System
+model GradeReport {
+  id                    String    @id @default(uuid())
+  
+  // Context
+  gradeBookId           String?
+  gradeBook             GradeBook? @relation(fields: [gradeBookId], references: [id])
+  studentId             String
+  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYearId        String
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  termId                String?
+  term                  Term?     @relation(fields: [termId], references: [id])
+  
+  // Report Configuration
+  reportType            GradeReportType
+  reportPeriod          String                      // "Term 1", "Semester 1", "Mid-Year", etc.
+  
+  // Grade Summary
+  overallGrade          String?                     // Overall letter grade
+  overallPercentage     Float?                      // Overall percentage
+  overallGPA            Float?                      // Overall GPA
+  classRank             Int?                        // Student's rank in class
+  classSize             Int?                        // Total students in class
+  
+  // Subject-wise Performance
+  subjectGrades         Json                        // Detailed subject grades
+  progressIndicators    Json?                       // Progress in different areas
+  
+  // Comments and Feedback
+  teacherComments       Json?                       // Comments from multiple teachers
+  conductGrade          String?                     // Conduct/Behavior grade
+  attendancePercentage  Float?                      // Attendance percentage
+  
+  // Analytics and Insights
+  strengths             String[]                    // Identified strengths
+  areasForImprovement   String[]                    // Areas needing work
+  recommendations       String[]                    // Specific recommendations
+  parentGuidance        String?                     // Guidance for parents
+  
+  // Status and Publishing
+  status                ReportStatus @default(DRAFT)
+  publishedAt           DateTime?
+  parentViewedAt        DateTime?
+  studentViewedAt       DateTime?
+  
+  // Report Generation
+  generatedBy           String?                     // User who generated the report
+  approvedBy            String?                     // User who approved the report
+  approvedAt            DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([studentId, reportType, reportPeriod, academicYearId])
+  @@map("grade_reports")
+}
+
+// Parent Engagement and Tracking
+model ParentGradeAccess {
+  id                    String    @id @default(uuid())
+  
+  guardianId            String
+  guardian              Guardian  @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  studentId             String
+  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  // Access Configuration
+  hasGradeAccess        Boolean   @default(true)
+  hasReportAccess       Boolean   @default(true)
+  hasProgressAccess     Boolean   @default(true)
+  
+  // Notification Preferences
+  notifyOnNewGrades     Boolean   @default(true)
+  notifyOnReportCards   Boolean   @default(true)
+  notifyOnProgress      Boolean   @default(true)
+  
+  // Access Tracking
+  lastAccessDate        DateTime?
+  totalAccesses         Int       @default(0)
+  mostViewedSubject     String?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([guardianId, studentId])
+  @@map("parent_grade_access")
 }
 
 model House {
@@ -295,6 +762,9 @@ model Class {
   classTeachers       ClassTeacher[]
   studentClassHistory StudentClassHistory[]
   documents           Document[]
+  classCurricula      ClassCurriculum[]
+  curriculumProgressTrackers CurriculumProgressTracker[]
+  gradeBooks          GradeBook[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -348,6 +818,12 @@ model Student {
   documents            Document[]
   guardianStudents     GuardianStudent[]
   studentClassHistory  StudentClassHistory[]
+  
+  // Grade Management relationships
+  curriculumProgressTrackers CurriculumProgressTracker[]
+  gradeEntries         GradeEntry[]
+  gradeReports         GradeReport[]
+  parentGradeAccess    ParentGradeAccess[]
 
   @@unique([schoolId, admissionNumber])
   @@map("students")
@@ -393,6 +869,9 @@ model Teacher {
   teacherSubjects  TeacherSubject[]
   classTeachers    ClassTeacher[]
   createdAssessments Assessment[]
+  
+  // Grade Management relationships
+  gradeBooks       GradeBook[]
 
   @@unique([schoolId, employeeId])
   @@map("teachers")
@@ -507,6 +986,7 @@ model Guardian {
 
   // Relationships
   guardianStudents GuardianStudent[]
+  parentGradeAccess ParentGradeAccess[]
 
   @@map("guardians")
 }
@@ -666,6 +1146,7 @@ model Assessment {
 
   // Relationships
   grades Grade[]
+  gradeEntries GradeEntry[]
 
   @@map("assessments")
 }
@@ -874,9 +1355,9 @@ model Notification {
   
   // Targeting
   targetType   NotificationTargetType
-  targetUsers  String[]? // Array of user IDs when targeting specific users
-  targetRoles  UserRole[]? // Array of roles when targeting roles
-  targetClasses String[]? // Array of class IDs when targeting classes
+  targetUsers  String[] // Array of user IDs when targeting specific users
+  targetRoles  String[] // Array of roles when targeting roles (stored as strings)
+  targetClasses String[] // Array of class IDs when targeting classes
   
   // Scheduling
   scheduledAt  DateTime?
@@ -1025,7 +1506,7 @@ model UserNotificationPreferences {
   quietHoursEnabled Boolean @default(false)
   quietHoursStart   String? // Time in HH:MM format
   quietHoursEnd     String? // Time in HH:MM format
-  quietHoursDays    String[]? // Array of days: ['MON', 'TUE', etc.]
+  quietHoursDays    String[] // Array of days: ['MON', 'TUE', etc.]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1413,4 +1894,93 @@ enum WebhookDeliveryStatus {
   FAILED
   PENDING
   RETRYING
+}
+
+// Curriculum-related Enums
+enum CurriculumType {
+  STANDARD
+  CAMBRIDGE
+  IB
+  NATIONAL
+  STEM
+  ARTS
+  VOCATIONAL
+  CUSTOM
+}
+
+enum CurriculumStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+  UNDER_REVIEW
+}
+
+enum ObjectiveType {
+  KNOWLEDGE
+  COMPREHENSION
+  APPLICATION
+  ANALYSIS
+  SYNTHESIS
+  EVALUATION
+  SKILL
+  ATTITUDE
+}
+
+enum BloomLevel {
+  REMEMBER
+  UNDERSTAND
+  APPLY
+  ANALYZE
+  EVALUATE
+  CREATE
+}
+
+enum ImplementationStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+// New Enums for Enhanced Grade Management System
+
+enum CustomizationLevel {
+  MINIMAL     // Minor changes to original template
+  MODERATE    // Significant customizations while keeping core structure
+  FULL        // Complete custom curriculum
+}
+
+enum ProgressionStatus {
+  AHEAD       // Student is ahead of expected progression
+  ON_TRACK    // Student is progressing as expected
+  BEHIND      // Student is behind expected progression
+  AT_RISK     // Student is significantly behind and at risk
+}
+
+enum GradeBookStatus {
+  ACTIVE      // Currently active grade book
+  ARCHIVED    // Archived for historical reference
+  LOCKED      // Locked to prevent changes
+  DRAFT       // Draft state, not yet published
+}
+
+enum GradeReportType {
+  TERM_REPORT       // End of term report
+  SEMESTER_REPORT   // Semester report
+  ANNUAL_REPORT     // Annual report
+  PROGRESS_REPORT   // Mid-term progress report
+  PARENT_CONFERENCE // Parent-teacher conference report
+  TRANSCRIPT        // Official academic transcript
+  CUSTOM           // Custom report type
+}
+
+enum ReportStatus {
+  DRAFT           // Report is being prepared
+  PENDING_REVIEW  // Report is ready for review
+  APPROVED        // Report has been approved
+  PUBLISHED       // Report has been published
+  SENT            // Report has been sent to parents/students
+  ARCHIVED        // Report has been archived
 }

@@ -37,6 +37,12 @@ A comprehensive, AI-powered school management system designed to streamline educ
 - **Exam Management**: Creation, grading, and result analysis
 - **House System**: Student house assignments and competitions
 - **Sitting Position Management**: Classroom seating arrangements
+- **Curriculum Management**: Comprehensive curriculum design, standards mapping, and progress tracking
+  - Curriculum templates and frameworks (Cambridge, National, STEM-focused)
+  - Learning objectives and content modules organization
+  - Subject progression and prerequisites mapping
+  - Assessment criteria alignment with curriculum standards
+  - Real-time curriculum coverage tracking and reporting
 
 ## Tech Stack
 

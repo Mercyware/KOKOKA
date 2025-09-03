@@ -36,7 +36,13 @@ import {
   School,
   Layers,
   Building,
-  Home as HomeIcon
+  Home as HomeIcon,
+  Target,
+  TrendingUp,
+  Award,
+  Eye,
+  MessageSquare,
+  Library
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -97,15 +103,15 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     {
-      id: 'courses',
-      label: 'Courses',
-      icon: BookOpen,
+      id: 'curriculum',
+      label: 'Curriculum',
+      icon: Target,
       hasSubmenu: true,
       submenu: [
-        { id: 'courses-list', label: 'All Courses', icon: BookOpen },
-        { id: 'courses-add', label: 'Add Course', icon: Plus },
-        { id: 'courses-curriculum', label: 'Curriculum', icon: FileText },
-        { id: 'courses-assignments', label: 'Assignments', icon: ClipboardList },
+        { id: 'curriculum-global', label: 'Global Registry', icon: Globe },
+        { id: 'curriculum-school', label: 'School Curricula', icon: BookOpen },
+        { id: 'curriculum-progress', label: 'Progress Tracking', icon: TrendingUp },
+        { id: 'curriculum-analytics', label: 'Analytics', icon: BarChart3 },
       ]
     },
     {
@@ -121,15 +127,16 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     {
-      id: 'grades',
-      label: 'Grades',
-      icon: Trophy,
+      id: 'gradebook',
+      label: 'Grade Management',
+      icon: Award,
       hasSubmenu: true,
       submenu: [
-        { id: 'grades-entry', label: 'Grade Entry', icon: Trophy },
-        { id: 'grades-reports', label: 'Grade Reports', icon: FileText },
-        { id: 'grades-transcripts', label: 'Transcripts', icon: FileText },
-        { id: 'grades-analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'gradebook-teacher', label: 'Grade Books', icon: BookOpen },
+        { id: 'gradebook-entry', label: 'Grade Entry', icon: Trophy },
+        { id: 'gradebook-reports', label: 'Grade Reports', icon: FileText },
+        { id: 'gradebook-analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'gradebook-parent', label: 'Parent Dashboard', icon: Users },
       ]
     },
     {
@@ -156,6 +163,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'sections', label: 'Arms/Sections', icon: Layers },
         { id: 'departments', label: 'Departments', icon: Building },
         { id: 'subjects', label: 'Subjects', icon: BookOpen },
+        { id: 'curricula', label: 'Curricula', icon: Library },
         { id: 'houses', label: 'Houses', icon: HomeIcon },
       ]
     },
@@ -250,6 +258,39 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                           if (subItem.id === 'houses') {
                             navigate('/school-settings/houses');
                           }
+                          if (subItem.id === 'curricula') {
+                            navigate('/school-settings/curricula');
+                          }
+                          // Curriculum menu items
+                          if (subItem.id === 'curriculum-global') {
+                            navigate('/curriculum/global');
+                          }
+                          if (subItem.id === 'curriculum-school') {
+                            navigate('/curriculum/school');
+                          }
+                          if (subItem.id === 'curriculum-progress') {
+                            navigate('/curriculum/progress');
+                          }
+                          if (subItem.id === 'curriculum-analytics') {
+                            navigate('/curriculum/analytics');
+                          }
+                          // Grade management menu items
+                          if (subItem.id === 'gradebook-teacher') {
+                            navigate('/gradebook/teacher');
+                          }
+                          if (subItem.id === 'gradebook-entry') {
+                            navigate('/gradebook/entry');
+                          }
+                          if (subItem.id === 'gradebook-reports') {
+                            navigate('/gradebook/reports');
+                          }
+                          if (subItem.id === 'gradebook-analytics') {
+                            navigate('/gradebook/analytics');
+                          }
+                          if (subItem.id === 'gradebook-parent') {
+                            navigate('/parent/dashboard');
+                          }
+                          // Staff menu items
                           if (subItem.id === 'staff-list') {
                             navigate('/staff');
                           }

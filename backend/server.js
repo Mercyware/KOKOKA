@@ -34,6 +34,7 @@ const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
 // const termRoutes = require('./routes/termRoutes');
 const classRoutes = require('./routes/classRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
+const curriculumRoutes = require('./routes/curriculumRoutes');
 // const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 // const classTeacherRoutes = require('./routes/classTeacherRoutes');
 // const sittingPositionRoutes = require('./routes/sittingPositionRoutes');
@@ -46,6 +47,11 @@ const departmentRoutes = require('./routes/departmentRoutes');
 // const documentRoutes = require('./routes/documentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+
+// New Grade Management and Curriculum Routes
+const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
+const gradeBookRoutes = require('./routes/gradeBookRoutes');
+const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 
 // Import utilities
 const logger = require('./utils/logger');
@@ -184,6 +190,7 @@ app.use('/api/academic-calendars', academicCalendarRoutes);
 // app.use('/api/terms', termRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/curricula', curriculumRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/class-teachers', classTeacherRoutes);
 // app.use('/api/sitting-positions', sittingPositionRoutes);
@@ -198,6 +205,11 @@ app.use('/api/departments', departmentRoutes);
 
 // Notification routes
 app.use('/api/notifications', notificationRoutes);
+
+// New Grade Management and Curriculum Routes
+app.use('/api/global-curricula', globalCurriculumRoutes);
+app.use('/api/gradebooks', gradeBookRoutes);
+app.use('/api/parent', parentDashboardRoutes);
 
 // AI routes (conditionally enabled)
 // if (env.FEATURE_AI_ENABLED) {

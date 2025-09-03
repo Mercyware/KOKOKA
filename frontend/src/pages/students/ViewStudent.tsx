@@ -98,11 +98,11 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button onClick={onEdit}>
+            <Button intent="secondary" onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Student
             </Button>
-            <Button variant="outline" className="text-red-600 hover:text-red-700">
+            <Button intent="danger">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
