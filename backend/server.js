@@ -53,6 +53,7 @@ const scoreRoutes = require('./routes/scoreRoutes');
 // New Grade Management and Curriculum Routes
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
 const gradeBookRoutes = require('./routes/gradeBookRoutes');
+const reportCardRoutes = require('./routes/reportCardRoutes');
 const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 
 // Import utilities
@@ -215,6 +216,7 @@ app.use('/api/scores', scoreRoutes);
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);
 app.use('/api/gradebooks', gradeBookRoutes);
+app.use('/api/report-cards', reportCardRoutes);
 app.use('/api/parent', parentDashboardRoutes);
 
 // AI routes (conditionally enabled)

@@ -53,6 +53,7 @@ import TeacherSubjectAssignmentsList from "./pages/assignments/teacher-subjects/
 // New Curriculum and Grade Management Components
 import GlobalCurriculumRegistry from "./pages/curriculum/GlobalCurriculumRegistry";
 import GradeBookManagement from "./pages/teacher/GradeBookManagement";
+import ReportCards from "./pages/gradebook/ReportCards";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import StudentGradeView from "./pages/student/StudentGradeView";
 // Academic Components
@@ -180,7 +181,7 @@ const App = () => (
             <Route path="/gradebook/teacher" element={<GradeBookManagement />} />
             <Route path="/teacher/gradebooks" element={<GradeBookManagement />} />
             <Route path="/gradebook/entry" element={<GradeBookManagement />} />
-            <Route path="/gradebook/reports" element={<div>Grade Reports Page</div>} />
+            <Route path="/gradebook/reports" element={<ReportCards />} />
             <Route path="/gradebook/analytics" element={<div>Grade Analytics Page</div>} />
             
             {/* Parent Dashboard Routes */}

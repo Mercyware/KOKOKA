@@ -119,6 +119,9 @@ router.get('/', academicYearController.getAllAcademicYears);
  */
 router.get('/:id', academicYearController.getAcademicYearById);
 
+// Get terms for an academic year
+router.get('/:academicYearId/terms', academicYearController.getTermsForAcademicYear);
+
 /**
  * @swagger
  * /api/academic-years/current/active:

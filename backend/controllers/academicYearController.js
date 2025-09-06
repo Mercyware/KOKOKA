@@ -503,3 +503,48 @@ exports.getActiveAcademicYear = exports.getCurrentAcademicYear;
 
 // Set active academic year (alias for setCurrentAcademicYear)
 exports.setActiveAcademicYear = exports.setCurrentAcademicYear;
+
+// Get terms for an academic year
+exports.getTermsForAcademicYear = async (req, res) => {
+  try {
+    const { academicYearId } = req.params;
+    const { schoolId } = req.user;
+
+    // Verify the academic year exists and belongs to the school
+    const academicYear = await prisma.academicYear.findFirst({
+      where: {
+        id: academicYearId,
+        schoolId
+      }
+    });
+
+    if (!academicYear) {
+      return res.status(404).json({
+        success: false,
+        message: 'Academic year not found'
+      });
+    }
+
+    const terms = await prisma.term.findMany({
+      where: {
+        academicYearId,
+        schoolId
+      },
+      orderBy: {
+        startDate: 'asc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: terms
+    });
+  } catch (error) {
+    console.error('Get terms for academic year error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch terms',
+      error: error.message
+    });
+  }
+};

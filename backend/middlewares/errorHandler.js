@@ -5,26 +5,32 @@ const errorHandler = (err, req, res, next) => {
   // Log error for development
   console.error(err);
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    const message = `Resource not found with id of ${err.value}`;
-    error = new Error(message);
-    error.statusCode = 404;
-  }
-
-  // Mongoose duplicate key
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
-    const value = err.keyValue[field];
-    const message = `Duplicate field value: ${field} with value: ${value}. Please use another value.`;
+  // Prisma errors
+  if (err.code === 'P2002') {
+    const field = err.meta?.target?.[0] || 'field';
+    const message = `Duplicate field value: ${field}. Please use another value.`;
     error = new Error(message);
     error.statusCode = 400;
   }
 
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map(val => val.message);
-    error = new Error(message.join(', '));
+  // Prisma record not found
+  if (err.code === 'P2025') {
+    const message = 'Resource not found';
+    error = new Error(message);
+    error.statusCode = 404;
+  }
+
+  // Prisma foreign key constraint failed
+  if (err.code === 'P2003') {
+    const message = 'Foreign key constraint failed';
+    error = new Error(message);
+    error.statusCode = 400;
+  }
+
+  // Prisma validation error
+  if (err.code === 'P2006' || err.code === 'P2007') {
+    const message = 'The provided value for the column is invalid';
+    error = new Error(message);
     error.statusCode = 400;
   }
 

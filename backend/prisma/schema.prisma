@@ -75,6 +75,10 @@ model School {
   
   // Grade Management relationships
   gradeBooks           GradeBook[]
+  
+  // Report Card relationships
+  reportCardTemplates  ReportCardTemplate[]
+  reportBatches        ReportBatch[]
 
   @@map("schools")
 }
@@ -125,6 +129,12 @@ model User {
   notificationPreferences  UserNotificationPreferences?
   deviceTokens             DeviceToken[]
   webhookSubscriptions     WebhookSubscription[]
+  
+  // Report Card relationships
+  createdReportCardTemplates ReportCardTemplate[] @relation("ReportCardTemplateCreatedBy")
+  generatedReportCards     ReportCard[] @relation("ReportCardGeneratedBy")
+  approvedReportCards      ReportCard[] @relation("ReportCardApprovedBy")
+  createdReportBatches     ReportBatch[] @relation("ReportBatchCreatedBy")
 
   @@map("users")
 }
@@ -158,6 +168,8 @@ model AcademicYear {
   gradeReports        GradeReport[]
   classSubjectHistory ClassSubjectHistory[]
   classTeachers       ClassTeacher[]
+  reportCards         ReportCard[]
+  reportBatches       ReportBatch[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -182,6 +194,8 @@ model Term {
   assessments Assessment[]
   gradeBooks  GradeBook[]
   gradeReports GradeReport[]
+  reportCards ReportCard[]
+  reportBatches ReportBatch[]
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
@@ -679,6 +693,175 @@ model GradeReport {
   @@map("grade_reports")
 }
 
+// Report Card Templates
+model ReportCardTemplate {
+  id                    String    @id @default(uuid())
+  
+  // Basic Info
+  name                  String
+  description           String?
+  type                  GradeReportType
+  
+  // Template Configuration
+  layout                Json      // Layout structure (sections, columns, etc.)
+  subjectOrder          String[]  // Order of subjects in report
+  includeAttendance     Boolean   @default(true)
+  includeConduct        Boolean   @default(true)
+  includeCreditHours    Boolean   @default(false)
+  includeClassRank      Boolean   @default(false)
+  includeGPA            Boolean   @default(true)
+  includePercentile     Boolean   @default(false)
+  includeComments       Boolean   @default(true)
+  includeSignatures     Boolean   @default(true)
+  
+  // Grading Configuration
+  gradingScale          Json      // Custom grading scale for this template
+  passingGrade          String    @default("D")
+  showLetterGrades      Boolean   @default(true)
+  showPercentages       Boolean   @default(true)
+  showGPA               Boolean   @default(true)
+  
+  // Design & Styling
+  headerText            String?   // Custom header text
+  footerText            String?   // Custom footer text
+  logoUrl               String?   // School logo URL
+  colors                Json?     // Color scheme
+  fonts                 Json?     // Font settings
+  pageSize              String    @default("A4")  // A4, Letter, etc.
+  orientation           String    @default("portrait") // portrait, landscape
+  
+  // Visibility & Access
+  isActive              Boolean   @default(true)
+  isDefault             Boolean   @default(false)
+  isSystem              Boolean   @default(false) // System templates can't be deleted
+  
+  // Relationships
+  schoolId              String
+  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdById           String
+  createdBy             User      @relation("ReportCardTemplateCreatedBy", fields: [createdById], references: [id])
+  
+  // Usage
+  reportCards           ReportCard[]
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([schoolId, name])
+  @@map("report_card_templates")
+}
+
+// Generated Report Cards
+model ReportCard {
+  id                    String    @id @default(uuid())
+  
+  // Context
+  studentId             String
+  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYearId        String
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  termId                String?
+  term                  Term?     @relation(fields: [termId], references: [id])
+  classId               String?
+  class                 Class?    @relation(fields: [classId], references: [id])
+  
+  // Template & Configuration
+  templateId            String
+  template              ReportCardTemplate @relation(fields: [templateId], references: [id])
+  reportType            GradeReportType
+  reportPeriod          String    // "Term 1", "Semester 1", etc.
+  
+  // Generated Content
+  generatedData         Json      // Complete report card data
+  subjectGrades         Json      // Subject-wise detailed grades
+  overallSummary        Json      // Overall performance summary
+  
+  // Analytics
+  overallGrade          String?   // Overall letter grade
+  overallPercentage     Float?    // Overall percentage
+  overallGPA            Float?    // Overall GPA
+  classRank             Int?      // Student's rank in class
+  classSize             Int?      // Total students in class
+  
+  // Additional Information
+  attendanceData        Json?     // Attendance information
+  conductGrade          String?   // Conduct/Behavior grade
+  teacherComments       Json?     // Comments from multiple teachers
+  
+  // Status & Publishing
+  status                ReportStatus @default(DRAFT)
+  publishedAt           DateTime?
+  parentViewedAt        DateTime?
+  studentViewedAt       DateTime?
+  
+  // Generation Metadata
+  generatedBy           String
+  generatedByUser       User      @relation("ReportCardGeneratedBy", fields: [generatedBy], references: [id])
+  approvedBy            String?
+  approvedByUser        User?     @relation("ReportCardApprovedBy", fields: [approvedBy], references: [id])
+  approvedAt            DateTime?
+  
+  // File Storage
+  pdfUrl                String?   // URL to generated PDF
+  pdfStoragePath        String?   // Storage path for PDF
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([studentId, reportType, reportPeriod, academicYearId, termId])
+  @@map("report_cards")
+}
+
+// Bulk Report Generation Jobs
+model ReportBatch {
+  id                    String    @id @default(uuid())
+  
+  // Batch Information
+  name                  String
+  description           String?
+  
+  // Target Selection
+  academicYearId        String
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  termId                String?
+  term                  Term?     @relation(fields: [termId], references: [id])
+  classIds              String[]  // Classes to generate reports for
+  studentIds            String[]? // Specific students (optional)
+  
+  // Template Configuration
+  templateId            String
+  template              ReportCardTemplate @relation(fields: [templateId], references: [id])
+  reportType            GradeReportType
+  reportPeriod          String
+  
+  // Processing Status
+  status                BatchProcessingStatus @default(PENDING)
+  totalStudents         Int
+  processedStudents     Int       @default(0)
+  successfulReports     Int       @default(0)
+  failedReports         Int       @default(0)
+  
+  // Progress Tracking
+  startedAt             DateTime?
+  completedAt           DateTime?
+  errorLog              Json?     // Detailed error information
+  
+  // Generated Files
+  bulkPdfUrl            String?   // URL to combined PDF
+  individualPdfsUrl     String?   // URL to zip file of individual PDFs
+  
+  // Creation Info
+  createdById           String
+  createdBy             User      @relation("ReportBatchCreatedBy", fields: [createdById], references: [id])
+  schoolId              String
+  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("report_batches")
+}
+
 // Parent Engagement and Tracking
 model ParentGradeAccess {
   id                    String    @id @default(uuid())
@@ -770,6 +953,7 @@ model Class {
   curriculumProgressTrackers CurriculumProgressTracker[]
   gradeBooks          GradeBook[]
   classSubjectHistory ClassSubjectHistory[]
+  reportCards         ReportCard[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -828,6 +1012,7 @@ model Student {
   curriculumProgressTrackers CurriculumProgressTracker[]
   gradeEntries         GradeEntry[]
   gradeReports         GradeReport[]
+  reportCards          ReportCard[]
   parentGradeAccess    ParentGradeAccess[]
 
   @@unique([schoolId, admissionNumber])
@@ -2053,6 +2238,15 @@ enum ReportStatus {
   PUBLISHED       // Report has been published
   SENT            // Report has been sent to parents/students
   ARCHIVED        // Report has been archived
+}
+
+enum BatchProcessingStatus {
+  PENDING         // Batch is queued for processing
+  PROCESSING      // Batch is currently being processed
+  COMPLETED       // Batch processing completed successfully
+  FAILED          // Batch processing failed
+  CANCELLED       // Batch processing was cancelled
+  PARTIAL         // Batch completed with some failures
 }
 
 enum ClassSubjectStatus {

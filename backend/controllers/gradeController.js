@@ -498,16 +498,16 @@ exports.getGradeStats = asyncHandler(async (req, res) => {
     ];
 
     if (classId) {
-      pipeline.push({ $match: { 'assessmentInfo.class': mongoose.Types.ObjectId(classId) } });
+      pipeline.push({ $match: { 'assessmentInfo.class': classId } });
     }
     if (subjectId) {
-      pipeline.push({ $match: { 'assessmentInfo.subject': mongoose.Types.ObjectId(subjectId) } });
+      pipeline.push({ $match: { 'assessmentInfo.subject': subjectId } });
     }
     if (assessmentId) {
-      pipeline.push({ $match: { 'assessmentInfo._id': mongoose.Types.ObjectId(assessmentId) } });
+      pipeline.push({ $match: { 'assessmentInfo._id': assessmentId } });
     }
     if (academicYear) {
-      pipeline.push({ $match: { 'assessmentInfo.academicYear': mongoose.Types.ObjectId(academicYear) } });
+      pipeline.push({ $match: { 'assessmentInfo.academicYear': academicYear } });
     }
 
     // Add date filter
