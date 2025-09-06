@@ -54,13 +54,17 @@ async function main() {
   console.log('👨‍🎓 Creating students...');
   const students = await createStudents(school.id, users, classes, houses, academicYear.id);
 
-  // 11. Create Class-Subject History
-  console.log('📋 Creating class-subject history...');
-  await createClassSubjectHistory(school.id, classes, subjects, teachers, academicYear.id);
+  // 11. Create Class-Subject History - TEMPORARILY DISABLED
+  // console.log('📋 Creating class-subject history...');
+  // await createClassSubjectHistory(school.id, classes, subjects, teachers, academicYear.id);
 
-  // 12. Create Class Teachers
-  console.log('👨‍🏫 Creating class teacher assignments...');
-  await createClassTeachers(school.id, teachers, classes, academicYear.id);
+  // 12. Create Class Teachers - TEMPORARILY DISABLED
+  // console.log('👨‍🏫 Creating class teacher assignments...');
+  // await createClassTeachers(school.id, teachers, classes, academicYear.id);
+
+  // 13. Create Sample Assessment for Testing - TEMPORARILY DISABLED
+  // console.log('📝 Creating sample assessment for testing...');
+  // await createSampleAssessment(school.id, classes[0], subjects[0], academicYear.id, academicCalendars[0], teachers[0]);
 
   // 13. Create Guardians
   console.log('👨‍👩‍👧‍👦 Creating guardians...');
@@ -102,32 +106,28 @@ async function main() {
 }
 
 async function clearExistingData() {
-  // Clear in reverse dependency order
-  await prisma.globalCurriculumSubject.deleteMany();
-  await prisma.globalCurriculum.deleteMany();
-  await prisma.curriculumSubject.deleteMany();
-  await prisma.curriculum.deleteMany();
-  await prisma.guardianStudent.deleteMany();
-  await prisma.guardian.deleteMany();
-  await prisma.classTeacher.deleteMany();
-  await prisma.classSubjectHistory.deleteMany();
-  await prisma.studentClassHistory.deleteMany();
-  await prisma.teacherSubject.deleteMany();
-  await prisma.grade.deleteMany();
-  await prisma.assessment.deleteMany();
-  await prisma.attendance.deleteMany();
-  await prisma.student.deleteMany();
-  await prisma.teacher.deleteMany();
-  await prisma.staff.deleteMany();
-  await prisma.subject.deleteMany();
-  await prisma.class.deleteMany();
-  await prisma.section.deleteMany();
-  await prisma.house.deleteMany();
-  await prisma.academicCalendar.deleteMany();
-  await prisma.term.deleteMany();
-  await prisma.academicYear.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.school.deleteMany();
+  // Clear core tables in reverse dependency order
+  try {
+    await prisma.grade.deleteMany();
+    await prisma.assessment.deleteMany();
+    await prisma.attendance.deleteMany();
+    await prisma.studentClassHistory.deleteMany();
+    await prisma.student.deleteMany();
+    await prisma.teacherSubject.deleteMany();
+    await prisma.teacher.deleteMany();
+    await prisma.staff.deleteMany();
+    await prisma.subject.deleteMany();
+    await prisma.class.deleteMany();
+    await prisma.section.deleteMany();
+    await prisma.house.deleteMany();
+    await prisma.academicCalendar.deleteMany();
+    await prisma.term.deleteMany();
+    await prisma.academicYear.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.school.deleteMany();
+  } catch (error) {
+    console.log('Some tables may not exist, continuing with seeding...');
+  }
 }
 
 async function createSchool() {
@@ -351,6 +351,59 @@ async function createUsers(schoolId) {
       emailVerified: true,
       schoolId: schoolId
     },
+    // Additional students for load testing
+    { email: 'michael.brown@greenwood.com', passwordHash: passwordHash, name: 'Michael Brown', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'sarah.wilson@greenwood.com', passwordHash: passwordHash, name: 'Sarah Wilson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'david.martinez@greenwood.com', passwordHash: passwordHash, name: 'David Martinez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'olivia.garcia@greenwood.com', passwordHash: passwordHash, name: 'Olivia Garcia', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'james.anderson@greenwood.com', passwordHash: passwordHash, name: 'James Anderson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'sophia.taylor@greenwood.com', passwordHash: passwordHash, name: 'Sophia Taylor', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'benjamin.thomas@greenwood.com', passwordHash: passwordHash, name: 'Benjamin Thomas', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'isabella.jackson@greenwood.com', passwordHash: passwordHash, name: 'Isabella Jackson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'matthew.white@greenwood.com', passwordHash: passwordHash, name: 'Matthew White', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'ava.harris@greenwood.com', passwordHash: passwordHash, name: 'Ava Harris', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'ethan.clark@greenwood.com', passwordHash: passwordHash, name: 'Ethan Clark', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'mia.lewis@greenwood.com', passwordHash: passwordHash, name: 'Mia Lewis', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'alexander.robinson@greenwood.com', passwordHash: passwordHash, name: 'Alexander Robinson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'charlotte.walker@greenwood.com', passwordHash: passwordHash, name: 'Charlotte Walker', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'daniel.perez@greenwood.com', passwordHash: passwordHash, name: 'Daniel Perez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'amelia.hall@greenwood.com', passwordHash: passwordHash, name: 'Amelia Hall', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'william.young@greenwood.com', passwordHash: passwordHash, name: 'William Young', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'harper.allen@greenwood.com', passwordHash: passwordHash, name: 'Harper Allen', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'henry.sanchez@greenwood.com', passwordHash: passwordHash, name: 'Henry Sanchez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'evelyn.wright@greenwood.com', passwordHash: passwordHash, name: 'Evelyn Wright', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'sebastian.lopez@greenwood.com', passwordHash: passwordHash, name: 'Sebastian Lopez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'abigail.hill@greenwood.com', passwordHash: passwordHash, name: 'Abigail Hill', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'jackson.scott@greenwood.com', passwordHash: passwordHash, name: 'Jackson Scott', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'emily.green@greenwood.com', passwordHash: passwordHash, name: 'Emily Green', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'owen.adams@greenwood.com', passwordHash: passwordHash, name: 'Owen Adams', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'ella.baker@greenwood.com', passwordHash: passwordHash, name: 'Ella Baker', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'lucas.gonzalez@greenwood.com', passwordHash: passwordHash, name: 'Lucas Gonzalez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'avery.nelson@greenwood.com', passwordHash: passwordHash, name: 'Avery Nelson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'carter.carter@greenwood.com', passwordHash: passwordHash, name: 'Carter Carter', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'scarlett.mitchell@greenwood.com', passwordHash: passwordHash, name: 'Scarlett Mitchell', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'wyatt.perez@greenwood.com', passwordHash: passwordHash, name: 'Wyatt Perez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'madison.roberts@greenwood.com', passwordHash: passwordHash, name: 'Madison Roberts', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'jack.turner@greenwood.com', passwordHash: passwordHash, name: 'Jack Turner', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'layla.phillips@greenwood.com', passwordHash: passwordHash, name: 'Layla Phillips', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'jacob.campbell@greenwood.com', passwordHash: passwordHash, name: 'Jacob Campbell', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'grace.parker@greenwood.com', passwordHash: passwordHash, name: 'Grace Parker', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'mason.evans@greenwood.com', passwordHash: passwordHash, name: 'Mason Evans', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'chloe.edwards@greenwood.com', passwordHash: passwordHash, name: 'Chloe Edwards', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'noah.collins@greenwood.com', passwordHash: passwordHash, name: 'Noah Collins', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'lily.stewart@greenwood.com', passwordHash: passwordHash, name: 'Lily Stewart', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'elijah.sanchez@greenwood.com', passwordHash: passwordHash, name: 'Elijah Sanchez', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'zoe.morris@greenwood.com', passwordHash: passwordHash, name: 'Zoe Morris', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'luke.rogers@greenwood.com', passwordHash: passwordHash, name: 'Luke Rogers', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'nora.reed@greenwood.com', passwordHash: passwordHash, name: 'Nora Reed', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'levi.cook@greenwood.com', passwordHash: passwordHash, name: 'Levi Cook', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'hazel.morgan@greenwood.com', passwordHash: passwordHash, name: 'Hazel Morgan', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'oliver.bailey@greenwood.com', passwordHash: passwordHash, name: 'Oliver Bailey', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'violet.rivera@greenwood.com', passwordHash: passwordHash, name: 'Violet Rivera', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'asher.cooper@greenwood.com', passwordHash: passwordHash, name: 'Asher Cooper', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'aurora.richardson@greenwood.com', passwordHash: passwordHash, name: 'Aurora Richardson', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'grayson.cox@greenwood.com', passwordHash: passwordHash, name: 'Grayson Cox', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
+    { email: 'savannah.ward@greenwood.com', passwordHash: passwordHash, name: 'Savannah Ward', role: 'STUDENT', isActive: true, emailVerified: true, schoolId: schoolId },
     {
       email: 'robert.smith@greenwood.com',
       passwordHash: await bcrypt.hash('parent123', 10),
@@ -777,16 +830,34 @@ async function createTeachers(schoolId, users) {
 async function createStudents(schoolId, users, classes, houses, academicYearId) {
   const studentUsers = users.filter(user => user.role === 'STUDENT');
   
-  const studentsData = [
-    {
-      admissionNumber: 'STU2024001',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      dateOfBirth: new Date('2012-04-10'),
-      gender: 'FEMALE',
-      email: 'jane.smith@greenwood.com',
-      phone: '+1-555-0201',
-      streetAddress: '123 Student Road',
+  // Generate student data for all student users
+  const studentsData = studentUsers.map((studentUser, index) => {
+    const names = studentUser.name.split(' ');
+    const firstName = names[0];
+    const lastName = names.slice(1).join(' ');
+    
+    // Distribute students across different classes and houses
+    const classIndex = index % classes.length;
+    const houseIndex = index % houses.length;
+    
+    // Generate different birth years (2010-2014 for grades 1-8)
+    const birthYear = 2010 + (index % 5);
+    const birthMonth = Math.floor(Math.random() * 12) + 1;
+    const birthDay = Math.floor(Math.random() * 28) + 1;
+    
+    // Determine gender from common first names
+    const maleNames = ['Michael', 'David', 'James', 'Benjamin', 'Matthew', 'Ethan', 'Alexander', 'Daniel', 'William', 'Henry', 'Sebastian', 'Jackson', 'Owen', 'Lucas', 'Carter', 'Wyatt', 'Jack', 'Jacob', 'Mason', 'Noah', 'Elijah', 'Luke', 'Levi', 'Oliver', 'Asher', 'Grayson'];
+    const gender = maleNames.includes(firstName) ? 'MALE' : 'FEMALE';
+    
+    return {
+      admissionNumber: `STU2024${String(index + 1).padStart(3, '0')}`,
+      firstName,
+      lastName,
+      dateOfBirth: new Date(birthYear, birthMonth - 1, birthDay),
+      gender,
+      email: studentUser.email,
+      phone: `+1-555-${String(200 + index).padStart(4, '0')}`,
+      streetAddress: `${100 + index} Student Street`,
       city: 'Springfield',
       state: 'California',
       zipCode: '90210',
@@ -794,54 +865,12 @@ async function createStudents(schoolId, users, classes, houses, academicYearId) 
       admissionDate: new Date('2024-09-01'),
       status: 'ACTIVE',
       schoolId: schoolId,
-      userId: studentUsers[0].id,
-      currentClassId: classes[5].id, // Grade 6A
+      userId: studentUser.id,
+      currentClassId: classes[classIndex].id,
       academicYearId: academicYearId,
-      houseId: houses[0].id // Phoenix House
-    },
-    {
-      admissionNumber: 'STU2024002',
-      firstName: 'Alex',
-      lastName: 'Johnson',
-      dateOfBirth: new Date('2013-08-15'),
-      gender: 'MALE',
-      email: 'alex.johnson@greenwood.com',
-      phone: '+1-555-0202',
-      streetAddress: '456 Learning Lane',
-      city: 'Springfield',
-      state: 'California',
-      zipCode: '90210',
-      country: 'United States',
-      admissionDate: new Date('2024-09-01'),
-      status: 'ACTIVE',
-      schoolId: schoolId,
-      userId: studentUsers[1].id,
-      currentClassId: classes[4].id, // Grade 5A
-      academicYearId: academicYearId,
-      houseId: houses[1].id // Dragon House
-    },
-    {
-      admissionNumber: 'STU2024003',
-      firstName: 'Emma',
-      lastName: 'Davis',
-      dateOfBirth: new Date('2011-12-03'),
-      gender: 'FEMALE',
-      email: 'emma.davis@greenwood.com',
-      phone: '+1-555-0203',
-      streetAddress: '789 Academy Street',
-      city: 'Springfield',
-      state: 'California',
-      zipCode: '90210',
-      country: 'United States',
-      admissionDate: new Date('2024-09-01'),
-      status: 'ACTIVE',
-      schoolId: schoolId,
-      userId: studentUsers[2].id,
-      currentClassId: classes[6].id, // Grade 7A
-      academicYearId: academicYearId,
-      houseId: houses[2].id // Eagle House
-    }
-  ];
+      houseId: houses[houseIndex].id
+    };
+  });
 
   const students = [];
   for (const studentData of studentsData) {
@@ -1175,6 +1204,34 @@ async function createGlobalCurriculumSubjects(curriculumId, type) {
       }
     });
   }
+}
+
+async function createSampleAssessment(schoolId, targetClass, subject, academicYearId, term, teacher) {
+  const assessment = await prisma.assessment.create({
+    data: {
+      title: 'Math Quiz - Chapter 1',
+      description: 'Basic arithmetic and problem solving skills assessment',
+      type: 'QUIZ',
+      totalMarks: 100,
+      passingMarks: 60,
+      duration: 60, // minutes
+      scheduledDate: new Date(),
+      status: 'PUBLISHED',
+      schoolId,
+      classId: targetClass.id,
+      subjectId: subject.id,
+      academicYearId,
+      termId: term.id,
+      teacherId: teacher.id,
+      instructions: 'Answer all questions. Show your work for full credit.',
+      rubricData: null,
+      allowLateSubmission: true,
+      lateSubmissionPenalty: 10
+    }
+  });
+
+  console.log(`✅ Created sample assessment: ${assessment.title} for ${targetClass.name} - ${subject.name}`);
+  return assessment;
 }
 
 main()

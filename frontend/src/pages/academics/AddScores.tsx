@@ -22,6 +22,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { toast } from 'sonner';
 import { Upload, Download, Save, UserPlus, Search, Filter, RefreshCw } from 'lucide-react';
 import scoreService, { Assessment, Student, Grade, FormData } from '@/services/scoreService';
@@ -43,6 +59,13 @@ const AddScores = () => {
   // Score data
   const [scores, setScores] = useState<Record<string, { marksObtained: string; feedback: string; privateNotes: string }>>({});
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // Search and pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   
   // CSV Upload
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -66,9 +89,17 @@ const AddScores = () => {
 
   useEffect(() => {
     if (selectedAssessment) {
+      // Auto-populate class and academic year from selected assessment
+      const assessmentData = assessments.find(a => a.id === selectedAssessment);
+      if (assessmentData) {
+        setSelectedClass(assessmentData.classId);
+        setSelectedSubject(assessmentData.subjectId);
+        setSelectedAcademicYear(assessmentData.academicYearId);
+        setSelectedTerm(assessmentData.termId);
+      }
       fetchExistingScores();
     }
-  }, [selectedAssessment]);
+  }, [selectedAssessment, assessments]);
 
   const fetchFormData = async () => {
     try {
@@ -148,6 +179,38 @@ const AddScores = () => {
   };
 
   const handleScoreChange = (studentId: string, field: 'marksObtained' | 'feedback' | 'privateNotes', value: string) => {
+    // Validate marks if it's the marksObtained field
+    if (field === 'marksObtained' && value !== '') {
+      const numericValue = parseFloat(value);
+      const totalMarks = selectedAssessmentData?.totalMarks || 0;
+      
+      if (isNaN(numericValue)) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [studentId]: 'Please enter a valid number'
+        }));
+      } else if (numericValue < 0) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [studentId]: 'Marks cannot be negative'
+        }));
+      } else if (numericValue > totalMarks) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [studentId]: `Marks cannot exceed ${totalMarks}`
+        }));
+        toast.error(`Marks cannot exceed ${totalMarks} for this assessment`);
+        return; // Don't update state if validation fails
+      } else {
+        // Clear any existing validation errors for this student
+        setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[studentId];
+          return newErrors;
+        });
+      }
+    }
+
     setScores(prev => ({
       ...prev,
       [studentId]: {
@@ -230,11 +293,11 @@ const AddScores = () => {
   };
 
   const downloadTemplate = () => {
-    const headers = ['studentId', 'marksObtained', 'feedback', 'privateNotes'];
+    const headers = ['studentId', 'studentName', 'marksObtained', 'feedback', 'privateNotes'];
     const csvContent = [
       headers.join(','),
       ...students.map(student => 
-        `${student.id},"","",""`
+        `${student.id},"${student.user?.name || 'Unknown Student'}","","",""`
       )
     ].join('\n');
 
@@ -246,6 +309,21 @@ const AddScores = () => {
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  // Filter and paginate students
+  const filteredStudents = students.filter(student => 
+    student.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const totalPages = Math.ceil(filteredStudents.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedStudents = filteredStudents.slice(startIndex, startIndex + pageSize);
+  
+  // Calculate progress statistics
+  const scoredStudentsCount = Object.values(scores).filter(s => s.marksObtained && s.marksObtained !== '').length;
+  const progressPercentage = students.length > 0 ? Math.round((scoredStudentsCount / students.length) * 100) : 0;
 
   const selectedAssessmentData = assessments.find(a => a.id === selectedAssessment);
 
@@ -428,9 +506,9 @@ const AddScores = () => {
                     <SelectItem key={assessment.id} value={assessment.id}>
                       <div className="flex flex-col">
                         <span>{assessment.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {assessment.subject.name} • {assessment.class.name} • {assessment.type}
-                        </span>
+<span className="text-xs text-muted-foreground">
+  {(assessment.subject?.name || '-')} • {(assessment.class?.name || '-')} • {(assessment.type || '-')}
+</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -441,24 +519,24 @@ const AddScores = () => {
             {selectedAssessmentData && (
               <div className="p-4 bg-muted rounded-lg">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Subject:</span> {selectedAssessmentData.subject.name}
-                  </div>
-                  <div>
-                    <span className="font-medium">Class:</span> {selectedAssessmentData.class.name}
-                  </div>
-                  <div>
-                    <span className="font-medium">Type:</span> {selectedAssessmentData.type}
-                  </div>
-                  <div>
-                    <span className="font-medium">Total Marks:</span> {selectedAssessmentData.totalMarks}
-                  </div>
+<div>
+  <span className="font-medium">Subject:</span> {selectedAssessmentData.subject?.name || '-'}
+</div>
+<div>
+  <span className="font-medium">Class:</span> {selectedAssessmentData.class?.name || '-'}
+</div>
+<div>
+  <span className="font-medium">Type:</span> {selectedAssessmentData.type || '-'}
+</div>
+<div>
+  <span className="font-medium">Total Marks:</span> {selectedAssessmentData.totalMarks ?? '-'}
+</div>
                 </div>
-                {selectedAssessmentData.description && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {selectedAssessmentData.description}
-                  </p>
-                )}
+{selectedAssessmentData.description && (
+  <p className="mt-2 text-sm text-muted-foreground">
+    {selectedAssessmentData.description}
+  </p>
+)}
               </div>
             )}
           </div>
@@ -469,99 +547,327 @@ const AddScores = () => {
       {students.length > 0 && selectedAssessmentData && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Students & Scores
-              <Badge variant="outline">
-                {students.length} Students
-              </Badge>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                <CardTitle>Students & Scores</CardTitle>
+                <Badge variant="outline">
+                  {filteredStudents.length} of {students.length} Students
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="text-muted-foreground">Progress:</div>
+                  <Badge variant={progressPercentage === 100 ? "default" : "secondary"}>
+                    {scoredStudentsCount}/{students.length} ({progressPercentage}%)
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            
+            {/* Search and Filters */}
+            <div className="flex items-center gap-4 pt-4">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search students by name, email, or ID..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={viewMode} onValueChange={(value: 'table' | 'cards') => setViewMode(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="table">Table View</SelectItem>
+                  <SelectItem value="cards">Cards View</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
+          
           <CardContent>
-            <div className="space-y-4">
-              {students.map((student) => {
-                const studentScore = scores[student.id];
-                const marksObtained = studentScore?.marksObtained ? parseFloat(studentScore.marksObtained) : 0;
-                const grade = marksObtained > 0 ? calculateGrade(marksObtained, selectedAssessmentData.totalMarks) : '';
-                const percentage = marksObtained > 0 ? ((marksObtained / selectedAssessmentData.totalMarks) * 100).toFixed(1) : '';
+            {viewMode === 'table' ? (
+              <div className="space-y-4">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead className="w-32">Marks</TableHead>
+                        <TableHead className="w-24">Grade</TableHead>
+                        <TableHead className="w-24">%</TableHead>
+                        <TableHead>Feedback</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedStudents.map((student) => {
+                        const studentScore = scores[student.id];
+                        const marksObtained = studentScore?.marksObtained ? parseFloat(studentScore.marksObtained) : 0;
+                        const grade = marksObtained > 0 ? calculateGrade(marksObtained, selectedAssessmentData.totalMarks) : '';
+                        const percentage = marksObtained > 0 ? ((marksObtained / selectedAssessmentData.totalMarks) * 100).toFixed(1) : '';
 
-                return (
-                  <div key={student.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start p-4 border rounded-lg">
-                    <div className="lg:col-span-3">
-                      <div className="font-medium">{student.user.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {student.user.email}
-                      </div>
-                      {student.studentClassHistory.length > 0 && (
+                        return (
+                          <TableRow key={student.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{student.user.name}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {student.admissionNumber} • {student.user.email}
+                                </div>
+                              </div>
+                            </TableCell>
+                            
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    min={0}
+                                    max={selectedAssessmentData.totalMarks}
+                                    value={studentScore?.marksObtained || ''}
+                                    onChange={(e) => handleScoreChange(student.id, 'marksObtained', e.target.value)}
+                                    className={`w-16 h-8 ${validationErrors[student.id] ? 'border-red-500 bg-red-50' : ''}`}
+                                  />
+                                  {validationErrors[student.id] && (
+                                    <div className="absolute top-full left-0 mt-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1 z-10 whitespace-nowrap">
+                                      {validationErrors[student.id]}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-sm text-muted-foreground">
+                                  /{selectedAssessmentData.totalMarks}
+                                </span>
+                              </div>
+                            </TableCell>
+                            
+                            <TableCell>
+                              {grade && (
+                                <Badge variant={marksObtained >= selectedAssessmentData.passingMarks ? "default" : "destructive"} className="text-xs">
+                                  {grade}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            
+                            <TableCell>
+                              {percentage && (
+                                <span className="text-sm font-medium">{percentage}%</span>
+                              )}
+                            </TableCell>
+                            
+                            <TableCell>
+                              <Input
+                                placeholder="Feedback..."
+                                value={studentScore?.feedback || ''}
+                                onChange={(e) => handleScoreChange(student.id, 'feedback', e.target.value)}
+                                className="h-8"
+                              />
+                            </TableCell>
+                            
+                            <TableCell>
+                              <Input
+                                placeholder="Notes..."
+                                value={studentScore?.privateNotes || ''}
+                                onChange={(e) => handleScoreChange(student.id, 'privateNotes', e.target.value)}
+                                className="h-8"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1} to {Math.min(startIndex + pageSize, filteredStudents.length)} of {filteredStudents.length} students
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        const page = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                        if (page <= totalPages) {
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Card View for backward compatibility */
+              <div className="space-y-4">
+                {paginatedStudents.map((student) => {
+                  const studentScore = scores[student.id];
+                  const marksObtained = studentScore?.marksObtained ? parseFloat(studentScore.marksObtained) : 0;
+                  const grade = marksObtained > 0 ? calculateGrade(marksObtained, selectedAssessmentData.totalMarks) : '';
+                  const percentage = marksObtained > 0 ? ((marksObtained / selectedAssessmentData.totalMarks) * 100).toFixed(1) : '';
+
+                  return (
+                    <div key={student.id} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start p-4 border rounded-lg">
+                      <div className="lg:col-span-3">
+                        <div className="font-medium">{student.user.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          Section: {student.studentClassHistory[0].section.name}
+                          {student.user.email}
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="lg:col-span-2">
-                      <Label className="text-xs">Marks Obtained</Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          min={0}
-                          max={selectedAssessmentData.totalMarks}
-                          value={studentScore?.marksObtained || ''}
-                          onChange={(e) => handleScoreChange(student.id, 'marksObtained', e.target.value)}
-                          className="w-20"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          / {selectedAssessmentData.totalMarks}
-                        </span>
+                        {student.studentClassHistory.length > 0 && (
+                          <div className="text-sm text-muted-foreground">
+                            Class: {student.studentClassHistory[0].class?.name || '-'}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    
-                    {marksObtained > 0 && (
+                      
                       <div className="lg:col-span-2">
-                        <Label className="text-xs">Grade & Percentage</Label>
+                        <Label className="text-xs">Marks Obtained</Label>
                         <div className="flex items-center gap-2">
-                          <Badge variant={marksObtained >= selectedAssessmentData.passingMarks ? "default" : "destructive"}>
-                            {grade}
-                          </Badge>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              min={0}
+                              max={selectedAssessmentData.totalMarks}
+                              value={studentScore?.marksObtained || ''}
+                              onChange={(e) => handleScoreChange(student.id, 'marksObtained', e.target.value)}
+                              className={`w-20 ${validationErrors[student.id] ? 'border-red-500 bg-red-50' : ''}`}
+                            />
+                            {validationErrors[student.id] && (
+                              <div className="absolute top-full left-0 mt-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1 z-10 whitespace-nowrap">
+                                {validationErrors[student.id]}
+                              </div>
+                            )}
+                          </div>
                           <span className="text-sm text-muted-foreground">
-                            {percentage}%
+                            / {selectedAssessmentData.totalMarks}
                           </span>
                         </div>
                       </div>
-                    )}
-                    
-                    {!marksObtained && <div className="lg:col-span-2"></div>}
-                    
-                    <div className="lg:col-span-3">
-                      <Label className="text-xs">Feedback</Label>
-                      <Textarea
-                        placeholder="Student feedback (optional)"
-                        value={studentScore?.feedback || ''}
-                        onChange={(e) => handleScoreChange(student.id, 'feedback', e.target.value)}
-                        rows={2}
-                      />
+                      
+                      {marksObtained > 0 && (
+                        <div className="lg:col-span-2">
+                          <Label className="text-xs">Grade & Percentage</Label>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={marksObtained >= selectedAssessmentData.passingMarks ? "default" : "destructive"}>
+                              {grade}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {percentage}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!marksObtained && <div className="lg:col-span-2"></div>}
+                      
+                      <div className="lg:col-span-3">
+                        <Label className="text-xs">Feedback</Label>
+                        <Textarea
+                          placeholder="Student feedback (optional)"
+                          value={studentScore?.feedback || ''}
+                          onChange={(e) => handleScoreChange(student.id, 'feedback', e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+                      
+                      <div className="lg:col-span-2">
+                        <Label className="text-xs">Private Notes</Label>
+                        <Textarea
+                          placeholder="Private notes (optional)"
+                          value={studentScore?.privateNotes || ''}
+                          onChange={(e) => handleScoreChange(student.id, 'privateNotes', e.target.value)}
+                          rows={2}
+                        />
+                      </div>
                     </div>
+                  );
+                })}
+                
+                {/* Pagination for cards view */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center space-x-2 pt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
                     
-                    <div className="lg:col-span-2">
-                      <Label className="text-xs">Private Notes</Label>
-                      <Textarea
-                        placeholder="Private notes (optional)"
-                        value={studentScore?.privateNotes || ''}
-                        onChange={(e) => handleScoreChange(student.id, 'privateNotes', e.target.value)}
-                        rows={2}
-                      />
-                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </div>
+            )}
             
-            {Object.values(scores).filter(s => s.marksObtained).length > 0 && (
+            {/* Progress Summary */}
+            {scoredStudentsCount > 0 && (
               <div className="mt-6 p-4 bg-muted rounded-lg">
-                <div className="text-sm">
-                  <span className="font-medium">Summary:</span> {' '}
-                  {Object.values(scores).filter(s => s.marksObtained).length} of {students.length} students have scores entered
+                <div className="flex items-center justify-between">
+                  <div className="text-sm">
+                    <span className="font-medium">Progress Summary:</span> {' '}
+                    {scoredStudentsCount} of {students.length} students have scores entered
+                  </div>
+                  {progressPercentage === 100 && (
+                    <Badge variant="default" className="bg-green-500">
+                      Complete ✓
+                    </Badge>
+                  )}
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
                 </div>
               </div>
             )}

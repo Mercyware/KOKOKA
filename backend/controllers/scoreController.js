@@ -33,7 +33,7 @@ const upload = multer({
 exports.getAssessments = async (req, res) => {
   try {
     const { classId, subjectId, academicYearId, termId } = req.query;
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
 
     const whereClause = {
       schoolId,
@@ -88,7 +88,7 @@ exports.getAssessments = async (req, res) => {
 exports.getStudentsInClass = async (req, res) => {
   try {
     const { classId, academicYearId } = req.query;
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
 
     if (!classId || !academicYearId) {
       return res.status(400).json({
@@ -104,7 +104,7 @@ exports.getStudentsInClass = async (req, res) => {
           some: {
             classId,
             academicYearId,
-            status: 'ACTIVE'
+            status: 'active'
           }
         }
       },
@@ -116,10 +116,13 @@ exports.getStudentsInClass = async (req, res) => {
           where: {
             classId,
             academicYearId,
-            status: 'ACTIVE'
+            status: 'active'
           },
           include: {
-            section: {
+            class: {
+              select: { id: true, name: true, grade: true }
+            },
+            academicYear: {
               select: { id: true, name: true }
             }
           }
@@ -144,11 +147,125 @@ exports.getStudentsInClass = async (req, res) => {
   }
 };
 
+// Get students for an assessment (for score entry)
+exports.getStudentsForAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params;
+    const schoolId = req.school?.id;
+
+    // First get the assessment details
+    const assessment = await prisma.assessment.findFirst({
+      where: {
+        id: assessmentId,
+        schoolId
+      },
+      include: {
+        class: {
+          select: { id: true, name: true, grade: true }
+        },
+        academicYear: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    if (!assessment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    // Get students in the assessment's class for the academic year
+    const students = await prisma.student.findMany({
+      where: {
+        schoolId,
+        studentClassHistory: {
+          some: {
+            classId: assessment.classId,
+            academicYearId: assessment.academicYearId,
+            status: 'active'
+          }
+        }
+      },
+      include: {
+        user: {
+          select: { name: true, email: true }
+        },
+        studentClassHistory: {
+          where: {
+            classId: assessment.classId,
+            academicYearId: assessment.academicYearId,
+            status: 'active'
+          },
+          include: {
+            class: {
+              select: { id: true, name: true, grade: true }
+            },
+            academicYear: {
+              select: { id: true, name: true }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { user: { name: 'asc' } }
+      ]
+    });
+
+    // Get existing scores for these students
+    const existingScores = await prisma.grade.findMany({
+      where: {
+        assessmentId,
+        schoolId,
+        studentId: {
+          in: students.map(s => s.id)
+        }
+      }
+    });
+
+    // Create a map of existing scores by student ID
+    const scoresMap = existingScores.reduce((acc, score) => {
+      acc[score.studentId] = score;
+      return acc;
+    }, {});
+
+    // Add existing scores to student data
+    const studentsWithScores = students.map(student => ({
+      ...student,
+      existingScore: scoresMap[student.id] || null
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        assessment: {
+          id: assessment.id,
+          title: assessment.title,
+          type: assessment.type,
+          totalMarks: assessment.totalMarks,
+          passingMarks: assessment.passingMarks,
+          class: assessment.class,
+          academicYear: assessment.academicYear
+        },
+        students: studentsWithScores
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching students for assessment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch students for assessment',
+      error: error.message
+    });
+  }
+};
+
 // Get scores for an assessment
 exports.getScores = async (req, res) => {
   try {
     const { assessmentId } = req.params;
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
 
     const scores = await prisma.grade.findMany({
       where: {
@@ -210,7 +327,12 @@ exports.createOrUpdateScore = async (req, res) => {
       feedback,
       privateNotes
     } = req.body;
-    const { schoolId, id: gradedById } = req.user;
+    const schoolId = req.school?.id;
+    const gradedById = req.user?.id;
+
+    // Validate gradedById - only use if it's a valid UUID format
+    const isValidUUID = gradedById && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gradedById);
+    const validGradedById = isValidUUID ? gradedById : null;
 
     // Validate input
     if (!assessmentId || !studentId || marksObtained === undefined) {
@@ -264,9 +386,9 @@ exports.createOrUpdateScore = async (req, res) => {
           letterGrade,
           feedback,
           privateNotes,
-          gradedById,
-          gradedAt: new Date(),
-          status: 'COMPLETED'
+          gradedById: validGradedById,
+          gradedAt: validGradedById ? new Date() : null,
+          status: 'GRADED'
         },
         include: {
           student: {
@@ -299,9 +421,9 @@ exports.createOrUpdateScore = async (req, res) => {
           feedback,
           privateNotes,
           schoolId,
-          gradedById,
-          gradedAt: new Date(),
-          status: 'COMPLETED'
+          gradedById: validGradedById,
+          gradedAt: validGradedById ? new Date() : null,
+          status: 'GRADED'
         },
         include: {
           student: {
@@ -342,7 +464,12 @@ exports.createOrUpdateScore = async (req, res) => {
 exports.bulkCreateOrUpdateScores = async (req, res) => {
   try {
     const { scores } = req.body;
-    const { schoolId, id: gradedById } = req.user;
+    const schoolId = req.school?.id;
+    const gradedById = req.user?.id;
+
+    // Validate gradedById - only use if it's a valid UUID format
+    const isValidUUID = gradedById && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gradedById);
+    const validGradedById = isValidUUID ? gradedById : null;
 
     if (!scores || !Array.isArray(scores) || scores.length === 0) {
       return res.status(400).json({
@@ -413,9 +540,9 @@ exports.bulkCreateOrUpdateScores = async (req, res) => {
             feedback,
             privateNotes,
             schoolId,
-            gradedById,
-            gradedAt: new Date(),
-            status: 'COMPLETED'
+            gradedById: validGradedById,
+            gradedAt: validGradedById ? new Date() : null,
+            status: 'GRADED'
           },
           update: {
             marksObtained,
@@ -424,9 +551,9 @@ exports.bulkCreateOrUpdateScores = async (req, res) => {
             letterGrade,
             feedback,
             privateNotes,
-            gradedById,
-            gradedAt: new Date(),
-            status: 'COMPLETED'
+            gradedById: validGradedById,
+            gradedAt: validGradedById ? new Date() : null,
+            status: 'GRADED'
           }
         });
 
@@ -471,7 +598,12 @@ exports.uploadScoresCSV = [
       }
 
       const { assessmentId } = req.body;
-      const { schoolId, id: gradedById } = req.user;
+      const schoolId = req.school?.id;
+      const gradedById = req.user?.id;
+
+      // Validate gradedById - only use if it's a valid UUID format
+      const isValidUUID = gradedById && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gradedById);
+      const validGradedById = isValidUUID ? gradedById : null;
 
       if (!assessmentId) {
         return res.status(400).json({
@@ -503,7 +635,7 @@ exports.uploadScoresCSV = [
         fs.createReadStream(req.file.path)
           .pipe(csv())
           .on('data', (row) => {
-            // Expected CSV format: studentId, marksObtained, feedback (optional)
+            // Expected CSV format: studentId, studentName (optional), marksObtained, feedback (optional), privateNotes (optional)
             if (row.studentId && row.marksObtained !== undefined) {
               scores.push({
                 assessmentId,
@@ -561,9 +693,9 @@ exports.uploadScoresCSV = [
               percentage,
               letterGrade,
               schoolId,
-              gradedById,
-              gradedAt: new Date(),
-              status: 'COMPLETED'
+              gradedById: validGradedById,
+              gradedAt: validGradedById ? new Date() : null,
+              status: 'GRADED'
             },
             update: {
               marksObtained: scoreData.marksObtained,
@@ -572,9 +704,9 @@ exports.uploadScoresCSV = [
               letterGrade,
               feedback: scoreData.feedback,
               privateNotes: scoreData.privateNotes,
-              gradedById,
-              gradedAt: new Date(),
-              status: 'COMPLETED'
+              gradedById: validGradedById,
+              gradedAt: validGradedById ? new Date() : null,
+              status: 'GRADED'
             }
           });
 
@@ -616,7 +748,7 @@ exports.uploadScoresCSV = [
 exports.deleteScore = async (req, res) => {
   try {
     const { id } = req.params;
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
 
     const score = await prisma.grade.findFirst({
       where: {
@@ -653,7 +785,7 @@ exports.deleteScore = async (req, res) => {
 // Get form data (classes, subjects, academic years, terms)
 exports.getFormData = async (req, res) => {
   try {
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
 
     const [classes, subjects, academicYears, terms] = await Promise.all([
       prisma.class.findMany({

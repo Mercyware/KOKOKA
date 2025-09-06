@@ -115,6 +115,28 @@ router.get('/students', scoreController.getStudentsInClass);
  */
 router.get('/assessment/:assessmentId', scoreController.getScores);
 
+/**
+ * @swagger
+ * /api/scores/assessment/{assessmentId}/students:
+ *   get:
+ *     summary: Get students for an assessment
+ *     description: Get all students enrolled in the assessment's class with existing scores
+ *     tags: [Scores]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Assessment ID
+ *     responses:
+ *       200:
+ *         description: Students retrieved successfully
+ */
+router.get('/assessment/:assessmentId/students', scoreController.getStudentsForAssessment);
+
 // Teacher and admin routes
 router.use(roleMiddleware.restrictTo('admin', 'teacher', 'principal', 'vice_principal'));
 
