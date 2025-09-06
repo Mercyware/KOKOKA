@@ -57,6 +57,9 @@ import ParentDashboard from "./pages/parent/ParentDashboard";
 import StudentGradeView from "./pages/student/StudentGradeView";
 // Academic Components
 import AddScores from "./pages/academics/AddScores";
+import AddScoresQuickEntry from "./pages/academics/AddScores.QuickEntry";
+import AddScoresGradeBook from "./pages/academics/AddScores.GradeBook";
+import ScoreEntryModes from "./pages/academics/ScoreEntryModes";
 
 const queryClient = new QueryClient();
 
@@ -94,7 +97,12 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter 
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true
+          }}
+        >
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -152,8 +160,11 @@ const App = () => (
             <Route path="/staff/:id" element={<StaffDetails />} />
             
             {/* Academic Routes */}
-            <Route path="/scores-add" element={<AddScores />} />
-            <Route path="/academics/scores" element={<AddScores />} />
+            <Route path="/scores-add" element={<ScoreEntryModes />} />
+            <Route path="/academics/scores" element={<ScoreEntryModes />} />
+            <Route path="/academics/scores/standard" element={<AddScores />} />
+            <Route path="/academics/scores/quick-entry" element={<AddScoresQuickEntry />} />
+            <Route path="/academics/scores/gradebook" element={<AddScoresGradeBook />} />
             
             {/* Teacher Routes */}
             <Route path="/teachers/class-assignments" element={<ClassAssignments />} />

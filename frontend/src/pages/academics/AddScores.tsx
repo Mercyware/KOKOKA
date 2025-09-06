@@ -1,19 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle,
+  Button,
+  Form,
+  FormSection,
+  FormField,
+  Input,
+  Textarea,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import {
+  StatusBadge,
+  Badge,
+  Label,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -21,28 +27,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { 
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+  TableRow
+} from '@/components/ui';
 import { toast } from 'sonner';
-import { Upload, Download, Save, UserPlus, Search, Filter, RefreshCw } from 'lucide-react';
+import { Upload, Download, Save, UserPlus, Search, Filter, RefreshCw, ArrowLeft } from 'lucide-react';
 import scoreService, { Assessment, Student, Grade, FormData } from '@/services/scoreService';
 
 const AddScores = () => {
+  const navigate = useNavigate();
   // Form data from backend
   const [formData, setFormData] = useState<FormData | null>(null);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -332,13 +329,37 @@ const AddScores = () => {
       <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add Scores</h1>
-          <p className="text-muted-foreground">
-            Enter and manage student assessment scores
-          </p>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => navigate('/academics/scores')}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Standard Score Entry</h1>
+              <p className="text-muted-foreground">
+                Complete score management with full features
+              </p>
+            </div>
+          </div>
         </div>
         
         <div className="flex gap-2">
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/academics/scores/quick-entry')}
+            >
+              Quick Entry
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/academics/scores/gradebook')}
+            >
+              Grade Book
+            </Button>
+          </div>
           {students.length > 0 && (
             <Button
               variant="outline"
@@ -558,9 +579,11 @@ const AddScores = () => {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="text-muted-foreground">Progress:</div>
-                  <Badge variant={progressPercentage === 100 ? "default" : "secondary"}>
+                  <StatusBadge 
+                    variant={progressPercentage === 100 ? "success" : progressPercentage > 50 ? "warning" : "info"}
+                  >
                     {scoredStudentsCount}/{students.length} ({progressPercentage}%)
-                  </Badge>
+                  </StatusBadge>
                 </div>
               </div>
             </div>
@@ -568,7 +591,6 @@ const AddScores = () => {
             {/* Search and Filters */}
             <div className="flex items-center gap-4 pt-4">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search students by name, email, or ID..."
                   value={searchTerm}
@@ -576,7 +598,7 @@ const AddScores = () => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-10"
+                  leftIcon={<Search />}
                 />
               </div>
               <Select value={viewMode} onValueChange={(value: 'table' | 'cards') => setViewMode(value)}>
@@ -650,9 +672,12 @@ const AddScores = () => {
                             
                             <TableCell>
                               {grade && (
-                                <Badge variant={marksObtained >= selectedAssessmentData.passingMarks ? "default" : "destructive"} className="text-xs">
+                                <StatusBadge 
+                                  variant={marksObtained >= (selectedAssessmentData.passingMarks || 50) ? "success" : "danger"} 
+                                  className="text-xs"
+                                >
                                   {grade}
-                                </Badge>
+                                </StatusBadge>
                               )}
                             </TableCell>
                             
@@ -694,7 +719,7 @@ const AddScores = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
-                        variant="outline"
+                        intent="secondary"
                         size="sm"
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
@@ -708,7 +733,7 @@ const AddScores = () => {
                           return (
                             <Button
                               key={page}
-                              variant={currentPage === page ? "default" : "outline"}
+                              intent={currentPage === page ? "primary" : "secondary"}
                               size="sm"
                               onClick={() => setCurrentPage(page)}
                             >
@@ -720,7 +745,7 @@ const AddScores = () => {
                       })}
                       
                       <Button
-                        variant="outline"
+                        intent="secondary"
                         size="sm"
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
@@ -783,10 +808,10 @@ const AddScores = () => {
                         <div className="lg:col-span-2">
                           <Label className="text-xs">Grade & Percentage</Label>
                           <div className="flex items-center gap-2">
-                            <Badge variant={marksObtained >= selectedAssessmentData.passingMarks ? "default" : "destructive"}>
+                            <StatusBadge variant={marksObtained >= (selectedAssessmentData.passingMarks || 50) ? "success" : "danger"}>
                               {grade}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
+                            </StatusBadge>
+                            <span className="text-sm text-muted-foreground font-medium">
                               {percentage}%
                             </span>
                           </div>
@@ -822,7 +847,7 @@ const AddScores = () => {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center space-x-2 pt-4">
                     <Button
-                      variant="outline"
+                      intent="secondary"
                       size="sm"
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
@@ -830,12 +855,12 @@ const AddScores = () => {
                       Previous
                     </Button>
                     
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground font-medium">
                       Page {currentPage} of {totalPages}
                     </span>
                     
                     <Button
-                      variant="outline"
+                      intent="secondary"
                       size="sm"
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
@@ -856,9 +881,9 @@ const AddScores = () => {
                     {scoredStudentsCount} of {students.length} students have scores entered
                   </div>
                   {progressPercentage === 100 && (
-                    <Badge variant="default" className="bg-green-500">
+                    <StatusBadge variant="success" className="bg-green-600">
                       Complete ✓
-                    </Badge>
+                    </StatusBadge>
                   )}
                 </div>
                 
@@ -889,12 +914,16 @@ const AddScores = () => {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-muted-foreground">No assessments found for the selected filters</p>
-            <Button variant="outline" onClick={() => {
-              setSelectedClass('');
-              setSelectedSubject('');
-              setSelectedAcademicYear('');
-              setSelectedTerm('');
-            }} className="mt-2">
+            <Button 
+              intent="secondary" 
+              onClick={() => {
+                setSelectedClass('');
+                setSelectedSubject('');
+                setSelectedAcademicYear('');
+                setSelectedTerm('');
+              }} 
+              className="mt-2"
+            >
               Clear Filters
             </Button>
           </CardContent>
