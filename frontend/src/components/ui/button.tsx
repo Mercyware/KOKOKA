@@ -26,18 +26,18 @@ const buttonVariants = cva(
           "transition-all duration-200 ease-in-out",
         ],
         outline: [
-          "bg-white border border-gray-300 text-gray-700 shadow-sm",
-          "hover:bg-gray-50 hover:border-gray-400 hover:text-gray-800 hover:shadow-sm",
-          "active:bg-gray-100 active:border-gray-500",
-          "dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200",
-          "dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:hover:text-gray-100",
+          "bg-white border border-cyan-300 text-cyan-700 shadow-sm",
+          "hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-800 hover:shadow-sm",
+          "active:bg-cyan-100 active:border-cyan-500",
+          "dark:bg-cyan-800 dark:border-cyan-600 dark:text-cyan-200",
+          "dark:hover:bg-cyan-700 dark:hover:border-cyan-500 dark:hover:text-cyan-100",
           "transition-all duration-200 ease-in-out",
         ],
         ghost: [
-          "bg-transparent text-gray-700 border-transparent shadow-none",
-          "hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm",
-          "active:bg-gray-200",
-          "dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+          "bg-transparent text-green-700 border-transparent shadow-none",
+          "hover:bg-green-50 hover:text-green-900 hover:shadow-sm",
+          "active:bg-green-100",
+          "dark:text-green-300 dark:hover:bg-green-800 dark:hover:text-green-100",
           "transition-all duration-200 ease-in-out",
         ],
         destructive: [
@@ -49,11 +49,11 @@ const buttonVariants = cva(
           "transition-all duration-200 ease-in-out",
         ],
         secondary: [
-          "bg-gray-100 text-gray-900 border border-gray-300 shadow-sm",
-          "hover:bg-gray-200 hover:border-gray-400 hover:text-gray-800 hover:shadow-sm",
-          "active:bg-gray-300 active:border-gray-500",
-          "dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600",
-          "dark:hover:bg-gray-600 dark:hover:border-gray-500",
+          "bg-orange-100 text-orange-900 border border-orange-300 shadow-sm",
+          "hover:bg-orange-200 hover:border-orange-400 hover:text-orange-800 hover:shadow-sm",
+          "active:bg-orange-300 active:border-orange-500",
+          "dark:bg-orange-700 dark:text-orange-100 dark:border-orange-600",
+          "dark:hover:bg-orange-600 dark:hover:border-orange-500",
           "transition-all duration-200 ease-in-out",
         ],
         link: [
@@ -170,7 +170,7 @@ const buttonVariants = cva(
     defaultVariants: {
       variant: "default",
       intent: "secondary",
-      size: "md", 
+      size: "md",
       width: "auto",
       iconOnly: false,
     },
@@ -179,7 +179,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'iconOnly'> {
+  Omit<VariantProps<typeof buttonVariants>, 'iconOnly'> {
   asChild?: boolean;
   loading?: boolean;
   loadingText?: string;
@@ -190,13 +190,13 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ 
-    className, 
+  ({
+    className,
     variant,
-    intent, 
-    size, 
+    intent,
+    size,
     width,
-    asChild = false, 
+    asChild = false,
     loading = false,
     loadingText,
     leftIcon,
@@ -205,25 +205,25 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     pulse = false,
     children,
     disabled,
-    ...props 
+    ...props
   }, ref) => {
     const Comp = asChild ? Slot : "button";
     const isDisabled = disabled || loading;
     const isIconOnly = Boolean(iconOnly);
-    
+
     // Get icon configuration based on button size
     const iconConfig = iconPatterns.button[size || 'md'];
     const iconSize: IconSize = iconConfig.size;
-    
+
     return (
       <Comp
         className={cn(
-          buttonVariants({ 
+          buttonVariants({
             variant,
-            intent, 
-            size, 
+            intent,
+            size,
             width,
-            iconOnly: isIconOnly 
+            iconOnly: isIconOnly
           }),
           pulse && "animate-pulse",
           className
@@ -237,11 +237,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           !isIconOnly && "gap-2"
         )}>
           {loading && normalizeIcon(<Loader2 className="animate-spin" />, iconSize)}
-          
+
           {!loading && !isIconOnly && leftIcon && normalizeIcon(leftIcon, iconSize)}
-          
+
           {!loading && isIconOnly && iconOnly && normalizeIcon(iconOnly, iconSize)}
-          
+
           {!isIconOnly && (
             <span className={cn(
               "flex items-center leading-none",
@@ -250,7 +250,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               {loading ? loadingText : children}
             </span>
           )}
-          
+
           {!loading && !isIconOnly && rightIcon && normalizeIcon(rightIcon, iconSize)}
         </div>
       </Comp>
@@ -272,8 +272,8 @@ export const ButtonGroup = React.forwardRef<
       ref={ref}
       className={cn(
         "inline-flex",
-        orientation === 'horizontal' 
-          ? "flex-row [&>*:not(:first-child)]:ml-0 [&>*:not(:first-child)]:-ml-px [&>*:not(:first-child)]:rounded-l-none [&>*:not(:last-child)]:rounded-r-none" 
+        orientation === 'horizontal'
+          ? "flex-row [&>*:not(:first-child)]:ml-0 [&>*:not(:first-child)]:-ml-px [&>*:not(:first-child)]:rounded-l-none [&>*:not(:last-child)]:rounded-r-none"
           : "flex-col [&>*:not(:first-child)]:mt-0 [&>*:not(:first-child)]:-mt-px [&>*:not(:first-child)]:rounded-t-none [&>*:not(:last-child)]:rounded-b-none",
         className
       )}
@@ -283,8 +283,8 @@ export const ButtonGroup = React.forwardRef<
       {React.Children.map(children, (child) =>
         React.isValidElement(child) && child.type === Button
           ? React.cloneElement(child as React.ReactElement<ButtonProps>, {
-              size: size || child.props.size,
-            })
+            size: size || child.props.size,
+          })
           : child
       )}
     </div>

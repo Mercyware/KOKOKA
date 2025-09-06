@@ -234,8 +234,7 @@ const GlobalCurriculumRegistry: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Global Curriculum Registry</h1>
           <p className="text-gray-600 mt-2">Browse and adopt curriculum templates from leading education providers worldwide</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/curriculum/school')}>
-          <ArrowRight className="h-4 w-4 mr-2" />
+        <Button intent="secondary" leftIcon={<ArrowRight />} onClick={() => navigate('/curriculum/school')}>
           My School Curricula
         </Button>
       </div>
@@ -475,14 +474,15 @@ const GlobalCurriculumRegistry: React.FC = () => {
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
                       <Button 
-                        variant="outline" 
+                        intent="action" 
                         size="sm"
                         onClick={() => setSelectedCurriculum(curriculum)}
+                        leftIcon={<Eye />}
                       >
-                        <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
                       <Button 
+                        intent="success"
                         size="sm"
                         onClick={() => {
                           setSelectedCurriculum(curriculum);
@@ -493,8 +493,8 @@ const GlobalCurriculumRegistry: React.FC = () => {
                           });
                           setShowAdoptDialog(true);
                         }}
+                        leftIcon={<Download />}
                       >
-                        <Download className="h-3 w-3 mr-1" />
                         Adopt
                       </Button>
                     </div>
@@ -526,7 +526,7 @@ const GlobalCurriculumRegistry: React.FC = () => {
         <div className="flex justify-center">
           <div className="flex items-center space-x-2">
             <Button
-              variant="outline"
+              intent="secondary"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
@@ -536,7 +536,7 @@ const GlobalCurriculumRegistry: React.FC = () => {
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              variant="outline"
+              intent="secondary"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
@@ -625,10 +625,11 @@ const GlobalCurriculumRegistry: React.FC = () => {
           )}
 
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setSelectedCurriculum(null)}>
+            <Button intent="cancel" onClick={() => setSelectedCurriculum(null)}>
               Close
             </Button>
             <Button 
+              intent="primary"
               onClick={() => {
                 if (selectedCurriculum) {
                   setAdoptionData({
@@ -639,8 +640,8 @@ const GlobalCurriculumRegistry: React.FC = () => {
                   setShowAdoptDialog(true);
                 }
               }}
+              leftIcon={<Download />}
             >
-              <Download className="h-4 w-4 mr-2" />
               Adopt This Curriculum
             </Button>
           </DialogFooter>
@@ -690,11 +691,10 @@ const GlobalCurriculumRegistry: React.FC = () => {
           </div>
 
           <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowAdoptDialog(false)}>
+            <Button intent="cancel" onClick={() => setShowAdoptDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAdoptCurriculum}>
-              <Download className="h-4 w-4 mr-2" />
+            <Button intent="success" onClick={handleAdoptCurriculum} leftIcon={<Download />}>
               Adopt Curriculum
             </Button>
           </DialogFooter>

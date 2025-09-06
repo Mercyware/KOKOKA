@@ -6,6 +6,18 @@ const { JWT_SECRET } = require('../config/jwt');
 // Protect routes
 exports.protect = async (req, res, next) => {
   try {
+    // Development bypass - REMOVE IN PRODUCTION
+    if (process.env.NODE_ENV === 'development' && process.env.AUTH_BYPASS === 'true') {
+      req.user = {
+        id: 'dev-user',
+        name: 'Dev User',
+        email: 'dev@example.com',
+        role: 'admin',
+        schoolId: 'dev-school'
+      };
+      return next();
+    }
+    
     let token;
     
     // Get token from Authorization header

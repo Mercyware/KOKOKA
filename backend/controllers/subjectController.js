@@ -7,11 +7,25 @@ const asyncHandler = require('express-async-handler');
 // @route   GET /api/subjects
 // @access  Private
 exports.getAllSubjects = asyncHandler(async (req, res) => {
-  // Check if req.school exists
+  // Check if req.school exists with enhanced debugging
   if (!req.school) {
+    console.log('Missing school context in subjects request');
+    console.log('Headers:', JSON.stringify({
+      'x-school-subdomain': req.headers['x-school-subdomain'],
+      'host': req.headers.host,
+      'origin': req.headers.origin
+    }, null, 2));
+    
     return res.status(404).json({
       success: false,
-      message: 'School not found or inactive'
+      message: 'School not found or inactive',
+      debug: {
+        hasSchool: !!req.school,
+        headers: req.headers['x-school-subdomain'],
+        host: req.headers.host,
+        endpoint: '/api/subjects',
+        timestamp: new Date().toISOString()
+      }
     });
   }
 

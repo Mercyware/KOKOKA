@@ -1,15 +1,58 @@
 const { prisma } = require('../config/database');
 const asyncHandler = require('express-async-handler');
 
+// @desc    Debug school context for curricula
+// @route   GET /api/curricula/debug
+// @access  Private
+exports.debugSchoolContext = asyncHandler(async (req, res) => {
+  const debugInfo = {
+    hasSchool: !!req.school,
+    schoolId: req.school?.id,
+    schoolName: req.school?.name,
+    schoolSubdomain: req.school?.subdomain,
+    schoolStatus: req.school?.status,
+    headers: {
+      'x-school-subdomain': req.headers['x-school-subdomain'],
+      'host': req.headers.host,
+      'origin': req.headers.origin,
+      'user-agent': req.headers['user-agent']
+    },
+    query: req.query,
+    url: req.url,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  };
+  
+  console.log('Curriculum Debug school context:', JSON.stringify(debugInfo, null, 2));
+  
+  res.json({
+    success: true,
+    debug: debugInfo
+  });
+});
+
 // @desc    Get all curricula
 // @route   GET /api/curricula
 // @access  Private
 exports.getAllCurricula = asyncHandler(async (req, res) => {
-  // Check if req.school exists
+  // Check if req.school exists with enhanced debugging
   if (!req.school) {
+    console.log('Missing school context in curriculum request');
+    console.log('Headers:', JSON.stringify({
+      'x-school-subdomain': req.headers['x-school-subdomain'],
+      'host': req.headers.host,
+      'origin': req.headers.origin
+    }, null, 2));
+    
     return res.status(404).json({
       success: false,
-      message: 'School not found or inactive'
+      message: 'School not found or inactive',
+      debug: {
+        hasSchool: !!req.school,
+        headers: req.headers['x-school-subdomain'],
+        host: req.headers.host,
+        timestamp: new Date().toISOString()
+      }
     });
   }
 

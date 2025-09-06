@@ -21,7 +21,14 @@
       "Bash(npm install:*)",
       "Bash(node server.js)",
       "Bash(node:*)",
-      "Bash(wmic process where processid=43112 delete:*)"
+      "Bash(wmic process where processid=43112 delete:*)",
+      "Bash(wmic process where:*)",
+      "Bash(grep:*)",
+      "Bash(start http://localhost:8081/teachers/class-assignments)",
+      "Bash(start \"http://localhost:8081/teachers/class-assignments?refresh=1\")",
+      "Bash(PORT=5002 npm run dev)",
+      "Bash(start \"http://localhost:8081/teachers/class-assignments?v=2\")",
+      "Bash(start \"http://localhost:8081/teachers/class-assignments?v=3\")"
     ],
     "deny": [],
     "ask": [],

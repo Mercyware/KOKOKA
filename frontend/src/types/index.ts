@@ -26,11 +26,17 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  school: string;
+  school?: School; // School object from auth response
+  schoolId?: string; // School ID field
   schoolStatus?: SchoolStatus;
   profileImage?: string;
   lastLogin?: Date;
   isActive: boolean;
+  // Additional fields from auth response
+  emailVerified?: boolean;
+  student?: any;
+  teacher?: any;
+  guardian?: any;
 }
 
 export type UserRole = 'student' | 'teacher' | 'admin' | 'superadmin' | 'cashier' | 'librarian' | 'counselor' | 'nurse' | 'security' | 'maintenance' | 'other';
@@ -53,8 +59,8 @@ export interface School {
   updatedAt: Date;
 }
 
-export type SchoolType = 'primary' | 'secondary' | 'college' | 'university' | 'vocational' | 'other';
-export type SchoolStatus = 'active' | 'pending' | 'suspended' | 'inactive';
+export type SchoolType = 'PRIMARY' | 'SECONDARY' | 'COLLEGE' | 'UNIVERSITY' | 'VOCATIONAL' | 'OTHER';
+export type SchoolStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'INACTIVE';
 
 export interface Address {
   street?: string;

@@ -126,7 +126,6 @@ export { Progress } from './progress';
 export { Skeleton } from './skeleton';
 export { ScrollArea } from './scroll-area';
 export { Label } from './label';
-export { Textarea } from './textarea';
 
 // Navigation Components
 export {

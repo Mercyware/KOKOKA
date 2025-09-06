@@ -159,6 +159,75 @@ The system has been migrated from MongoDB to PostgreSQL with Redis for caching a
 - **Connection**: Environment-based connection strings for Docker and local development
 - **Schema**: 20+ models with proper foreign keys, indexes, and constraints
 
+### Database Seeding & Sample Data
+
+#### **Comprehensive Seeder Script**
+A complete seeder script is available at `backend/prisma/seed.js` that creates a full working school environment:
+
+- **School**: Greenwood International School with complete configuration
+- **Users**: Admin, Principal, Teachers, Students, and Parents with working credentials
+- **Academic Structure**: Academic year, terms, and calendar with holidays
+- **Organizational Structure**: Houses (Phoenix, Dragon, Eagle, Lion) and Sections
+- **Classes**: Grade 1A through Grade 8A with appropriate capacities
+- **Subjects**: Complete curriculum including Math, ELA, Science, Social Studies, PE, Arts, Music, CS, Spanish
+- **Teachers**: 3 teachers with different specializations and grade assignments
+- **Students**: Sample students assigned to classes and houses with parent relationships
+- **Class-Subject Mappings**: Proper subject assignments based on grade levels
+- **Teacher Assignments**: Class teachers and subject teachers properly assigned
+- **Guardians**: Parent-child relationships with proper permissions
+- **Curriculum**: Sample school curriculum with global curriculum templates
+
+#### **Seeder Usage**
+```bash
+# Run the comprehensive seeder
+npm run db:seed
+
+# Reset database and reseed (development only)
+npm run db:reset
+```
+
+#### **Sample Login Credentials**
+After seeding, you can log in with:
+- **Admin**: `admin@greenwood.com` / `admin123`
+- **Principal**: `principal@greenwood.com` / `principal123`
+- **Teacher**: `john.doe@greenwood.com` / `teacher123`
+- **Student**: `jane.smith@greenwood.com` / `student123`
+- **Parent**: `robert.smith@greenwood.com` / `parent123`
+
+#### **⚠️ CRITICAL SEEDER MAINTENANCE RULE**
+
+**ALWAYS UPDATE THE SEEDER WHEN ADDING NEW MODELS OR FIELDS:**
+
+When you add new database models, modify existing models, or add required fields:
+
+1. **Update `backend/prisma/seed.js`** immediately to include the new entities
+2. **Add realistic sample data** for all new fields and relationships
+3. **Maintain referential integrity** - ensure all foreign keys have valid references
+4. **Test the seeder** - run `npm run db:reset` to verify it works completely
+5. **Update login credentials list** if new user types are added
+6. **Document any new entity relationships** in the seeder comments
+
+**Why this is critical:**
+- New developers need working sample data to understand the system
+- Testing requires consistent, realistic data
+- Demo environments depend on the seeder for presentations
+- CI/CD pipelines may use seeded data for automated testing
+- Missing seeder updates break the development workflow
+
+**Example workflow when adding a new model:**
+```bash
+# 1. Add new model to schema.prisma
+# 2. Run migration
+npm run db:migrate
+
+# 3. Update backend/prisma/seed.js with new model data
+# 4. Test the seeder
+npm run db:reset
+
+# 5. Verify all relationships work correctly
+# 6. Document the new model in CLAUDE.md if necessary
+```
+
 ### Development Notes
 - API endpoints documented at `/api-docs` (Swagger)
 - Development subdomain defaults to 'demo' 

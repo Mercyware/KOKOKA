@@ -11,78 +11,61 @@ router.use(authMiddleware.protect);
  * @swagger
  * tags:
  *   name: Class Teachers
- *   description: Class teacher management endpoints
+ *   description: Teacher-Class assignment management endpoints
  */
 
 /**
  * @swagger
  * /api/class-teachers:
  *   get:
- *     summary: Get all class teachers
- *     description: Retrieve a list of all class teachers. Accessible by all authenticated users.
+ *     summary: Get all teacher-class assignments
+ *     description: Retrieve a list of all teacher-class assignments with filtering options
+ *     tags: [Class Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: academicYearId
+ *         schema:
+ *           type: string
+ *         description: Filter by Academic Year ID
+ *       - in: query
+ *         name: teacherId
+ *         schema:
+ *           type: string
+ *         description: Filter by Teacher ID
+ *       - in: query
+ *         name: classId
+ *         schema:
+ *           type: string
+ *         description: Filter by Class ID
+ *     responses:
+ *       200:
+ *         description: A list of teacher-class assignments
+ */
+router.get('/', classTeacherController.getClassTeacherAssignments);
+
+/**
+ * @swagger
+ * /api/class-teachers/form-data:
+ *   get:
+ *     summary: Get form data for teacher-class assignments
+ *     description: Get classes, academic years, and teachers for dropdowns
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: A list of class teachers
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 count:
- *                   type: integer
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       teacher:
- *                         type: object
- *                         properties:
- *                           _id:
- *                             type: string
- *                           name:
- *                             type: string
- *                       class:
- *                         type: object
- *                         properties:
- *                           _id:
- *                             type: string
- *                           name:
- *                             type: string
- *                       academicYear:
- *                         type: object
- *                         properties:
- *                           _id:
- *                             type: string
- *                           name:
- *                             type: string
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: Form data including classes, academic years, and teachers
  */
-router.get('/', classTeacherController.getAllClassTeachers);
+router.get('/form-data', classTeacherController.getFormData);
 
 /**
  * @swagger
- * /api/class-teachers/check:
+ * /api/class-teachers/available-teachers:
  *   get:
- *     summary: Check if class teacher exists
- *     description: Check if a class teacher assignment exists for a specific class and academic year
+ *     summary: Get available teachers for assignment
+ *     description: Get teachers not already assigned to a class in an academic year
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -101,84 +84,16 @@ router.get('/', classTeacherController.getAllClassTeachers);
  *         description: Academic Year ID
  *     responses:
  *       200:
- *         description: Check result
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 exists:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   nullable: true
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: List of available teachers
  */
-router.get('/check', classTeacherController.checkClassTeacherExists);
-
-/**
- * @swagger
- * /api/class-teachers/academic-year/{academicYearId}:
- *   get:
- *     summary: Get class teachers by academic year
- *     description: Retrieve all class teachers for a specific academic year
- *     tags: [Class Teachers]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: academicYearId
- *         schema:
- *           type: string
- *         required: true
- *         description: Academic Year ID
- *     responses:
- *       200:
- *         description: List of class teachers for the academic year
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 count:
- *                   type: integer
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       teacher:
- *                         type: object
- *                       class:
- *                         type: object
- *                       academicYear:
- *                         type: object
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       404:
- *         description: Academic year not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
- */
-router.get('/academic-year/:academicYearId', classTeacherController.getClassTeachersByAcademicYear);
+router.get('/available-teachers', classTeacherController.getAvailableTeachers);
 
 /**
  * @swagger
  * /api/class-teachers/teacher/{teacherId}:
  *   get:
- *     summary: Get classes by teacher
- *     description: Retrieve all classes assigned to a specific teacher
+ *     summary: Get assignments by teacher
+ *     description: Retrieve all class assignments for a specific teacher
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -189,45 +104,50 @@ router.get('/academic-year/:academicYearId', classTeacherController.getClassTeac
  *           type: string
  *         required: true
  *         description: Teacher ID
+ *       - in: query
+ *         name: academicYearId
+ *         schema:
+ *           type: string
+ *         description: Filter by Academic Year ID
  *     responses:
  *       200:
- *         description: List of classes assigned to the teacher
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 count:
- *                   type: integer
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       class:
- *                         type: object
- *                       academicYear:
- *                         type: object
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       404:
- *         description: Teacher not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: List of class assignments for the teacher
  */
-router.get('/teacher/:teacherId', classTeacherController.getClassesByTeacher);
+router.get('/teacher/:teacherId', classTeacherController.getTeacherAssignments);
+
+/**
+ * @swagger
+ * /api/class-teachers/class/{classId}:
+ *   get:
+ *     summary: Get assignments by class
+ *     description: Retrieve all teacher assignments for a specific class
+ *     tags: [Class Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: classId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Class ID
+ *       - in: query
+ *         name: academicYearId
+ *         schema:
+ *           type: string
+ *         description: Filter by Academic Year ID
+ *     responses:
+ *       200:
+ *         description: List of teacher assignments for the class
+ */
+router.get('/class/:classId', classTeacherController.getClassAssignments);
 
 /**
  * @swagger
  * /api/class-teachers/{id}:
  *   get:
- *     summary: Get class teacher by ID
- *     description: Retrieve a specific class teacher assignment by ID
+ *     summary: Get assignment by ID
+ *     description: Retrieve a specific teacher-class assignment by ID
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -237,47 +157,22 @@ router.get('/teacher/:teacherId', classTeacherController.getClassesByTeacher);
  *         schema:
  *           type: string
  *         required: true
- *         description: Class Teacher ID
+ *         description: Assignment ID
  *     responses:
  *       200:
- *         description: Class teacher details
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     teacher:
- *                       type: object
- *                     class:
- *                       type: object
- *                     academicYear:
- *                       type: object
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       404:
- *         description: Class teacher not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: Teacher-class assignment details
  */
-router.get('/:id', classTeacherController.getClassTeacherById);
+router.get('/:id', classTeacherController.getClassTeacherAssignment);
 
-// Admin only routes
-router.use(roleMiddleware.restrictTo('admin'));
+// Admin and Principal only routes
+router.use(roleMiddleware.restrictTo('admin', 'principal', 'vice_principal'));
 
 /**
  * @swagger
  * /api/class-teachers:
  *   post:
- *     summary: Create new class teacher assignment
- *     description: Assign a teacher as a class teacher for a specific class and academic year. Accessible by admin users only.
+ *     summary: Create new teacher-class assignment
+ *     description: Assign a teacher to a class for a specific academic year
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -288,58 +183,67 @@ router.use(roleMiddleware.restrictTo('admin'));
  *           schema:
  *             type: object
  *             required:
- *               - teacher
- *               - class
- *               - academicYear
+ *               - teacherId
+ *               - classId
+ *               - academicYearId
  *             properties:
- *               teacher:
+ *               teacherId:
  *                 type: string
  *                 description: Teacher ID
- *               class:
+ *               classId:
  *                 type: string
  *                 description: Class ID
- *               academicYear:
+ *               academicYearId:
  *                 type: string
  *                 description: Academic Year ID
+ *               isClassTeacher:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Whether this is a class teacher assignment
+ *               isSubjectTeacher:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Whether this is a subject teacher assignment
+ *               subjects:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of subject IDs if isSubjectTeacher is true
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Assignment start date
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: Assignment end date
+ *               canMarkAttendance:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Permission to mark attendance
+ *               canGradeAssignments:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Permission to grade assignments
+ *               canManageClassroom:
+ *                 type: boolean
+ *                 default: false
+ *                 description: Permission to manage classroom (class teacher only)
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes
  *     responses:
  *       201:
- *         description: Class teacher assignment created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     teacher:
- *                       type: string
- *                     class:
- *                       type: string
- *                     academicYear:
- *                       type: string
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       403:
- *         description: Forbidden - User does not have admin role
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: Teacher-class assignment created successfully
  */
-router.post('/', classTeacherController.createClassTeacher);
+router.post('/', classTeacherController.createClassTeacherAssignment);
 
 /**
  * @swagger
  * /api/class-teachers/{id}:
  *   put:
- *     summary: Update class teacher assignment
- *     description: Update an existing class teacher assignment. Accessible by admin users only.
+ *     summary: Update teacher-class assignment
+ *     description: Update an existing teacher-class assignment
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -349,7 +253,7 @@ router.post('/', classTeacherController.createClassTeacher);
  *         schema:
  *           type: string
  *         required: true
- *         description: Class Teacher ID
+ *         description: Assignment ID
  *     requestBody:
  *       required: true
  *       content:
@@ -357,56 +261,53 @@ router.post('/', classTeacherController.createClassTeacher);
  *           schema:
  *             type: object
  *             properties:
- *               teacher:
+ *               isClassTeacher:
+ *                 type: boolean
+ *                 description: Whether this is a class teacher assignment
+ *               isSubjectTeacher:
+ *                 type: boolean
+ *                 description: Whether this is a subject teacher assignment
+ *               subjects:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of subject IDs
+ *               startDate:
  *                 type: string
- *                 description: Teacher ID
- *               class:
+ *                 format: date
+ *                 description: Assignment start date
+ *               endDate:
  *                 type: string
- *                 description: Class ID
- *               academicYear:
+ *                 format: date
+ *                 description: Assignment end date
+ *               status:
  *                 type: string
- *                 description: Academic Year ID
+ *                 enum: [ACTIVE, INACTIVE, COMPLETED, TRANSFERRED, CANCELLED]
+ *                 description: Assignment status
+ *               canMarkAttendance:
+ *                 type: boolean
+ *                 description: Permission to mark attendance
+ *               canGradeAssignments:
+ *                 type: boolean
+ *                 description: Permission to grade assignments
+ *               canManageClassroom:
+ *                 type: boolean
+ *                 description: Permission to manage classroom
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes
  *     responses:
  *       200:
- *         description: Class teacher assignment updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     _id:
- *                       type: string
- *                     teacher:
- *                       type: string
- *                     class:
- *                       type: string
- *                     academicYear:
- *                       type: string
- *       400:
- *         $ref: '#/components/responses/ValidationError'
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       403:
- *         description: Forbidden - User does not have admin role
- *       404:
- *         description: Class teacher not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: Teacher-class assignment updated successfully
  */
-router.put('/:id', classTeacherController.updateClassTeacher);
+router.put('/:id', classTeacherController.updateClassTeacherAssignment);
 
 /**
  * @swagger
  * /api/class-teachers/{id}:
  *   delete:
- *     summary: Delete class teacher assignment
- *     description: Delete a class teacher assignment. Accessible by admin users only.
+ *     summary: Delete teacher-class assignment
+ *     description: Delete a teacher-class assignment
  *     tags: [Class Teachers]
  *     security:
  *       - bearerAuth: []
@@ -416,30 +317,11 @@ router.put('/:id', classTeacherController.updateClassTeacher);
  *         schema:
  *           type: string
  *         required: true
- *         description: Class Teacher ID
+ *         description: Assignment ID
  *     responses:
  *       200:
- *         description: Class teacher assignment deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Class teacher deleted successfully
- *       401:
- *         $ref: '#/components/responses/UnauthorizedError'
- *       403:
- *         description: Forbidden - User does not have admin role
- *       404:
- *         description: Class teacher not found
- *       500:
- *         $ref: '#/components/responses/ServerError'
+ *         description: Teacher-class assignment deleted successfully
  */
-router.delete('/:id', classTeacherController.deleteClassTeacher);
+router.delete('/:id', classTeacherController.deleteClassTeacherAssignment);
 
 module.exports = router;

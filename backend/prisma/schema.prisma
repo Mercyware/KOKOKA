@@ -66,6 +66,7 @@ model School {
   curricula            Curriculum[]
   studentClassHistory  StudentClassHistory[]
   academicCalendars    AcademicCalendar[]
+  classSubjectHistory  ClassSubjectHistory[]
   
   // Notification relationships
   notifications        Notification[]
@@ -155,6 +156,8 @@ model AcademicYear {
   curriculumProgressTrackers CurriculumProgressTracker[]
   gradeBooks          GradeBook[]
   gradeReports        GradeReport[]
+  classSubjectHistory ClassSubjectHistory[]
+  classTeachers       ClassTeacher[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -247,6 +250,7 @@ model Subject {
   assessments          Assessment[]
   curriculumSubjects   CurriculumSubject[]
   gradeBooks           GradeBook[]
+  classSubjectHistory  ClassSubjectHistory[]
 
   @@unique([schoolId, code])
   @@map("subjects")
@@ -765,6 +769,7 @@ model Class {
   classCurricula      ClassCurriculum[]
   curriculumProgressTrackers CurriculumProgressTracker[]
   gradeBooks          GradeBook[]
+  classSubjectHistory ClassSubjectHistory[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -872,6 +877,7 @@ model Teacher {
   
   // Grade Management relationships
   gradeBooks       GradeBook[]
+  classSubjectHistory ClassSubjectHistory[]
 
   @@unique([schoolId, employeeId])
   @@map("teachers")
@@ -1045,15 +1051,32 @@ model ClassTeacher {
   classId   String
   class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
   
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId       String
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   
   isClassTeacher Boolean @default(true)
+  isSubjectTeacher Boolean @default(false) // For subject-specific teaching assignments
+  subjects       String[] // Array of subject IDs if isSubjectTeacher is true
+  
+  // Assignment details
+  assignedDate DateTime @default(now())
+  startDate    DateTime?
+  endDate      DateTime?
+  status       ClassTeacherStatus @default(ACTIVE)
+  
+  // Role and permissions
+  canMarkAttendance Boolean @default(true)
+  canGradeAssignments Boolean @default(true)
+  canManageClassroom Boolean @default(false) // Only class teacher should have this
+  
+  notes String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([teacherId, classId])
+  @@unique([teacherId, classId, academicYearId])
   @@map("class_teachers")
 }
 
@@ -1078,6 +1101,53 @@ model StudentClassHistory {
   updatedAt DateTime @updatedAt
 
   @@map("student_class_history")
+}
+
+model ClassSubjectHistory {
+  id String @id @default(uuid())
+  
+  // Core relationships
+  classId        String
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  
+  schoolId       String
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  // Subject configuration for this class and academic year
+  isCore         Boolean      @default(true)    // Whether this subject is core/mandatory
+  isOptional     Boolean      @default(false)   // Whether this subject is optional/elective
+  credits        Int?                           // Credit hours for this subject
+  hoursPerWeek   Int?                          // Weekly hours allocated
+  term           Int?                          // Specific term (1, 2, 3) if applicable
+  semester       Int?                          // Specific semester if applicable
+  
+  // Teaching assignment
+  teacherId      String?
+  assignedTeacher Teacher?    @relation(fields: [teacherId], references: [id])
+  
+  // Status and dates
+  status         ClassSubjectStatus @default(ACTIVE)
+  startDate      DateTime     @default(now())
+  endDate        DateTime?
+  
+  // Additional configuration
+  maxStudents    Int?                          // Maximum students allowed for this subject
+  prerequisites  String[]                      // Array of prerequisite subject codes
+  description    String?                       // Special notes or description
+  
+  // Grading configuration
+  gradingScale   Json?                         // Custom grading scale if different from school default
+  passingGrade   Float?                        // Minimum passing grade
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([classId, subjectId, academicYearId, term])
+  @@map("class_subject_history")
 }
 
 model SittingPosition {
@@ -1983,4 +2053,20 @@ enum ReportStatus {
   PUBLISHED       // Report has been published
   SENT            // Report has been sent to parents/students
   ARCHIVED        // Report has been archived
+}
+
+enum ClassSubjectStatus {
+  ACTIVE          // Subject is currently active for this class
+  INACTIVE        // Subject is temporarily inactive
+  COMPLETED       // Subject has been completed for the academic year
+  CANCELLED       // Subject has been cancelled
+  SUSPENDED       // Subject is suspended temporarily
+}
+
+enum ClassTeacherStatus {
+  ACTIVE          // Teacher is currently assigned to the class
+  INACTIVE        // Assignment is temporarily inactive
+  COMPLETED       // Assignment has been completed for the academic year
+  TRANSFERRED     // Teacher has been transferred to another class
+  CANCELLED       // Assignment has been cancelled
 }

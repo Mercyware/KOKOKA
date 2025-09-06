@@ -195,8 +195,7 @@ const CurriculumList: React.FC = () => {
           <p className="text-gray-600 mt-2">Manage and organize your school's curricula</p>
         </div>
         <Link to="/school-settings/curricula/create">
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+          <Button intent="primary" leftIcon={<Plus />}>
             Add Curriculum
           </Button>
         </Link>
@@ -376,9 +375,7 @@ const CurriculumList: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <Button intent="ghost" size="sm" leftIcon={<MoreHorizontal />} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -418,7 +415,7 @@ const CurriculumList: React.FC = () => {
         <div className="flex justify-center mt-6">
           <div className="flex items-center space-x-2">
             <Button
-              variant="outline"
+              intent="secondary"
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
@@ -428,7 +425,7 @@ const CurriculumList: React.FC = () => {
               Page {currentPage} of {totalPages}
             </span>
             <Button
-              variant="outline"
+              intent="secondary"
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >

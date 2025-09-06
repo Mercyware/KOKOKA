@@ -5,9 +5,8 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const schoolMiddleware = require('../middlewares/schoolMiddleware');
 
-// Apply authentication and school context middleware
+// Apply authentication middleware only (school middleware is applied globally in server.js)
 router.use(authMiddleware.protect);
-router.use(schoolMiddleware.extractSchoolFromSubdomain);
 
 /**
  * @swagger
@@ -56,6 +55,9 @@ router.use(schoolMiddleware.extractSchoolFromSubdomain);
  *       500:
  *         description: Server error
  */
+// Debug route - must be before the main route
+router.get('/debug', curriculumController.debugSchoolContext);
+
 router.get('/', curriculumController.getAllCurricula);
 
 /**

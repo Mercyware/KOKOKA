@@ -13,10 +13,11 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
     
     console.log(`Header subdomain: ${headerSubdomain}`);
     if (headerSubdomain) {
-      // Find school by subdomain from header
+      // Find school by subdomain from header (case-insensitive)
+      const normalizedSubdomain = headerSubdomain.toLowerCase().trim();
       const school = await prisma.school.findFirst({ 
         where: {
-          subdomain: headerSubdomain,
+          subdomain: normalizedSubdomain,
           status: { in: ['ACTIVE', 'PENDING'] } // Allow both active and pending schools
         }
       });
@@ -28,7 +29,7 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
         logger.info(`Request for school from header: ${school.name} (${headerSubdomain})`);
         return next();
       } else {
-        logger.warn(`Invalid subdomain in header: ${headerSubdomain}`);
+        logger.warn(`Invalid subdomain in header: ${headerSubdomain} (normalized: ${normalizedSubdomain})`);
       }
     }
     
@@ -46,7 +47,13 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
     
     // If we have a subdomain (e.g., school.domain.com has 3+ parts)
     if (hostParts.length >= 3) {
-      const subdomain = hostParts[0].toLowerCase();
+      const subdomain = hostParts[0].toLowerCase().trim();
+      
+      // Skip common subdomains that aren't school-specific
+      const skipSubdomains = ['www', 'api', 'admin', 'app'];
+      if (skipSubdomains.includes(subdomain)) {
+        return next();
+      }
       
       // Find school by subdomain
       const school = await prisma.school.findFirst({ 
@@ -61,7 +68,9 @@ exports.extractSchoolFromSubdomain = async (req, res, next) => {
         req.school = school;
         logger.info(`Request for school from host: ${school.name} (${subdomain})`);
       } else {
-        logger.warn(`Invalid subdomain accessed: ${subdomain}`);
+        logger.warn(`Invalid subdomain accessed: ${subdomain} from host: ${host}`);
+        // Log this for debugging purposes
+        console.log(`Failed to find school for subdomain: "${subdomain}" (host: ${host})`);
       }
     }
     

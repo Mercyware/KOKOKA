@@ -38,11 +38,18 @@ import HousesList from "./pages/school-settings/houses/HousesList";
 import CurriculumList from "./pages/school-settings/curricula/CurriculumList";
 import CreateCurriculum from "./pages/school-settings/curricula/CreateCurriculum";
 import EditCurriculum from "./pages/school-settings/curricula/EditCurriculum";
+// Class-Subject History Components
+import ClassSubjectHistory from "./pages/school-settings/class-subjects/ClassSubjectHistory";
+import TestClassSubjectHistory from "./pages/school-settings/class-subjects/TestClassSubjectHistory";
+import SimpleClassSubjectHistory from "./pages/school-settings/class-subjects/SimpleClassSubjectHistory";
 // Staff Components
 import StaffList from "./pages/staff/StaffList";
 import CreateStaff from "./pages/staff/CreateStaff";
 import EditStaff from "./pages/staff/EditStaff";
 import StaffDetails from "./pages/staff/StaffDetails";
+// Teacher Components
+import ClassAssignments from "./pages/teachers/ClassAssignments";
+import TeacherSubjectAssignmentsList from "./pages/assignments/teacher-subjects/TeacherSubjectAssignmentsList";
 // New Curriculum and Grade Management Components
 import GlobalCurriculumRegistry from "./pages/curriculum/GlobalCurriculumRegistry";
 import GradeBookManagement from "./pages/teacher/GradeBookManagement";
@@ -128,6 +135,11 @@ const App = () => (
             <Route path="/school-settings/curricula/create" element={<CreateCurriculum />} />
             <Route path="/school-settings/curricula/:id/edit" element={<EditCurriculum />} />
             
+            {/* School Settings - Class-Subject History Routes */}
+            <Route path="/school-settings/class-subjects" element={<ClassSubjectHistory />} />
+            <Route path="/school-settings/class-subjects-simple" element={<SimpleClassSubjectHistory />} />
+            <Route path="/school-settings/class-subjects-test" element={<TestClassSubjectHistory />} />
+            
             {/* School Settings - Houses Routes */}
             <Route path="/school-settings/houses" element={<HousesList />} />
             
@@ -136,6 +148,10 @@ const App = () => (
             <Route path="/staff/create" element={<CreateStaff />} />
             <Route path="/staff/edit/:id" element={<EditStaff />} />
             <Route path="/staff/:id" element={<StaffDetails />} />
+            
+            {/* Teacher Routes */}
+            <Route path="/teachers/class-assignments" element={<ClassAssignments />} />
+            <Route path="/teachers/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
             
             {/* Global Curriculum Registry Routes */}
             <Route path="/curriculum/global" element={<GlobalCurriculumRegistry />} />

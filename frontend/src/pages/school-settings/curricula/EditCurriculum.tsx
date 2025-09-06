@@ -362,11 +362,10 @@ const EditCurriculum: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
         <Button
-          variant="ghost"
+          intent="ghost"
           onClick={() => navigate('/school-settings/curricula')}
-          className="flex items-center gap-2"
+          leftIcon={<ArrowLeft />}
         >
-          <ArrowLeft className="h-4 w-4" />
           Back to Curricula
         </Button>
       </div>
@@ -517,12 +516,13 @@ const EditCurriculum: React.FC = () => {
 
               {/* Save Basic Information */}
               <div className="flex justify-end pt-4 border-t">
-                <Button type="submit" disabled={saving} className="flex items-center gap-2">
-                  {saving ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
+                <Button 
+                  type="submit" 
+                  intent="primary" 
+                  disabled={saving}
+                  loading={saving}
+                  leftIcon={<Save />}
+                >
                   Save Changes
                 </Button>
               </div>
@@ -563,13 +563,11 @@ const EditCurriculum: React.FC = () => {
                       </div>
                     </div>
                     <Button
-                      variant="ghost"
+                      intent="danger"
                       size="sm"
                       onClick={() => handleRemoveSubject(curriculumSubject.id, curriculumSubject.subject.name)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      leftIcon={<Trash2 />}
+                    />
                   </div>
                 ))}
               </div>

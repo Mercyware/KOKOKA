@@ -1,349 +1,671 @@
-const ClassTeacher = require('../models/ClassTeacher');
-const Staff = require('../models/Staff');
-const Class = require('../models/Class');
-const AcademicYear = require('../models/AcademicYear');
+const { prisma } = require('../config/database');
 
-// Get all class teacher assignments
-exports.getAllClassTeachers = async (req, res) => {
+// Get all teacher-class assignments for a school
+exports.getClassTeacherAssignments = async (req, res) => {
   try {
-    const classTeachers = await ClassTeacher.find({ school: req.user.school })
-      .populate({
-        path: 'teacher',
-        select: 'user employeeId',
-        populate: {
-          path: 'user',
-          select: 'name email'
+    const { academicYearId, teacherId, classId } = req.query;
+    const schoolId = req.school.id;
+
+    const whereClause = {
+      schoolId,
+      ...(academicYearId && { academicYearId }),
+      ...(teacherId && { teacherId }),
+      ...(classId && { classId })
+    };
+
+    const assignments = await prisma.classTeacher.findMany({
+      where: whereClause,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeId: true,
+            user: {
+              select: {
+                email: true
+              }
+            }
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
         }
-      })
-      .populate('class', 'name level')
-      .populate('classArm', 'name')
-      .populate('academicYear', 'name')
-      .sort({ assignedDate: -1 });
-    
-    res.json(classTeachers);
+      },
+      orderBy: [
+        { academicYear: { startDate: 'desc' } },
+        { class: { name: 'asc' } }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: assignments
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error fetching class teacher assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch teacher-class assignments',
+      error: error.message
+    });
   }
 };
 
-// Get class teacher assignment by ID
-exports.getClassTeacherById = async (req, res) => {
+// Create a new teacher-class assignment
+exports.createClassTeacherAssignment = async (req, res) => {
   try {
-    const classTeacher = await ClassTeacher.findById(req.params.id)
-      .populate({
-        path: 'teacher',
-        select: 'user employeeId',
-        populate: {
-          path: 'user',
-          select: 'name email'
-        }
-      })
-      .populate('class', 'name level')
-      .populate('classArm', 'name')
-      .populate('academicYear', 'name');
+    const {
+      teacherId,
+      classId,
+      academicYearId,
+      isClassTeacher = true,
+      isSubjectTeacher = false,
+      subjects = [],
+      startDate,
+      endDate,
+      canMarkAttendance = true,
+      canGradeAssignments = true,
+      canManageClassroom = false,
+      notes
+    } = req.body;
     
-    if (!classTeacher) {
-      return res.status(404).json({ message: 'Class teacher assignment not found' });
-    }
-    
-    res.json(classTeacher);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
+    const schoolId = req.school.id;
 
-// Create new class teacher assignment
-exports.createClassTeacher = async (req, res) => {
-  try {
-    // Add the current user as creator and school
-    req.body.createdBy = req.user.id;
-    req.body.school = req.user.school;
-    
-    // Verify that the teacher exists
-    const teacher = await Staff.findById(req.body.teacher);
+    // Validate that teacher, class, and academic year exist and belong to the school
+    const [teacher, classRecord, academicYear] = await Promise.all([
+      prisma.teacher.findFirst({
+        where: { id: teacherId, schoolId }
+      }),
+      prisma.class.findFirst({
+        where: { id: classId, schoolId }
+      }),
+      prisma.academicYear.findFirst({
+        where: { id: academicYearId, schoolId }
+      })
+    ]);
+
     if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Teacher not found'
+      });
     }
-    
-    // Verify that the staff is a teacher
-    if (teacher.staffType !== 'teacher') {
-      return res.status(400).json({ message: 'Staff member must be a teacher to be assigned as class teacher' });
+
+    if (!classRecord) {
+      return res.status(404).json({
+        success: false,
+        message: 'Class not found'
+      });
     }
-    
-    // Verify that the class exists
-    const classObj = await Class.findById(req.body.class);
-    if (!classObj) {
-      return res.status(404).json({ message: 'Class not found' });
-    }
-    
-    // Verify that the class arm exists
-    const classArm = await ClassArm.findById(req.body.classArm);
-    if (!classArm) {
-      return res.status(404).json({ message: 'Class arm not found' });
-    }
-    
-    // Verify that the academic year exists
-    const academicYear = await AcademicYear.findById(req.body.academicYear);
+
     if (!academicYear) {
-      return res.status(404).json({ message: 'Academic year not found' });
-    }
-    
-    // Check if this class and arm already has a class teacher for this academic year
-    const existingClassTeacher = await ClassTeacher.findOne({
-      class: req.body.class,
-      classArm: req.body.classArm,
-      academicYear: req.body.academicYear,
-      isActive: true
-    });
-    
-    if (existingClassTeacher) {
-      return res.status(400).json({ 
-        message: 'This class and arm already has an active class teacher for this academic year' 
+      return res.status(404).json({
+        success: false,
+        message: 'Academic year not found'
       });
     }
-    
-    // Check if this teacher is already assigned as a class teacher for this academic year
-    const existingTeacherAssignment = await ClassTeacher.findOne({
-      teacher: req.body.teacher,
-      academicYear: req.body.academicYear,
-      isActive: true
-    });
-    
-    if (existingTeacherAssignment) {
-      return res.status(400).json({ 
-        message: 'This teacher is already assigned as a class teacher for another class in this academic year' 
-      });
-    }
-    
-    const classTeacher = new ClassTeacher(req.body);
-    await classTeacher.save();
-    
-    res.status(201).json(classTeacher);
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        message: 'Duplicate assignment. This class or teacher may already be assigned for this academic year.' 
-      });
-    }
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
 
-// Update class teacher assignment
-exports.updateClassTeacher = async (req, res) => {
-  try {
-    // If teacher is being updated, verify they exist
-    if (req.body.teacher) {
-      const teacher = await Staff.findById(req.body.teacher);
-      if (!teacher) {
-        return res.status(404).json({ message: 'Teacher not found' });
+    // Check if assignment already exists
+    const existingAssignment = await prisma.classTeacher.findFirst({
+      where: {
+        teacherId,
+        classId,
+        academicYearId,
+        schoolId
       }
-      
-      // Verify that the staff is a teacher
-      if (teacher.staffType !== 'teacher') {
-        return res.status(400).json({ message: 'Staff member must be a teacher to be assigned as class teacher' });
-      }
-      
-      // Check if this teacher is already assigned as a class teacher for this academic year (excluding current assignment)
-      if (req.body.academicYear) {
-        const existingTeacherAssignment = await ClassTeacher.findOne({
-          _id: { $ne: req.params.id },
-          teacher: req.body.teacher,
-          academicYear: req.body.academicYear,
-          isActive: true
-        });
-        
-        if (existingTeacherAssignment) {
-          return res.status(400).json({ 
-            message: 'This teacher is already assigned as a class teacher for another class in this academic year' 
-          });
-        }
-      }
-    }
-    
-    // If class is being updated, verify it exists
-    if (req.body.class) {
-      const classObj = await Class.findById(req.body.class);
-      if (!classObj) {
-        return res.status(404).json({ message: 'Class not found' });
-      }
-    }
-    
-    // If class arm is being updated, verify it exists
-    if (req.body.classArm) {
-      const classArm = await ClassArm.findById(req.body.classArm);
-      if (!classArm) {
-        return res.status(404).json({ message: 'Class arm not found' });
-      }
-    }
-    
-    // If academic year is being updated, verify it exists
-    if (req.body.academicYear) {
-      const academicYear = await AcademicYear.findById(req.body.academicYear);
-      if (!academicYear) {
-        return res.status(404).json({ message: 'Academic year not found' });
-      }
-    }
-    
-    // Check if this class and arm already has a class teacher for this academic year (excluding current assignment)
-    if (req.body.class && req.body.classArm && req.body.academicYear) {
-      const existingClassTeacher = await ClassTeacher.findOne({
-        _id: { $ne: req.params.id },
-        class: req.body.class,
-        classArm: req.body.classArm,
-        academicYear: req.body.academicYear,
-        isActive: true
+    });
+
+    if (existingAssignment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Teacher is already assigned to this class for the selected academic year'
       });
-      
+    }
+
+    // If assigning as class teacher, check if class already has a class teacher
+    if (isClassTeacher && canManageClassroom) {
+      const existingClassTeacher = await prisma.classTeacher.findFirst({
+        where: {
+          classId,
+          academicYearId,
+          schoolId,
+          isClassTeacher: true,
+          canManageClassroom: true,
+          status: 'ACTIVE'
+        }
+      });
+
       if (existingClassTeacher) {
-        return res.status(400).json({ 
-          message: 'This class and arm already has an active class teacher for this academic year' 
+        return res.status(400).json({
+          success: false,
+          message: 'This class already has a class teacher for the selected academic year'
         });
       }
     }
-    
-    const classTeacher = await ClassTeacher.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    
-    if (!classTeacher) {
-      return res.status(404).json({ message: 'Class teacher assignment not found' });
-    }
-    
-    res.json(classTeacher);
+
+    const assignment = await prisma.classTeacher.create({
+      data: {
+        teacherId,
+        classId,
+        academicYearId,
+        schoolId,
+        isClassTeacher,
+        isSubjectTeacher,
+        subjects: subjects || [],
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        canMarkAttendance,
+        canGradeAssignments,
+        canManageClassroom: isClassTeacher ? canManageClassroom : false,
+        notes,
+        status: 'ACTIVE'
+      },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeId: true
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Teacher assigned to class successfully',
+      data: assignment
+    });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ 
-        message: 'Duplicate assignment. This class or teacher may already be assigned for this academic year.' 
+    console.error('Error creating class teacher assignment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create teacher-class assignment',
+      error: error.message
+    });
+  }
+};
+
+// Update a teacher-class assignment
+exports.updateClassTeacherAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      isClassTeacher,
+      isSubjectTeacher,
+      subjects,
+      startDate,
+      endDate,
+      status,
+      canMarkAttendance,
+      canGradeAssignments,
+      canManageClassroom,
+      notes
+    } = req.body;
+    
+    const schoolId = req.school.id;
+
+    // Check if assignment exists and belongs to the school
+    const existingAssignment = await prisma.classTeacher.findFirst({
+      where: { id, schoolId }
+    });
+
+    if (!existingAssignment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
       });
     }
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
 
-// Delete class teacher assignment
-exports.deleteClassTeacher = async (req, res) => {
-  try {
-    const classTeacher = await ClassTeacher.findByIdAndDelete(req.params.id);
-    
-    if (!classTeacher) {
-      return res.status(404).json({ message: 'Class teacher assignment not found' });
-    }
-    
-    res.json({ message: 'Class teacher assignment deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-// Get class teachers by academic year
-exports.getClassTeachersByAcademicYear = async (req, res) => {
-  try {
-    const classTeachers = await ClassTeacher.find({ 
-      academicYear: req.params.academicYearId,
-      school: req.user.school
-    })
-      .populate({
-        path: 'teacher',
-        select: 'user employeeId',
-        populate: {
-          path: 'user',
-          select: 'name email'
+    // If updating to class teacher with classroom management, check for conflicts
+    if (isClassTeacher && canManageClassroom) {
+      const conflictingAssignment = await prisma.classTeacher.findFirst({
+        where: {
+          classId: existingAssignment.classId,
+          academicYearId: existingAssignment.academicYearId,
+          schoolId,
+          isClassTeacher: true,
+          canManageClassroom: true,
+          status: 'ACTIVE',
+          id: { not: id }
         }
-      })
-      .populate('class', 'name level')
-      .populate('classArm', 'name')
-      .sort({ 'class.level': 1 });
-    
-    res.json(classTeachers);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
+      });
 
-// Get class teacher by class and arm for current academic year
-exports.getClassTeacherByClassAndArm = async (req, res) => {
-  try {
-    // Find the current academic year
-    const currentAcademicYear = await AcademicYear.findOne({ 
-      school: req.user.school,
-      isCurrent: true
+      if (conflictingAssignment) {
+        return res.status(400).json({
+          success: false,
+          message: 'This class already has a class teacher for the selected academic year'
+        });
+      }
+    }
+
+    const updateData = {};
+    if (isClassTeacher !== undefined) updateData.isClassTeacher = isClassTeacher;
+    if (isSubjectTeacher !== undefined) updateData.isSubjectTeacher = isSubjectTeacher;
+    if (subjects !== undefined) updateData.subjects = subjects;
+    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+    if (status !== undefined) updateData.status = status;
+    if (canMarkAttendance !== undefined) updateData.canMarkAttendance = canMarkAttendance;
+    if (canGradeAssignments !== undefined) updateData.canGradeAssignments = canGradeAssignments;
+    if (canManageClassroom !== undefined) updateData.canManageClassroom = isClassTeacher ? canManageClassroom : false;
+    if (notes !== undefined) updateData.notes = notes;
+
+    const assignment = await prisma.classTeacher.update({
+      where: { id },
+      data: updateData,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeId: true
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
+        }
+      }
     });
-    
-    if (!currentAcademicYear) {
-      return res.status(404).json({ message: 'Current academic year not found' });
-    }
-    
-    const classTeacher = await ClassTeacher.findOne({
-      class: req.params.classId,
-      classArm: req.params.classArmId,
-      academicYear: currentAcademicYear._id,
-      isActive: true,
-      school: req.user.school
-    })
-      .populate({
-        path: 'teacher',
-        select: 'user employeeId',
-        populate: {
-          path: 'user',
-          select: 'name email'
-        }
-      })
-      .populate('class', 'name level')
-      .populate('classArm', 'name');
-    
-    if (!classTeacher) {
-      return res.status(404).json({ message: 'No class teacher assigned for this class and arm in the current academic year' });
-    }
-    
-    res.json(classTeacher);
+
+    res.json({
+      success: true,
+      message: 'Assignment updated successfully',
+      data: assignment
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error updating class teacher assignment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update assignment',
+      error: error.message
+    });
   }
 };
 
-// Get classes assigned to a teacher as class teacher
-exports.getClassesByTeacher = async (req, res) => {
+// Delete a teacher-class assignment
+exports.deleteClassTeacherAssignment = async (req, res) => {
   try {
-    const classTeachers = await ClassTeacher.find({ 
-      teacher: req.params.teacherId,
-      school: req.user.school
-    })
-      .populate('class', 'name level')
-      .populate('classArm', 'name')
-      .populate('academicYear', 'name startDate endDate isCurrent');
-    
-    res.json(classTeachers);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
+    const { id } = req.params;
+    const schoolId = req.school.id;
 
-// Check if a class teacher exists for a class, arm, and academic year
-exports.checkClassTeacherExists = async (req, res) => {
-  try {
-    const { class: classId, classArm: classArmId, academicYear: academicYearId } = req.query;
-    
-    // Validate required parameters
-    if (!classId || !classArmId || !academicYearId) {
-      return res.status(400).json({ 
-        message: 'Class ID, Class Arm ID, and Academic Year ID are required' 
+    const assignment = await prisma.classTeacher.findFirst({
+      where: { id, schoolId }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
       });
     }
-    
-    // Check if a class teacher exists
-    const existingClassTeacher = await ClassTeacher.findOne({
-      class: classId,
-      classArm: classArmId,
-      academicYear: academicYearId,
-      isActive: true,
-      school: req.user.school
+
+    await prisma.classTeacher.delete({
+      where: { id }
     });
-    
-    res.json({ exists: !!existingClassTeacher });
+
+    res.json({
+      success: true,
+      message: 'Assignment deleted successfully'
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error deleting class teacher assignment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete assignment',
+      error: error.message
+    });
+  }
+};
+
+// Get assignment by ID
+exports.getClassTeacherAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schoolId = req.school.id;
+
+    const assignment = await prisma.classTeacher.findFirst({
+      where: { id, schoolId },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeId: true,
+            user: {
+              select: {
+                email: true
+              }
+            }
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
+        }
+      }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: assignment
+    });
+  } catch (error) {
+    console.error('Error fetching class teacher assignment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assignment',
+      error: error.message
+    });
+  }
+};
+
+// Get assignments by teacher ID
+exports.getTeacherAssignments = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const { academicYearId } = req.query;
+    const schoolId = req.school.id;
+
+    const whereClause = {
+      teacherId,
+      schoolId,
+      ...(academicYearId && { academicYearId })
+    };
+
+    const assignments = await prisma.classTeacher.findMany({
+      where: whereClause,
+      include: {
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
+        }
+      },
+      orderBy: [
+        { academicYear: { startDate: 'desc' } },
+        { class: { name: 'asc' } }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: assignments
+    });
+  } catch (error) {
+    console.error('Error fetching teacher assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch teacher assignments',
+      error: error.message
+    });
+  }
+};
+
+// Get assignments by class ID
+exports.getClassAssignments = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { academicYearId } = req.query;
+    const schoolId = req.school.id;
+
+    const whereClause = {
+      classId,
+      schoolId,
+      ...(academicYearId && { academicYearId })
+    };
+
+    const assignments = await prisma.classTeacher.findMany({
+      where: whereClause,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeId: true,
+            user: {
+              select: {
+                email: true
+              }
+            }
+          }
+        },
+        academicYear: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true
+          }
+        }
+      },
+      orderBy: [
+        { academicYear: { startDate: 'desc' } },
+        { teacher: { firstName: 'asc' } }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: assignments
+    });
+  } catch (error) {
+    console.error('Error fetching class assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch class assignments',
+      error: error.message
+    });
+  }
+};
+
+// Get available teachers for assignment (not already assigned to the class in the academic year)
+exports.getAvailableTeachers = async (req, res) => {
+  try {
+    const { classId, academicYearId } = req.query;
+    const schoolId = req.school.id;
+
+    if (!classId || !academicYearId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Class ID and Academic Year ID are required'
+      });
+    }
+
+    // Get teachers already assigned to this class in this academic year
+    const assignedTeachers = await prisma.classTeacher.findMany({
+      where: {
+        classId,
+        academicYearId,
+        schoolId,
+        status: 'ACTIVE'
+      },
+      select: {
+        teacherId: true
+      }
+    });
+
+    const assignedTeacherIds = assignedTeachers.map(assignment => assignment.teacherId);
+
+    // Get all active teachers not assigned to this class
+    const availableTeachers = await prisma.teacher.findMany({
+      where: {
+        schoolId,
+        status: 'ACTIVE',
+        id: {
+          notIn: assignedTeacherIds
+        }
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        employeeId: true,
+        user: {
+          select: {
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        firstName: 'asc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: availableTeachers
+    });
+  } catch (error) {
+    console.error('Error fetching available teachers:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch available teachers',
+      error: error.message
+    });
+  }
+};
+
+// Get all classes and academic years for dropdowns
+exports.getFormData = async (req, res) => {
+  try {
+    const schoolId = req.school.id;
+
+    const [classes, academicYears, teachers] = await Promise.all([
+      prisma.class.findMany({
+        where: { schoolId },
+        select: {
+          id: true,
+          name: true,
+          grade: true
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      }),
+      prisma.academicYear.findMany({
+        where: { schoolId },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+          isCurrent: true
+        },
+        orderBy: {
+          startDate: 'desc'
+        }
+      }),
+      prisma.teacher.findMany({
+        where: {
+          schoolId,
+          status: 'ACTIVE'
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          employeeId: true
+        },
+        orderBy: {
+          firstName: 'asc'
+        }
+      })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        classes,
+        academicYears,
+        teachers
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching form data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch form data',
+      error: error.message
+    });
   }
 };

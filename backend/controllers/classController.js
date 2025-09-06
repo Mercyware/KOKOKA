@@ -4,9 +4,26 @@ const { prisma } = require('../config/database');
 exports.getAllClasses = async (req, res) => {
   try {
     if (!req.school || !req.school.id) {
+      console.log('Missing school context in classes request');
+      console.log('School object:', req.school);
+      console.log('Headers:', JSON.stringify({
+        'x-school-subdomain': req.headers['x-school-subdomain'],
+        'host': req.headers.host,
+        'origin': req.headers.origin
+      }, null, 2));
+      
       return res.status(400).json({
         success: false,
-        message: 'School context not found'
+        message: 'School context not found',
+        debug: {
+          hasSchool: !!req.school,
+          hasSchoolId: !!req.school?.id,
+          schoolData: req.school,
+          headers: req.headers['x-school-subdomain'],
+          host: req.headers.host,
+          endpoint: '/api/classes',
+          timestamp: new Date().toISOString()
+        }
       });
     }
     

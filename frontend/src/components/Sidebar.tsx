@@ -103,6 +103,18 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     {
+      id: 'teachers',
+      label: 'Teachers',
+      icon: GraduationCap,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'teacher-class-assignments', label: 'Class Assignments', icon: Users },
+        { id: 'teacher-subject-assignments', label: 'Subject Assignments', icon: BookOpen },
+        { id: 'teacher-schedule', label: 'Teaching Schedule', icon: Calendar },
+        { id: 'teacher-performance', label: 'Performance', icon: BarChart3 },
+      ]
+    },
+    {
       id: 'curriculum',
       label: 'Curriculum',
       icon: Target,
@@ -164,6 +176,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'departments', label: 'Departments', icon: Building },
         { id: 'subjects', label: 'Subjects', icon: BookOpen },
         { id: 'curricula', label: 'Curricula', icon: Library },
+        { id: 'class-subjects', label: 'Class Subjects', icon: Target },
         { id: 'houses', label: 'Houses', icon: HomeIcon },
       ]
     },
@@ -261,6 +274,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                           if (subItem.id === 'curricula') {
                             navigate('/school-settings/curricula');
                           }
+                          if (subItem.id === 'class-subjects') {
+                            navigate('/school-settings/class-subjects');
+                          }
                           // Curriculum menu items
                           if (subItem.id === 'curriculum-global') {
                             navigate('/curriculum/global');
@@ -296,6 +312,29 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                           }
                           if (subItem.id === 'staff-add') {
                             navigate('/staff/create');
+                          }
+                          // Students menu items
+                          if (subItem.id === 'students-list') {
+                            navigate('/students');
+                          }
+                          if (subItem.id === 'students-add') {
+                            navigate('/students/add');
+                          }
+                          if (subItem.id === 'students-reports') {
+                            navigate('/students'); // For now, redirect to students list
+                          }
+                          // Teacher menu items
+                          if (subItem.id === 'teacher-class-assignments') {
+                            navigate('/teachers/class-assignments');
+                          }
+                          if (subItem.id === 'teacher-subject-assignments') {
+                            navigate('/teachers/subject-assignments');
+                          }
+                          if (subItem.id === 'teacher-schedule') {
+                            navigate('/teachers/schedule');
+                          }
+                          if (subItem.id === 'teacher-performance') {
+                            navigate('/teachers/performance');
                           }
                         }}
                       >

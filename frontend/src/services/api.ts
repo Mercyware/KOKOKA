@@ -12,7 +12,7 @@ const getSubdomain = (): string | null => {
   if (hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
     // Initialize with a default subdomain if none exists
     // You can change 'demo' to any default subdomain you want to use for development
-    const devSubdomain = initDevSubdomain('demo');
+    const devSubdomain = initDevSubdomain('greenwood');
     if (devSubdomain) {
       console.log(`Using development subdomain: ${devSubdomain}`);
       return devSubdomain;

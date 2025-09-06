@@ -267,11 +267,10 @@ const CreateCurriculum: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
         <Button
-          variant="ghost"
+          intent="ghost"
           onClick={() => navigate('/school-settings/curricula')}
-          className="flex items-center gap-2"
+          leftIcon={<ArrowLeft />}
         >
-          <ArrowLeft className="h-4 w-4" />
           Back to Curricula
         </Button>
       </div>
@@ -497,17 +496,18 @@ const CreateCurriculum: React.FC = () => {
           <div className="flex justify-end gap-4">
             <Button
               type="button"
-              variant="outline"
+              intent="cancel"
               onClick={() => navigate('/school-settings/curricula')}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="flex items-center gap-2">
-              {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
+            <Button 
+              type="submit" 
+              intent="primary" 
+              disabled={loading}
+              loading={loading}
+              leftIcon={<Save />}
+            >
               Create Curriculum
             </Button>
           </div>

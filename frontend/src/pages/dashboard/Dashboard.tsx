@@ -5,12 +5,54 @@ import DashboardComponent from '../../components/Dashboard';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
-  const { authState } = useAuth();
+  const { authState, checkAuth } = useAuth();
   const user = authState.user;
 
-  // School is a string id, need to check approval via user.schoolStatus or similar
-  // For now, fallback to user.schoolStatus === 'active'
-  const isSchoolApproved = user?.schoolStatus === 'active';
+  // Temporary debug logging to see current state
+  console.log('Current user school status:', user?.school?.status);
+  console.log('Current timestamp:', new Date().toISOString());
+
+  const isSchoolApproved = user?.school?.status === 'ACTIVE';
+
+  const handleRefreshUserData = async () => {
+    console.log('Refreshing user data...');
+    // Clear localStorage to force fresh data fetch
+    localStorage.removeItem('user');
+    await checkAuth();
+    console.log('User data refreshed. New status:', authState.user?.school?.status);
+  };
+
+  const handleClearCache = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  // Show loading state while auth is loading
+  if (authState.loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-4">
+          <div className="flex flex-col items-center justify-center h-96 bg-white dark:bg-gray-900 rounded-lg shadow-md">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">Loading...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show error if no user is loaded
+  if (!user) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-4">
+          <div className="flex flex-col items-center justify-center h-96 bg-white dark:bg-gray-900 rounded-lg shadow-md border border-yellow-300">
+            <p className="text-lg text-gray-700 dark:text-gray-200">No user data available</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -26,7 +68,21 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-lg text-gray-700 dark:text-gray-200 mb-2">Your school is not approved yet.</p>
             <p className="text-md text-gray-500 dark:text-gray-400 mb-6">Please wait for an administrator to approve your school. No menu is available until approval.</p>
-            <button className="px-6 py-2 bg-red-500 dark:bg-red-700 text-white rounded shadow hover:bg-red-600 dark:hover:bg-red-800 transition">Contact Support</button>
+            <div className="flex gap-4">
+              <button 
+                onClick={handleRefreshUserData}
+                className="px-6 py-2 bg-blue-500 dark:bg-blue-700 text-white rounded shadow hover:bg-blue-600 dark:hover:bg-blue-800 transition">
+                Refresh Status
+              </button>
+              <button 
+                onClick={handleClearCache}
+                className="px-4 py-2 bg-yellow-500 dark:bg-yellow-700 text-white rounded shadow hover:bg-yellow-600 dark:hover:bg-yellow-800 transition text-sm">
+                Clear Cache
+              </button>
+              <button className="px-6 py-2 bg-red-500 dark:bg-red-700 text-white rounded shadow hover:bg-red-600 dark:hover:bg-red-800 transition">
+                Contact Support
+              </button>
+            </div>
           </div>
         ) : (
           <DashboardComponent />
