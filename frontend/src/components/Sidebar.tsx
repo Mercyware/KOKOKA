@@ -323,6 +323,10 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                           if (subItem.id === 'students-reports') {
                             navigate('/students'); // For now, redirect to students list
                           }
+                          // Academic menu items
+                          if (subItem.id === 'scores-add') {
+                            navigate('/scores-add');
+                          }
                           // Teacher menu items
                           if (subItem.id === 'teacher-class-assignments') {
                             navigate('/teachers/class-assignments');

@@ -19,7 +19,7 @@ async function main() {
 
   // 3. Create Academic Calendar
   console.log('📆 Creating academic calendar...');
-  await createAcademicCalendar(school.id, academicYear.id);
+  const academicCalendars = await createAcademicCalendar(school.id, academicYear.id);
 
   // 4. Create Users (Admin, Principal, Teachers, etc.)
   console.log('👥 Creating users...');
@@ -41,11 +41,16 @@ async function main() {
   console.log('📖 Creating subjects...');
   const subjects = await createSubjects(school.id);
 
-  // 9. Create Teachers
+  // 9. Create Assessments - TEMPORARILY DISABLED DUE TO SCHEMA COMPLEXITY
+  // console.log('📝 Creating assessments...');
+  // const assessments = await createAssessments(school.id, subjects, academicCalendars);
+  const assessments = []; // Placeholder for now
+
+  // 10. Create Teachers
   console.log('👨‍🏫 Creating teachers...');
   const teachers = await createTeachers(school.id, users);
 
-  // 10. Create Students
+    // 10. Create Students
   console.log('👨‍🎓 Creating students...');
   const students = await createStudents(school.id, users, classes, houses, academicYear.id);
 
@@ -58,6 +63,10 @@ async function main() {
   await createClassTeachers(school.id, teachers, classes, academicYear.id);
 
   // 13. Create Guardians
+  console.log('👨‍👩‍👧‍👦 Creating guardians...');
+  await createGuardians(school.id, students);
+
+    // 13. Create Guardians
   console.log('👨‍👩‍👧‍👦 Creating guardians...');
   await createGuardians(school.id, students);
 
@@ -79,6 +88,7 @@ async function main() {
 - Sections: ${sections.length}  
 - Classes: ${classes.length}
 - Subjects: ${subjects.length}
+- Assessments: ${assessments.length}
 - Teachers: ${teachers.length}
 - Students: ${students.length}
 
@@ -248,6 +258,11 @@ async function createAcademicCalendar(schoolId, academicYearId) {
 
   await prisma.academicCalendar.createMany({
     data: calendars
+  });
+
+  // Return the created calendars
+  return await prisma.academicCalendar.findMany({
+    where: { schoolId }
   });
 }
 
@@ -612,6 +627,73 @@ async function createSubjects(schoolId) {
   }
 
   return subjects;
+}
+
+async function createAssessments(schoolId, subjects, academicCalendars) {
+  const assessmentTypes = ['ASSIGNMENT', 'QUIZ', 'EXAM', 'TEST'];
+  const assessmentData = [];
+
+  // Create assessments for each subject in each academic calendar
+  for (const calendar of academicCalendars) {
+    for (const subject of subjects) {
+      // Create different types of assessments
+      const assessments = [
+        {
+          title: `${subject.name} Assignment 1`,
+          description: `First assignment for ${subject.name} in ${calendar.term} term`,
+          type: 'ASSIGNMENT',
+          totalMarks: 50,
+          passingMarks: 30,
+          dueDate: new Date(calendar.startDate.getTime() + 14 * 24 * 60 * 60 * 1000), // 2 weeks after start
+          subjectId: subject.id,
+          academicCalendarId: calendar.id,
+          schoolId: schoolId,
+          status: 'PUBLISHED',
+          instructions: `Complete all exercises in Chapter 1-3 of your ${subject.name} textbook.`
+        },
+        {
+          title: `${subject.name} Quiz 1`,
+          description: `First quiz for ${subject.name} in ${calendar.term} term`,
+          type: 'QUIZ',
+          totalMarks: 25,
+          passingMarks: 15,
+          dueDate: new Date(calendar.startDate.getTime() + 21 * 24 * 60 * 60 * 1000), // 3 weeks after start
+          subjectId: subject.id,
+          academicCalendarId: calendar.id,
+          schoolId: schoolId,
+          status: 'PUBLISHED',
+          instructions: `30-minute quiz covering basic concepts from the first three weeks.`
+        },
+        {
+          title: `${subject.name} Mid-Term Exam`,
+          description: `Mid-term examination for ${subject.name} in ${calendar.term} term`,
+          type: 'EXAM',
+          totalMarks: 100,
+          passingMarks: 60,
+          dueDate: new Date((calendar.startDate.getTime() + calendar.endDate.getTime()) / 2), // Mid-term
+          subjectId: subject.id,
+          academicCalendarId: calendar.id,
+          schoolId: schoolId,
+          status: 'PUBLISHED',
+          instructions: `Comprehensive exam covering all topics taught in the first half of the term.`
+        }
+      ];
+
+      assessmentData.push(...assessments);
+    }
+  }
+
+  await prisma.assessment.createMany({
+    data: assessmentData
+  });
+
+  return await prisma.assessment.findMany({
+    where: { schoolId },
+    include: {
+      subject: true,
+      academicCalendar: true
+    }
+  });
 }
 
 async function createTeachers(schoolId, users) {

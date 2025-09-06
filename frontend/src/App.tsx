@@ -55,6 +55,8 @@ import GlobalCurriculumRegistry from "./pages/curriculum/GlobalCurriculumRegistr
 import GradeBookManagement from "./pages/teacher/GradeBookManagement";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import StudentGradeView from "./pages/student/StudentGradeView";
+// Academic Components
+import AddScores from "./pages/academics/AddScores";
 
 const queryClient = new QueryClient();
 
@@ -148,6 +150,10 @@ const App = () => (
             <Route path="/staff/create" element={<CreateStaff />} />
             <Route path="/staff/edit/:id" element={<EditStaff />} />
             <Route path="/staff/:id" element={<StaffDetails />} />
+            
+            {/* Academic Routes */}
+            <Route path="/scores-add" element={<AddScores />} />
+            <Route path="/academics/scores" element={<AddScores />} />
             
             {/* Teacher Routes */}
             <Route path="/teachers/class-assignments" element={<ClassAssignments />} />

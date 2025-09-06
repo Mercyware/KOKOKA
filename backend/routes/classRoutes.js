@@ -84,6 +84,53 @@ router.get('/', classController.getAllClasses);
 
 /**
  * @swagger
+ * /api/classes/with-sections:
+ *   get:
+ *     summary: Get all classes with their sections
+ *     description: Retrieve a flattened list of class-section combinations. Accessible by all authenticated users.
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of class-section combinations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   class:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Class ID
+ *                       name:
+ *                         type: string
+ *                         description: Class name
+ *                       level:
+ *                         type: string
+ *                         description: Class level
+ *                   section:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Section ID
+ *                       name:
+ *                         type: string
+ *                         description: Section name
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get('/with-sections', classController.getClassesWithSections);
+
+/**
+ * @swagger
  * /api/classes/{id}:
  *   get:
  *     summary: Get class by ID

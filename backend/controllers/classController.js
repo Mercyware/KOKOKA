@@ -344,3 +344,59 @@ exports.bulkUpdateGrades = async (req, res) => {
     });
   }
 };
+
+// Get all classes with their sections for a school
+exports.getClassesWithSections = async (req, res) => {
+  try {
+    if (!req.school || !req.school.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'School context not found'
+      });
+    }
+    
+    const schoolId = req.school.id;
+    
+    // Get all classes for the school
+    const classes = await prisma.class.findMany({
+      where: { schoolId },
+      orderBy: { name: 'asc' }
+    });
+
+    // Get all sections for the school
+    const sections = await prisma.section.findMany({
+      where: { schoolId },
+      orderBy: { name: 'asc' }
+    });
+
+    // Create all possible class-section combinations
+    const classSections = [];
+    classes.forEach(classItem => {
+      sections.forEach(section => {
+        classSections.push({
+          class: {
+            id: classItem.id,
+            name: classItem.name,
+            level: classItem.grade // Use grade as level since level field doesn't exist in schema
+          },
+          section: {
+            id: section.id,
+            name: section.name
+          }
+        });
+      });
+    });
+
+    res.json({
+      success: true,
+      data: classSections
+    });
+  } catch (error) {
+    console.error('Error fetching classes with sections:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};

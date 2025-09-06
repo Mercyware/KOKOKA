@@ -28,7 +28,8 @@
       "Bash(start \"http://localhost:8081/teachers/class-assignments?refresh=1\")",
       "Bash(PORT=5002 npm run dev)",
       "Bash(start \"http://localhost:8081/teachers/class-assignments?v=2\")",
-      "Bash(start \"http://localhost:8081/teachers/class-assignments?v=3\")"
+      "Bash(start \"http://localhost:8081/teachers/class-assignments?v=3\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": [],

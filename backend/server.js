@@ -48,6 +48,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 // const documentRoutes = require('./routes/documentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const scoreRoutes = require('./routes/scoreRoutes');
 
 // New Grade Management and Curriculum Routes
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
@@ -207,6 +208,9 @@ app.use('/api/departments', departmentRoutes);
 
 // Notification routes
 app.use('/api/notifications', notificationRoutes);
+
+// Score Management Routes
+app.use('/api/scores', scoreRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);
