@@ -85,18 +85,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'students-add', label: 'Add Student', icon: Plus },
       ]
     },
-    {
-      id: 'academic',
-      label: 'Academic',
-      icon: BookOpen,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
-        { id: 'report-templates', label: 'Report Cards', icon: FileText },
-        { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
-        { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart },
-      ]
-    },
+   
     {
       id: 'staff',
       label: 'Staff',
@@ -118,6 +107,18 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'teacher-subject-assignments', label: 'Subject Assignments', icon: BookOpen },
         { id: 'teacher-schedule', label: 'Teaching Schedule', icon: Calendar },
         { id: 'teacher-performance', label: 'Performance', icon: BarChart3 },
+      ]
+    },
+     {
+      id: 'academic',
+      label: 'Academic',
+      icon: BookOpen,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
+        { id: 'report-templates', label: 'Report Cards', icon: FileText },
+        { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
+        { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart },
       ]
     },
     {
