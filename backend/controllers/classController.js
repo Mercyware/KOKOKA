@@ -35,7 +35,15 @@ exports.getAllClasses = async (req, res) => {
     
     const classes = await prisma.class.findMany({
       where: { schoolId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        grade: true,
+        capacity: true,
+        description: true,
+        schoolId: true,
+        createdAt: true,
+        updatedAt: true,
         students: {
           select: {
             id: true

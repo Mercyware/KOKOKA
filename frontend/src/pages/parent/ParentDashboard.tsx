@@ -380,7 +380,7 @@ const ParentDashboard: React.FC = () => {
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={student.photo} alt={`${student.firstName} ${student.lastName}`} />
+                        <AvatarImage src={student.profileImageUrl || student.photo} alt={`${student.firstName} ${student.lastName}`} />
                         <AvatarFallback>
                           {student.firstName[0]}{student.lastName[0]}
                         </AvatarFallback>

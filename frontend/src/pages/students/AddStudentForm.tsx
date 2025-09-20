@@ -9,6 +9,7 @@ import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { useNavigate } from 'react-router-dom';
 import StudentForm from '@/components/students/StudentForm';
+import { convertToBackendData, type FrontendFormData } from '@/utils/studentFormUtils';
 import { ArrowLeft } from 'lucide-react';
 
 interface AddStudentFormProps {
@@ -16,13 +17,13 @@ interface AddStudentFormProps {
   onSave?: (student: any) => void;
 }
 
-const emptyFormData = {
+const emptyFormData: FrontendFormData = {
   firstName: '',
   middleName: '',
   lastName: '',
   email: '',
   dateOfBirth: '',
-  gender: '' as 'male' | 'female' | 'other' | '',
+  gender: '',
   admissionNumber: '',
   admissionDate: new Date().toISOString().split('T')[0],
   class: '',
@@ -30,17 +31,68 @@ const emptyFormData = {
   academicYear: '',
   house: '',
   rollNumber: '',
-  status: 'active' as 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled',
-  bloodGroup: '' as 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown' | '',
-  height: { value: '', unit: 'cm' as 'cm' | 'in' },
-  weight: { value: '', unit: 'kg' as 'kg' | 'lb' },
-  healthInfo: {
-    allergies: [] as string[],
-    medicalConditions: [] as string[],
-    medications: [] as string[],
-    dietaryRestrictions: [] as string[],
-    disabilities: [] as string[]
+  status: 'active',
+  
+  // Additional Personal Information
+  placeOfBirth: '',
+  nationality: '',
+  religion: '',
+  motherTongue: '',
+  previousSchool: '',
+  previousClass: '',
+  tcNumber: '',
+  tcDate: '',
+  
+  // Blood group and physical info
+  bloodGroup: '',
+  height: { value: '', unit: 'cm' },
+  weight: { value: '', unit: 'kg' },
+  
+  // Comprehensive Medical Information
+  medicalInfo: {
+    height: '',
+    weight: '',
+    lastCheckup: '',
+    generalHealth: '',
+    bloodType: '',
+    physicianName: '',
+    physicianPhone: ''
   },
+  allergies: [],
+  medications: {
+    current: []
+  },
+  medicalConditions: [],
+  immunizations: {
+    completed: [],
+    pending: [],
+    lastUpdated: ''
+  },
+  emergencyMedicalInfo: '',
+  doctorName: '',
+  doctorPhone: '',
+  hospitalPreference: '',
+  
+  // Health info (legacy compatibility)
+  healthInfo: {
+    allergies: [],
+    medicalConditions: [],
+    medications: [],
+    dietaryRestrictions: [],
+    disabilities: []
+  },
+  
+  // Emergency Contacts (separate from guardians)
+  emergencyContacts: [{
+    name: '',
+    relationship: '',
+    phone: '',
+    email: '',
+    address: '',
+    isPrimary: true
+  }],
+  
+  // Contact info
   contactInfo: {
     phone: '',
     alternativePhone: '',
@@ -50,6 +102,8 @@ const emptyFormData = {
       phone: ''
     }
   },
+  
+  // Current Address
   address: {
     street: '',
     city: '',
@@ -57,10 +111,62 @@ const emptyFormData = {
     zipCode: '',
     country: ''
   },
+  
+  // Permanent Address
+  permanentAddress: {
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
+  },
+  
+  // Academic Background
+  previousAcademicRecord: {
+    previousSchool: '',
+    previousGrade: '',
+    subjects: [],
+    performance: '',
+    teacherRecommendations: ''
+  },
+  specialNeeds: '',
+  talents: [],
+  extracurriculars: [],
+  
+  // Administrative Information
+  applicationDate: '',
+  interviewDate: '',
+  admissionTestScore: 0,
+  feesPaid: 0,
+  scholarshipInfo: null,
+  transportInfo: {
+    mode: '',
+    busRoute: '',
+    pickupPoint: '',
+    dropoffPoint: ''
+  },
+  
+  // Behavioral and Social Information
+  behavioralNotes: '',
+  socialBackground: '',
+  languagesSpoken: [],
+  
+  // Documents and Identification
+  identificationDocs: {
+    birthCertificate: false,
+    passport: false,
+    socialSecurityCard: false
+  },
+  photographs: {
+    passport: 0,
+    school: 0
+  },
+  documentsSubmitted: [],
+  
   guardians: [{
     firstName: '',
     lastName: '',
-    relationship: '' as 'father' | 'mother' | 'grandfather' | 'grandmother' | 'uncle' | 'aunt' | 'sibling' | 'legal guardian' | 'other' | '',
+    relationship: '',
     phone: '',
     email: '',
     occupation: '',
@@ -117,45 +223,19 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     fetchHousesData();
   }, []);
 
-  const handleSubmit = (formData: any) => {
+  const handleSubmit = (formData: FrontendFormData) => {
     setLoading(true);
     (async () => {
       try {
-        const validGuardians = formData.guardians.filter((guardian: any) =>
-          guardian.firstName &&
-          guardian.lastName &&
-          guardian.relationship &&
-          guardian.phone
-        );
-
-        const studentData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          middleName: formData.middleName || undefined,
-          email: formData.email || undefined,
-          dateOfBirth: formData.dateOfBirth || undefined,
-          gender: formData.gender || undefined,
-          admissionNumber: formData.admissionNumber,
-          admissionDate: formData.admissionDate || undefined,
-          class: formData.class,
-          academicYear: formData.academicYear || undefined,
-          house: formData.house || undefined,
-          status: formData.status,
-          phone: formData.contactInfo.phone || undefined,
-          streetAddress: formData.address.street || undefined,
-          city: formData.address.city || undefined,
-          state: formData.address.state || undefined,
-          zipCode: formData.address.zipCode || undefined,
-          country: formData.address.country || undefined,
-          guardians: validGuardians.length > 0 ? validGuardians : undefined
-        };
+        // Convert frontend form data to backend format
+        const studentData = convertToBackendData(formData);
 
         const response = await createStudent(studentData);
 
         if (response.success) {
           toast({
             title: 'Student added successfully!',
-            description: 'The student profile has been created.',
+            description: 'The student profile has been created with comprehensive medical and admission information.',
             variant: 'default',
           });
           setTimeout(() => {

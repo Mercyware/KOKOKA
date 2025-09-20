@@ -44,7 +44,12 @@ import {
   MessageSquare,
   Library,
   QrCode,
-  Shield
+  Shield,
+  Bell,
+  Send,
+  UserPlus,
+  BookOpenCheck,
+  Cog
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -75,7 +80,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, hasSubmenu: false },
-    
+
     // Core Management
     {
       id: 'students',
@@ -98,7 +103,17 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'staff-reports', label: 'Reports', icon: FileText },
       ]
     },
-    
+    {
+      id: 'teachers',
+      label: 'Teachers',
+      icon: UserPlus,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'teachers-class-assignments', label: 'Class Assignments', icon: School },
+        { id: 'teachers-subject-assignments', label: 'Subject Assignments', icon: BookOpenCheck },
+      ]
+    },
+
     // Academic Operations
     {
       id: 'attendance',
@@ -124,7 +139,48 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'gradebook-reports', label: 'Reports', icon: FileText },
       ]
     },
-    
+    {
+      id: 'curriculum',
+      label: 'Curriculum',
+      icon: Library,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'curriculum-global', label: 'Global Registry', icon: Globe },
+        { id: 'curriculum-school', label: 'School Curriculum', icon: School },
+        { id: 'curriculum-progress', label: 'Progress', icon: TrendingUp },
+      ]
+    },
+
+    // School Settings
+    {
+      id: 'school-settings',
+      label: 'School Settings',
+      icon: Cog,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'academic-years', label: 'Academic Years', icon: Calendar },
+        { id: 'academic-calendars', label: 'Academic Calendars', icon: CalendarDays },
+        { id: 'classes', label: 'Classes', icon: Building2 },
+        { id: 'sections', label: 'Sections', icon: Layers },
+        { id: 'subjects', label: 'Subjects', icon: BookOpen },
+        { id: 'departments', label: 'Departments', icon: Building },
+        { id: 'houses', label: 'Houses', icon: HomeIcon },
+        { id: 'curricula', label: 'Curricula', icon: Library },
+      ]
+    },
+
+    // Communication
+    {
+      id: 'communication',
+      label: 'Communication',
+      icon: MessageSquare,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'messaging', label: 'Messaging', icon: Send },
+      ]
+    },
+
     // Analytics & Insights
     {
       id: 'analytics',
@@ -252,13 +308,20 @@ return (
                         onTabChange(subItem.id);
                         // Routing logic
                         if (subItem.id === 'academic-years') navigate('/school-settings/academic-years');
+                        if (subItem.id === 'academic-calendars') navigate('/school-settings/academic-calendars');
                         if (subItem.id === 'classes') navigate('/school-settings/classes');
+                        if (subItem.id === 'sections') navigate('/school-settings/sections');
                         if (subItem.id === 'subjects') navigate('/school-settings/subjects');
                         if (subItem.id === 'departments') navigate('/school-settings/departments');
                         if (subItem.id === 'houses') navigate('/school-settings/houses');
+                        if (subItem.id === 'curricula') navigate('/school-settings/curricula');
                         if (subItem.id === 'curriculum-school') navigate('/curriculum/school');
                         if (subItem.id === 'curriculum-global') navigate('/curriculum/global');
                         if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
+                        if (subItem.id === 'teachers-class-assignments') navigate('/teachers/class-assignments');
+                        if (subItem.id === 'teachers-subject-assignments') navigate('/teachers/subject-assignments');
+                        if (subItem.id === 'notifications') navigate('/notifications');
+                        if (subItem.id === 'messaging') navigate('/messaging');
                         if (subItem.id === 'gradebook-teacher') navigate('/gradebook/teacher');
                         if (subItem.id === 'gradebook-entry') navigate('/gradebook/entry');
                         if (subItem.id === 'gradebook-reports') navigate('/gradebook/reports');

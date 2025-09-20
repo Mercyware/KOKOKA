@@ -11,13 +11,20 @@ const StudentsManager: React.FC = () => {
     window.location.href = `/students/${studentId}`;
   };
 
+  const handleEditStudent = (studentId: string) => {
+    window.location.href = `/students/${studentId}/edit`;
+  };
+
   return (
     <Layout>
-      <div className="container mx-auto p-4">
-        <StudentsManagerComponent 
-          onAddStudent={handleAddStudent}
-          onViewStudent={handleViewStudent}
-        />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <StudentsManagerComponent
+            onAddStudent={handleAddStudent}
+            onViewStudent={handleViewStudent}
+            onEditStudent={handleEditStudent}
+          />
+        </div>
       </div>
     </Layout>
   );

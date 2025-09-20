@@ -52,7 +52,7 @@ async function main() {
 
     // 10. Create Students
   console.log('👨‍🎓 Creating students...');
-  const students = await createStudents(school.id, users, classes, houses, academicYear.id);
+  const students = await createStudents(school.id, users, classes, houses, academicYear.id, sections);
 
   // 11. Create Class-Subject History - TEMPORARILY DISABLED
   // console.log('📋 Creating class-subject history...');
@@ -67,10 +67,6 @@ async function main() {
   // await createSampleAssessment(school.id, classes[0], subjects[0], academicYear.id, academicCalendars[0], teachers[0]);
 
   // 13. Create Guardians
-  console.log('👨‍👩‍👧‍👦 Creating guardians...');
-  await createGuardians(school.id, students);
-
-    // 13. Create Guardians
   console.log('👨‍👩‍👧‍👦 Creating guardians...');
   await createGuardians(school.id, students);
 
@@ -827,8 +823,19 @@ async function createTeachers(schoolId, users) {
   return teachers;
 }
 
-async function createStudents(schoolId, users, classes, houses, academicYearId) {
+async function createStudents(schoolId, users, classes, houses, academicYearId, sections) {
   const studentUsers = users.filter(user => user.role === 'STUDENT');
+  
+  // Sample data for comprehensive student information
+  const bloodGroups = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
+  const nationalities = ['American', 'Canadian', 'British', 'Indian', 'Chinese', 'Mexican', 'German', 'French'];
+  const religions = ['Christianity', 'Islam', 'Judaism', 'Hinduism', 'Buddhism', 'Other', 'None'];
+  const languages = ['English', 'Spanish', 'French', 'Mandarin', 'Hindi', 'Arabic', 'German'];
+  const allergies = ['Peanuts', 'Tree Nuts', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Shellfish', 'Fish'];
+  const medicalConditions = ['Asthma', 'Diabetes Type 1', 'ADHD', 'Autism Spectrum', 'Epilepsy', 'Food Allergies'];
+  const talents = ['Music', 'Art', 'Sports', 'Mathematics', 'Writing', 'Dancing', 'Public Speaking', 'Technology'];
+  const extracurriculars = ['Soccer', 'Basketball', 'Piano', 'Guitar', 'Chess', 'Debate', 'Art Club', 'Science Club'];
+  const previousSchools = ['Springfield Elementary', 'Riverside Primary', 'Oak Hill School', 'Maple Grove Academy'];
   
   // Generate student data for all student users
   const studentsData = studentUsers.map((studentUser, index) => {
@@ -836,9 +843,10 @@ async function createStudents(schoolId, users, classes, houses, academicYearId) 
     const firstName = names[0];
     const lastName = names.slice(1).join(' ');
     
-    // Distribute students across different classes and houses
+    // Distribute students across different classes, houses, and sections
     const classIndex = index % classes.length;
     const houseIndex = index % houses.length;
+    const sectionIndex = index % sections.length;
     
     // Generate different birth years (2010-2014 for grades 1-8)
     const birthYear = 2010 + (index % 5);
@@ -849,7 +857,15 @@ async function createStudents(schoolId, users, classes, houses, academicYearId) 
     const maleNames = ['Michael', 'David', 'James', 'Benjamin', 'Matthew', 'Ethan', 'Alexander', 'Daniel', 'William', 'Henry', 'Sebastian', 'Jackson', 'Owen', 'Lucas', 'Carter', 'Wyatt', 'Jack', 'Jacob', 'Mason', 'Noah', 'Elijah', 'Luke', 'Levi', 'Oliver', 'Asher', 'Grayson'];
     const gender = maleNames.includes(firstName) ? 'MALE' : 'FEMALE';
     
+    // Generate comprehensive student data
+    const studentAllergies = Math.random() > 0.7 ? [allergies[Math.floor(Math.random() * allergies.length)]] : [];
+    const studentMedicalConditions = Math.random() > 0.9 ? [medicalConditions[Math.floor(Math.random() * medicalConditions.length)]] : [];
+    const studentTalents = [talents[Math.floor(Math.random() * talents.length)], talents[Math.floor(Math.random() * talents.length)]].filter((v, i, a) => a.indexOf(v) === i);
+    const studentExtracurriculars = [extracurriculars[Math.floor(Math.random() * extracurriculars.length)]];
+    const studentLanguages = ['English', languages[Math.floor(Math.random() * languages.length)]].filter((v, i, a) => a.indexOf(v) === i);
+    
     return {
+      // Basic Information
       admissionNumber: `STU2024${String(index + 1).padStart(3, '0')}`,
       firstName,
       lastName,
@@ -857,16 +873,108 @@ async function createStudents(schoolId, users, classes, houses, academicYearId) 
       gender,
       email: studentUser.email,
       phone: `+1-555-${String(200 + index).padStart(4, '0')}`,
+      
+      // Address Information
       streetAddress: `${100 + index} Student Street`,
       city: 'Springfield',
       state: 'California',
       zipCode: '90210',
       country: 'United States',
+      
+      // Permanent Address (some different, some same)
+      permanentStreetAddress: Math.random() > 0.3 ? `${100 + index} Student Street` : `${200 + index} Permanent Ave`,
+      permanentCity: Math.random() > 0.3 ? 'Springfield' : 'Los Angeles',
+      permanentState: 'California',
+      permanentZipCode: Math.random() > 0.3 ? '90210' : '90211',
+      permanentCountry: 'United States',
+      
+      // Additional Personal Information
+      placeOfBirth: Math.random() > 0.5 ? 'Springfield, CA' : 'Los Angeles, CA',
+      nationality: nationalities[Math.floor(Math.random() * nationalities.length)],
+      religion: religions[Math.floor(Math.random() * religions.length)],
+      bloodGroup: bloodGroups[Math.floor(Math.random() * bloodGroups.length)],
+      motherTongue: languages[Math.floor(Math.random() * languages.length)],
+      previousSchool: Math.random() > 0.2 ? previousSchools[Math.floor(Math.random() * previousSchools.length)] : null,
+      previousClass: Math.random() > 0.2 ? `Grade ${Math.floor(Math.random() * 5) + 1}` : null,
+      
+      // Medical Information
+      medicalInfo: {
+        height: `${120 + Math.floor(Math.random() * 40)}cm`,
+        weight: `${25 + Math.floor(Math.random() * 25)}kg`,
+        lastCheckup: '2024-08-15',
+        generalHealth: 'Good'
+      },
+      allergies: studentAllergies,
+      medicalConditions: studentMedicalConditions,
+      immunizations: {
+        MMR: true,
+        DPT: true,
+        Polio: true,
+        Hepatitis: true,
+        lastUpdated: '2024-01-15'
+      },
+      emergencyMedicalInfo: studentMedicalConditions.length > 0 ? `Has ${studentMedicalConditions.join(', ')}` : null,
+      doctorName: `Dr. ${['Smith', 'Johnson', 'Brown', 'Davis', 'Miller'][Math.floor(Math.random() * 5)]}`,
+      doctorPhone: `+1-555-${String(300 + index).padStart(4, '0')}`,
+      hospitalPreference: ['Springfield General', 'City Medical Center', 'Regional Hospital'][Math.floor(Math.random() * 3)],
+      
+      // Emergency Contacts
+      emergencyContacts: [
+        {
+          name: `Emergency Contact ${index + 1}`,
+          relationship: 'Family Friend',
+          phone: `+1-555-${String(400 + index).padStart(4, '0')}`,
+          address: `${300 + index} Emergency St, Springfield, CA`
+        }
+      ],
+      
+      // Academic Background
+      previousAcademicRecord: {
+        previousGrade: Math.random() > 0.2 ? `Grade ${Math.floor(Math.random() * 5) + 1}` : null,
+        performance: ['Excellent', 'Good', 'Average'][Math.floor(Math.random() * 3)],
+        subjects: ['Math', 'English', 'Science', 'Social Studies']
+      },
+      specialNeeds: Math.random() > 0.95 ? 'Requires additional learning support' : null,
+      talents: studentTalents,
+      extracurriculars: studentExtracurriculars,
+      
+      // Administrative Information
+      applicationDate: new Date('2024-07-15'),
+      interviewDate: new Date('2024-08-01'),
+      admissionTestScore: Math.random() > 0.3 ? Math.floor(Math.random() * 40) + 60 : null, // 60-100
+      feesPaid: Math.floor(Math.random() * 5000) + 1000, // $1000-$6000
+      scholarshipInfo: Math.random() > 0.8 ? { type: 'Merit Scholarship', amount: 1000, percentage: 25 } : null,
+      transportInfo: {
+        mode: ['Bus', 'Car', 'Walk'][Math.floor(Math.random() * 3)],
+        busRoute: Math.random() > 0.5 ? `Route ${Math.floor(Math.random() * 10) + 1}` : null
+      },
+      
+      // Behavioral and Social Information
+      behavioralNotes: Math.random() > 0.8 ? 'Excellent behavior and attitude' : null,
+      socialBackground: 'Middle class family background',
+      languagesSpoken: studentLanguages,
+      
+      // Documents and Identification
+      identificationDocs: {
+        birthCertificate: true,
+        passport: Math.random() > 0.5,
+        ssn: true,
+        medicalRecords: true
+      },
+      photographs: {
+        passport: true,
+        school: true,
+        family: Math.random() > 0.5
+      },
+      documentsSubmitted: ['Birth Certificate', 'Medical Records', 'Previous School Records', 'Passport Photos'],
+      
+      // Core fields
       admissionDate: new Date('2024-09-01'),
       status: 'ACTIVE',
       schoolId: schoolId,
       userId: studentUser.id,
       currentClassId: classes[classIndex].id,
+      currentSectionId: sections[sectionIndex].id,
       academicYearId: academicYearId,
       houseId: houses[houseIndex].id
     };
@@ -879,11 +987,12 @@ async function createStudents(schoolId, users, classes, houses, academicYearId) 
     });
     students.push(student);
     
-    // Create student class history record
+    // Create student class history record with section
     await prisma.studentClassHistory.create({
       data: {
         studentId: student.id,
         classId: student.currentClassId,
+        sectionId: student.currentSectionId,
         schoolId: schoolId,
         academicYearId: academicYearId,
         startDate: new Date('2024-09-01'),
@@ -1170,8 +1279,10 @@ async function createGlobalCurricula() {
   ];
 
   for (const curriculumData of globalCurriculaData) {
-    const curriculum = await prisma.globalCurriculum.create({
-      data: curriculumData
+    const curriculum = await prisma.globalCurriculum.upsert({
+      where: { name: curriculumData.name },
+      update: curriculumData,
+      create: curriculumData
     });
     
     // Add sample subjects for each global curriculum
@@ -1197,8 +1308,19 @@ async function createGlobalCurriculumSubjects(curriculumId, type) {
   }
 
   for (const subject of subjects) {
-    await prisma.globalCurriculumSubject.create({
-      data: {
+    await prisma.globalCurriculumSubject.upsert({
+      where: {
+        globalCurriculumId_code_gradeLevel: {
+          globalCurriculumId: curriculumId,
+          code: subject.code,
+          gradeLevel: subject.gradeLevel
+        }
+      },
+      update: {
+        ...subject,
+        globalCurriculumId: curriculumId
+      },
+      create: {
         ...subject,
         globalCurriculumId: curriculumId
       }

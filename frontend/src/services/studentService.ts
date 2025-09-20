@@ -38,8 +38,8 @@ export const getStudents = async (filters: StudentFilters = {}): Promise<Paginat
         data: response.data.students,
         total: response.data.pagination.total,
         count: response.data.pagination.limit,
-        pages: response.data.pagination.pages,
-        currentPage: response.data.pagination.page
+        totalPages: response.data.pagination.pages,
+        page: response.data.pagination.page
       };
     }
     
@@ -78,20 +78,43 @@ export const createStudent = async (studentData: Partial<Student>): Promise<ApiR
 };
 
 // Update student
-export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<{ success: boolean; student: Student }> => {
+export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
   try {
     const response = await put<{ student: Student }>(`/students/${id}`, studentData);
+
+    // Check if the response indicates an error (returned by handleApiError)
+    if (response && 'success' in response && !response.success) {
+      return {
+        success: false,
+        message: response.message || 'Failed to update student',
+        error: response.error || response.message
+      };
+    }
+
     // If backend returns { student, success }
     if (response && 'student' in response) {
       return { success: true, student: response.student };
     }
+
     // Fallback: if backend returns { data, success }
     if (response && 'data' in response) {
       return { success: true, student: response.data };
     }
-    throw new Error('Invalid response shape');
+
+    // If response exists but doesn't have expected structure, log it for debugging
+    console.error('Unexpected response structure:', response);
+    return {
+      success: false,
+      message: 'Unexpected response format from server',
+      error: 'Invalid response structure'
+    };
   } catch (error: any) {
-    return { success: false, student: {} as Student };
+    console.error('Update student error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to update student',
+      error: error.response?.data?.error || error.message
+    };
   }
 };
 
@@ -142,5 +165,72 @@ export const getStudentClassHistory = async (id: string): Promise<ApiResponse<an
   } catch (error) {
     console.error(`Error fetching class history for student with ID ${id}:`, error);
     throw error;
+  }
+};
+
+// Upload student profile picture
+export const uploadStudentProfilePicture = async (
+  studentId: string, 
+  file: File
+): Promise<{ success: boolean; data?: any; message?: string; error?: string }> => {
+  try {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+
+    const response = await fetch(`/api/students/${studentId}/profile-picture`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Upload failed');
+    }
+
+    return {
+      success: true,
+      data: result.data,
+      message: result.message
+    };
+  } catch (error: any) {
+    console.error('Profile picture upload error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to upload profile picture',
+      error: error.message
+    };
+  }
+};
+
+// Delete student profile picture
+export const deleteStudentProfilePicture = async (
+  studentId: string
+): Promise<{ success: boolean; data?: any; message?: string; error?: string }> => {
+  try {
+    const response = await fetch(`/api/students/${studentId}/profile-picture`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Delete failed');
+    }
+
+    return {
+      success: true,
+      data: result.data,
+      message: result.message
+    };
+  } catch (error: any) {
+    console.error('Profile picture delete error:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to delete profile picture',
+      error: error.message
+    };
   }
 };

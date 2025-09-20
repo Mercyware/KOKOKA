@@ -83,6 +83,9 @@ model School {
   reportCardTemplates  ReportCardTemplate[]
   reportBatches        ReportBatch[]
 
+  // File Management relationships
+  files                FileManager[]
+
   @@map("schools")
 }
 
@@ -141,7 +144,54 @@ model User {
   approvedReportCards      ReportCard[] @relation("ReportCardApprovedBy")
   createdReportBatches     ReportBatch[] @relation("ReportBatchCreatedBy")
 
+  // File Management relationships
+  uploadedFiles            FileManager[]
+
   @@map("users")
+}
+
+// ================================
+// FILE MANAGEMENT SYSTEM
+// ================================
+
+model FileManager {
+  id          String    @id @default(uuid())
+  fileName    String    // Original file name
+  fileKey     String    @unique // S3 key/path
+  fileUrl     String    // S3 URL
+  fileSize    Int       // File size in bytes
+  mimeType    String    // MIME type (image/jpeg, application/pdf, etc.)
+  category    FileCategory @default(OTHER) // Category for organization
+  
+  // File metadata
+  originalName String?  // Original filename from upload
+  dimensions  Json?     // For images: { width: number, height: number }
+  compressed  Boolean   @default(false) // Whether the file was compressed/optimized
+  
+  // Relationships
+  entityType  String?   // Type of entity this file belongs to (Student, Teacher, etc.)
+  entityId    String?   // ID of the entity this file belongs to
+  
+  // Upload info
+  uploadedById String?  // User who uploaded the file
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  
+  // Status and metadata
+  status      FileStatus @default(ACTIVE)
+  isPublic    Boolean   @default(false) // Whether file is publicly accessible
+  description String?   // Optional description
+  tags        String[]  // Tags for searching/filtering
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations to specific entities
+  studentProfiles Student[] @relation("StudentProfilePicture")
+  
+  @@map("file_manager")
 }
 
 // ================================
@@ -931,6 +981,10 @@ model Section {
   schoolId  String
   school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   
+  // Relationships
+  students            Student[]
+  studentClassHistory StudentClassHistory[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -956,8 +1010,6 @@ model Class {
   assessments         Assessment[]
   attendance          Attendance[]
   attendanceSessions  AttendanceSession[]
-  attendancePolicy    AttendancePolicy? @relation(fields: [attendancePolicyId], references: [id])
-  attendancePolicyId  String?
   classTeachers       ClassTeacher[]
   studentClassHistory StudentClassHistory[]
   documents           Document[]
@@ -983,9 +1035,20 @@ model Student {
   middleName      String?
   dateOfBirth     DateTime?
   gender          Gender?
-  photo           String?
+  photo           String?    // Legacy field - kept for backward compatibility
   email           String?
   phone           String?
+  
+  // Additional Personal Information
+  placeOfBirth    String?
+  nationality     String?
+  religion        String?
+  bloodGroup      String?    // A+, B+, O+, AB+, A-, B-, O-, AB-
+  motherTongue    String?
+  previousSchool  String?
+  previousClass   String?
+  tcNumber        String?    // Transfer Certificate Number
+  tcDate          DateTime?  // Transfer Certificate Date
   
   // Address
   streetAddress String?
@@ -994,22 +1057,73 @@ model Student {
   zipCode       String?
   country       String?
   
+  // Permanent Address (if different)
+  permanentStreetAddress String?
+  permanentCity          String?
+  permanentState         String?
+  permanentZipCode       String?
+  permanentCountry       String?
+  
   // Academic Information
   admissionDate DateTime  @default(now())
   status        StudentStatus @default(ACTIVE)
   
-  // Relationships
-  schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  userId         String?      @unique
-  user           User?        @relation(fields: [userId], references: [id])
-  currentClassId String?
-  currentClass   Class?       @relation(fields: [currentClassId], references: [id])
-  academicYearId String?
-  academicYear   AcademicYear? @relation(fields: [academicYearId], references: [id])
-  houseId        String?
-  house          House?       @relation(fields: [houseId], references: [id])
+  // Medical Information
+  medicalInfo    Json?      // Comprehensive medical information
+  allergies      String[]   // List of allergies
+  medications    Json?      // Current medications and dosage
+  medicalConditions String[] // Chronic conditions, disabilities, etc.
+  immunizations  Json?      // Vaccination records
+  emergencyMedicalInfo String? // Critical medical information for emergencies
+  doctorName     String?    // Primary care physician
+  doctorPhone    String?    // Doctor's contact number
+  hospitalPreference String? // Preferred hospital for emergencies
   
+  // Emergency Contacts (in addition to guardians)
+  emergencyContacts Json?   // Array of emergency contact objects
+  
+  // Academic Background
+  previousAcademicRecord Json? // Previous school performance
+  specialNeeds           String? // Special educational needs
+  talents               String[] // Special talents or skills
+  extracurriculars      String[] // Previous extracurricular activities
+  
+  // Administrative Information
+  applicationDate    DateTime? // Date of application submission
+  interviewDate      DateTime? // Interview date
+  admissionTestScore Float?    // Admission test score
+  feesPaid          Float?     // Fees paid
+  scholarshipInfo   Json?      // Scholarship information
+  transportInfo     Json?      // Transportation details
+  
+  // Behavioral and Social Information
+  behavioralNotes   String?   // Behavioral observations
+  socialBackground  String?   // Social/economic background
+  languagesSpoken   String[]  // Languages the student speaks
+  
+  // Documents and Identification
+  identificationDocs Json?    // Birth certificate, passport, etc.
+  photographs       Json?     // Student photos
+  documentsSubmitted String[] // List of documents submitted
+  
+  // Profile Picture Management
+  profilePictureId String?      @unique
+  profilePicture   FileManager? @relation("StudentProfilePicture", fields: [profilePictureId], references: [id])
+  
+  // Relationships
+  schoolId         String
+  school           School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  userId           String?      @unique
+  user             User?        @relation(fields: [userId], references: [id])
+  currentClassId   String?
+  currentClass     Class?       @relation(fields: [currentClassId], references: [id])
+  currentSectionId String?
+  currentSection   Section?     @relation(fields: [currentSectionId], references: [id])
+  academicYearId   String?
+  academicYear     AcademicYear? @relation(fields: [academicYearId], references: [id])
+  houseId          String?
+  house            House?       @relation(fields: [houseId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1284,6 +1398,8 @@ model StudentClassHistory {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   classId   String
   class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id])
   
   schoolId       String
   school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
@@ -1594,7 +1710,6 @@ model AttendancePolicy {
   // Relationships
   schoolId String
   school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  classes  Class[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2423,4 +2538,23 @@ enum ClassTeacherStatus {
   COMPLETED       // Assignment has been completed for the academic year
   TRANSFERRED     // Teacher has been transferred to another class
   CANCELLED       // Assignment has been cancelled
+}
+
+enum FileCategory {
+  PROFILE_PICTURE    // Student/Teacher profile pictures
+  DOCUMENT          // Documents (PDFs, Word docs, etc.)
+  IMAGE             // General images
+  AUDIO             // Audio files
+  VIDEO             // Video files
+  REPORT            // Reports and certificates
+  ASSIGNMENT        // Assignment submissions
+  OTHER             // Other file types
+}
+
+enum FileStatus {
+  ACTIVE            // File is active and accessible
+  ARCHIVED          // File is archived but accessible
+  DELETED           // File is marked for deletion
+  QUARANTINED       // File is quarantined (security/policy issues)
+  PROCESSING        // File is being processed (e.g., being compressed)
 }

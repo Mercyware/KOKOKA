@@ -44,7 +44,8 @@ interface Student {
   lastName: string;
   middleName?: string;
   admissionNumber: string;
-  profileImage?: string;
+  profileImage?: string;  // Legacy field for backward compatibility
+  profileImageUrl?: string;  // New S3 CDN URL field
   house?: {
     name: string;
     color: string;
@@ -523,9 +524,9 @@ const TakeAttendance: React.FC = () => {
                   >
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        {student.profileImage ? (
+                        {student.profileImageUrl || student.profileImage ? (
                           <img
-                            src={student.profileImage}
+                            src={student.profileImageUrl || student.profileImage}
                             alt={`${student.firstName} ${student.lastName}`}
                             className="h-10 w-10 rounded-full object-cover"
                           />

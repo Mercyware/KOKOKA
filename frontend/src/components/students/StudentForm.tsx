@@ -33,9 +33,52 @@ interface StudentFormData {
   house: string;
   rollNumber: string;
   status: 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled';
+  
+  // Additional Personal Information
+  placeOfBirth: string;
+  nationality: string;
+  religion: string;
+  motherTongue: string;
+  previousSchool: string;
+  previousClass: string;
+  tcNumber: string;
+  tcDate: string;
+  
+  // Blood group and physical info
   bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown' | '';
   height: { value: string; unit: 'cm' | 'in' };
   weight: { value: string; unit: 'kg' | 'lb' };
+  
+  // Comprehensive Medical Information
+  medicalInfo: {
+    height: string;
+    weight: string;
+    lastCheckup: string;
+    generalHealth: string;
+    bloodType: string;
+    physicianName: string;
+    physicianPhone: string;
+  };
+  allergies: string[];
+  medications: {
+    current: Array<{
+      name: string;
+      dosage: string;
+      frequency: string;
+    }>;
+  };
+  medicalConditions: string[];
+  immunizations: {
+    completed: string[];
+    pending: string[];
+    lastUpdated: string;
+  };
+  emergencyMedicalInfo: string;
+  doctorName: string;
+  doctorPhone: string;
+  hospitalPreference: string;
+  
+  // Health info (legacy compatibility)
   healthInfo: {
     allergies: string[];
     medicalConditions: string[];
@@ -43,6 +86,18 @@ interface StudentFormData {
     dietaryRestrictions: string[];
     disabilities: string[];
   };
+  
+  // Emergency Contacts (separate from guardians)
+  emergencyContacts: Array<{
+    name: string;
+    relationship: string;
+    phone: string;
+    email: string;
+    address: string;
+    isPrimary: boolean;
+  }>;
+  
+  // Contact info
   contactInfo: {
     phone: string;
     alternativePhone: string;
@@ -52,6 +107,8 @@ interface StudentFormData {
       phone: string;
     };
   };
+  
+  // Current Address
   address: {
     street: string;
     city: string;
@@ -59,6 +116,62 @@ interface StudentFormData {
     zipCode: string;
     country: string;
   };
+  
+  // Permanent Address
+  permanentAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  
+  // Academic Background
+  previousAcademicRecord: {
+    previousSchool: string;
+    previousGrade: string;
+    subjects: string[];
+    performance: string;
+    teacherRecommendations: string;
+  };
+  specialNeeds: string;
+  talents: string[];
+  extracurriculars: string[];
+  
+  // Administrative Information
+  applicationDate: string;
+  interviewDate: string;
+  admissionTestScore: number;
+  feesPaid: number;
+  scholarshipInfo: {
+    type: string;
+    amount: number;
+    percentage: number;
+  } | null;
+  transportInfo: {
+    mode: string;
+    busRoute: string;
+    pickupPoint: string;
+    dropoffPoint: string;
+  };
+  
+  // Behavioral and Social Information
+  behavioralNotes: string;
+  socialBackground: string;
+  languagesSpoken: string[];
+  
+  // Documents and Identification
+  identificationDocs: {
+    birthCertificate: boolean;
+    passport: boolean;
+    socialSecurityCard: boolean;
+  };
+  photographs: {
+    passport: number;
+    school: number;
+  };
+  documentsSubmitted: string[];
+  
   guardians: Guardian[];
 }
 
@@ -208,6 +321,56 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="placeOfBirth">Place of Birth</Label>
+                <Input
+                  id="placeOfBirth"
+                  value={formData.placeOfBirth}
+                  onChange={e => handleChange('placeOfBirth', e.target.value)}
+                  placeholder="Enter place of birth"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nationality">Nationality</Label>
+                <Input
+                  id="nationality"
+                  value={formData.nationality}
+                  onChange={e => handleChange('nationality', e.target.value)}
+                  placeholder="Enter nationality"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="religion">Religion</Label>
+                <Input
+                  id="religion"
+                  value={formData.religion}
+                  onChange={e => handleChange('religion', e.target.value)}
+                  placeholder="Enter religion"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="motherTongue">Mother Tongue</Label>
+                <Input
+                  id="motherTongue"
+                  value={formData.motherTongue}
+                  onChange={e => handleChange('motherTongue', e.target.value)}
+                  placeholder="Enter mother tongue"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="languagesSpoken">Languages Spoken</Label>
+                <Input
+                  id="languagesSpoken"
+                  value={formData.languagesSpoken.join(', ')}
+                  onChange={e => {
+                    const languagesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                    setFormData(prev => ({ ...prev, languagesSpoken: languagesArray }));
+                  }}
+                  placeholder="List languages, separated by commas"
+                />
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -288,11 +451,17 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <SelectValue placeholder="Select section" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sections.map(section => (
-                      <SelectItem key={section._id} value={section._id}>
-                        {section.name}
-                      </SelectItem>
-                    ))}
+                    {sections.map(section => {
+                      // Find the selected class name
+                      const selectedClass = classes.find(c => (c._id || c.id) === formData.class);
+                      const classPrefix = selectedClass ? `${selectedClass.name} - ` : '';
+                      
+                      return (
+                        <SelectItem key={section._id} value={section._id}>
+                          {classPrefix}Section {section.name}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -313,6 +482,187 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="previousSchool">Previous School</Label>
+                <Input
+                  id="previousSchool"
+                  value={formData.previousSchool}
+                  onChange={e => handleChange('previousSchool', e.target.value)}
+                  placeholder="Previous school name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="previousClass">Previous Class</Label>
+                <Input
+                  id="previousClass"
+                  value={formData.previousClass}
+                  onChange={e => handleChange('previousClass', e.target.value)}
+                  placeholder="Previous class/grade"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tcNumber">Transfer Certificate Number</Label>
+                <Input
+                  id="tcNumber"
+                  value={formData.tcNumber}
+                  onChange={e => handleChange('tcNumber', e.target.value)}
+                  placeholder="TC Number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tcDate">Transfer Certificate Date</Label>
+                <Input
+                  id="tcDate"
+                  type="date"
+                  value={formData.tcDate}
+                  onChange={e => handleChange('tcDate', e.target.value)}
+                />
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Academic Background */}
+        <AccordionItem value="academic-background">
+          <AccordionTrigger>Academic Background</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="previousAcademicSchool">Previous School Name</Label>
+                  <Input
+                    id="previousAcademicSchool"
+                    value={formData.previousAcademicRecord.previousSchool}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        previousAcademicRecord: {
+                          ...prev.previousAcademicRecord,
+                          previousSchool: e.target.value
+                        }
+                      }));
+                    }}
+                    placeholder="Name of previous school"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="previousGrade">Previous Grade/Class</Label>
+                  <Input
+                    id="previousGrade"
+                    value={formData.previousAcademicRecord.previousGrade}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        previousAcademicRecord: {
+                          ...prev.previousAcademicRecord,
+                          previousGrade: e.target.value
+                        }
+                      }));
+                    }}
+                    placeholder="Previous grade or class"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="previousSubjects">Previous Subjects</Label>
+                  <Input
+                    id="previousSubjects"
+                    value={formData.previousAcademicRecord.subjects.join(', ')}
+                    onChange={e => {
+                      const subjectsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                      setFormData(prev => ({
+                        ...prev,
+                        previousAcademicRecord: {
+                          ...prev.previousAcademicRecord,
+                          subjects: subjectsArray
+                        }
+                      }));
+                    }}
+                    placeholder="List subjects, separated by commas"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="academicPerformance">Academic Performance</Label>
+                  <Select
+                    value={formData.previousAcademicRecord.performance}
+                    onValueChange={value => {
+                      setFormData(prev => ({
+                        ...prev,
+                        previousAcademicRecord: {
+                          ...prev.previousAcademicRecord,
+                          performance: value
+                        }
+                      }));
+                    }}
+                  >
+                    <SelectTrigger id="academicPerformance">
+                      <SelectValue placeholder="Select performance level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Excellent">Excellent</SelectItem>
+                      <SelectItem value="Very Good">Very Good</SelectItem>
+                      <SelectItem value="Good">Good</SelectItem>
+                      <SelectItem value="Average">Average</SelectItem>
+                      <SelectItem value="Below Average">Below Average</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teacherRecommendations">Teacher Recommendations</Label>
+                <Input
+                  id="teacherRecommendations"
+                  value={formData.previousAcademicRecord.teacherRecommendations}
+                  onChange={e => {
+                    setFormData(prev => ({
+                      ...prev,
+                      previousAcademicRecord: {
+                        ...prev.previousAcademicRecord,
+                        teacherRecommendations: e.target.value
+                      }
+                    }));
+                  }}
+                  placeholder="Teacher recommendations or comments"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="talents">Special Talents</Label>
+                  <Input
+                    id="talents"
+                    value={formData.talents.join(', ')}
+                    onChange={e => {
+                      const talentsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, talents: talentsArray }));
+                    }}
+                    placeholder="List talents, separated by commas"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="extracurriculars">Extracurricular Activities</Label>
+                  <Input
+                    id="extracurriculars"
+                    value={formData.extracurriculars.join(', ')}
+                    onChange={e => {
+                      const activitiesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, extracurriculars: activitiesArray }));
+                    }}
+                    placeholder="List activities, separated by commas"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="specialNeeds">Special Educational Needs</Label>
+                <Input
+                  id="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={e => handleChange('specialNeeds', e.target.value)}
+                  placeholder="Describe any special educational needs"
+                />
               </div>
             </div>
           </AccordionContent>
@@ -490,7 +840,469 @@ const StudentForm: React.FC<StudentFormProps> = ({
             </div>
           </AccordionContent>
         </AccordionItem>
-        {/* Physical & Medical Information */}
+        {/* Comprehensive Medical Information */}
+        <AccordionItem value="medical-info">
+          <AccordionTrigger>Comprehensive Medical Information</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-6">
+              {/* Basic Medical Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="medicalHeight">Height (Medical Record)</Label>
+                  <Input
+                    id="medicalHeight"
+                    value={formData.medicalInfo.height}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicalInfo: { ...prev.medicalInfo, height: e.target.value }
+                      }));
+                    }}
+                    placeholder="e.g., 140cm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="medicalWeight">Weight (Medical Record)</Label>
+                  <Input
+                    id="medicalWeight"
+                    value={formData.medicalInfo.weight}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicalInfo: { ...prev.medicalInfo, weight: e.target.value }
+                      }));
+                    }}
+                    placeholder="e.g., 35kg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastCheckup">Last Medical Checkup</Label>
+                  <Input
+                    id="lastCheckup"
+                    type="date"
+                    value={formData.medicalInfo.lastCheckup}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicalInfo: { ...prev.medicalInfo, lastCheckup: e.target.value }
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="generalHealth">General Health Status</Label>
+                  <Select
+                    value={formData.medicalInfo.generalHealth}
+                    onValueChange={value => {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicalInfo: { ...prev.medicalInfo, generalHealth: value }
+                      }));
+                    }}
+                  >
+                    <SelectTrigger id="generalHealth">
+                      <SelectValue placeholder="Select health status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Excellent">Excellent</SelectItem>
+                      <SelectItem value="Very Good">Very Good</SelectItem>
+                      <SelectItem value="Good">Good</SelectItem>
+                      <SelectItem value="Fair">Fair</SelectItem>
+                      <SelectItem value="Poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="medicalBloodType">Blood Type</Label>
+                  <Input
+                    id="medicalBloodType"
+                    value={formData.medicalInfo.bloodType}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        medicalInfo: { ...prev.medicalInfo, bloodType: e.target.value }
+                      }));
+                    }}
+                    placeholder="e.g., O+"
+                  />
+                </div>
+              </div>
+
+              {/* Doctor Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Primary Care Physician</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="physicianName">Physician Name</Label>
+                    <Input
+                      id="physicianName"
+                      value={formData.medicalInfo.physicianName}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          medicalInfo: { ...prev.medicalInfo, physicianName: e.target.value }
+                        }));
+                      }}
+                      placeholder="Dr. Smith"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="physicianPhone">Physician Phone</Label>
+                    <Input
+                      id="physicianPhone"
+                      value={formData.medicalInfo.physicianPhone}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          medicalInfo: { ...prev.medicalInfo, physicianPhone: e.target.value }
+                        }));
+                      }}
+                      placeholder="+1-555-DOCTOR"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hospitalPreference">Preferred Hospital</Label>
+                    <Input
+                      id="hospitalPreference"
+                      value={formData.hospitalPreference}
+                      onChange={e => handleChange('hospitalPreference', e.target.value)}
+                      placeholder="General Hospital"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Medications */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Current Medications</h3>
+                {formData.medications.current.map((medication, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">Medication {index + 1}</h4>
+                      {formData.medications.current.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newMedications = [...formData.medications.current];
+                            newMedications.splice(index, 1);
+                            setFormData(prev => ({
+                              ...prev,
+                              medications: { ...prev.medications, current: newMedications }
+                            }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`medication-${index}-name`}>Medication Name</Label>
+                        <Input
+                          id={`medication-${index}-name`}
+                          value={medication.name}
+                          onChange={e => {
+                            const newMedications = [...formData.medications.current];
+                            newMedications[index].name = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              medications: { ...prev.medications, current: newMedications }
+                            }));
+                          }}
+                          placeholder="Medication name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`medication-${index}-dosage`}>Dosage</Label>
+                        <Input
+                          id={`medication-${index}-dosage`}
+                          value={medication.dosage}
+                          onChange={e => {
+                            const newMedications = [...formData.medications.current];
+                            newMedications[index].dosage = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              medications: { ...prev.medications, current: newMedications }
+                            }));
+                          }}
+                          placeholder="e.g., 10mg"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`medication-${index}-frequency`}>Frequency</Label>
+                        <Input
+                          id={`medication-${index}-frequency`}
+                          value={medication.frequency}
+                          onChange={e => {
+                            const newMedications = [...formData.medications.current];
+                            newMedications[index].frequency = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              medications: { ...prev.medications, current: newMedications }
+                            }));
+                          }}
+                          placeholder="e.g., Twice daily"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      medications: {
+                        ...prev.medications,
+                        current: [
+                          ...prev.medications.current,
+                          { name: '', dosage: '', frequency: '' }
+                        ]
+                      }
+                    }));
+                  }}
+                >
+                  Add Medication
+                </Button>
+              </div>
+
+              {/* Immunizations */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Immunization Records</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="completedImmunizations">Completed Immunizations</Label>
+                    <Input
+                      id="completedImmunizations"
+                      value={formData.immunizations.completed.join(', ')}
+                      onChange={e => {
+                        const immunizationsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                        setFormData(prev => ({
+                          ...prev,
+                          immunizations: {
+                            ...prev.immunizations,
+                            completed: immunizationsArray
+                          }
+                        }));
+                      }}
+                      placeholder="List completed immunizations, separated by commas"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pendingImmunizations">Pending Immunizations</Label>
+                    <Input
+                      id="pendingImmunizations"
+                      value={formData.immunizations.pending.join(', ')}
+                      onChange={e => {
+                        const pendingArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                        setFormData(prev => ({
+                          ...prev,
+                          immunizations: {
+                            ...prev.immunizations,
+                            pending: pendingArray
+                          }
+                        }));
+                      }}
+                      placeholder="List pending immunizations, separated by commas"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="immunizationLastUpdated">Last Updated</Label>
+                  <Input
+                    id="immunizationLastUpdated"
+                    type="date"
+                    value={formData.immunizations.lastUpdated}
+                    onChange={e => {
+                      setFormData(prev => ({
+                        ...prev,
+                        immunizations: {
+                          ...prev.immunizations,
+                          lastUpdated: e.target.value
+                        }
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Emergency Medical Information */}
+              <div className="space-y-2">
+                <Label htmlFor="emergencyMedicalInfo">Emergency Medical Information</Label>
+                <Input
+                  id="emergencyMedicalInfo"
+                  value={formData.emergencyMedicalInfo}
+                  onChange={e => handleChange('emergencyMedicalInfo', e.target.value)}
+                  placeholder="Critical medical information for emergencies"
+                />
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Emergency Contacts */}
+        <AccordionItem value="emergency-contacts">
+          <AccordionTrigger>Emergency Contacts</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-6">
+              {formData.emergencyContacts.map((contact, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">
+                      Emergency Contact {index + 1} {contact.isPrimary && <span className="text-sm text-blue-600">(Primary)</span>}
+                    </h3>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newContacts = [...formData.emergencyContacts];
+                          newContacts[index].isPrimary = true;
+                          newContacts.forEach((c, i) => {
+                            if (i !== index) c.isPrimary = false;
+                          });
+                          setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                        }}
+                        disabled={contact.isPrimary}
+                      >
+                        Set as Primary
+                      </Button>
+                      {formData.emergencyContacts.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            const newContacts = [...formData.emergencyContacts];
+                            newContacts.splice(index, 1);
+                            if (contact.isPrimary && newContacts.length > 0) {
+                              newContacts[0].isPrimary = true;
+                            }
+                            setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor={`emergency-${index}-name`}>Full Name *</Label>
+                      <Input
+                        id={`emergency-${index}-name`}
+                        value={contact.name}
+                        onChange={e => {
+                          const newContacts = [...formData.emergencyContacts];
+                          newContacts[index].name = e.target.value;
+                          setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                        }}
+                        placeholder="Emergency contact's full name"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`emergency-${index}-relationship`}>Relationship *</Label>
+                      <Select
+                        value={contact.relationship}
+                        onValueChange={value => {
+                          const newContacts = [...formData.emergencyContacts];
+                          newContacts[index].relationship = value;
+                          setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                        }}
+                        required
+                      >
+                        <SelectTrigger id={`emergency-${index}-relationship`}>
+                          <SelectValue placeholder="Select relationship" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Parent">Parent</SelectItem>
+                          <SelectItem value="Guardian">Guardian</SelectItem>
+                          <SelectItem value="Sibling">Sibling</SelectItem>
+                          <SelectItem value="Relative">Relative</SelectItem>
+                          <SelectItem value="Family Friend">Family Friend</SelectItem>
+                          <SelectItem value="Neighbor">Neighbor</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`emergency-${index}-phone`}>Phone Number *</Label>
+                      <Input
+                        id={`emergency-${index}-phone`}
+                        value={contact.phone}
+                        onChange={e => {
+                          const newContacts = [...formData.emergencyContacts];
+                          newContacts[index].phone = e.target.value;
+                          setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                        }}
+                        placeholder="+1-555-EMERGENCY"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`emergency-${index}-email`}>Email Address</Label>
+                      <Input
+                        id={`emergency-${index}-email`}
+                        type="email"
+                        value={contact.email}
+                        onChange={e => {
+                          const newContacts = [...formData.emergencyContacts];
+                          newContacts[index].email = e.target.value;
+                          setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                        }}
+                        placeholder="emergency@example.com"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`emergency-${index}-address`}>Address</Label>
+                    <Input
+                      id={`emergency-${index}-address`}
+                      value={contact.address}
+                      onChange={e => {
+                        const newContacts = [...formData.emergencyContacts];
+                        newContacts[index].address = e.target.value;
+                        setFormData(prev => ({ ...prev, emergencyContacts: newContacts }));
+                      }}
+                      placeholder="Full address"
+                    />
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    emergencyContacts: [
+                      ...prev.emergencyContacts,
+                      {
+                        name: '',
+                        relationship: '',
+                        phone: '',
+                        email: '',
+                        address: '',
+                        isPrimary: false
+                      }
+                    ]
+                  }));
+                }}
+              >
+                Add Another Emergency Contact
+              </Button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Physical & Medical Information (Legacy) */}
         <AccordionItem value="physical-info">
           <AccordionTrigger>Physical & Medical Information</AccordionTrigger>
           <AccordionContent>
@@ -668,11 +1480,502 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </AccordionContent>
         </AccordionItem>
         {/* Address Information */}
-        <AccordionItem value="additional-details">
+        <AccordionItem value="address-info">
           <AccordionTrigger>Address Information</AccordionTrigger>
           <AccordionContent>
+            <div className="space-y-6">
+              {/* Current Address */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Current Address</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="street">Street Address</Label>
+                    <Input
+                      id="street"
+                      value={formData.address.street}
+                      onChange={e => handleChange('address.street', e.target.value)}
+                      placeholder="Street address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={formData.address.city}
+                      onChange={e => handleChange('address.city', e.target.value)}
+                      placeholder="City"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State/Province</Label>
+                    <Input
+                      id="state"
+                      value={formData.address.state}
+                      onChange={e => handleChange('address.state', e.target.value)}
+                      placeholder="State/Province"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">Zip/Postal Code</Label>
+                    <Input
+                      id="zipCode"
+                      value={formData.address.zipCode}
+                      onChange={e => handleChange('address.zipCode', e.target.value)}
+                      placeholder="Zip/Postal code"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={formData.address.country}
+                      onChange={e => handleChange('address.country', e.target.value)}
+                      placeholder="Country"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Permanent Address */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Permanent Address</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="permanentStreet">Street Address</Label>
+                    <Input
+                      id="permanentStreet"
+                      value={formData.permanentAddress.street}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          permanentAddress: { ...prev.permanentAddress, street: e.target.value }
+                        }));
+                      }}
+                      placeholder="Permanent street address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="permanentCity">City</Label>
+                    <Input
+                      id="permanentCity"
+                      value={formData.permanentAddress.city}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          permanentAddress: { ...prev.permanentAddress, city: e.target.value }
+                        }));
+                      }}
+                      placeholder="Permanent city"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="permanentState">State/Province</Label>
+                    <Input
+                      id="permanentState"
+                      value={formData.permanentAddress.state}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          permanentAddress: { ...prev.permanentAddress, state: e.target.value }
+                        }));
+                      }}
+                      placeholder="Permanent state/province"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="permanentZipCode">Zip/Postal Code</Label>
+                    <Input
+                      id="permanentZipCode"
+                      value={formData.permanentAddress.zipCode}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          permanentAddress: { ...prev.permanentAddress, zipCode: e.target.value }
+                        }));
+                      }}
+                      placeholder="Permanent zip/postal code"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="permanentCountry">Country</Label>
+                    <Input
+                      id="permanentCountry"
+                      value={formData.permanentAddress.country}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          permanentAddress: { ...prev.permanentAddress, country: e.target.value }
+                        }));
+                      }}
+                      placeholder="Permanent country"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Administrative Information */}
+        <AccordionItem value="administrative-info">
+          <AccordionTrigger>Administrative Information</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-6">
+              {/* Application and Interview Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="applicationDate">Application Date</Label>
+                  <Input
+                    id="applicationDate"
+                    type="date"
+                    value={formData.applicationDate}
+                    onChange={e => handleChange('applicationDate', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="interviewDate">Interview Date</Label>
+                  <Input
+                    id="interviewDate"
+                    type="date"
+                    value={formData.interviewDate}
+                    onChange={e => handleChange('interviewDate', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admissionTestScore">Admission Test Score</Label>
+                  <Input
+                    id="admissionTestScore"
+                    type="number"
+                    step="0.1"
+                    value={formData.admissionTestScore}
+                    onChange={e => handleChange('admissionTestScore', e.target.value)}
+                    placeholder="0.0"
+                  />
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Financial Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="feesPaid">Fees Paid</Label>
+                    <Input
+                      id="feesPaid"
+                      type="number"
+                      step="0.01"
+                      value={formData.feesPaid}
+                      onChange={e => handleChange('feesPaid', e.target.value)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                {/* Scholarship Information */}
+                <div className="space-y-4">
+                  <Label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.scholarshipInfo !== null}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          scholarshipInfo: e.target.checked 
+                            ? { type: '', amount: 0, percentage: 0 }
+                            : null
+                        }));
+                      }}
+                    />
+                    <span>Student has scholarship</span>
+                  </Label>
+                  
+                  {formData.scholarshipInfo && (
+                    <div className="border rounded-lg p-4 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="scholarshipType">Scholarship Type</Label>
+                          <Input
+                            id="scholarshipType"
+                            value={formData.scholarshipInfo.type}
+                            onChange={e => {
+                              setFormData(prev => ({
+                                ...prev,
+                                scholarshipInfo: prev.scholarshipInfo ? {
+                                  ...prev.scholarshipInfo,
+                                  type: e.target.value
+                                } : null
+                              }));
+                            }}
+                            placeholder="Merit, Need-based, etc."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="scholarshipAmount">Scholarship Amount</Label>
+                          <Input
+                            id="scholarshipAmount"
+                            type="number"
+                            step="0.01"
+                            value={formData.scholarshipInfo.amount}
+                            onChange={e => {
+                              setFormData(prev => ({
+                                ...prev,
+                                scholarshipInfo: prev.scholarshipInfo ? {
+                                  ...prev.scholarshipInfo,
+                                  amount: parseFloat(e.target.value) || 0
+                                } : null
+                              }));
+                            }}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="scholarshipPercentage">Percentage (%)</Label>
+                          <Input
+                            id="scholarshipPercentage"
+                            type="number"
+                            step="1"
+                            min="0"
+                            max="100"
+                            value={formData.scholarshipInfo.percentage}
+                            onChange={e => {
+                              setFormData(prev => ({
+                                ...prev,
+                                scholarshipInfo: prev.scholarshipInfo ? {
+                                  ...prev.scholarshipInfo,
+                                  percentage: parseFloat(e.target.value) || 0
+                                } : null
+                              }));
+                            }}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Transportation Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Transportation Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="transportMode">Transportation Mode</Label>
+                    <Select
+                      value={formData.transportInfo.mode}
+                      onValueChange={value => {
+                        setFormData(prev => ({
+                          ...prev,
+                          transportInfo: { ...prev.transportInfo, mode: value }
+                        }));
+                      }}
+                    >
+                      <SelectTrigger id="transportMode">
+                        <SelectValue placeholder="Select transportation mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bus">School Bus</SelectItem>
+                        <SelectItem value="Car">Private Car</SelectItem>
+                        <SelectItem value="Walk">Walking</SelectItem>
+                        <SelectItem value="Bike">Bicycle</SelectItem>
+                        <SelectItem value="Public Transport">Public Transport</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="busRoute">Bus Route</Label>
+                    <Input
+                      id="busRoute"
+                      value={formData.transportInfo.busRoute}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          transportInfo: { ...prev.transportInfo, busRoute: e.target.value }
+                        }));
+                      }}
+                      placeholder="Route A, Route B, etc."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pickupPoint">Pickup Point</Label>
+                    <Input
+                      id="pickupPoint"
+                      value={formData.transportInfo.pickupPoint}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          transportInfo: { ...prev.transportInfo, pickupPoint: e.target.value }
+                        }));
+                      }}
+                      placeholder="Bus stop or pickup location"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dropoffPoint">Dropoff Point</Label>
+                    <Input
+                      id="dropoffPoint"
+                      value={formData.transportInfo.dropoffPoint}
+                      onChange={e => {
+                        setFormData(prev => ({
+                          ...prev,
+                          transportInfo: { ...prev.transportInfo, dropoffPoint: e.target.value }
+                        }));
+                      }}
+                      placeholder="School gate or dropoff location"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Behavioral and Social Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Behavioral & Social Information</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="behavioralNotes">Behavioral Notes</Label>
+                    <Input
+                      id="behavioralNotes"
+                      value={formData.behavioralNotes}
+                      onChange={e => handleChange('behavioralNotes', e.target.value)}
+                      placeholder="Behavioral observations or notes"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="socialBackground">Social Background</Label>
+                    <Input
+                      id="socialBackground"
+                      value={formData.socialBackground}
+                      onChange={e => handleChange('socialBackground', e.target.value)}
+                      placeholder="Social or economic background information"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Documents and Identification */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Documents & Identification</h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Identification Documents</Label>
+                    <div className="flex flex-wrap gap-4">
+                      <Label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.identificationDocs.birthCertificate}
+                          onChange={e => {
+                            setFormData(prev => ({
+                              ...prev,
+                              identificationDocs: {
+                                ...prev.identificationDocs,
+                                birthCertificate: e.target.checked
+                              }
+                            }));
+                          }}
+                        />
+                        <span>Birth Certificate</span>
+                      </Label>
+                      <Label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.identificationDocs.passport}
+                          onChange={e => {
+                            setFormData(prev => ({
+                              ...prev,
+                              identificationDocs: {
+                                ...prev.identificationDocs,
+                                passport: e.target.checked
+                              }
+                            }));
+                          }}
+                        />
+                        <span>Passport</span>
+                      </Label>
+                      <Label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.identificationDocs.socialSecurityCard}
+                          onChange={e => {
+                            setFormData(prev => ({
+                              ...prev,
+                              identificationDocs: {
+                                ...prev.identificationDocs,
+                                socialSecurityCard: e.target.checked
+                              }
+                            }));
+                          }}
+                        />
+                        <span>Social Security Card</span>
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="passportPhotos">Passport Photos</Label>
+                      <Input
+                        id="passportPhotos"
+                        type="number"
+                        min="0"
+                        value={formData.photographs.passport}
+                        onChange={e => {
+                          setFormData(prev => ({
+                            ...prev,
+                            photographs: {
+                              ...prev.photographs,
+                              passport: parseInt(e.target.value) || 0
+                            }
+                          }));
+                        }}
+                        placeholder="Number of passport photos"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="schoolPhotos">School Photos</Label>
+                      <Input
+                        id="schoolPhotos"
+                        type="number"
+                        min="0"
+                        value={formData.photographs.school}
+                        onChange={e => {
+                          setFormData(prev => ({
+                            ...prev,
+                            photographs: {
+                              ...prev.photographs,
+                              school: parseInt(e.target.value) || 0
+                            }
+                          }));
+                        }}
+                        placeholder="Number of school photos"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="documentsSubmitted">Documents Submitted</Label>
+                    <Input
+                      id="documentsSubmitted"
+                      value={formData.documentsSubmitted.join(', ')}
+                      onChange={e => {
+                        const documentsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+                        setFormData(prev => ({ ...prev, documentsSubmitted: documentsArray }));
+                      }}
+                      placeholder="List submitted documents, separated by commas"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Address Information (Legacy) */}
+        <AccordionItem value="additional-details">
+          <AccordionTrigger>Additional Details</AccordionTrigger>
+          <AccordionContent>
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Address Information</h3>
+              <p className="text-sm text-gray-600">This section contains legacy address fields for backward compatibility.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="street">Street Address</Label>

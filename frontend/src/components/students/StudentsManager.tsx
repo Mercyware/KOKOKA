@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, User, Mail, Phone, Grid, List, Eye, Loader2, X, ChevronDown, Save, BookOpen, Home, Calendar, Percent, Award, Globe, Users } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, User, Mail, Phone, Grid, List, Eye, Loader2, X, ChevronDown, Save, BookOpen, Home, Calendar, Percent, Award, Globe, Users, UserCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,9 +20,10 @@ import { Student, Class, House } from '@/types';
 interface StudentsManagerProps {
   onAddStudent: () => void;
   onViewStudent: (studentId: string) => void;
+  onEditStudent: (studentId: string) => void;
 }
 
-const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) => {
+const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: StudentsManagerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [students, setStudents] = useState<Student[]>([]);
@@ -58,7 +59,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     const fetchData = async () => {
       try {
         const classesResponse = await getAllClasses();
-        setClasses(classesResponse.data || []);
+        setClasses(Array.isArray(classesResponse.data) ? classesResponse.data : []);
         console.log('Classes fetched:', classesResponse);
 
         const housesResponse = await getHouses();
@@ -68,13 +69,15 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
           setHouses(housesResponse);
           console.log('Houses set from array:', housesResponse);
         } else {
-          setHouses(housesResponse.data || []);
-          console.log('Houses set from data property:', housesResponse.data);
+          const housesData = Array.isArray(housesResponse.data) ? housesResponse.data : [];
+          setHouses(housesData);
+          console.log('Houses set from data property:', housesData);
         }
 
         const academicYearsResponse = await getAllAcademicYears();
+        const academicYearsData = Array.isArray(academicYearsResponse.data) ? academicYearsResponse.data : [];
         setAcademicYears(
-          (academicYearsResponse.data || []).map((y: any) => ({
+          academicYearsData.map((y: any) => ({
             id: y.id || y._id,
             name: y.name
           }))
@@ -89,8 +92,12 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         // Fetch sections
         const sectionsResponse = await getSections();
         if (sectionsResponse.success && sectionsResponse.data) {
+          const sectionsData = Array.isArray(sectionsResponse.data)
+            ? sectionsResponse.data
+            : sectionsResponse.data.data || [];
+
           setSections(
-            sectionsResponse.data.data.map((s: any) => ({
+            sectionsData.map((s: any) => ({
               id: s.id || s._id,
               name: s.name
             }))
@@ -119,14 +126,18 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         const response = await getStudents(searchFilters);
         setStudents(response.data || []);
         setPagination({
-          total: response.total,
-          page: response.currentPage,
-          limit: response.count,
-          pages: response.pages
+          total: response.total || 0,
+          page: response.page || 1,
+          limit: response.count || 10,
+          pages: response.totalPages || 1
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching students:', err);
-        setError('Failed to fetch students. Please try again later.');
+        if (err.response?.status === 401) {
+          setError('Authentication required. Please log in to view students.');
+        } else {
+          setError('Failed to fetch students. Please try again later.');
+        }
         setStudents([]);
       } finally {
         setLoading(false);
@@ -323,7 +334,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     if (loading) {
       return (
         <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-siohioma-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-lg">Loading students...</span>
         </div>
       );
@@ -331,14 +342,22 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
     if (error) {
       return (
-        <Card className="p-6 text-center">
-          <div className="text-red-500 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div className="text-red-500 mb-6">
             <span className="font-semibold">Error:</span> {error}
           </div>
-          <Button onClick={() => setFilters({ ...filters })}>
-            Retry
-          </Button>
-        </Card>
+          <div className="flex gap-3 justify-center">
+            {error.includes('Authentication') ? (
+              <Button intent="primary" onClick={() => window.location.href = '/login'}>
+                Go to Login
+              </Button>
+            ) : (
+              <Button intent="secondary" onClick={() => setFilters({ ...filters })}>
+                Retry
+              </Button>
+            )}
+          </div>
+        </div>
       );
     }
 
@@ -356,9 +375,9 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {students.map((student, index) => (
-          <Card key={student.id || index} className="hover:shadow-lg transition-shadow duration-200">
+          <Card key={student.id || index} className="hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
@@ -414,7 +433,12 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   <Eye className="h-4 w-4 mr-1" />
                   View
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => onEditStudent(student._id || student.id)}
+                >
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
@@ -430,7 +454,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     if (loading) {
       return (
         <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-siohioma-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-lg">Loading students...</span>
         </div>
       );
@@ -438,14 +462,22 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
     if (error) {
       return (
-        <Card className="p-6 text-center">
-          <div className="text-red-500 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div className="text-red-500 mb-6">
             <span className="font-semibold">Error:</span> {error}
           </div>
-          <Button onClick={() => setFilters({ ...filters })}>
-            Retry
-          </Button>
-        </Card>
+          <div className="flex gap-3 justify-center">
+            {error.includes('Authentication') ? (
+              <Button intent="primary" onClick={() => window.location.href = '/login'}>
+                Go to Login
+              </Button>
+            ) : (
+              <Button intent="secondary" onClick={() => setFilters({ ...filters })}>
+                Retry
+              </Button>
+            )}
+          </div>
+        </div>
       );
     }
 
@@ -463,9 +495,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     }
 
     return (
-      <Card>
-        <CardContent className="p-0">
-          <Table>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Student</TableHead>
@@ -511,7 +542,11 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onEditStudent(student._id || student.id)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700">
@@ -523,8 +558,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+      </div>
     );
   };
 
@@ -548,56 +582,94 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
   // Show ViewStudent component when a student is selected
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage student information and academic records</p>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Management</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Manage student information and academic records</p>
+            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {pagination.total || 0} Total Students
+              </span>
+              {activeFilters.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <Filter className="h-4 w-4" />
+                  {activeFilters.length} Active Filters
+                </span>
+              )}
+            </div>
+          </div>
+          <Button intent="primary" onClick={onAddStudent}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Student
+          </Button>
         </div>
-        <Button variant="default" intent="primary" onClick={onAddStudent}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Student
-        </Button>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search students by name, email, or admission number..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex space-x-2">
-              <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={activeFilters.length > 0 ? "default" : "outline"}
-                    className={`flex items-center space-x-2 ${activeFilters.length > 0
-                      ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                      : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
-                      } transition-colors duration-200`}
-                    type="button"
-                    onClick={() => setFilterMenuOpen(!filterMenuOpen)} // <-- Remove e parameter and preventDefault
+      {/* Search and Filter Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search students by name, email, or admission number..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="pl-11 h-11 text-base border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+            />
+          </div>
 
-                  >
-                    <Filter className={`h-4 w-4 ${activeFilters.length > 0 ? "animate-pulse" : ""}`} />
-                    <span>Filter</span>
-                    {activeFilters.length > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 bg-white text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary font-bold"
-                      >
-                        {activeFilters.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
+          {/* Filter and View Controls */}
+          <div className="flex items-center gap-3">
+            {/* Quick Filters */}
+            <div className="hidden lg:flex items-center gap-2">
+              <Select value={filters.status || 'all'} onValueChange={(value) => applyFilter('status', value === 'all' ? undefined : value)}>
+                <SelectTrigger className="w-32 h-11">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="graduated">Graduated</SelectItem>
+                  <SelectItem value="transferred">Transferred</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.class || 'all'} onValueChange={(value) => applyFilter('class', value === 'all' ? undefined : value)}>
+                <SelectTrigger className="w-32 h-11">
+                  <SelectValue placeholder="Class" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {classes.map((classItem) => (
+                    <SelectItem key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Advanced Filter Button */}
+            <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  intent={activeFilters.length > 0 ? "primary" : "secondary"}
+                  className="h-11 min-w-[100px]"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {activeFilters.length > 0 && (
+                    <Badge variant="secondary" className="ml-2 bg-white text-blue-600 dark:bg-blue-900 dark:text-blue-200">
+                      {activeFilters.length}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
                 <PopoverContent className="w-96 max-h-[80vh] overflow-y-auto">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -664,13 +736,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Status</span>
                           </Label>
                           <Select
-                            value={filters.status || ''}
-                            onValueChange={(value) => applyFilter('status', value || undefined)}
+                            value={filters.status || 'all'}
+                            onValueChange={(value) => applyFilter('status', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="status-filter">
                               <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
                               <SelectItem value="active">Active</SelectItem>
                               <SelectItem value="graduated">Graduated</SelectItem>
                               <SelectItem value="transferred">Transferred</SelectItem>
@@ -687,13 +760,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Gender</span>
                           </Label>
                           <Select
-                            value={filters.gender || ''}
-                            onValueChange={(value) => applyFilter('gender', value || undefined)}
+                            value={filters.gender || 'all'}
+                            onValueChange={(value) => applyFilter('gender', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="gender-filter">
                               <SelectValue placeholder="All Genders" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Genders</SelectItem>
                               <SelectItem value="male">Male</SelectItem>
                               <SelectItem value="female">Female</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
@@ -708,13 +782,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Class</span>
                           </Label>
                           <Select
-                            value={filters.class || ''}
-                            onValueChange={(value) => applyFilter('class', value || undefined)}
+                            value={filters.class || 'all'}
+                            onValueChange={(value) => applyFilter('class', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="class-filter">
                               <SelectValue placeholder="All Classes" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Classes</SelectItem>
                               {classes.map((classItem) => (
                                 <SelectItem key={classItem.id} value={classItem.id}>
                                   {classItem.name}
@@ -731,13 +806,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Section</span>
                           </Label>
                           <Select
-                            value={filters.section || ''}
-                            onValueChange={(value) => applyFilter('section', value || undefined)}
+                            value={filters.section || 'all'}
+                            onValueChange={(value) => applyFilter('section', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="section-filter">
                               <SelectValue placeholder="All Sections" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Sections</SelectItem>
                               {sections.map((sectionItem) => (
                                 <SelectItem key={sectionItem.id} value={sectionItem.id}>
                                   {sectionItem.name}
@@ -754,17 +830,18 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>House</span>
                           </Label>
                           <Select
-                            value={filters.house || ''}
-                            onValueChange={(value) => applyFilter('house', value || undefined)}
+                            value={filters.house || 'all'}
+                            onValueChange={(value) => applyFilter('house', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="house-filter">
                               <SelectValue placeholder="All Houses" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Houses</SelectItem>
                               {houses && houses.length > 0 ? (
                                 houses.map((houseItem) => (
-                                  <SelectItem 
-                                    key={houseItem.id} 
+                                  <SelectItem
+                                    key={houseItem.id}
                                     value={houseItem.id}
                                   >
                                     {houseItem.name}
@@ -792,13 +869,14 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                             <span>Academic Year</span>
                           </Label>
                           <Select
-                            value={filters.academicYear || ''}
-                            onValueChange={(value) => applyFilter('academicYear', value || undefined)}
+                            value={filters.academicYear || 'all'}
+                            onValueChange={(value) => applyFilter('academicYear', value === 'all' ? undefined : value)}
                           >
                             <SelectTrigger id="academic-year-filter">
                               <SelectValue placeholder="All Academic Years" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Academic Years</SelectItem>
                               {academicYears.map((year) => (
                                 <SelectItem key={year.id} value={year.id}>
                                   {year.name}
@@ -1056,164 +1134,179 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   </div>
                 </PopoverContent>
               </Popover>
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('cards')}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'table' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+            {/* View Toggle */}
+            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('cards')}
+                className={`h-9 px-4 rounded-md transition-all ${
+                  viewMode === 'cards'
+                    ? 'bg-white dark:bg-gray-800 shadow-sm text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                <Grid className="h-4 w-4 mr-2" />
+                Cards
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={`h-9 px-4 rounded-md transition-all ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-gray-800 shadow-sm text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                <List className="h-4 w-4 mr-2" />
+                Table
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Active Filters Summary */}
       {activeFilters.length > 0 && (
-        <Card className="mb-4 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 mr-2">
-                <Filter className="h-4 w-4 text-siohioma-primary dark:text-siohioma-primary" />
-                <span className="font-medium text-siohioma-primary dark:text-siohioma-primary">Active Filters:</span>
-              </div>
-              <div className="flex flex-wrap gap-2 flex-1">
-                {activeFilters.map(filter => {
-                  // Format the filter name for display
-                  let displayName = filter;
-                  let displayValue = '';
-
-                  // Get the value for display
-                  if (filter === 'academicYear' && filters.academicYear) {
-                    displayName = 'Academic Year';
-                    const year = academicYears.find(y => y.id === filters.academicYear);
-                    displayValue = year ? year.name : filters.academicYear;
-                  } else if (filter === 'status' && filters.status) {
-                    displayValue = filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
-                  } else if (filter === 'gender' && filters.gender) {
-                    displayValue = filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1);
-                  } else if (filter === 'class' && filters.class) {
-                    const classItem = classes.find(c => c.id === filters.class);
-                    displayValue = classItem ? classItem.name : filters.class;
-                  } else if (filter === 'section' && filters.section) {
-                    displayName = 'Section';
-                    const sectionItem = sections.find(s => s.id === filters.section);
-                    displayValue = sectionItem ? sectionItem.name : filters.section;
-                  } else if (filter === 'house' && filters.house) {
-                    const houseItem = houses.find(h => 
-                      (h.id && h.id === filters.house) || 
-                      (h._id && h._id === filters.house) || 
-                      `house-${h.name}` === filters.house
-                    );
-                    displayValue = houseItem ? houseItem.name : filters.house;
-                  } else if (filter === 'admissionDateFrom' && filters.admissionDateFrom) {
-                    displayName = 'Admission From';
-                    displayValue = new Date(filters.admissionDateFrom).toLocaleDateString();
-                  } else if (filter === 'admissionDateTo' && filters.admissionDateTo) {
-                    displayName = 'Admission To';
-                    displayValue = new Date(filters.admissionDateTo).toLocaleDateString();
-                  } else if (filter === 'minGPA' && filters.minGPA) {
-                    displayName = 'Min GPA';
-                    displayValue = filters.minGPA.toString();
-                  } else if (filter === 'maxGPA' && filters.maxGPA) {
-                    displayName = 'Max GPA';
-                    displayValue = filters.maxGPA.toString();
-                  } else if (filter === 'minAttendance' && filters.minAttendance) {
-                    displayName = 'Min Attendance';
-                    displayValue = `${filters.minAttendance}%`;
-                  } else if (filter === 'maxAttendance' && filters.maxAttendance) {
-                    displayName = 'Max Attendance';
-                    displayValue = `${filters.maxAttendance}%`;
-                  } else if (filter === 'minAge' && filters.minAge) {
-                    displayName = 'Min Age';
-                    displayValue = filters.minAge.toString();
-                  } else if (filter === 'maxAge' && filters.maxAge) {
-                    displayName = 'Max Age';
-                    displayValue = filters.maxAge.toString();
-                  } else if (filter === 'nationality' && filters.nationality) {
-                    displayName = 'Nationality';
-                    displayValue = filters.nationality;
-                  } else if (filter === 'religion' && filters.religion) {
-                    displayName = 'Religion';
-                    displayValue = filters.religion;
-                  } else if (filter === 'sort' && filters.sort) {
-                    // Don't show sort in the summary
-                    return null;
-                  }
-
-                  return (
-                    <Badge
-                      key={filter}
-                      variant="secondary"
-                      className="flex items-center gap-1 px-2 py-1 bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary hover:bg-siohioma-primary/20 dark:hover:bg-siohioma-primary/30 transition-colors"
-                    >
-                      <span className="font-medium">{displayName}:</span> {displayValue}
-                      <X
-                        className="h-3 w-3 cursor-pointer ml-1"
-                        onClick={() => clearFilter(filter)}
-                      />
-                    </Badge>
-                  );
-                })}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearAllFilters}
-                className="text-xs h-7 border-siohioma-primary text-siohioma-primary hover:bg-siohioma-primary/10 dark:border-siohioma-primary dark:text-siohioma-primary dark:hover:bg-siohioma-primary/20"
-              >
-                Clear all filters
-              </Button>
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span className="font-medium text-blue-900 dark:text-blue-100">Active Filters:</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex flex-wrap gap-2 flex-1">
+              {activeFilters.map(filter => {
+                // Format the filter name for display
+                let displayName = filter;
+                let displayValue = '';
+
+                // Get the value for display
+                if (filter === 'academicYear' && filters.academicYear) {
+                  displayName = 'Academic Year';
+                  const year = academicYears.find(y => y.id === filters.academicYear);
+                  displayValue = year ? year.name : filters.academicYear;
+                } else if (filter === 'status' && filters.status) {
+                  displayValue = filters.status.charAt(0).toUpperCase() + filters.status.slice(1);
+                } else if (filter === 'gender' && filters.gender) {
+                  displayValue = filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1);
+                } else if (filter === 'class' && filters.class) {
+                  const classItem = classes.find(c => c.id === filters.class);
+                  displayValue = classItem ? classItem.name : filters.class;
+                } else if (filter === 'section' && filters.section) {
+                  displayName = 'Section';
+                  const sectionItem = sections.find(s => s.id === filters.section);
+                  displayValue = sectionItem ? sectionItem.name : filters.section;
+                } else if (filter === 'house' && filters.house) {
+                  const houseItem = houses.find(h =>
+                    (h.id && h.id === filters.house) ||
+                    ((h as any)._id && (h as any)._id === filters.house) ||
+                    `house-${h.name}` === filters.house
+                  );
+                  displayValue = houseItem ? houseItem.name : filters.house;
+                } else if (filter === 'admissionDateFrom' && filters.admissionDateFrom) {
+                  displayName = 'Admission From';
+                  displayValue = new Date(filters.admissionDateFrom).toLocaleDateString();
+                } else if (filter === 'admissionDateTo' && filters.admissionDateTo) {
+                  displayName = 'Admission To';
+                  displayValue = new Date(filters.admissionDateTo).toLocaleDateString();
+                } else if (filter === 'minGPA' && filters.minGPA) {
+                  displayName = 'Min GPA';
+                  displayValue = filters.minGPA.toString();
+                } else if (filter === 'maxGPA' && filters.maxGPA) {
+                  displayName = 'Max GPA';
+                  displayValue = filters.maxGPA.toString();
+                } else if (filter === 'minAttendance' && filters.minAttendance) {
+                  displayName = 'Min Attendance';
+                  displayValue = `${filters.minAttendance}%`;
+                } else if (filter === 'maxAttendance' && filters.maxAttendance) {
+                  displayName = 'Max Attendance';
+                  displayValue = `${filters.maxAttendance}%`;
+                } else if (filter === 'minAge' && filters.minAge) {
+                  displayName = 'Min Age';
+                  displayValue = filters.minAge.toString();
+                } else if (filter === 'maxAge' && filters.maxAge) {
+                  displayName = 'Max Age';
+                  displayValue = filters.maxAge.toString();
+                } else if (filter === 'nationality' && filters.nationality) {
+                  displayName = 'Nationality';
+                  displayValue = filters.nationality;
+                } else if (filter === 'religion' && filters.religion) {
+                  displayName = 'Religion';
+                  displayValue = filters.religion;
+                } else if (filter === 'sort' && filters.sort) {
+                  // Don't show sort in the summary
+                  return null;
+                }
+
+                return (
+                  <Badge
+                    key={filter}
+                    variant="secondary"
+                    className="flex items-center gap-1 px-3 py-1 bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/50 transition-colors cursor-pointer"
+                  >
+                    <span className="font-medium">{displayName}:</span> {displayValue}
+                    <X
+                      className="h-3 w-3 ml-1 hover:text-red-500"
+                      onClick={() => clearFilter(filter)}
+                    />
+                  </Badge>
+                );
+              })}
+            </div>
+            <Button
+              intent="cancel"
+              size="sm"
+              onClick={clearAllFilters}
+              className="h-8 text-xs"
+            >
+              Clear All
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Students List */}
       {viewMode === 'cards' ? renderCardView() : renderTableView()}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-siohioma-primary dark:text-siohioma-primary">{pagination.total || 0}</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Statistics</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg mx-auto mb-3">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{pagination.total || 0}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Students</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg mx-auto mb-3">
+              <UserCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {students.length > 0
                 ? (students.reduce((sum, student) => sum + (student.attendancePercentage || 0), 0) / students.length).toFixed(1)
                 : 'N/A'}%
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Attendance</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg mx-auto mb-3">
+              <Award className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {students.length > 0
                 ? (students.reduce((sum, student) => sum + (student.averageGrade || 0), 0) / students.length).toFixed(1)
                 : 'N/A'}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Avg. GPA</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg mx-auto mb-3">
+              <Calendar className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {students.filter(s => {
                 const admissionDate = new Date(s.admissionDate);
                 const now = new Date();
@@ -1222,8 +1315,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
               }).length}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">New This Month</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

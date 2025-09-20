@@ -1,9 +1,26 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const studentController = require('../controllers/studentController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const schoolDataRoutes = require('./schoolDataRoutes');
+
+// Configure multer for memory storage (we'll process in memory before S3 upload)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 // All routes require authentication and school context
 router.use(schoolDataRoutes.filterBySchoolMiddleware);
@@ -993,6 +1010,161 @@ router.get(
   '/:id/class-history',
   roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
   studentController.getStudentClassHistory
+);
+
+/**
+ * @swagger
+ * /students/{id}/profile-picture:
+ *   post:
+ *     summary: Upload student profile picture
+ *     description: Upload a profile picture for a student. The image will be optimized and stored in S3.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - profilePicture
+ *             properties:
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile picture image file (JPEG, PNG, or WebP)
+ *     responses:
+ *       200:
+ *         description: Profile picture uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile picture uploaded successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     student:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         profileImageUrl:
+ *                           type: string
+ *                         photo:
+ *                           type: string
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *                     upload:
+ *                       type: object
+ *                       properties:
+ *                         url:
+ *                           type: string
+ *                         publicUrl:
+ *                           type: string
+ *                         key:
+ *                           type: string
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.post(
+  '/:id/profile-picture',
+  roleMiddleware.restrictTo(['admin', 'teacher']),
+  upload.single('profilePicture'),
+  studentController.uploadProfilePicture
+);
+
+/**
+ * @swagger
+ * /students/{id}/profile-picture:
+ *   delete:
+ *     summary: Delete student profile picture
+ *     description: Delete the profile picture for a student.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     responses:
+ *       200:
+ *         description: Profile picture deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile picture deleted successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     student:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         profileImageUrl:
+ *                           type: string
+ *                           nullable: true
+ *                         photo:
+ *                           type: string
+ *                           nullable: true
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.delete(
+  '/:id/profile-picture',
+  roleMiddleware.restrictTo(['admin', 'teacher']),
+  studentController.deleteProfilePicture
 );
 
 module.exports = router;

@@ -21,6 +21,38 @@ export interface PaginatedResponse<T> {
   data: T[];
 }
 
+// File Management System
+export interface FileManager {
+  id: string;
+  fileName: string;
+  fileKey: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  category: 'PROFILE_PICTURE' | 'DOCUMENT' | 'IMAGE' | 'AUDIO' | 'VIDEO' | 'REPORT' | 'ASSIGNMENT' | 'OTHER';
+  originalName?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+  compressed: boolean;
+  entityType?: string;
+  entityId?: string;
+  uploadedById?: string;
+  schoolId: string;
+  status: 'ACTIVE' | 'ARCHIVED' | 'DELETED' | 'QUARANTINED' | 'PROCESSING';
+  isPublic: boolean;
+  description?: string;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  uploadedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface User {
   id: string;
   name: string;
@@ -168,7 +200,9 @@ export interface Student {
   house?: string | House;
   dateOfBirth: Date;
   gender: 'male' | 'female' | 'other';
-  photo?: string;
+  photo?: string;  // Legacy field - kept for backward compatibility
+  profilePictureId?: string;  // FileManager ID for profile picture
+  profilePictureUrl?: string; // Direct URL from FileManager system
   bloodGroup?: string;
   height?: {
     value: number;

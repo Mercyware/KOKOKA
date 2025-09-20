@@ -32,6 +32,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       'dashboard': 'dashboard',
       'students': subPath === 'add' ? 'students-add' : 'students-list',
       'staff': subPath === 'create' ? 'staff-add' : 'staff-list',
+      'teachers': subPath === 'class-assignments' ? 'teachers-class-assignments' :
+                 subPath === 'subject-assignments' ? 'teachers-subject-assignments' : 'teachers',
       'attendance': subPath === 'entry' || subPath === 'take' ? 'attendance-entry' :
                    subPath === 'dashboard' ? 'attendance-dashboard' :
                    subPath === 'reports' ? 'attendance-reports' :
@@ -51,11 +53,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       'ai-insights': 'ai-insights',
       'settings': 'settings',
       'security': 'security',
+      'notifications': 'notifications',
+      'messaging': 'messaging',
+      'communication': 'communication',
       'school-settings': subPath === 'academic-years' ? 'academic-years' :
+                        subPath === 'academic-calendars' ? 'academic-calendars' :
                         subPath === 'classes' ? 'classes' :
+                        subPath === 'sections' ? 'sections' :
                         subPath === 'subjects' ? 'subjects' :
                         subPath === 'departments' ? 'departments' :
-                        subPath === 'houses' ? 'houses' : basePath,
+                        subPath === 'houses' ? 'houses' :
+                        subPath === 'curricula' ? 'curricula' : basePath,
     };
 
     return routeMapping[basePath] || 'dashboard';
@@ -157,15 +165,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           
           {/* Page Content */}
           <div className="flex-1">
-            {React.Children.map(children, child => {
-              if (React.isValidElement(child)) {
-                return React.cloneElement(child, { 
-                  onMenuToggle: isMobile ? handleToggleSidebar : undefined,
-                  user
-                } as any);
-              }
-              return child;
-            })}
+            {children}
           </div>
         </main>
       </div>

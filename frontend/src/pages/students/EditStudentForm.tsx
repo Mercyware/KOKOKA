@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import { fetchSections, fetchHouses } from '@/services/api';
-import { House } from '@/types';
-import { Section } from '@/types/Section';
-import { getStudentById, updateStudent } from '@/services/studentService';
+import { useNavigate } from 'react-router-dom';
+import {
+  Save,
+  ArrowLeft,
+  Users,
+  Loader2
+} from 'lucide-react';
 import Layout from '../../components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import { getStudentById, updateStudent } from '@/services/studentService';
 import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
-import { useNavigate } from 'react-router-dom';
+import { fetchHouses, fetchSections } from '@/services/api';
 import StudentForm from '@/components/students/StudentForm';
-import { ArrowLeft } from 'lucide-react';
+import { convertToFormData, convertToBackendData, type FrontendFormData } from '@/utils/studentFormUtils';
 
 interface EditStudentFormProps {
   studentId: string;
@@ -17,304 +23,162 @@ interface EditStudentFormProps {
   onSave?: (student: any) => void;
 }
 
-const emptyFormData = {
-  firstName: '',
-  middleName: '',
-  lastName: '',
-  email: '',
-  dateOfBirth: '',
-  gender: '' as 'male' | 'female' | 'other' | '',
-  admissionNumber: '',
-  admissionDate: new Date().toISOString().split('T')[0],
-  class: '',
-  section: '',
-  academicYear: '',
-  house: '',
-  rollNumber: '',
-  status: 'active' as 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled',
-  bloodGroup: '' as 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown' | '',
-  height: { value: '', unit: 'cm' as 'cm' | 'in' },
-  weight: { value: '', unit: 'kg' as 'kg' | 'lb' },
-  healthInfo: {
-    allergies: [] as string[],
-    medicalConditions: [] as string[],
-    medications: [] as string[],
-    dietaryRestrictions: [] as string[],
-    disabilities: [] as string[]
-  },
-  contactInfo: {
-    phone: '',
-    alternativePhone: '',
-    emergencyContact: {
-      name: '',
-      relationship: '',
-      phone: ''
-    }
-  },
-  address: {
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: ''
-  },
-  guardians: [{
-    firstName: '',
-    lastName: '',
-    relationship: '' as 'father' | 'mother' | 'grandfather' | 'grandmother' | 'uncle' | 'aunt' | 'sibling' | 'legal guardian' | 'other' | '',
-    phone: '',
-    email: '',
-    occupation: '',
-    isPrimary: true
-  }]
-};
-
 const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [sections, setSections] = useState<Section[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [houses, setHouses] = useState<House[]>([]);
-  const [formData, setFormData] = useState(emptyFormData);
+  const [error, setError] = useState<string | null>(null);
+  const [student, setStudent] = useState<any>(null);
+  const [formData, setFormData] = useState<FrontendFormData | null>(null);
+  
+  // Options state
+  const [classes, setClasses] = useState<any[]>([]);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [houses, setHouses] = useState<any[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setInitialLoading(true);
-      try {
-        const studentResponse = await getStudentById(studentId);
-        if (studentResponse.success && studentResponse.student) {
-          const student = studentResponse.student;
-          setFormData({
-            firstName: student.firstName || '',
-            middleName: student.middleName || '',
-            lastName: student.lastName || '',
-            email: student.email || '',
-            dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split('T')[0] : '',
-            gender: student.gender || '',
-            admissionNumber: student.admissionNumber || '',
-            admissionDate: student.admissionDate ? new Date(student.admissionDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            class: typeof student.class === 'object' && student.class !== null && typeof (student.class as any)._id === 'string'
-              ? (student.class as any)._id
-              : typeof student.class === 'string'
-                ? student.class
-                : '',
-            section: typeof (student as any).section === 'object' && (student as any).section !== null && typeof ((student as any).section as any)._id === 'string'
-              ? ((student as any).section as any)._id
-              : typeof (student as any).section === 'string'
-                ? (student as any).section
-                : '',
-            academicYear: typeof student.academicYear === 'object' && student.academicYear !== null && typeof (student.academicYear as any)._id === 'string'
-              ? (student.academicYear as any)._id
-              : typeof student.academicYear === 'string'
-                ? student.academicYear
-                : '',
-            house: typeof student.house === 'object' && student.house !== null && typeof (student.house as any)._id === 'string'
-              ? (student.house as any)._id
-              : typeof student.house === 'string'
-                ? student.house
-                : '',
-            rollNumber: student.rollNumber || '',
-            status: student.status || 'active',
-            bloodGroup: typeof student.bloodGroup === 'string' && (['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown', ''] as const).includes(student.bloodGroup as any)
-              ? (student.bloodGroup as any)
-              : '',
-            height: {
-              value: student.height?.value?.toString() || '',
-              unit: student.height?.unit || 'cm'
-            },
-            weight: {
-              value: student.weight?.value?.toString() || '',
-              unit: student.weight?.unit || 'kg'
-            },
-            healthInfo: {
-              allergies: student.healthInfo?.allergies || [],
-              medicalConditions: student.healthInfo?.medicalConditions || [],
-              medications: student.healthInfo?.medications || [],
-              dietaryRestrictions: student.healthInfo?.dietaryRestrictions || [],
-              disabilities: student.healthInfo?.disabilities || []
-            },
-            contactInfo: {
-              phone: student.contactInfo?.phone || '',
-              alternativePhone: student.contactInfo?.alternativePhone || '',
-              emergencyContact: {
-                name: student.contactInfo?.emergencyContact?.name || '',
-                relationship: student.contactInfo?.emergencyContact?.relationship || '',
-                phone: student.contactInfo?.emergencyContact?.phone || ''
-              }
-            },
-            address: {
-              street: typeof student.address === 'string' ? student.address : student.address?.street || '',
-              city: student.address?.city || '',
-              state: student.address?.state || '',
-              zipCode: student.address?.zipCode || '',
-              country: student.address?.country || ''
-            },
-            guardians: Array.isArray((student as any).guardians) && (student as any).guardians.length > 0
-              ? (student as any).guardians.map((guardian: any) => ({
-                  _id: typeof guardian._id === 'string' ? guardian._id : undefined,
-                  firstName: guardian.firstName || '',
-                  lastName: guardian.lastName || '',
-                  relationship: guardian.relationship || '',
-                  phone: guardian.phone || '',
-                  email: guardian.email || '',
-                  occupation: guardian.occupation || '',
-                  isPrimary:
-                    typeof guardian._id === 'string' &&
-                    (((student as any).primaryGuardian && typeof (student as any).primaryGuardian === 'object' && typeof (student as any).primaryGuardian._id === 'string'
-                      ? guardian._id === (student as any).primaryGuardian._id
-                      : guardian._id === (student as any).primaryGuardian))
-                }))
-              : [{
-                  firstName: '',
-                  lastName: '',
-                  relationship: '',
-                  phone: '',
-                  email: '',
-                  occupation: '',
-                  isPrimary: true
-                }]
-          });
-        }
-
-        const sectionsResponse = await fetchSections();
-        if (sectionsResponse.success && sectionsResponse.data) {
-          setSections(sectionsResponse.data);
-        }
-        const classesResponse = await getAllClasses();
-        if (classesResponse.data) {
-          setClasses(classesResponse.data);
-        }
-        const academicYearsResponse = await getAllAcademicYears();
-        if (academicYearsResponse.data) {
-          setAcademicYears(academicYearsResponse.data);
-        }
-        const housesResponse = await fetchHouses();
-        if (housesResponse.success && housesResponse.data) {
-          setHouses(housesResponse.data);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load student data. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
     fetchData();
-  }, [studentId, toast]);
+  }, [studentId]);
 
-  const handleSubmit = (formData: any) => {
-    setLoading(true);
-    (async () => {
-      try {
-        const validGuardians = formData.guardians.filter((guardian: any) =>
-          guardian.firstName &&
-          guardian.lastName &&
-          guardian.relationship &&
-          guardian.phone
-        );
+  const fetchData = async () => {
+    setInitialLoading(true);
+    setError(null);
+    try {
+      // Fetch student data and form options in parallel
+      const [studentResponse, classesResponse, academicYearsResponse, housesResponse, sectionsResponse] = await Promise.all([
+        getStudentById(studentId),
+        getAllClasses(),
+        getAllAcademicYears(),
+        fetchHouses(),
+        fetchSections()
+      ]);
 
-        const studentData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          middleName: formData.middleName || undefined,
-          email: formData.email || undefined,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
-          gender: (formData.gender === 'male' || formData.gender === 'female' || formData.gender === 'other')
-            ? formData.gender
-            : undefined,
-          admissionNumber: formData.admissionNumber,
-          admissionDate: formData.admissionDate ? new Date(formData.admissionDate) : undefined,
-          class: formData.class,
-          section: formData.section || undefined,
-          academicYear: formData.academicYear || undefined,
-          house: formData.house || undefined,
-          rollNumber: formData.rollNumber || undefined,
-          status: formData.status,
-          bloodGroup: formData.bloodGroup || undefined,
-          height: {
-            value: formData.height.value ? parseFloat(formData.height.value as string) : 0,
-            unit: formData.height.unit
-          },
-          weight: {
-            value: formData.weight.value ? parseFloat(formData.weight.value as string) : 0,
-            unit: formData.weight.unit
-          },
-          healthInfo: {
-            allergies: formData.healthInfo.allergies || [],
-            medicalConditions: formData.healthInfo.medicalConditions || [],
-            medications: formData.healthInfo.medications || [],
-            dietaryRestrictions: formData.healthInfo.dietaryRestrictions || [],
-            disabilities: formData.healthInfo.disabilities || [],
-            vaccinationStatus: formData.healthInfo.vaccinationStatus || []
-          },
-          contactInfo: {
-            phone: formData.contactInfo.phone || '',
-            alternativePhone: formData.contactInfo.alternativePhone || '',
-            emergencyContact: {
-              name: formData.contactInfo.emergencyContact.name || '',
-              relationship: formData.contactInfo.emergencyContact.relationship || '',
-              phone: formData.contactInfo.emergencyContact.phone || ''
-            }
-          },
-          address: (
-            formData.address.street ||
-            formData.address.city ||
-            formData.address.state ||
-            formData.address.zipCode ||
-            formData.address.country
-          ) ? formData.address : undefined,
-          guardians: validGuardians.length > 0 ? (validGuardians as any) : undefined
-        };
-
-        const response = await updateStudent(studentId, studentData);
-
-        if (response.success) {
-          toast({
-            title: 'Student updated successfully!',
-            description: 'The student profile has been updated.',
-            variant: 'default',
-          });
-          setTimeout(() => {
-            if (onSave) {
-              onSave(response.student);
-            } else {
-              navigate(`/students/${studentId}`);
-            }
-          }, 500);
-        } else {
-          console.error('Failed to update student');
-          toast({
-            title: 'Failed to update student',
-            description: 'An error occurred while updating the student.',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Error updating student:', error);
-        toast({
-          title: 'Error',
-          description: 'An error occurred while updating the student. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
+      // Set form options
+      if (classesResponse.data) {
+        setClasses(classesResponse.data);
       }
-    })();
+
+      if (academicYearsResponse.data) {
+        setAcademicYears(academicYearsResponse.data);
+      }
+
+      if (housesResponse.success && housesResponse.data) {
+        setHouses(housesResponse.data);
+      }
+
+      if (sectionsResponse.success && sectionsResponse.data) {
+        setSections(sectionsResponse.data);
+      }
+      
+      if (studentResponse.success && studentResponse.student) {
+        setStudent(studentResponse.student);
+        
+        // Convert backend data to frontend form format
+        const convertedFormData = convertToFormData(studentResponse.student as any);
+        setFormData(convertedFormData);
+      } else {
+        throw new Error('Failed to load student data');
+      }
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+      setError('Failed to load student data. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load student data",
+        variant: "destructive",
+      });
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  const handleSubmit = async (data: FrontendFormData) => {
+    setLoading(true);
+    try {
+      // Convert frontend form data to backend format
+      const backendData = convertToBackendData(data);
+      
+      const response = await updateStudent(studentId, backendData);
+
+      if (response.success && response.student) {
+        toast({
+          title: "Success",
+          description: "Student updated successfully",
+        });
+        setTimeout(() => {
+          if (onSave) {
+            onSave(response.student);
+          } else {
+            navigate(`/students/${studentId}`);
+          }
+        }, 500);
+      } else {
+        console.error('Update failed:', response);
+        toast({
+          title: "Error",
+          description: response.message || response.error || "Failed to update student",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating student:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while updating the student",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (initialLoading) {
     return (
       <Layout>
         <div className="flex justify-center items-center py-12">
-          <span className="text-lg">Loading student data...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-siohioma-primary" />
+          <span className="ml-2 text-lg">Loading student data...</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Error Loading Student</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+            <div className="space-x-4">
+              <Button onClick={() => fetchData()}>
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/students')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Students
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!student || !formData) {
+    return (
+      <Layout>
+        <div className="container mx-auto p-6">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Student Not Found</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">The student you're trying to edit could not be found.</p>
+            <Button onClick={() => navigate('/students')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Students
+            </Button>
+          </div>
         </div>
       </Layout>
     );
@@ -322,32 +186,37 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
 
   return (
     <Layout>
-      <div className="container mx-auto p-4">
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <button type="button" className="btn btn-outline" onClick={onBack}>
-              <span className="inline-flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </span>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Edit Student</h1>
-              <p className="text-gray-600 dark:text-gray-400">Update student information</p>
-            </div>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Users className="h-8 w-8 text-siohioma-primary" />
+              Edit Student
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Update comprehensive student profile information
+            </p>
           </div>
-          <StudentForm
-            initialValues={formData}
-            onSubmit={handleSubmit}
-            onBack={onBack}
-            loading={loading}
-            submitLabel="Update Student"
-            sections={sections}
-            classes={classes}
-            academicYears={academicYears}
-            houses={houses}
-          />
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/students/${studentId}`)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Student
+          </Button>
         </div>
+
+        <StudentForm
+          initialValues={formData}
+          onSubmit={handleSubmit}
+          onBack={() => navigate(`/students/${studentId}`)}
+          loading={loading}
+          submitLabel={loading ? "Updating Student..." : "Update Student"}
+          sections={sections}
+          classes={classes}
+          academicYears={academicYears}
+          houses={houses}
+        />
       </div>
     </Layout>
   );
