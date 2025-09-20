@@ -134,7 +134,7 @@ const StaffList: React.FC = () => {
       case 'terminated':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'retired':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
@@ -148,7 +148,7 @@ const StaffList: React.FC = () => {
       case 'administrator':
         return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
       default:
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary';
     }
   };
 
@@ -195,7 +195,7 @@ const StaffList: React.FC = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                  <div className="bg-siohioma-primary/10 dark:bg-siohioma-primary/20 p-3 rounded-full">
                     <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
@@ -326,7 +326,7 @@ const StaffList: React.FC = () => {
                 <TableRow key={staff.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
+                      <div className="bg-siohioma-primary/10 dark:bg-siohioma-primary/20 p-2 rounded-full">
                         <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
@@ -391,7 +391,7 @@ const StaffList: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Staff Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage staff members and their information</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleCreateStaff}>
+          <Button className="bg-siohioma-primary hover:bg-siohioma-primary/90" onClick={handleCreateStaff}>
             <Plus className="h-4 w-4 mr-2" />
             Add Staff Member
           </Button>
@@ -416,7 +416,7 @@ const StaffList: React.FC = () => {
                     <Button
                       variant={activeFilters.length > 0 ? "default" : "outline"}
                       className={`flex items-center space-x-2 ${activeFilters.length > 0
-                        ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                        ? "bg-siohioma-primary hover:bg-siohioma-primary/90 text-white border-siohioma-primary"
                         : "border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
                       } transition-colors duration-200`}
                     >
@@ -425,7 +425,7 @@ const StaffList: React.FC = () => {
                       {activeFilters.length > 0 && (
                         <Badge
                           variant="secondary"
-                          className="ml-1 bg-white text-blue-800 dark:bg-blue-200 dark:text-blue-900 font-bold"
+                          className="ml-1 bg-white text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary font-bold"
                         >
                           {activeFilters.length}
                         </Badge>

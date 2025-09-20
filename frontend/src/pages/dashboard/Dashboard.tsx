@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
             <div className="flex gap-4">
               <button 
                 onClick={handleRefreshUserData}
-                className="px-6 py-2 bg-blue-500 dark:bg-blue-700 text-white rounded shadow hover:bg-blue-600 dark:hover:bg-blue-800 transition">
+                className="px-6 py-2 bg-siohioma-primary hover:bg-siohioma-primary/90 text-white rounded shadow transition">
                 Refresh Status
               </button>
               <button 

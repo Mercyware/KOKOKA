@@ -319,7 +319,7 @@ const AddScoresQuickEntry = () => {
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back
               </Button>
-              <Zap className="h-8 w-8 text-blue-600" />
+              <Zap className="h-8 w-8 text-siohioma-orange" />
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Quick Score Entry</h1>
                 <p className="text-muted-foreground">
@@ -379,7 +379,7 @@ const AddScoresQuickEntry = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
-              <Users className="h-8 w-8 text-blue-600" />
+              <Users className="h-8 w-8 text-siohioma-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Students</p>
                 <p className="text-2xl font-bold">{students.length}</p>
@@ -606,7 +606,7 @@ const AddScoresQuickEntry = () => {
                 {/* Student Info */}
                 <div className="space-y-4">
                   <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                    <div className="text-2xl font-bold text-siohioma-primary dark:text-siohioma-primary">
                       {currentStudent.user.name}
                     </div>
                     <div className="text-sm text-blue-700 dark:text-blue-300">
@@ -703,7 +703,7 @@ const AddScoresQuickEntry = () => {
                       key={student.id}
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${
                         isActive 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                          ? 'border-siohioma-primary bg-siohioma-primary/10 dark:bg-siohioma-primary/20' 
                           : hasScore 
                             ? 'border-green-300 bg-green-50 dark:bg-green-900/20'
                             : 'border-gray-200 hover:border-gray-300'

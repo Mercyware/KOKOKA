@@ -97,7 +97,7 @@ interface CurriculumStats {
 }
 
 const typeConfig = {
-  STANDARD: { label: 'Standard', color: 'bg-blue-100 text-blue-800', icon: BookOpen },
+  STANDARD: { label: 'Standard', color: 'bg-siohioma-primary/10 text-siohioma-primary', icon: BookOpen },
   CAMBRIDGE: { label: 'Cambridge', color: 'bg-green-100 text-green-800', icon: Award },
   IB: { label: 'IB', color: 'bg-purple-100 text-purple-800', icon: Globe },
   NATIONAL: { label: 'National', color: 'bg-red-100 text-red-800', icon: Building },
@@ -109,7 +109,7 @@ const typeConfig = {
 
 const difficultyConfig = {
   BEGINNER: { label: 'Beginner', color: 'bg-green-100 text-green-800' },
-  STANDARD: { label: 'Standard', color: 'bg-blue-100 text-blue-800' },
+  STANDARD: { label: 'Standard', color: 'bg-siohioma-primary/10 text-siohioma-primary' },
   ADVANCED: { label: 'Advanced', color: 'bg-red-100 text-red-800' },
 };
 

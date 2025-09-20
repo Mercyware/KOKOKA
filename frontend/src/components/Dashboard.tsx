@@ -204,8 +204,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
         {/* Recent Activities */}
         <div className="siohioma-card">
           <div className="flex items-center gap-3 p-siohioma-xl pb-siohioma-lg border-b border-gray-100">
-            <div className="bg-blue-100 p-2 rounded-siohioma-lg">
-              <Clock className="h-5 w-5 text-blue-600" />
+            <div className="bg-siohioma-primary/10 p-2 rounded-siohioma-lg">
+              <Clock className="h-5 w-5 text-siohioma-primary" />
             </div>
             <div>
               <h3 className="siohioma-heading-3">Recent Activities</h3>
@@ -219,11 +219,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
                   <div className={`p-2 rounded-siohioma-lg ${
                     activity.type === 'success' ? 'bg-siohioma-light-green/20' :
                     activity.type === 'warning' ? 'bg-siohioma-accent/10' :
-                    activity.type === 'info' ? 'bg-blue-100' : 'bg-gray-100'
+                    activity.type === 'info' ? 'bg-siohioma-primary/10' : 'bg-gray-100'
                   }`}>
                     {activity.type === 'success' ? <CheckCircle className="h-4 w-4 text-siohioma-light-green" /> :
                      activity.type === 'warning' ? <AlertCircle className="h-4 w-4 text-siohioma-accent" /> :
-                     activity.type === 'info' ? <Calendar className="h-4 w-4 text-blue-600" /> :
+                     activity.type === 'info' ? <Calendar className="h-4 w-4 text-siohioma-primary" /> :
                      <Clock className="h-4 w-4 text-gray-600" />}
                   </div>
                   <div className="flex-1">

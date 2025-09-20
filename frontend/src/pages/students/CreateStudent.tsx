@@ -250,7 +250,7 @@ const CreateStudent: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Users className="h-8 w-8 text-blue-600" />
+              <Users className="h-8 w-8 text-siohioma-primary" />
               Add New Student
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -271,7 +271,7 @@ const CreateStudent: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-blue-600" />
+                <User className="h-5 w-5 text-siohioma-primary" />
                 Personal Information
               </CardTitle>
             </CardHeader>
@@ -373,7 +373,7 @@ const CreateStudent: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-blue-600" />
+                <GraduationCap className="h-5 w-5 text-siohioma-primary" />
                 Academic Information
               </CardTitle>
             </CardHeader>
@@ -469,7 +469,7 @@ const CreateStudent: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-blue-600" />
+                <MapPin className="h-5 w-5 text-siohioma-primary" />
                 Address Information
               </CardTitle>
             </CardHeader>
@@ -531,7 +531,7 @@ const CreateStudent: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-blue-600" />
+                <UserCheck className="h-5 w-5 text-siohioma-primary" />
                 Guardian Information
               </CardTitle>
             </CardHeader>
@@ -540,7 +540,7 @@ const CreateStudent: React.FC = () => {
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">
-                      Guardian {index + 1} {guardian.isPrimary && <span className="text-sm text-blue-600">(Primary)</span>}
+                      Guardian {index + 1} {guardian.isPrimary && <span className="text-sm text-siohioma-primary">(Primary)</span>}
                     </h3>
                     <div className="flex space-x-2">
                       <Button
@@ -664,7 +664,7 @@ const CreateStudent: React.FC = () => {
             <Button 
               type="submit" 
               disabled={loading} 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-siohioma-primary hover:bg-siohioma-primary/90 text-white"
             >
               {loading ? (
                 <>

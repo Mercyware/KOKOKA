@@ -307,7 +307,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
       case 'active':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'graduated':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary';
       case 'transferred':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'suspended':
@@ -323,7 +323,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     if (loading) {
       return (
         <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-siohioma-primary" />
           <span className="ml-2 text-lg">Loading students...</span>
         </div>
       );
@@ -363,7 +363,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
-                    <User className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <User className="h-6 w-6 text-siohioma-primary dark:text-siohioma-primary" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{formatStudentName(student)}</CardTitle>
@@ -391,7 +391,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
 
               <div className="grid grid-cols-2 gap-4 pt-2 border-t dark:border-gray-700">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  <p className="text-2xl font-bold text-siohioma-primary dark:text-siohioma-primary">
                     {student.averageGrade?.toFixed(1) || 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">GPA</p>
@@ -430,7 +430,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
     if (loading) {
       return (
         <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-siohioma-primary" />
           <span className="ml-2 text-lg">Loading students...</span>
         </div>
       );
@@ -483,7 +483,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                   <TableCell>
                     <div className="flex items-center space-x-3">
                       <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
-                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <User className="h-4 w-4 text-siohioma-primary dark:text-siohioma-primary" />
                       </div>
                       <div>
                         <p className="font-medium">{formatStudentName(student)}</p>
@@ -591,7 +591,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                     {activeFilters.length > 0 && (
                       <Badge
                         variant="secondary"
-                        className="ml-1 bg-white text-blue-800 dark:bg-blue-200 dark:text-blue-900 font-bold"
+                        className="ml-1 bg-white text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary font-bold"
                       >
                         {activeFilters.length}
                       </Badge>
@@ -1085,8 +1085,8 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
           <CardContent className="p-4">
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2 mr-2">
-                <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="font-medium text-blue-700 dark:text-blue-300">Active Filters:</span>
+                <Filter className="h-4 w-4 text-siohioma-primary dark:text-siohioma-primary" />
+                <span className="font-medium text-siohioma-primary dark:text-siohioma-primary">Active Filters:</span>
               </div>
               <div className="flex flex-wrap gap-2 flex-1">
                 {activeFilters.map(filter => {
@@ -1156,7 +1156,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                     <Badge
                       key={filter}
                       variant="secondary"
-                      className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary hover:bg-siohioma-primary/20 dark:hover:bg-siohioma-primary/30 transition-colors"
                     >
                       <span className="font-medium">{displayName}:</span> {displayValue}
                       <X
@@ -1171,7 +1171,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
                 variant="outline"
                 size="sm"
                 onClick={clearAllFilters}
-                className="text-xs h-7 border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900"
+                className="text-xs h-7 border-siohioma-primary text-siohioma-primary hover:bg-siohioma-primary/10 dark:border-siohioma-primary dark:text-siohioma-primary dark:hover:bg-siohioma-primary/20"
               >
                 Clear all filters
               </Button>
@@ -1187,7 +1187,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{pagination.total || 0}</p>
+            <p className="text-2xl font-bold text-siohioma-primary dark:text-siohioma-primary">{pagination.total || 0}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Students</p>
           </CardContent>
         </Card>

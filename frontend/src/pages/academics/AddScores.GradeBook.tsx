@@ -262,7 +262,7 @@ const AddScoresGradeBook = () => {
       case 'A+':
       case 'A': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'B+':
-      case 'B': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'B': return 'bg-siohioma-primary/10 text-siohioma-primary dark:bg-siohioma-primary/20 dark:text-siohioma-primary';
       case 'C+':
       case 'C': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
       case 'D': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
@@ -405,7 +405,7 @@ const AddScoresGradeBook = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-siohioma-primary">
                   {statistics.average.toFixed(1)}
                 </div>
                 <div className="text-sm text-muted-foreground">Average Score</div>
