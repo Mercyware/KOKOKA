@@ -1,5 +1,22 @@
 const { prisma } = require('../config/database');
 
+// Authorize access to specific roles (alias for restrictTo for compatibility)
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    // Convert both user role and expected roles to lowercase for case-insensitive comparison
+    const userRole = req.user.role.toLowerCase();
+    const allowedRoles = roles.map(role => role.toLowerCase());
+    
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to perform this action'
+      });
+    }
+    next();
+  };
+};
+
 // Restrict access to specific roles
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {

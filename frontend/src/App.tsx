@@ -61,6 +61,11 @@ import AddScores from "./pages/academics/AddScores";
 import AddScoresQuickEntry from "./pages/academics/AddScores.QuickEntry";
 import AddScoresGradeBook from "./pages/academics/AddScores.GradeBook";
 import ScoreEntryModes from "./pages/academics/ScoreEntryModes";
+// Attendance Components
+import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
+import AttendanceEntry from "./pages/attendance/AttendanceEntry";
+import AttendanceReports from "./pages/attendance/AttendanceReports";
+import QRAttendanceScanner from "./pages/attendance/QRAttendanceScanner";
 
 const queryClient = new QueryClient();
 
@@ -194,6 +199,15 @@ const App = () => (
             {/* Student Grade Views */}
             <Route path="/student/grades" element={<StudentGradeView />} />
             <Route path="/student/progress" element={<StudentGradeView />} />
+            
+            {/* Attendance Management Routes */}
+            <Route path="/attendance" element={<AttendanceDashboard />} />
+            <Route path="/attendance/dashboard" element={<AttendanceDashboard />} />
+            <Route path="/attendance/entry" element={<AttendanceEntry />} />
+            <Route path="/attendance/take" element={<AttendanceEntry />} />
+            <Route path="/attendance/reports" element={<AttendanceReports />} />
+            <Route path="/attendance/bulk" element={<AttendanceEntry />} />
+            <Route path="/attendance/qr-scanner" element={<QRAttendanceScanner />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

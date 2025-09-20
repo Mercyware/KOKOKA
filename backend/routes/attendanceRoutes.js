@@ -6,7 +6,17 @@ const {
   getStudentAttendance,
   getAttendanceStats,
   generateQRCode,
-  scanQRAttendance
+  scanQRAttendance,
+  getAttendanceDashboard,
+  generateAttendanceReport,
+  getAttendanceReports,
+  // New enhanced functions
+  getClassRoster,
+  takeClassAttendance,
+  createQRSession,
+  getQRSessionStatus,
+  geofenceCheckIn,
+  correctAttendance
 } = require('../controllers/attendanceController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
@@ -29,8 +39,39 @@ router.route('/class/:classId')
 router.route('/stats')
   .get(authorize('admin', 'teacher', 'principal'), getAttendanceStats);
 
+router.route('/dashboard')
+  .get(authorize('admin', 'teacher', 'principal'), getAttendanceDashboard);
+
 router.route('/qr-code/:classId')
   .get(authorize('admin', 'teacher'), generateQRCode);
+
+router.route('/reports')
+  .get(authorize('admin', 'teacher', 'principal'), getAttendanceReports);
+
+router.route('/reports/generate')
+  .post(authorize('admin', 'teacher', 'principal'), generateAttendanceReport);
+
+// Enhanced class attendance routes
+router.route('/class/:classId/roster')
+  .get(authorize('admin', 'teacher', 'principal'), getClassRoster);
+
+router.route('/class/:classId/take')
+  .post(authorize('admin', 'teacher'), takeClassAttendance);
+
+// Enhanced QR code attendance routes
+router.route('/qr-session')
+  .post(authorize('admin', 'teacher'), createQRSession);
+
+router.route('/qr-session/:sessionId')
+  .get(authorize('admin', 'teacher'), getQRSessionStatus);
+
+// Automated attendance methods
+router.route('/geofence-checkin')
+  .post(authorize('student'), geofenceCheckIn);
+
+// Administrative corrections
+router.route('/:attendanceId/correct')
+  .put(authorize('admin', 'principal'), correctAttendance);
 
 // Routes accessible by Students (for QR attendance)
 router.route('/qr-scan')

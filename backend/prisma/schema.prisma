@@ -55,6 +55,9 @@ model School {
   assessments          Assessment[]
   grades               Grade[]
   attendance           Attendance[]
+  attendanceSessions   AttendanceSession[]
+  attendancePolicies   AttendancePolicy[]
+  attendanceReports    AttendanceReport[]
   documents            Document[]
   guardians            Guardian[]
   houses               House[]
@@ -115,7 +118,9 @@ model User {
   // Activity relationships
   createdDocuments    Document[] @relation("DocumentCreatedBy")
   verifiedDocuments   Document[] @relation("DocumentVerifiedBy")
-  markedAttendance    Attendance[]
+  markedAttendance    Attendance[] @relation("AttendanceMarkedBy")
+  modifiedAttendance  Attendance[] @relation("AttendanceModifiedBy")
+  generatedAttendanceReports AttendanceReport[]
   createdAssessments  Assessment[]
   gradedAssessments   Grade[] @relation("GradedBy")
   verifiedGuardians   Guardian[] @relation("GuardianVerifiedBy")
@@ -160,6 +165,7 @@ model AcademicYear {
   terms               Term[]
   students            Student[]
   assessments         Assessment[]
+  attendance          Attendance[]
   studentClassHistory StudentClassHistory[]
   academicCalendars   AcademicCalendar[]
   classCurricula      ClassCurriculum[]
@@ -192,6 +198,7 @@ model Term {
 
   // Relationships
   assessments Assessment[]
+  attendance  Attendance[]
   gradeBooks  GradeBook[]
   gradeReports GradeReport[]
   reportCards ReportCard[]
@@ -262,6 +269,7 @@ model Subject {
   // Relationships
   teacherSubjects      TeacherSubject[]
   assessments          Assessment[]
+  attendance           Attendance[]
   curriculumSubjects   CurriculumSubject[]
   gradeBooks           GradeBook[]
   classSubjectHistory  ClassSubjectHistory[]
@@ -743,6 +751,7 @@ model ReportCardTemplate {
   
   // Usage
   reportCards           ReportCard[]
+  reportBatches         ReportBatch[]
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -826,7 +835,7 @@ model ReportBatch {
   termId                String?
   term                  Term?     @relation(fields: [termId], references: [id])
   classIds              String[]  // Classes to generate reports for
-  studentIds            String[]? // Specific students (optional)
+  studentIds            String[] // Specific students (optional)
   
   // Template Configuration
   templateId            String
@@ -946,6 +955,9 @@ model Class {
   students            Student[]
   assessments         Assessment[]
   attendance          Attendance[]
+  attendanceSessions  AttendanceSession[]
+  attendancePolicy    AttendancePolicy? @relation(fields: [attendancePolicyId], references: [id])
+  attendancePolicyId  String?
   classTeachers       ClassTeacher[]
   studentClassHistory StudentClassHistory[]
   documents           Document[]
@@ -1475,6 +1487,7 @@ model Attendance {
   // Time tracking
   checkInTime  DateTime?
   checkOutTime DateTime?
+  totalMinutesPresent Int? // for partial attendance
   
   // Method and Location
   method   AttendanceMethod @default(MANUAL)
@@ -1482,12 +1495,27 @@ model Attendance {
   
   // Notes and Modifications
   notes            String?
+  adminNotes       String? // Private admin notes
   parentNotified   Boolean @default(false)
   notificationSentAt DateTime?
   
   // Modification tracking
   isModified         Boolean @default(false)
   modificationReason String?
+  modifiedById       String?
+  modifiedBy         User?    @relation("AttendanceModifiedBy", fields: [modifiedById], references: [id])
+  modifiedAt         DateTime?
+  
+  // Academic Context
+  termId         String?
+  term           Term?        @relation(fields: [termId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  
+  // Additional tracking
+  temperature    Float? // for health monitoring
+  deviceInfo     Json? // device used for marking attendance
+  ipAddress      String? // IP address for security
   
   // Relationships
   schoolId       String
@@ -1497,15 +1525,115 @@ model Attendance {
   classId        String
   class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   subjectId      String?
+  subject        Subject?     @relation(fields: [subjectId], references: [id])
   markedById     String
-  markedBy       User         @relation(fields: [markedById], references: [id])
+  markedBy       User         @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
   markedAt       DateTime     @default(now())
+  
+  // Related records
+  sessions       AttendanceSession[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, classId, date, period])
   @@map("attendance")
+}
+
+model AttendanceSession {
+  id           String   @id @default(uuid())
+  sessionName  String   // e.g., "Morning Session", "Math Period", "Assembly"
+  startTime    DateTime
+  endTime      DateTime
+  isCompleted  Boolean  @default(false)
+  
+  // Relationships
+  schoolId     String
+  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classId      String
+  class        Class      @relation(fields: [classId], references: [id])
+  attendances  Attendance[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("attendance_sessions")
+}
+
+model AttendancePolicy {
+  id              String @id @default(uuid())
+  name            String
+  description     String?
+  
+  // Policy settings
+  graceMinutes    Int    @default(15) // grace period for late arrival
+  halfDayMinutes  Int    @default(240) // minimum minutes for half day
+  fullDayMinutes  Int    @default(360) // minimum minutes for full day
+  
+  // Thresholds
+  lowAttendanceThreshold  Float @default(75.0) // percentage threshold for low attendance alerts
+  criticalThreshold       Float @default(65.0) // percentage threshold for critical attendance
+  
+  // Notification settings
+  enableParentNotifications Boolean @default(true)
+  enableSMSAlerts          Boolean @default(false)
+  enableEmailAlerts        Boolean @default(true)
+  notifyOnLateArrival     Boolean @default(true)
+  notifyOnAbsence         Boolean @default(true)
+  
+  // Geofencing settings
+  enableGeofencing Boolean @default(false)
+  geofenceRadius   Float?  // in meters
+  geofenceCenter   Json?   // { latitude, longitude }
+  
+  // Academic context
+  isActive       Boolean @default(true)
+  applicableFrom DateTime @default(now())
+  applicableTo   DateTime?
+  
+  // Relationships
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes  Class[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("attendance_policies")
+}
+
+model AttendanceReport {
+  id           String @id @default(uuid())
+  title        String
+  description  String?
+  reportType   AttendanceReportType @default(MONTHLY)
+  
+  // Date range
+  fromDate     DateTime
+  toDate       DateTime
+  
+  // Filters applied
+  filters      Json? // stored filter criteria
+  
+  // Report data
+  reportData   Json  // generated report data
+  summary      Json? // summary statistics
+  
+  // Status
+  status       AttendanceReportStatus @default(PENDING)
+  generatedAt  DateTime?
+  fileUrl      String? // URL to generated PDF/Excel file
+  
+  // Relationships
+  schoolId     String
+  school       School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  generatedById String?
+  generatedBy  User?  @relation(fields: [generatedById], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("attendance_reports")
 }
 
 // ================================
@@ -1971,6 +2099,9 @@ enum AttendanceStatus {
   LATE
   EXCUSED
   PARTIAL
+  SICK
+  SUSPENDED
+  EARLY_DEPARTURE
 }
 
 enum AttendancePeriod {
@@ -1985,6 +2116,10 @@ enum AttendancePeriod {
   PERIOD_6
   PERIOD_7
   PERIOD_8
+  LUNCH
+  ASSEMBLY
+  BREAK
+  CUSTOM
 }
 
 enum AttendanceMethod {
@@ -1993,6 +2128,31 @@ enum AttendanceMethod {
   BIOMETRIC
   GEOFENCING
   BULK
+  RFID
+  FACE_RECOGNITION
+  MOBILE_APP
+  WEB_PORTAL
+  CSV_IMPORT
+}
+
+enum AttendanceReportType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  CUSTOM_RANGE
+  STUDENT_WISE
+  CLASS_WISE
+  TEACHER_WISE
+}
+
+enum AttendanceReportStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  EXPIRED
 }
 
 enum AcademicTerm {

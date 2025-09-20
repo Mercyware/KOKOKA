@@ -727,7 +727,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
       <div className="flex space-x-4 pt-6">
         <Button
           type="submit"
-          className="flex items-center space-x-2"
+          variant="default"
+          intent="primary"
           disabled={loading}
         >
           {loading ? (
@@ -742,7 +743,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
             </>
           )}
         </Button>
-        <Button type="button" variant="outline" onClick={onBack} disabled={loading}>
+        <Button type="button" variant="outline" intent="cancel" onClick={onBack} disabled={loading}>
           Cancel
         </Button>
       </div>

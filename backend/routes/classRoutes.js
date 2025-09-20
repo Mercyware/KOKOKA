@@ -5,6 +5,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const schoolMiddleware = require('../middlewares/schoolMiddleware');
 
+// Debug log to see if this route file is loaded
+console.log('🎯 CLASSES ROUTES: Loading classRoutes.js');
+
 // Protect all routes
 router.use(authMiddleware.protect);
 
@@ -187,6 +190,58 @@ router.get('/with-sections', classController.getClassesWithSections);
  *         $ref: '#/components/responses/ServerError'
  */
 router.get('/:id', classController.getClassById);
+
+/**
+ * @swagger
+ * /classes/{id}/students:
+ *   get:
+ *     summary: Get students in a class
+ *     description: Retrieve all students enrolled in a specific class. Accessible by all authenticated users.
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Class ID
+ *     responses:
+ *       200:
+ *         description: List of students in the class
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       rollNumber:
+ *                         type: string
+ *                       admissionNumber:
+ *                         type: string
+ *                       profilePhoto:
+ *                         type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Class not found
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get('/:id/students', classController.getClassStudents);
 
 /**
  * @swagger

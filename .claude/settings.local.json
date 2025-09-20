@@ -31,7 +31,12 @@
       "Bash(start \"http://localhost:8081/teachers/class-assignments?v=3\")",
       "Bash(cat:*)",
       "Bash(PORT=5003 npm run dev)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(start \"http://localhost:8082/attendance/take\")",
+      "Bash(PORT=5000 npm run dev)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(start \"http://localhost:8081/attendance/reports\")"
     ],
     "deny": [],
     "ask": [],

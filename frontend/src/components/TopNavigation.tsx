@@ -20,7 +20,8 @@ import {
   Calendar,
   Trophy,
   ClipboardList,
-  PieChart
+  PieChart,
+  QrCode
 } from 'lucide-react';
 
 interface TopNavigationProps {
@@ -62,9 +63,11 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
     {
       title: 'Attendance',
       items: [
-        { id: 'attendance-today', label: 'Today\'s Attendance', icon: UserCheck, description: 'Mark daily attendance' },
-        { id: 'attendance-reports', label: 'Reports', icon: BarChart3, description: 'Attendance analytics' },
-        { id: 'attendance-bulk', label: 'Bulk Update', icon: ClipboardList, description: 'Bulk attendance updates' },
+        { id: 'attendance-dashboard', label: 'Dashboard', icon: BarChart3, description: 'Attendance overview and analytics' },
+        { id: 'attendance-entry', label: 'Take Attendance', icon: UserCheck, description: 'Mark student attendance' },
+        { id: 'attendance-reports', label: 'Reports', icon: FileText, description: 'Detailed attendance reports' },
+        { id: 'attendance-bulk', label: 'Bulk Operations', icon: ClipboardList, description: 'Bulk attendance operations' },
+        { id: 'attendance-qr', label: 'QR Scanner', icon: QrCode, description: 'QR code attendance scanning' },
       ]
     },
     {

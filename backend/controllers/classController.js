@@ -3,14 +3,17 @@ const { prisma } = require('../config/database');
 // Get all classes for a school
 exports.getAllClasses = async (req, res) => {
   try {
+    console.log('=== GET /api/classes request ===');
+    console.log('Headers:', JSON.stringify({
+      'x-school-subdomain': req.headers['x-school-subdomain'],
+      'host': req.headers.host,
+      'origin': req.headers.origin,
+      'authorization': req.headers.authorization ? 'Bearer [PRESENT]' : 'MISSING'
+    }, null, 2));
+    console.log('School context:', req.school);
+    
     if (!req.school || !req.school.id) {
       console.log('Missing school context in classes request');
-      console.log('School object:', req.school);
-      console.log('Headers:', JSON.stringify({
-        'x-school-subdomain': req.headers['x-school-subdomain'],
-        'host': req.headers.host,
-        'origin': req.headers.origin
-      }, null, 2));
       
       return res.status(400).json({
         success: false,
@@ -28,16 +31,49 @@ exports.getAllClasses = async (req, res) => {
     }
     
     const schoolId = req.school.id;
+    console.log('Fetching classes for school ID:', schoolId);
+    
     const classes = await prisma.class.findMany({
       where: { schoolId },
+      include: {
+        students: {
+          select: {
+            id: true
+          }
+        }
+      },
       orderBy: { name: 'asc' }
     });
 
+    console.log(`Found ${classes.length} classes for school ${schoolId}`);
+
+    // Transform classes to include section and totalStudents
+    const transformedClasses = classes.map(classItem => {
+      // Extract section from class name (e.g., "Grade 1A" -> section = "A")
+      const section = classItem.name.match(/([A-Z])$/)?.[1] || 'A';
+      
+      return {
+        id: classItem.id,
+        name: classItem.name,
+        grade: classItem.grade,
+        section: section,
+        capacity: classItem.capacity,
+        description: classItem.description,
+        totalStudents: classItem.students.length,
+        schoolId: classItem.schoolId,
+        createdAt: classItem.createdAt,
+        updatedAt: classItem.updatedAt
+      };
+    });
+
+    console.log('Transformed classes:', transformedClasses.map(c => ({ id: c.id, name: c.name, grade: c.grade })));
+
     res.json({
       success: true,
-      data: classes
+      data: transformedClasses
     });
   } catch (error) {
+    console.error('Error in getAllClasses:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -337,6 +373,76 @@ exports.bulkUpdateGrades = async (req, res) => {
       message: 'This feature is not yet implemented with Prisma schema'
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Get students for a specific class
+exports.getClassStudents = async (req, res) => {
+  try {
+    if (!req.school || !req.school.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'School context not found'
+      });
+    }
+
+    const classId = req.params.id;
+    const schoolId = req.school.id;
+
+    // First verify the class belongs to the school
+    const classData = await prisma.class.findFirst({
+      where: { 
+        id: classId,
+        schoolId: schoolId
+      }
+    });
+
+    if (!classData) {
+      return res.status(404).json({
+        success: false,
+        message: 'Class not found'
+      });
+    }
+
+    // Get students for this class
+    const students = await prisma.student.findMany({
+      where: { 
+        currentClassId: classId,
+        schoolId: schoolId
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        admissionNumber: true,
+        photo: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      orderBy: [
+        { admissionNumber: 'asc' },
+        { firstName: 'asc' }
+      ]
+    });
+
+    // Transform to match expected frontend interface
+    const transformedStudents = students.map(student => ({
+      ...student,
+      rollNumber: student.admissionNumber, // Map admissionNumber to rollNumber for frontend compatibility
+      profilePhoto: student.photo
+    }));
+
+    res.json({
+      success: true,
+      data: transformedStudents
+    });
+  } catch (error) {
+    console.error('Error fetching class students:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

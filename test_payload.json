@@ -1,0 +1,10 @@
+{
+  "attendanceData": [
+    {"studentId": "f09625a9-23d6-425a-a4b8-12ee8d1272ce", "status": "PRESENT"},
+    {"studentId": "8dff4ba9-b307-498d-9cea-bc41c8c20504", "status": "PRESENT"}
+  ],
+  "classId": "c2c1cd20-38c3-4969-a222-d0f6e040a7e8",
+  "date": "2025-09-20",
+  "method": "MANUAL",
+  "period": "PERIOD_1"
+}

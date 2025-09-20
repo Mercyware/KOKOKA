@@ -276,13 +276,9 @@ export const HeaderUserInfo = React.forwardRef<
     )}
     <div className="flex-1 min-w-0">
       <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-        Welcome back, {name}
+        KOKOKA 
       </p>
-      {role && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {role}
-        </p>
-      )}
+      <p className="text-sm text-gray-500 dark:text-gray-400">AI Powered Schools</p>
     </div>
   </div>
 ));

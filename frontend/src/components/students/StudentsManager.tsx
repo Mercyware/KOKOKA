@@ -347,7 +347,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
         <Card className="p-6 text-center">
           <p className="text-gray-500 mb-4">No students found matching your criteria.</p>
           {activeFilters.length > 0 && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" intent="cancel" onClick={clearAllFilters}>
               Clear all filters
             </Button>
           )}
@@ -554,7 +554,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent }: StudentsManagerProps) 
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Management</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage student information and academic records</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onAddStudent}>
+        <Button variant="default" intent="primary" onClick={onAddStudent}>
           <Plus className="h-4 w-4 mr-2" />
           Add Student
         </Button>

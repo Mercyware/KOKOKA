@@ -61,7 +61,7 @@ const AddStudentScores = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add Student Scores</h1>
           <p className="text-gray-600 dark:text-gray-400">Record and manage student academic performance</p>
         </div>
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSave} variant="default" intent="primary">
           <Save className="h-4 w-4 mr-2" />
           Save All Scores
         </Button>
@@ -106,7 +106,7 @@ const AddStudentScores = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Score Entry</span>
-            <Button onClick={addScore} size="sm" variant="outline">
+            <Button onClick={addScore} size="sm" variant="outline" intent="cancel">
               <Plus className="h-4 w-4 mr-2" />
               Add Subject
             </Button>
@@ -121,8 +121,7 @@ const AddStudentScores = () => {
                   <Button
                     onClick={() => removeScore(score.id)}
                     size="sm"
-                    variant="outline"
-                    className="text-red-600 hover:text-red-700"
+                    variant="destructive"
                   >
                     <X className="h-4 w-4" />
                   </Button>
