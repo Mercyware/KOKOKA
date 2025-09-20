@@ -259,7 +259,6 @@ class NotificationService {
             include: {
               notificationPreferences: true,
               student: true,
-              teacher: true,
               staff: true
             }
           });
@@ -276,7 +275,6 @@ class NotificationService {
               include: {
                 notificationPreferences: true,
                 student: true,
-                teacher: true,
                 staff: true
               }
             });
@@ -294,7 +292,6 @@ class NotificationService {
               include: {
                 notificationPreferences: true,
                 student: true,
-                teacher: true,
                 staff: true
               }
             });
@@ -360,7 +357,6 @@ class NotificationService {
               include: {
                 notificationPreferences: true,
                 student: true,
-                teacher: true,
                 staff: true
               }
             });

@@ -226,18 +226,44 @@ const StudentForm: React.FC<StudentFormProps> = ({
   };
 
   return (
-    <form
-      onSubmit={e => {
-        e.preventDefault();
-        onSubmit(formData);
-      }}
-      className="space-y-6"
-    >
-      <Accordion type="multiple" defaultValue={["personal-info"]}>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          onSubmit(formData);
+        }}
+        className="p-6"
+      >
+      {/* Form Progress Indicator */}
+      <div className="mb-8">
+        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+              ✓
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-blue-900">Complete Student Information</h3>
+              <p className="text-xs text-blue-700 mt-1">Fill out all sections to create a comprehensive student profile</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Accordion type="multiple" defaultValue={["personal-info"]} className="space-y-4">
         {/* Personal Information */}
-        <AccordionItem value="personal-info">
-          <AccordionTrigger>Personal Information</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="personal-info" className="border border-gray-200 rounded-lg bg-white shadow-sm">
+          <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                1
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-gray-900">Personal Information</h3>
+                <p className="text-sm text-gray-500">Basic student details and contact information</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name *</Label>
@@ -309,7 +335,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <Select
                   onValueChange={value => handleChange('gender', value)}
                   required
-                  value={formData.gender}
+                  value={formData.gender || ''}
                 >
                   <SelectTrigger id="gender">
                     <SelectValue placeholder="Select gender" />
@@ -363,7 +389,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <Label htmlFor="languagesSpoken">Languages Spoken</Label>
                 <Input
                   id="languagesSpoken"
-                  value={formData.languagesSpoken.join(', ')}
+                  value={(formData.languagesSpoken || []).join(', ')}
                   onChange={e => {
                     const languagesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                     setFormData(prev => ({ ...prev, languagesSpoken: languagesArray }));
@@ -375,9 +401,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </AccordionContent>
         </AccordionItem>
         {/* Academic Information */}
-        <AccordionItem value="academic-info">
-          <AccordionTrigger>Academic Information</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="academic-info" className="border border-gray-200 rounded-lg bg-white shadow-sm">
+          <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                2
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-gray-900">Academic Information</h3>
+                <p className="text-sm text-gray-500">Class assignment and academic details</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="admissionNumber">Admission Number *</Label>
@@ -405,7 +441,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="academicYear">Academic Year *</Label>
                 <Select
-                  value={formData.academicYear}
+                  value={formData.academicYear || ''}
                   onValueChange={value => handleChange('academicYear', value)}
                   required
                 >
@@ -413,7 +449,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <SelectValue placeholder="Select academic year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {academicYears.map(year => (
+                    {(academicYears || []).map(year => (
                       <SelectItem key={year._id || year.id} value={year._id || year.id}>
                         {year.name}
                       </SelectItem>
@@ -424,7 +460,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="class">Class *</Label>
                 <Select
-                  value={formData.class}
+                  value={formData.class || ''}
                   onValueChange={value => handleChange('class', value)}
                   required
                 >
@@ -432,7 +468,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map(classItem => (
+                    {(classes || []).map(classItem => (
                       <SelectItem key={classItem._id || classItem.id} value={classItem._id || classItem.id}>
                         {classItem.name}
                       </SelectItem>
@@ -443,7 +479,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="section">Section *</Label>
                 <Select
-                  value={formData.section}
+                  value={formData.section || ''}
                   onValueChange={value => handleChange('section', value)}
                   required
                 >
@@ -451,13 +487,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <SelectValue placeholder="Select section" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sections.map(section => {
+                    {(sections || []).map(section => {
                       // Find the selected class name
-                      const selectedClass = classes.find(c => (c._id || c.id) === formData.class);
+                      const selectedClass = (classes || []).find(c => (c._id || c.id) === formData.class);
                       const classPrefix = selectedClass ? `${selectedClass.name} - ` : '';
                       
                       return (
-                        <SelectItem key={section._id} value={section._id}>
+                        <SelectItem key={section._id || section.id} value={section._id || section.id}>
                           {classPrefix}Section {section.name}
                         </SelectItem>
                       );
@@ -468,14 +504,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="house">House</Label>
                 <Select
-                  value={formData.house}
+                  value={formData.house || ''}
                   onValueChange={value => handleChange('house', value)}
                 >
                   <SelectTrigger id="house">
                     <SelectValue placeholder="Select house" />
                   </SelectTrigger>
                   <SelectContent>
-                    {houses.map(house => (
+                    {(houses || []).map(house => (
                       <SelectItem key={house.id} value={house.id}>
                         {house.name}
                       </SelectItem>
@@ -526,9 +562,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
         </AccordionItem>
 
         {/* Academic Background */}
-        <AccordionItem value="academic-background">
-          <AccordionTrigger>Academic Background</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="academic-background" className="border border-gray-200 rounded-lg bg-white shadow-sm">
+          <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-medium">
+                3
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-gray-900">Academic Background</h3>
+                <p className="text-sm text-gray-500">Previous education and performance history</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -571,7 +617,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   <Label htmlFor="previousSubjects">Previous Subjects</Label>
                   <Input
                     id="previousSubjects"
-                    value={formData.previousAcademicRecord.subjects.join(', ')}
+                    value={(formData.previousAcademicRecord.subjects || []).join(', ')}
                     onChange={e => {
                       const subjectsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                       setFormData(prev => ({
@@ -588,7 +634,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <div className="space-y-2">
                   <Label htmlFor="academicPerformance">Academic Performance</Label>
                   <Select
-                    value={formData.previousAcademicRecord.performance}
+                    value={formData.previousAcademicRecord.performance || ''}
                     onValueChange={value => {
                       setFormData(prev => ({
                         ...prev,
@@ -634,7 +680,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   <Label htmlFor="talents">Special Talents</Label>
                   <Input
                     id="talents"
-                    value={formData.talents.join(', ')}
+                    value={(formData.talents || []).join(', ')}
                     onChange={e => {
                       const talentsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                       setFormData(prev => ({ ...prev, talents: talentsArray }));
@@ -646,7 +692,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   <Label htmlFor="extracurriculars">Extracurricular Activities</Label>
                   <Input
                     id="extracurriculars"
-                    value={formData.extracurriculars.join(', ')}
+                    value={(formData.extracurriculars || []).join(', ')}
                     onChange={e => {
                       const activitiesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                       setFormData(prev => ({ ...prev, extracurriculars: activitiesArray }));
@@ -668,11 +714,21 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </AccordionContent>
         </AccordionItem>
         {/* Guardian Information */}
-        <AccordionItem value="parent-info">
-          <AccordionTrigger>Parent/Guardian Information</AccordionTrigger>
-          <AccordionContent>
+        <AccordionItem value="parent-info" className="border border-gray-200 rounded-lg bg-white shadow-sm">
+          <AccordionTrigger className="px-6 py-4 hover:bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium">
+                4
+              </div>
+              <div className="text-left">
+                <h3 className="font-medium text-gray-900">Parent/Guardian Information</h3>
+                <p className="text-sm text-gray-500">Contact details for parents and guardians</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6">
             <div className="space-y-6">
-              {formData.guardians.map((guardian, index) => (
+              {(formData.guardians || []).map((guardian, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">
@@ -746,7 +802,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor={`guardian-${index}-relationship`}>Relationship *</Label>
                       <Select
-                        value={guardian.relationship}
+                        value={guardian.relationship || ''}
                         onValueChange={value => {
                           const newGuardians = [...formData.guardians];
                           newGuardians[index].relationship = value;
@@ -894,7 +950,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <div className="space-y-2">
                   <Label htmlFor="generalHealth">General Health Status</Label>
                   <Select
-                    value={formData.medicalInfo.generalHealth}
+                    value={formData.medicalInfo.generalHealth || ''}
                     onValueChange={value => {
                       setFormData(prev => ({
                         ...prev,
@@ -977,11 +1033,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
               {/* Current Medications */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Current Medications</h3>
-                {formData.medications.current.map((medication, index) => (
+                {(formData.medications.current || []).map((medication, index) => (
                   <div key={index} className="border rounded-lg p-4 space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium">Medication {index + 1}</h4>
-                      {formData.medications.current.length > 0 && (
+                      {(formData.medications.current || []).length > 0 && (
                         <Button
                           type="button"
                           variant="destructive"
@@ -1079,7 +1135,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="completedImmunizations">Completed Immunizations</Label>
                     <Input
                       id="completedImmunizations"
-                      value={formData.immunizations.completed.join(', ')}
+                      value={(formData.immunizations.completed || []).join(', ')}
                       onChange={e => {
                         const immunizationsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1097,7 +1153,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="pendingImmunizations">Pending Immunizations</Label>
                     <Input
                       id="pendingImmunizations"
-                      value={formData.immunizations.pending.join(', ')}
+                      value={(formData.immunizations.pending || []).join(', ')}
                       onChange={e => {
                         const pendingArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1150,7 +1206,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <AccordionTrigger>Emergency Contacts</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-6">
-              {formData.emergencyContacts.map((contact, index) => (
+              {(formData.emergencyContacts || []).map((contact, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">
@@ -1210,7 +1266,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <div className="space-y-2">
                       <Label htmlFor={`emergency-${index}-relationship`}>Relationship *</Label>
                       <Select
-                        value={contact.relationship}
+                        value={contact.relationship || ''}
                         onValueChange={value => {
                           const newContacts = [...formData.emergencyContacts];
                           newContacts[index].relationship = value;
@@ -1311,7 +1367,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <div className="space-y-2">
                   <Label htmlFor="bloodGroup">Blood Group</Label>
                   <Select
-                    value={formData.bloodGroup}
+                    value={formData.bloodGroup || ''}
                     onValueChange={value => handleChange('bloodGroup', value)}
                   >
                     <SelectTrigger id="bloodGroup">
@@ -1342,7 +1398,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       className="flex-1"
                     />
                     <Select
-                      value={formData.height.unit}
+                      value={formData.height.unit || ''}
                       onValueChange={value => handleChange('height.unit', value)}
                     >
                       <SelectTrigger className="w-24">
@@ -1367,7 +1423,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       className="flex-1"
                     />
                     <Select
-                      value={formData.weight.unit}
+                      value={formData.weight.unit || ''}
                       onValueChange={value => handleChange('weight.unit', value)}
                     >
                       <SelectTrigger className="w-24">
@@ -1388,7 +1444,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="allergies">Allergies</Label>
                     <Input
                       id="allergies"
-                      value={formData.healthInfo.allergies.join(', ')}
+                      value={(formData.healthInfo.allergies || []).join(', ')}
                       onChange={e => {
                         const allergiesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1406,7 +1462,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="medicalConditions">Medical Conditions</Label>
                     <Input
                       id="medicalConditions"
-                      value={formData.healthInfo.medicalConditions.join(', ')}
+                      value={(formData.healthInfo.medicalConditions || []).join(', ')}
                       onChange={e => {
                         const conditionsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1424,7 +1480,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="medications">Medications</Label>
                     <Input
                       id="medications"
-                      value={formData.healthInfo.medications.join(', ')}
+                      value={(formData.healthInfo.medications || []).join(', ')}
                       onChange={e => {
                         const medicationsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1442,7 +1498,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="dietaryRestrictions">Dietary Restrictions</Label>
                     <Input
                       id="dietaryRestrictions"
-                      value={formData.healthInfo.dietaryRestrictions.join(', ')}
+                      value={(formData.healthInfo.dietaryRestrictions || []).join(', ')}
                       onChange={e => {
                         const restrictionsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1460,7 +1516,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="disabilities">Disabilities</Label>
                     <Input
                       id="disabilities"
-                      value={formData.healthInfo.disabilities.join(', ')}
+                      value={(formData.healthInfo.disabilities || []).join(', ')}
                       onChange={e => {
                         const disabilitiesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({
@@ -1762,7 +1818,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   <div className="space-y-2">
                     <Label htmlFor="transportMode">Transportation Mode</Label>
                     <Select
-                      value={formData.transportInfo.mode}
+                      value={formData.transportInfo.mode || ''}
                       onValueChange={value => {
                         setFormData(prev => ({
                           ...prev,
@@ -1956,7 +2012,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                     <Label htmlFor="documentsSubmitted">Documents Submitted</Label>
                     <Input
                       id="documentsSubmitted"
-                      value={formData.documentsSubmitted.join(', ')}
+                      value={(formData.documentsSubmitted || []).join(', ')}
                       onChange={e => {
                         const documentsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
                         setFormData(prev => ({ ...prev, documentsSubmitted: documentsArray }));
@@ -2027,12 +2083,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      <div className="flex space-x-4 pt-6">
+      {/* Form Actions - Following UI Constitution standards */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200 mt-8">
+        <Button
+          type="button"
+          intent="cancel"
+          onClick={onBack}
+          disabled={loading}
+          className="w-full sm:w-auto bg-white border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          Cancel
+        </Button>
         <Button
           type="submit"
-          variant="default"
           intent="primary"
           disabled={loading}
+          className="w-full sm:w-auto"
         >
           {loading ? (
             <>
@@ -2046,11 +2112,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
             </>
           )}
         </Button>
-        <Button type="button" variant="outline" intent="cancel" onClick={onBack} disabled={loading}>
-          Cancel
-        </Button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

@@ -24,6 +24,26 @@ exports.getAllStaff = asyncHandler(async (req, res) => {
         select: {
           name: true
         }
+      },
+      teacherSubjects: {
+        include: {
+          subject: {
+            select: {
+              name: true,
+              code: true
+            }
+          }
+        }
+      },
+      classTeachers: {
+        include: {
+          class: {
+            select: {
+              name: true,
+              grade: true
+            }
+          }
+        }
       }
     }
   });
@@ -57,6 +77,26 @@ exports.getStaffById = asyncHandler(async (req, res) => {
         select: {
           name: true,
           description: true
+        }
+      },
+      teacherSubjects: {
+        include: {
+          subject: {
+            select: {
+              name: true,
+              code: true
+            }
+          }
+        }
+      },
+      classTeachers: {
+        include: {
+          class: {
+            select: {
+              name: true,
+              grade: true
+            }
+          }
         }
       }
     }

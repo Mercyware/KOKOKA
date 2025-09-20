@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Save, 
-  ArrowLeft, 
-  User, 
-  Mail, 
+import {
+  Save,
+  ArrowLeft,
+  User,
+  Mail,
   Phone,
   Calendar,
   Briefcase,
@@ -12,7 +12,8 @@ import {
   MapPin,
   UserCheck,
   Loader2,
-  UserPlus
+  UserPlus,
+  Users
 } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,7 +77,7 @@ const CreateStaff: React.FC = () => {
     state: '',
     zipCode: '',
     country: '',
-    department: '',
+    department: 'none',
     position: '',
     status: 'ACTIVE',
     // User account fields
@@ -171,15 +172,6 @@ const CreateStaff: React.FC = () => {
       return false;
     }
     
-    if (!formData.department) {
-      toast({
-        title: "Error",
-        description: "Department is required",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
     if (!formData.position.trim()) {
       toast({
         title: "Error",
@@ -266,7 +258,7 @@ const CreateStaff: React.FC = () => {
         state: formData.state,
         zipCode: formData.zipCode,
         country: formData.country,
-        departmentId: formData.department,
+        departmentId: formData.department && formData.department !== 'none' ? formData.department : null,
         position: formData.position,
         status: formData.status as any,
         // User details for account creation
@@ -318,26 +310,33 @@ const CreateStaff: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <UserPlus className="h-8 w-8 text-blue-600" />
-              Create Staff Member
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Add a new staff member to your school
-            </p>
+        {/* Page Header - Following UI Constitution standards */}
+        <div className="bg-white rounded-lg shadow-lg">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Add New Staff Member</h1>
+                <p className="text-gray-600 mt-1">
+                  Create a comprehensive staff profile with employment and contact information
+                </p>
+              </div>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => navigate('/staff')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Staff List
-          </Button>
-        </div>
+          <div className="p-6">
+            {/* Back Navigation */}
+            <div className="mb-6">
+              <Button
+                intent="secondary"
+                onClick={() => navigate('/staff')}
+                className="flex items-center"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Staff List
+              </Button>
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
           {/* Personal Information */}
           <Card>
             <CardHeader>
@@ -524,16 +523,16 @@ const CreateStaff: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="department">Department *</Label>
+                  <Label htmlFor="department">Department</Label>
                   <Select
                     value={formData.department}
                     onValueChange={(value) => handleInputChange('department', value)}
-                    required
                   >
                     <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
+                      <SelectValue placeholder="Select department (optional)" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
                       {departments.map(dept => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
@@ -638,35 +637,32 @@ const CreateStaff: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-4">
+          {/* Form Actions - Following UI Constitution standards */}
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200 mt-8">
             <Button
               type="button"
-              variant="outline"
+              intent="cancel"
               onClick={() => navigate('/staff')}
               disabled={saving}
+              className="w-full sm:w-auto bg-white border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={saving} 
-              className="bg-blue-600 hover:bg-blue-700"
+            <Button
+              type="submit"
+              intent="primary"
+              disabled={saving}
+              loading={saving}
+              loadingText="Creating Staff Member..."
+              className="w-full sm:w-auto"
             >
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Staff Member...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Create Staff Member
-                </>
-              )}
+              <Save className="h-4 w-4 mr-2" />
+              Create Staff Member
             </Button>
           </div>
         </form>
+          </div>
+        </div>
       </div>
     </Layout>
   );

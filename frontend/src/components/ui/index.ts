@@ -162,6 +162,31 @@ export {
   type TopNavigationDropdownProps,
 } from './top-navigation';
 
+// Page Layout Components
+export {
+  PageContainer,
+  PageHeader,
+  PageTitle,
+  PageDescription,
+  PageActions,
+  PageContent,
+  TabContainer,
+  TabList,
+  Tab,
+  TabContent,
+  pageContainerVariants,
+  pageHeaderVariants,
+  pageTitleVariants,
+  pageDescriptionVariants,
+  pageContentVariants,
+  type PageContainerProps,
+  type PageHeaderProps,
+  type PageTitleProps,
+  type PageDescriptionProps,
+  type PageActionsProps,
+  type PageContentProps,
+} from './page';
+
 // Navigation & Overlays
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
 export {

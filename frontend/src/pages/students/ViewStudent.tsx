@@ -171,10 +171,7 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
         <div className="bg-gradient-to-r from-siohioma-primary to-blue-600 rounded-xl p-6 text-white">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-6">
-              <Button variant="outline" onClick={onBack} className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
+              
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <Avatar className="h-20 w-20 border-4 border-white/30">

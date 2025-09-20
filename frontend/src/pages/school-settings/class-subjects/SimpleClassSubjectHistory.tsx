@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAllClasses } from '@/services/classService';
 import { getAllSubjects } from '@/services/subjectService';
 import { getAllAcademicYears } from '@/services/academicYearService';
-import { getAllTeachers } from '@/services/teacherService';
+import { getTeachers, StaffMember } from '@/services/staffService';
 import { createClassSubjectHistory, getClassSubjectHistory } from '@/services/classSubjectHistoryService';
 
 // Interface definitions
@@ -39,15 +39,8 @@ interface AcademicYear {
   isCurrent: boolean;
 }
 
-interface Teacher {
-  id: string;
-  firstName?: string;
-  lastName?: string;
-  user?: {
-    name: string;
-    email: string;
-  };
-}
+// Use StaffMember as Teacher type since teachers are now staff
+type Teacher = StaffMember;
 
 interface Assignment {
   id: string;
@@ -138,7 +131,7 @@ const SimpleClassSubjectHistory: React.FC = () => {
           getAllClasses(),
           getAllSubjects(),
           getAllAcademicYears(),
-          getAllTeachers()
+          getTeachers()
         ]);
         
         setClasses(classesRes.data || []);

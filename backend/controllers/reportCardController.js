@@ -317,7 +317,7 @@ exports.generateStudentReport = async (req, res) => {
             gradeBook: {
               include: {
                 subject: true,
-                teacher: true
+                staff: true
               }
             }
           }
@@ -890,7 +890,7 @@ async function processClassReports(batchId, classId, studentIds, schoolId) {
             gradeBook: {
               include: {
                 subject: true,
-                teacher: true
+                staff: true
               }
             }
           }
@@ -1066,7 +1066,7 @@ async function getTeacherComments(studentId, academicYearId, termId) {
       gradeBook: {
         include: {
           subject: true,
-          teacher: true
+          staff: true
         }
       }
     }
@@ -1074,7 +1074,7 @@ async function getTeacherComments(studentId, academicYearId, termId) {
 
   return comments.map(comment => ({
     subject: comment.gradeBook.subject.name,
-    teacher: comment.gradeBook.teacher.firstName + ' ' + comment.gradeBook.teacher.lastName,
+    teacher: comment.gradeBook.staff.firstName + ' ' + comment.gradeBook.staff.lastName,
     comment: comment.feedback
   }));
 }

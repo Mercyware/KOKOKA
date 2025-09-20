@@ -46,7 +46,6 @@ model School {
   // Relationships
   users                User[]
   students             Student[]
-  teachers             Teacher[]
   staff                Staff[]
   classes              Class[]
   subjects             Subject[]
@@ -114,7 +113,6 @@ model User {
 
   // Relationships based on role
   student             Student?
-  teacher             Teacher?
   staff               Staff?
   guardian            Guardian?
   
@@ -294,7 +292,6 @@ model Department {
 
   // Relationships
   subjects Subject[]
-  teachers Teacher[]
   staff    Staff[]
 
   @@unique([schoolId, code])
@@ -617,8 +614,8 @@ model GradeBook {
   // Context
   schoolId              String
   school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  teacherId             String
-  teacher               Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  staffId               String
+  staff                 Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
   classId               String
   class                 Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
   subjectId             String
@@ -649,7 +646,7 @@ model GradeBook {
   gradeEntries          GradeEntry[]
   gradeReports          GradeReport[]
 
-  @@unique([teacherId, classId, subjectId, academicYearId, termId])
+  @@unique([staffId, classId, subjectId, academicYearId, termId])
   @@map("grade_books")
 }
 
@@ -1145,55 +1142,6 @@ model Student {
   @@map("students")
 }
 
-model Teacher {
-  id            String    @id @default(uuid())
-  employeeId    String
-  firstName     String
-  lastName      String
-  middleName    String?
-  dateOfBirth   DateTime?
-  gender        Gender?
-  photo         String?
-  phone         String?
-  
-  // Address
-  streetAddress String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String?
-  
-  // Professional Information
-  qualification String?
-  experience    Int?
-  joiningDate   DateTime  @default(now())
-  salary        Decimal?
-  status        TeacherStatus @default(ACTIVE)
-  
-  // Relationships
-  schoolId     String
-  school       School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  userId       String      @unique
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Activity relationships
-  teacherSubjects  TeacherSubject[]
-  classTeachers    ClassTeacher[]
-  createdAssessments Assessment[]
-  
-  // Grade Management relationships
-  gradeBooks       GradeBook[]
-  classSubjectHistory ClassSubjectHistory[]
-
-  @@unique([schoolId, employeeId])
-  @@map("teachers")
-}
-
 model Staff {
   id            String    @id @default(uuid())
   employeeId    String
@@ -1215,6 +1163,8 @@ model Staff {
   // Professional Information
   position      String
   staffType     StaffType @default(GENERAL)
+  qualification String?
+  experience    Int?
   joiningDate   DateTime  @default(now())
   salary        Decimal?
   status        StaffStatus @default(ACTIVE)
@@ -1229,6 +1179,15 @@ model Staff {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Activity relationships (for staff who are teachers)
+  teacherSubjects  TeacherSubject[]
+  classTeachers    ClassTeacher[]
+  createdAssessments Assessment[]
+  
+  // Grade Management relationships (for staff who are teachers)
+  gradeBooks       GradeBook[]
+  classSubjectHistory ClassSubjectHistory[]
 
   @@unique([schoolId, employeeId])
   @@map("staff")
@@ -1339,8 +1298,8 @@ model GuardianStudent {
 model TeacherSubject {
   id String @id @default(uuid())
   
-  teacherId String
-  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  staffId String
+  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
   subjectId String
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   
@@ -1350,15 +1309,15 @@ model TeacherSubject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([teacherId, subjectId])
+  @@unique([staffId, subjectId])
   @@map("teacher_subjects")
 }
 
 model ClassTeacher {
   id String @id @default(uuid())
   
-  teacherId String
-  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  staffId String
+  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
   classId   String
   class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
   
@@ -1387,7 +1346,7 @@ model ClassTeacher {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([teacherId, classId, academicYearId])
+  @@unique([staffId, classId, academicYearId])
   @@map("class_teachers")
 }
 
@@ -1439,8 +1398,8 @@ model ClassSubjectHistory {
   semester       Int?                          // Specific semester if applicable
   
   // Teaching assignment
-  teacherId      String?
-  assignedTeacher Teacher?    @relation(fields: [teacherId], references: [id])
+  staffId        String?
+  assignedStaff  Staff?       @relation(fields: [staffId], references: [id])
   
   // Status and dates
   status         ClassSubjectStatus @default(ACTIVE)
@@ -1519,8 +1478,8 @@ model Assessment {
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   termId         String?
   term           Term?        @relation(fields: [termId], references: [id])
-  teacherId      String
-  teacher        Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  staffId        String
+  staff          Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
   createdById    String
   createdBy      User         @relation(fields: [createdById], references: [id])
   
@@ -2121,14 +2080,6 @@ enum StudentStatus {
   DROPPED_OUT
   SUSPENDED
   EXPELLED
-}
-
-enum TeacherStatus {
-  ACTIVE
-  INACTIVE
-  ON_LEAVE
-  TERMINATED
-  RETIRED
 }
 
 enum StaffType {

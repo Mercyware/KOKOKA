@@ -12,7 +12,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
 import StudentsManager from "./pages/students/StudentsManager";
 import ViewStudent from "@/pages/students/ViewStudent";
-import CreateStudent from "./pages/students/CreateStudent";
+import AddStudentForm from "./pages/students/AddStudentForm";
 import EditStudentForm from "./pages/students/EditStudentForm";
 import Register from "./pages/auth/Register";
 import RegisterSchool from "./pages/auth/RegisterSchool";
@@ -46,13 +46,11 @@ import SimpleClassSubjectHistory from "./pages/school-settings/class-subjects/Si
 import StaffList from "./pages/staff/StaffList";
 import CreateStaff from "./pages/staff/CreateStaff";
 import EditStaff from "./pages/staff/EditStaff";
-import StaffDetails from "./pages/staff/StaffDetails";
-// Teacher Components
-import ClassAssignments from "./pages/teachers/ClassAssignments";
-import TeacherSubjectAssignmentsList from "./pages/assignments/teacher-subjects/TeacherSubjectAssignmentsList";
+import ViewStaff from "./pages/staff/ViewStaff";
+// Staff Subject Assignment Components
+import TeacherSubjectAssignmentsList from "./pages/assignments/staff-subjects/TeacherSubjectAssignmentsList";
 // New Curriculum and Grade Management Components
 import GlobalCurriculumRegistry from "./pages/curriculum/GlobalCurriculumRegistry";
-import GradeBookManagement from "./pages/teacher/GradeBookManagement";
 import ReportCards from "./pages/gradebook/ReportCards";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import StudentGradeView from "./pages/student/StudentGradeView";
@@ -95,7 +93,7 @@ function EditStudentFormWrapper() {
   );
 }
 
-// No wrapper needed for CreateStudent as it handles navigation internally
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -121,7 +119,7 @@ const App = () => (
             {/* Main application routes (pages handle their own layout) */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/students" element={<StudentsManager />} />
-            <Route path="/students/add" element={<CreateStudent />} />
+            <Route path="/students/add" element={<AddStudentForm />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
             <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
             
@@ -159,7 +157,7 @@ const App = () => (
             <Route path="/staff" element={<StaffList />} />
             <Route path="/staff/create" element={<CreateStaff />} />
             <Route path="/staff/edit/:id" element={<EditStaff />} />
-            <Route path="/staff/:id" element={<StaffDetails />} />
+            <Route path="/staff/:id" element={<ViewStaff />} />
             
             {/* Academic Routes */}
             <Route path="/scores-add" element={<ScoreEntryModes />} />
@@ -168,9 +166,8 @@ const App = () => (
             <Route path="/academics/scores/quick-entry" element={<AddScoresQuickEntry />} />
             <Route path="/academics/scores/gradebook" element={<AddScoresGradeBook />} />
             
-            {/* Teacher Routes */}
-            <Route path="/teachers/class-assignments" element={<ClassAssignments />} />
-            <Route path="/teachers/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
+            {/* Staff Routes */}
+            <Route path="/staff/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
             
             {/* Curriculum Routes */}
             <Route path="/curriculum/global" element={<GlobalCurriculumRegistry />} />
@@ -178,10 +175,7 @@ const App = () => (
             <Route path="/curriculum/progress" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Curriculum Progress Page</h1><p className="text-gray-600 mt-2">Coming soon - curriculum progress tracking features</p></div></Layout>} />
             <Route path="/curriculum/analytics" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Curriculum Analytics Page</h1><p className="text-gray-600 mt-2">Coming soon - curriculum analytics and insights</p></div></Layout>} />
             
-            {/* Grade Book Management Routes */}
-            <Route path="/gradebook/teacher" element={<GradeBookManagement />} />
-            <Route path="/teacher/gradebooks" element={<GradeBookManagement />} />
-            <Route path="/gradebook/entry" element={<GradeBookManagement />} />
+            {/* Grade Book Routes */}
             <Route path="/gradebook/reports" element={<ReportCards />} />
             <Route path="/gradebook/analytics" element={<div>Grade Analytics Page</div>} />
             

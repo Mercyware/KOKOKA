@@ -76,7 +76,7 @@ const EditStaff: React.FC = () => {
     state: '',
     zipCode: '',
     country: '',
-    department: '',
+    department: 'none',
     position: '',
     status: '',
   });
@@ -105,7 +105,7 @@ const EditStaff: React.FC = () => {
             state: staffData.state || '',
             zipCode: staffData.zipCode || '',
             country: staffData.country || '',
-            department: staffData.department?.id || '',
+            department: staffData.department?.id || 'none',
             position: staffData.position || '',
             status: staffData.status || '',
           });
@@ -192,15 +192,6 @@ const EditStaff: React.FC = () => {
       return false;
     }
     
-    if (!formData.department) {
-      toast({
-        title: "Error",
-        description: "Department is required",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
     if (!formData.position.trim()) {
       toast({
         title: "Error",
@@ -248,7 +239,7 @@ const EditStaff: React.FC = () => {
           state: formData.state,
           zipCode: formData.zipCode,
           country: formData.country,
-          departmentId: formData.department,
+          departmentId: formData.department && formData.department !== 'none' ? formData.department : null,
           position: formData.position,
           status: formData.status as any,
         };
@@ -449,16 +440,17 @@ const EditStaff: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="department">Department *</Label>
+                  <Label htmlFor="department">Department</Label>
                   <Select
                     value={formData.department}
                     onValueChange={(value) => handleInputChange('department', value)}
                     required
                   >
                     <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
+                      <SelectValue placeholder="Select department (optional)" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
                       {departments.map(dept => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}

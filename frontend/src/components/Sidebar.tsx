@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -78,7 +78,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
     );
   };
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: 'dashboard', label: 'Dashboard', icon: Home, hasSubmenu: false },
 
     // Core Management
@@ -100,7 +100,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       submenu: [
         { id: 'staff-list', label: 'All Staff', icon: GraduationCap },
         { id: 'staff-add', label: 'Add Staff', icon: Plus },
-        { id: 'staff-reports', label: 'Reports', icon: FileText },
       ]
     },
     {
@@ -195,13 +194,13 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     { id: 'ai-insights', label: 'AI Insights', icon: Brain, hasSubmenu: false },
-  ];
+  ], []); // Added useMemo dependency array
 
   // General section items (matching the reference image)
-  const generalMenuItems = [
+  const generalMenuItems = useMemo(() => [
     { id: 'settings', label: 'Settings', icon: Settings, hasSubmenu: false },
     { id: 'security', label: 'Security', icon: Shield, hasSubmenu: false },
-  ];
+  ], []); // Added useMemo dependency array
 
   // Auto-expand parent menus when submenu is active
   useEffect(() => {
@@ -229,10 +228,11 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         return newExpanded;
       });
     }
-  }, [activeTab]);
+  }, [activeTab, menuItems]); // Added proper dependency array
 
 return (
-  <nav className={`siohioma-sidebar transition-all duration-200 ${folded ? "w-16" : "w-72"} flex flex-col min-h-screen shadow-siohioma-lg`}>
+  <React.Fragment key="sidebar-wrapper">
+    <nav className={`siohioma-sidebar transition-all duration-200 ${folded ? "w-16" : "w-72"} flex flex-col min-h-screen shadow-siohioma-lg`}>
     {/* Header / Logo */}
     <div className="flex items-center justify-between px-siohioma-lg py-siohioma-xl border-b border-white/20 flex-shrink-0">
       {!folded && (
@@ -436,6 +436,7 @@ return (
       )}
     </div>
   </nav>
+  </React.Fragment>
 );
 
 }

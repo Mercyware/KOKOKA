@@ -1,22 +1,22 @@
 const { prisma } = require('../config/database');
 
-// Get all teacher-class assignments for a school
+// Get all staff-class assignments for a school
 exports.getClassTeacherAssignments = async (req, res) => {
   try {
-    const { academicYearId, teacherId, classId } = req.query;
+    const { academicYearId, staffId, classId } = req.query;
     const schoolId = req.school.id;
 
     const whereClause = {
       schoolId,
       ...(academicYearId && { academicYearId }),
-      ...(teacherId && { teacherId }),
+      ...(staffId && { staffId }),
       ...(classId && { classId })
     };
 
     const assignments = await prisma.classTeacher.findMany({
       where: whereClause,
       include: {
-        teacher: {
+        staff: {
           select: {
             id: true,
             firstName: true,
@@ -70,7 +70,7 @@ exports.getClassTeacherAssignments = async (req, res) => {
 exports.createClassTeacherAssignment = async (req, res) => {
   try {
     const {
-      teacherId,
+      staffId,
       classId,
       academicYearId,
       isClassTeacher = true,
@@ -86,10 +86,10 @@ exports.createClassTeacherAssignment = async (req, res) => {
     
     const schoolId = req.school.id;
 
-    // Validate that teacher, class, and academic year exist and belong to the school
-    const [teacher, classRecord, academicYear] = await Promise.all([
-      prisma.teacher.findFirst({
-        where: { id: teacherId, schoolId }
+    // Validate that staff, class, and academic year exist and belong to the school
+    const [staff, classRecord, academicYear] = await Promise.all([
+      prisma.staff.findFirst({
+        where: { id: staffId, schoolId }
       }),
       prisma.class.findFirst({
         where: { id: classId, schoolId }
@@ -99,10 +99,10 @@ exports.createClassTeacherAssignment = async (req, res) => {
       })
     ]);
 
-    if (!teacher) {
+    if (!staff) {
       return res.status(404).json({
         success: false,
-        message: 'Teacher not found'
+        message: 'Staff member not found'
       });
     }
 
@@ -123,7 +123,7 @@ exports.createClassTeacherAssignment = async (req, res) => {
     // Check if assignment already exists
     const existingAssignment = await prisma.classTeacher.findFirst({
       where: {
-        teacherId,
+        staffId,
         classId,
         academicYearId,
         schoolId
@@ -133,7 +133,7 @@ exports.createClassTeacherAssignment = async (req, res) => {
     if (existingAssignment) {
       return res.status(400).json({
         success: false,
-        message: 'Teacher is already assigned to this class for the selected academic year'
+        message: 'Staff member is already assigned to this class for the selected academic year'
       });
     }
 
@@ -160,7 +160,7 @@ exports.createClassTeacherAssignment = async (req, res) => {
 
     const assignment = await prisma.classTeacher.create({
       data: {
-        teacherId,
+        staffId,
         classId,
         academicYearId,
         schoolId,

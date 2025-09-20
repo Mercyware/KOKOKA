@@ -124,7 +124,7 @@ exports.getCurrentUser = async (req, res) => {
       include: {
         school: true,
         student: true,
-        teacher: true,
+        staff: true,
         guardian: true
       }
     });

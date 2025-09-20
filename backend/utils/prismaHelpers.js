@@ -113,7 +113,7 @@ const userHelpers = {
         include: {
           school: true,
           student: true,
-          teacher: true,
+          staff: true,
           guardian: true
         }
       });
@@ -130,7 +130,7 @@ const userHelpers = {
         include: {
           school: true,
           student: true,
-          teacher: true,
+          staff: true,
           guardian: true
         }
       });
@@ -153,7 +153,7 @@ const userHelpers = {
         include: {
           school: true,
           student: true,
-          teacher: true,
+          staff: true,
           guardian: true
         }
       });
@@ -274,12 +274,15 @@ const studentHelpers = {
   }
 };
 
-// Teacher-related helpers
+// Teacher-related helpers (using Staff model with type TEACHER)
 const teacherHelpers = {
   create: async (teacherData) => {
     try {
-      return await prisma.teacher.create({
-        data: teacherData,
+      return await prisma.staff.create({
+        data: {
+          ...teacherData,
+          type: 'TEACHER'
+        },
         include: {
           school: true,
           user: true,
@@ -296,8 +299,11 @@ const teacherHelpers = {
       const { page = 1, limit = 10, sort } = options;
       const skip = (page - 1) * limit;
       
-      return await prisma.teacher.findMany({
-        where: transformQuery(filters),
+      return await prisma.staff.findMany({
+        where: {
+          ...transformQuery(filters),
+          type: 'TEACHER'
+        },
         include: {
           school: true,
           user: true,
@@ -326,7 +332,7 @@ const assessmentHelpers = {
           school: true,
           subject: true,
           class: true,
-          teacher: true,
+          staff: true,
           grades: true
         }
       });
@@ -346,7 +352,7 @@ const assessmentHelpers = {
           school: true,
           subject: true,
           class: true,
-          teacher: true,
+          staff: true,
           grades: {
             include: {
               student: true

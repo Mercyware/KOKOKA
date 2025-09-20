@@ -453,19 +453,36 @@ exports.createStudent = async (req, res) => {
       }
     }
     
-    // Create initial class history entry if class and academic year are provided
-    if (classId && academicYearId) {
-      await prisma.studentClassHistory.create({
-        data: {
-          studentId: student.id,
-          classId: classId,
-          sectionId: sectionId || null,
-          schoolId: req.school.id,
-          academicYearId: academicYearId,
-          startDate: new Date(),
-          status: 'active'
+    // Create initial class history entry if class is provided
+    if (classId) {
+      // If no academic year is provided, try to get the current active academic year
+      let historyAcademicYearId = academicYearId;
+      if (!historyAcademicYearId) {
+        const currentAcademicYear = await prisma.academicYear.findFirst({
+          where: {
+            schoolId: req.school.id,
+            isCurrent: true
+          }
+        });
+        if (currentAcademicYear) {
+          historyAcademicYearId = currentAcademicYear.id;
         }
-      });
+      }
+      
+      // Only create class history if we have an academic year (either provided or current)
+      if (historyAcademicYearId) {
+        await prisma.studentClassHistory.create({
+          data: {
+            studentId: student.id,
+            classId: classId,
+            sectionId: sectionId || null,
+            schoolId: req.school.id,
+            academicYearId: historyAcademicYearId,
+            startDate: new Date(),
+            status: 'ACTIVE'
+          }
+        });
+      }
     }
     
     // Return student with populated references
@@ -797,27 +814,44 @@ exports.updateStudent = async (req, res) => {
       await prisma.studentClassHistory.updateMany({
         where: {
           studentId: studentId,
-          status: 'active'
+          status: 'ACTIVE'
         },
         data: {
-          status: 'completed',
+          status: 'COMPLETED',
           endDate: new Date()
         }
       });
 
-      // Create new class history entry if both class and academic year are provided
-      if (updatedStudent.currentClassId && updatedStudent.academicYearId) {
-        await prisma.studentClassHistory.create({
-          data: {
-            studentId: studentId,
-            classId: updatedStudent.currentClassId,
-            sectionId: updatedStudent.currentSectionId || null,
-            schoolId: req.school.id,
-            academicYearId: updatedStudent.academicYearId,
-            startDate: new Date(),
-            status: 'active'
+      // Create new class history entry if class is provided
+      if (updatedStudent.currentClassId) {
+        // If no academic year is provided, try to get the current active academic year
+        let historyAcademicYearId = updatedStudent.academicYearId;
+        if (!historyAcademicYearId) {
+          const currentAcademicYear = await prisma.academicYear.findFirst({
+            where: {
+              schoolId: req.school.id,
+              isCurrent: true
+            }
+          });
+          if (currentAcademicYear) {
+            historyAcademicYearId = currentAcademicYear.id;
           }
-        });
+        }
+        
+        // Only create class history if we have an academic year (either provided or current)
+        if (historyAcademicYearId) {
+          await prisma.studentClassHistory.create({
+            data: {
+              studentId: studentId,
+              classId: updatedStudent.currentClassId,
+              sectionId: updatedStudent.currentSectionId || null,
+              schoolId: req.school.id,
+              academicYearId: historyAcademicYearId,
+              startDate: new Date(),
+              status: 'ACTIVE'
+            }
+          });
+        }
       }
     }
 

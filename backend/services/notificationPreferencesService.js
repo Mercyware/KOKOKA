@@ -461,7 +461,6 @@ class NotificationPreferencesService {
         include: {
           notificationPreferences: true,
           student: true,
-          teacher: true,
           staff: true
         }
       });

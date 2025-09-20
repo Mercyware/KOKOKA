@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
 import { Section } from '@/types/Section';
@@ -7,15 +9,11 @@ import { createStudent } from '@/services/studentService';
 import Layout from '../../components/layout/Layout';
 import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
-import { useNavigate } from 'react-router-dom';
 import StudentForm from '@/components/students/StudentForm';
+import QuickEnrollmentWizard from '@/components/students/QuickEnrollmentWizard';
 import { convertToBackendData, type FrontendFormData } from '@/utils/studentFormUtils';
-import { ArrowLeft } from 'lucide-react';
-
-interface AddStudentFormProps {
-  onBack: () => void;
-  onSave?: (student: any) => void;
-}
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Users, Zap, FileText, CheckCircle2, Clock } from 'lucide-react';
 
 const emptyFormData: FrontendFormData = {
   firstName: '',
@@ -174,14 +172,24 @@ const emptyFormData: FrontendFormData = {
   }]
 };
 
-const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
-  const { toast } = useToast();
+const AddStudentForm: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [houses, setHouses] = useState<House[]>([]);
+  const [formMode, setFormMode] = useState<'selection' | 'quick' | 'full'>('selection');
+
+  const handleBack = () => {
+    navigate('/students');
+  };
+
+  const handleSave = (student: any) => {
+    // Navigate to students page after successful creation
+    navigate('/students');
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -223,6 +231,31 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     fetchHousesData();
   }, []);
 
+  const handleQuickSubmit = (quickData: any) => {
+    // Convert quick form data to full form data format
+    const fullFormData: FrontendFormData = {
+      ...emptyFormData,
+      firstName: quickData.firstName,
+      lastName: quickData.lastName,
+      dateOfBirth: quickData.dateOfBirth,
+      gender: quickData.gender,
+      admissionNumber: quickData.admissionNumber,
+      class: quickData.class,
+      section: quickData.section,
+      academicYear: quickData.academicYear,
+      guardians: [{
+        firstName: quickData.guardianFirstName,
+        lastName: quickData.guardianLastName,
+        relationship: quickData.guardianRelationship,
+        phone: quickData.guardianPhone,
+        email: quickData.guardianEmail,
+        occupation: '',
+        isPrimary: true
+      }]
+    };
+    handleSubmit(fullFormData);
+  };
+
   const handleSubmit = (formData: FrontendFormData) => {
     setLoading(true);
     (async () => {
@@ -241,8 +274,8 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
           setTimeout(() => {
             navigate('/students');
           }, 500);
-          if (onSave && response.data) {
-            onSave(response.data);
+          if (response.data) {
+            handleSave(response.data);
           }
         } else {
           console.error('Failed to save student:', response.error);
@@ -265,33 +298,176 @@ const AddStudentForm = ({ onBack, onSave }: AddStudentFormProps) => {
     })();
   };
 
-  return (
-    <Layout>
-      <div className="container mx-auto p-4">
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <button type="button" className="btn btn-outline" onClick={onBack}>
-              <span className="inline-flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </span>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Add New Student</h1>
-              <p className="text-gray-600 dark:text-gray-400">Create a new student profile</p>
+  // Form Selection Component
+  const FormSelectionScreen = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Choose Enrollment Method</h2>
+        <p className="text-lg text-gray-600">Select the enrollment process that works best for you</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Quick Enrollment Card */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group"
+             onClick={() => setFormMode('quick')}>
+          <div className="flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <Zap className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-3">Quick Enrollment</h3>
+          <p className="text-gray-600 mb-4">Fast 3-step wizard with only essential information</p>
+
+          <div className="space-y-2 mb-6">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Basic student information</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Academic assignment</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Primary guardian contact</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">~2 minutes</span>
             </div>
           </div>
-          <StudentForm
-            initialValues={emptyFormData}
-            onSubmit={handleSubmit}
-            onBack={onBack}
-            loading={loading}
-            submitLabel="Save Student"
-            sections={sections}
-            classes={classes}
-            academicYears={academicYears}
-            houses={houses}
-          />
+
+          <Button intent="primary" className="w-full">
+            Start Quick Enrollment
+          </Button>
+        </div>
+
+        {/* Full Form Card */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group"
+             onClick={() => setFormMode('full')}>
+          <div className="flex items-center justify-center w-16 h-16 bg-green-600 text-white rounded-full mb-4 group-hover:scale-110 transition-transform">
+            <FileText className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-3">Complete Enrollment</h3>
+          <p className="text-gray-600 mb-4">Comprehensive form with all student information</p>
+
+          <div className="space-y-2 mb-6">
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Complete personal information</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Medical & health records</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>Emergency contacts & documents</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">~8-10 minutes</span>
+            </div>
+          </div>
+
+          <Button intent="secondary" className="w-full">
+            Use Complete Form
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-center mt-8">
+        <p className="text-sm text-gray-500 mb-4">
+          You can always add more details later by editing the student profile
+        </p>
+        <Button
+          intent="cancel"
+          onClick={handleBack}
+          className="bg-white border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Students
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Layout>
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="bg-white rounded-lg shadow-lg">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <Users className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Add New Student</h1>
+                <p className="text-gray-600 mt-1">
+                  {formMode === 'selection' && 'Choose your preferred enrollment method'}
+                  {formMode === 'quick' && 'Quick student enrollment wizard'}
+                  {formMode === 'full' && 'Create a comprehensive student profile'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
+            {formMode === 'selection' && <FormSelectionScreen />}
+
+            {formMode === 'quick' && (
+              <>
+                <div className="mb-6">
+                  <Button
+                    intent="secondary"
+                    onClick={() => setFormMode('selection')}
+                    className="flex items-center"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Selection
+                  </Button>
+                </div>
+                <QuickEnrollmentWizard
+                  onSubmit={handleQuickSubmit}
+                  onBack={() => setFormMode('selection')}
+                  onSwitchToFull={() => setFormMode('full')}
+                  loading={loading}
+                  classes={classes}
+                  sections={sections}
+                  academicYears={academicYears}
+                />
+              </>
+            )}
+
+            {formMode === 'full' && (
+              <>
+                <div className="mb-6 flex gap-3">
+                  <Button
+                    intent="secondary"
+                    onClick={() => setFormMode('selection')}
+                    className="flex items-center"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Selection
+                  </Button>
+                  <Button
+                    intent="action"
+                    onClick={() => setFormMode('quick')}
+                    className="flex items-center"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Switch to Quick Enrollment
+                  </Button>
+                </div>
+                <StudentForm
+                  initialValues={emptyFormData}
+                  onSubmit={handleSubmit}
+                  onBack={() => setFormMode('selection')}
+                  loading={loading}
+                  submitLabel="Save Student"
+                  sections={sections}
+                  classes={classes}
+                  academicYears={academicYears}
+                  houses={houses}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </Layout>

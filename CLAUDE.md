@@ -301,9 +301,11 @@ import { normalizeIcon, IconContainer } from '@/lib/icon-utils';
 - Color: White/Light gray background (`bg-white border-gray-300`)
 - Usage: Edit buttons, secondary actions
 
-**Cancel Intent (Medium Gray)**: Use exclusively for cancel operations
-- Color: Medium gray background (`bg-gray-200`)  
-- Usage: Cancel buttons, dismiss actions (less prominent than other buttons)
+**Cancel Intent (Red Text with Gray Background)**: Use exclusively for cancel operations
+- Color: Light gray background with red text (`bg-gray-100 border-gray-300 text-red-600`)
+- Hover: Darker red text with subtle red background (`hover:bg-red-50 hover:text-red-700 hover:border-red-300`)
+- Usage: Cancel buttons, dismiss actions, close modals
+- Visual Treatment: Less prominent than primary actions but clearly indicates cancellation
 
 **Action Intent (Indigo)**: Use for table actions, card actions, and general operations
 - Color: Indigo background (`bg-indigo-600`)
@@ -556,6 +558,687 @@ QUIET_HOURS_ENABLED=true
 5. **All notification channels support fallback** - if one fails, others continue
 6. **Queue system handles retries** automatically for failed deliveries
 7. **Analytics and delivery logs** are automatically tracked for all notifications
+
+## UI Design Constitution 🎨
+
+This section establishes the fundamental principles and standards for designing all user interfaces in the KOKOKA school management system. These guidelines ensure consistency, accessibility, and excellent user experience across all pages and components.
+
+### Core Design Principles
+
+#### 1. **Consistency First**
+- Every page should feel part of the same cohesive system
+- Use established patterns and components from our design system
+- Maintain consistent spacing, colors, typography, and behavior
+- Follow the same layout patterns across similar page types
+
+#### 2. **User-Centric Design**
+- Design for the primary user workflow, not edge cases
+- Prioritize common tasks and make them easily accessible
+- Consider the cognitive load on users (teachers, students, parents, administrators)
+- Design for different screen sizes and devices (responsive design)
+
+#### 3. **Clear Information Hierarchy**
+- Most important information should be immediately visible
+- Use typography, spacing, and color to guide user attention
+- Group related information together
+- Use progressive disclosure for complex features
+
+#### 4. **Accessible & Inclusive**
+- All interactions must be keyboard accessible
+- Maintain proper color contrast ratios (4.5:1 minimum)
+- Provide clear focus indicators
+- Use semantic HTML and proper ARIA labels
+- Support screen readers and assistive technologies
+
+### Page Layout Standards
+
+#### **Page Structure**
+Every page must follow this consistent structure:
+
+```tsx
+<PageContainer>
+  <PageHeader>
+    <PageTitle>Page Name</PageTitle>
+    <PageDescription>Brief description of page purpose</PageDescription>
+    <PageActions>
+      {/* Primary actions for this page */}
+    </PageActions>
+  </PageHeader>
+
+  <PageContent>
+    {/* Main content area with proper spacing */}
+  </PageContent>
+</PageContainer>
+```
+
+#### **Layout Patterns by Page Type**
+
+**1. List/Table Pages (Students, Teachers, Classes)**
+```tsx
+<PageContainer>
+  <PageHeader>
+    <div className="flex justify-between items-start">
+      <div>
+        <PageTitle>Students</PageTitle>
+        <PageDescription>Manage student records and information</PageDescription>
+      </div>
+      <Button intent="primary" leftIcon={<Plus />}>Add Student</Button>
+    </div>
+  </PageHeader>
+
+  <PageContent>
+    <div className="space-y-6">
+      {/* Search and filters */}
+      <SearchAndFilters />
+
+      {/* Data table/grid */}
+      <DataTable />
+
+      {/* Pagination */}
+      <Pagination />
+    </div>
+  </PageContent>
+</PageContainer>
+```
+
+**2. Form Pages (Add/Edit Student, Teacher)**
+```tsx
+<PageContainer>
+  <PageHeader>
+    <PageTitle>Add New Student</PageTitle>
+    <PageDescription>Create a new student record</PageDescription>
+  </PageHeader>
+
+  <PageContent>
+    <div className="max-w-4xl mx-auto">
+      <Form spacing="lg">
+        <FormSection title="Basic Information">
+          {/* Form fields */}
+        </FormSection>
+
+        <FormSection title="Contact Information">
+          {/* Form fields */}
+        </FormSection>
+
+        <FormActions className="flex justify-end gap-3 pt-6">
+          <Button intent="cancel">Cancel</Button>
+          <Button intent="primary">Save Student</Button>
+        </FormActions>
+      </Form>
+    </div>
+  </PageContent>
+</PageContainer>
+```
+
+**3. Dashboard Pages**
+```tsx
+<PageContainer>
+  <PageHeader>
+    <PageTitle>Dashboard</PageTitle>
+    <PageDescription>School overview and key metrics</PageDescription>
+  </PageHeader>
+
+  <PageContent>
+    <div className="space-y-8">
+      {/* Key metrics cards */}
+      <StatsCardGrid>
+        <StatsCard title="Total Students" value="1,247" trend="+5%" />
+        <StatsCard title="Total Teachers" value="68" trend="+2%" />
+        <StatsCard title="Active Classes" value="45" trend="0%" />
+      </StatsCardGrid>
+
+      {/* Content sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <RecentActivity />
+        <UpcomingEvents />
+      </div>
+    </div>
+  </PageContent>
+</PageContainer>
+```
+
+**4. Detail/Profile Pages**
+```tsx
+<PageContainer>
+  <PageHeader>
+    <div className="flex justify-between items-start">
+      <div className="flex items-center gap-4">
+        <Avatar size="lg" src={student.photo} />
+        <div>
+          <PageTitle>{student.fullName}</PageTitle>
+          <PageDescription>Student ID: {student.studentId}</PageDescription>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button intent="secondary" leftIcon={<Edit />}>Edit</Button>
+        <Button intent="action" leftIcon={<Mail />}>Contact</Button>
+      </div>
+    </div>
+  </PageHeader>
+
+  <PageContent>
+    <TabContainer>
+      <TabList>
+        <Tab active>Overview</Tab>
+        <Tab>Academic</Tab>
+        <Tab>Attendance</Tab>
+      </TabList>
+
+      <TabContent>
+        {/* Tab content */}
+      </TabContent>
+    </TabContainer>
+  </PageContent>
+</PageContainer>
+```
+
+### Component Usage Guidelines
+
+#### **Data Display Standards**
+
+**1. Tables**
+- Always include proper headers with sort indicators
+- Use consistent row heights (48px minimum for touch targets)
+- Implement zebra striping for readability
+- Include loading states and empty states
+- Use StatusBadge for status columns
+- Actions should be right-aligned in last column
+
+**2. Cards**
+- Use cards for grouped information or previews
+- Maintain consistent padding (16px minimum)
+- Include clear hierarchy with proper headings
+- Use subtle shadows for depth (shadow-sm)
+
+**3. Forms**
+- Group related fields using FormSection
+- Use consistent spacing between fields (16px)
+- Include clear labels and help text
+- Show validation errors immediately below fields
+- Use proper input types (email, tel, number, etc.)
+
+#### **Interactive Element Standards**
+
+**1. Buttons**
+- Follow the established intent system (primary, secondary, action, etc.)
+- Use consistent sizing (sm, md, lg)
+- Include proper loading states
+- Ensure 44px minimum touch target
+- Use icons appropriately (left for actions, right for navigation)
+
+**Button Positioning Standards:**
+- **Form Actions**: Always position on the right side using `justify-end`
+- **Button Order**: Cancel/Secondary button first, Primary action button last
+- **Spacing**: Use `gap-3` (12px) between buttons in button groups
+- **Top Spacing**: Add `pt-6` (24px) above form action buttons
+- **Full Width on Mobile**: Stack vertically with full width on mobile screens
+
+## Submit and Cancel Button Standards 🎯
+
+### Visual Specifications
+
+**Submit/Save Buttons (Primary Intent)**
+- **Background**: Blue (`bg-blue-600`)
+- **Text**: White (`text-white`)
+- **Hover**: Darker blue (`hover:bg-blue-700`)
+- **Size**: Standard medium (`size="md"`) - 40px height
+- **Font Weight**: Medium (`font-medium`)
+- **Border Radius**: 6px (`rounded-md`)
+- **Padding**: 12px horizontal, 8px vertical
+- **Shadow**: Subtle (`shadow-sm`)
+
+**Cancel Buttons (Cancel Intent)**
+- **Background**: White with subtle border (`bg-white`)
+- **Border**: Red border (`border border-red-300`)
+- **Text**: Red (`text-red-600`)
+- **Hover**: Light red background (`hover:bg-red-50`) with darker red text (`hover:text-red-700`) and darker red border (`hover:border-red-400`)
+- **Focus**: Red focus ring (`focus:ring-2 focus:ring-red-500 focus:ring-offset-2`)
+- **Size**: Standard medium (`size="md"`) - 40px height
+- **Font Weight**: Medium (`font-medium`)
+- **Border Radius**: 6px (`rounded-md`)
+- **Visual Treatment**: Clean white background with red accents that clearly indicates cancellation action while maintaining contrast with submit buttons
+
+**Alternative Cancel Button Style (Subtle)**
+For contexts where a less prominent cancel button is preferred:
+- **Background**: Light gray (`bg-gray-100`)
+- **Border**: Gray border (`border border-gray-300`)
+- **Text**: Gray (`text-gray-700`)
+- **Hover**: Darker gray background (`hover:bg-gray-200`) with darker text (`hover:text-gray-900`)
+- **Usage**: Use in contexts where cancel is a secondary concern and you want minimal visual emphasis
+
+### Layout and Positioning Rules
+
+**1. Standard Form Layout**
+```tsx
+// Always use this exact pattern for form submission buttons
+<div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+  <Button intent="cancel" className="w-full sm:w-auto">Cancel</Button>
+  <Button intent="primary" className="w-full sm:w-auto">Save Changes</Button>
+</div>
+```
+
+**2. Button Order (Left to Right)**
+- **Cancel/Secondary** button always comes FIRST (left side)
+- **Submit/Primary** button always comes LAST (right side)
+- This follows common UI patterns where the primary action is right-aligned
+
+**3. Spacing Requirements**
+- **Between Buttons**: 12px gap (`gap-3`)
+- **Above Button Group**: 24px padding top (`pt-6`)
+- **From Form Content**: Clear visual separation with adequate whitespace
+
+**4. Responsive Behavior**
+- **Desktop**: Horizontal layout, buttons side-by-side
+- **Mobile**: Stack vertically (`flex-col sm:flex-row`)
+- **Width**: Full width on mobile (`w-full`), auto width on desktop (`sm:w-auto`)
+
+### Button Text Standards
+
+**Submit Button Text Options** (in order of preference):
+1. **"Save"** - For simple save operations
+2. **"Save Changes"** - When editing existing data
+3. **"Create [Item]"** - When creating new items (e.g., "Create Student")
+4. **"Submit"** - For form submissions or applications
+5. **"Update"** - For updating existing records
+6. **"Add [Item]"** - For adding new items (e.g., "Add Student")
+
+**Cancel Button Text** (always use):
+- **"Cancel"** - Standard text for all cancel operations
+
+### Visual Design Comparison
+
+**Standard Cancel Button (Recommended)**
+```tsx
+// White background with red text and border - clearly indicates cancellation
+<Button
+  intent="cancel"
+  className="bg-white border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400"
+>
+  Cancel
+</Button>
+```
+
+**Subtle Cancel Button (Alternative)**
+```tsx
+// Gray background with gray text - use when cancel needs less emphasis
+<Button
+  intent="secondary"
+  className="bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+>
+  Cancel
+</Button>
+```
+
+### Loading States
+
+```tsx
+// Submit button with loading state
+<Button
+  intent="primary"
+  loading={isSubmitting}
+  disabled={isSubmitting}
+  className="w-full sm:w-auto"
+>
+  {isSubmitting ? 'Saving...' : 'Save Changes'}
+</Button>
+
+// Or using loadingText prop
+<Button
+  intent="primary"
+  loading={isSubmitting}
+  loadingText="Saving..."
+  className="w-full sm:w-auto"
+>
+  Save Changes
+</Button>
+```
+
+### Usage Examples
+
+**1. Basic Form (Add/Edit Pages)**
+```tsx
+<FormActions className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+  <Button intent="cancel" onClick={handleCancel} className="w-full sm:w-auto">
+    Cancel
+  </Button>
+  <Button
+    intent="primary"
+    type="submit"
+    loading={isSubmitting}
+    className="w-full sm:w-auto"
+  >
+    Save Student
+  </Button>
+</FormActions>
+```
+
+**2. Modal/Dialog Forms**
+```tsx
+<div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+  <Button intent="cancel" onClick={onClose}>Cancel</Button>
+  <Button intent="primary" onClick={handleSubmit} loading={isSubmitting}>
+    Create Class
+  </Button>
+</div>
+```
+
+**3. Multi-Step Forms**
+```tsx
+<div className="flex justify-between pt-6">
+  <Button intent="secondary" onClick={handlePrevious}>
+    Back
+  </Button>
+  <div className="flex gap-3">
+    <Button intent="cancel" onClick={handleCancel}>Cancel</Button>
+    <Button intent="primary" onClick={handleNext}>
+      {isLastStep ? 'Finish' : 'Next'}
+    </Button>
+  </div>
+</div>
+```
+
+**4. Confirmation Dialogs**
+```tsx
+<div className="flex justify-end gap-3 pt-4">
+  <Button intent="cancel" onClick={onCancel}>Cancel</Button>
+  <Button intent="danger" onClick={onConfirm}>
+    Delete Student
+  </Button>
+</div>
+```
+
+### Accessibility Requirements
+
+**1. Keyboard Navigation**
+- Submit button should be focusable and activated with Enter/Space
+- Tab order: Cancel button first, Submit button last
+- Clear focus indicators for both buttons
+
+**2. ARIA Attributes**
+```tsx
+<Button
+  intent="primary"
+  type="submit"
+  aria-describedby={hasErrors ? 'form-errors' : undefined}
+  disabled={isSubmitting}
+>
+  Save Changes
+</Button>
+
+<Button
+  intent="cancel"
+  aria-label="Cancel form and return to previous page"
+>
+  Cancel
+</Button>
+```
+
+**3. Screen Reader Support**
+- Use semantic button elements (not divs)
+- Provide clear button text that describes the action
+- Announce loading states to screen readers
+
+### Do's and Don'ts
+
+**✅ DO:**
+- Always use `intent="primary"` for submit buttons
+- Always use `intent="cancel"` for cancel buttons (white background with red text/border)
+- Position buttons on the right side of forms
+- Put cancel button first, submit button last
+- Use consistent spacing (`gap-3`, `pt-6`)
+- Include loading states for async operations
+- Make buttons full-width on mobile
+- Use descriptive text ("Save Student" not just "Save")
+- Use the standard cancel button style (white bg, red text/border) for clear cancellation indication
+- Consider the subtle cancel style (gray) only when cancellation needs less emphasis
+
+**❌ DON'T:**
+- Mix button intents (don't use `intent="secondary"` for cancel)
+- Position buttons on the left side of forms
+- Put submit button before cancel button
+- Use inconsistent spacing or positioning
+- Forget loading states for async operations
+- Use vague button text ("OK", "Done", "Submit")
+- Make buttons too small (minimum 40px height)
+- Use different button sizes in the same group
+- Use gray cancel buttons as the default (reserve for subtle contexts only)
+- Make cancel buttons too subtle that users can't easily identify the cancellation action
+
+### Form Integration Pattern
+
+```tsx
+const MyForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (data) => {
+    setIsSubmitting(true);
+    try {
+      await saveData(data);
+      onSuccess();
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      showConfirmDialog();
+    } else {
+      onCancel();
+    }
+  };
+
+  return (
+    <Form onSubmit={handleSubmit}>
+      {/* Form fields */}
+
+      <FormActions className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+        <Button
+          intent="cancel"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          Cancel
+        </Button>
+        <Button
+          intent="primary"
+          type="submit"
+          loading={isSubmitting}
+          loadingText="Saving..."
+          className="w-full sm:w-auto"
+        >
+          Save Changes
+        </Button>
+      </FormActions>
+    </Form>
+  );
+};
+```
+
+```tsx
+// Standard form button layout
+<div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+  <Button intent="cancel" className="w-full sm:w-auto">Cancel</Button>
+  <Button intent="primary" className="w-full sm:w-auto">Save Changes</Button>
+</div>
+
+// Modal/dialog button layout
+<div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+  <Button intent="cancel">Cancel</Button>
+  <Button intent="danger">Delete</Button>
+</div>
+
+// Table/card action buttons (left aligned)
+<div className="flex gap-2">
+  <Button intent="action" size="sm">View</Button>
+  <Button intent="secondary" size="sm">Edit</Button>
+  <Button intent="danger" size="sm">Delete</Button>
+</div>
+```
+
+**2. Navigation**
+- Use NavigationItem components, not buttons
+- Show active states clearly
+- Implement proper keyboard navigation
+- Include breadcrumbs for deep pages
+- Use consistent grouping for related items
+
+**3. Status Indicators**
+- Use StatusBadge for user status, record status, etc.
+- Use consistent color coding:
+  - Green: Active, Approved, Success
+  - Yellow: Pending, Warning, Review
+  - Red: Inactive, Rejected, Error
+  - Blue: Info, In Progress
+  - Gray: Neutral, Disabled
+
+### Typography & Content Standards
+
+#### **Text Hierarchy**
+1. **Page Titles**: `text-2xl font-bold text-gray-900`
+2. **Section Headings**: `text-lg font-semibold text-gray-900`
+3. **Subsection Headings**: `text-base font-medium text-gray-900`
+4. **Body Text**: `text-sm text-gray-700`
+5. **Helper Text**: `text-xs text-gray-500`
+6. **Labels**: `text-sm font-medium text-gray-700`
+
+#### **Content Writing Guidelines**
+- Use active voice and clear, concise language
+- Write in sentence case, not title case (except for proper nouns)
+- Use specific terms: "Add Student" not "Add New Item"
+- Keep button text short: "Save" not "Save Changes"
+- Use consistent terminology throughout the system
+- Provide helpful descriptions and context where needed
+
+### Color & Visual Design Standards
+
+#### **Color Usage**
+- **Primary Actions**: Blue (`bg-blue-600`)
+- **Secondary Actions**: Gray (`bg-gray-100 border-gray-300`)
+- **Success States**: Green (`bg-green-600`)
+- **Warning States**: Yellow (`bg-yellow-500`)
+- **Error States**: Red (`bg-red-600`)
+- **Info States**: Blue (`bg-blue-500`)
+- **Neutral/Cancel**: Gray (`bg-gray-200`)
+
+#### **Spacing System**
+- Use Tailwind's consistent spacing scale
+- Standard page padding: `p-6` (24px)
+- Section spacing: `space-y-6` (24px between sections)
+- Card padding: `p-4` (16px) for small cards, `p-6` (24px) for large cards
+- Form field spacing: `space-y-4` (16px between fields)
+
+#### **Shadow & Depth**
+- Cards: `shadow-sm` for subtle elevation
+- Dropdowns/Modals: `shadow-lg` for floating elements
+- Focus states: `shadow-outline` for keyboard navigation
+- Avoid excessive shadows or complex effects
+
+### Responsive Design Requirements
+
+#### **Breakpoint Strategy**
+- **Mobile First**: Design for mobile, enhance for larger screens
+- **Key Breakpoints**:
+  - Mobile: < 768px (full-width, stacked layout)
+  - Tablet: 768px - 1024px (mixed layout)
+  - Desktop: > 1024px (side-by-side layout)
+
+#### **Mobile Adaptations**
+- Stack form fields vertically on mobile
+- Use full-width buttons on mobile
+- Implement mobile-friendly navigation (hamburger menu)
+- Ensure touch targets are at least 44px
+- Hide less important columns in tables on mobile
+- Use bottom sheets for mobile modals
+
+### Error Handling & Loading States
+
+#### **Error States**
+- Show errors inline with form fields
+- Use red color and clear error messages
+- Provide actionable error messages
+- Include retry mechanisms where appropriate
+- Show system-level errors with toast notifications
+
+#### **Loading States**
+- Show skeleton loaders for content that's loading
+- Use button loading states during form submission
+- Implement progressive loading for large datasets
+- Show loading indicators for async operations
+- Maintain layout stability during loading
+
+#### **Empty States**
+- Design helpful empty states with clear actions
+- Include illustrations or icons where appropriate
+- Provide context about why the state is empty
+- Offer clear next steps for users
+
+### Accessibility Checklist
+
+For every page and component, ensure:
+
+- [ ] **Keyboard Navigation**: All interactive elements accessible via keyboard
+- [ ] **Focus Indicators**: Clear focus states for all focusable elements
+- [ ] **Color Contrast**: Text meets WCAG AA standards (4.5:1 ratio)
+- [ ] **Screen Reader Support**: Proper heading structure and ARIA labels
+- [ ] **Form Labels**: All form inputs have associated labels
+- [ ] **Error Messages**: Clear, descriptive error messages
+- [ ] **Loading States**: Screen reader announcements for dynamic content
+- [ ] **Button Labels**: Descriptive text, not just icons
+- [ ] **Landmark Regions**: Proper page structure with main, nav, aside elements
+
+### Quality Assurance Standards
+
+#### **Before Implementation**
+- [ ] Review design against this constitution
+- [ ] Verify component usage follows established patterns
+- [ ] Check responsive behavior across breakpoints
+- [ ] Test keyboard navigation flows
+- [ ] Validate color contrast ratios
+- [ ] Ensure loading and error states are designed
+
+#### **During Development**
+- [ ] Use established components from design system
+- [ ] Follow spacing and typography standards
+- [ ] Implement proper ARIA attributes
+- [ ] Test with screen readers
+- [ ] Verify cross-browser compatibility
+- [ ] Test on actual mobile devices
+
+#### **Before Release**
+- [ ] User testing with target audiences (teachers, students, administrators)
+- [ ] Accessibility audit using automated tools
+- [ ] Performance testing on slower devices
+- [ ] Content review for clarity and consistency
+- [ ] Final design review against standards
+
+### Component Evolution Guidelines
+
+#### **When to Create New Components**
+- Pattern appears 3+ times across the system
+- Component solves a unique, well-defined use case
+- Existing components cannot be composed to meet the need
+- Component follows established design patterns
+
+#### **Component Naming Conventions**
+- Use descriptive, specific names: `StudentCard` not `Card`
+- Follow PascalCase for component names
+- Use descriptive prop names: `isActive` not `active`
+- Include TypeScript interfaces for all props
+
+#### **Component Documentation Requirements**
+- Include Storybook stories showing all variants
+- Document when and how to use the component
+- Provide examples of common usage patterns
+- Include accessibility considerations
+- Document any breaking changes
+
+---
+
+**Remember**: This constitution is a living document. When patterns emerge that aren't covered here, document them and update these guidelines. The goal is to maintain consistency while allowing for thoughtful evolution of the design system.
 
 - "Always use descriptive names"
 - - "Always make a todo of work items before implementation"

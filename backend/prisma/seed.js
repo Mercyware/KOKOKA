@@ -46,9 +46,9 @@ async function main() {
   // const assessments = await createAssessments(school.id, subjects, academicCalendars);
   const assessments = []; // Placeholder for now
 
-  // 10. Create Teachers
-  console.log('👨‍🏫 Creating teachers...');
-  const teachers = await createTeachers(school.id, users);
+  // 10. Create Staff (including teachers)
+  console.log('👨‍🏫 Creating staff...');
+  const staff = await createStaff(school.id, users);
 
     // 10. Create Students
   console.log('👨‍🎓 Creating students...');
@@ -56,15 +56,15 @@ async function main() {
 
   // 11. Create Class-Subject History - TEMPORARILY DISABLED
   // console.log('📋 Creating class-subject history...');
-  // await createClassSubjectHistory(school.id, classes, subjects, teachers, academicYear.id);
+  // await createClassSubjectHistory(school.id, classes, subjects, staff, academicYear.id);
 
   // 12. Create Class Teachers - TEMPORARILY DISABLED
   // console.log('👨‍🏫 Creating class teacher assignments...');
-  // await createClassTeachers(school.id, teachers, classes, academicYear.id);
+  // await createClassTeachers(school.id, staff, classes, academicYear.id);
 
   // 13. Create Sample Assessment for Testing - TEMPORARILY DISABLED
   // console.log('📝 Creating sample assessment for testing...');
-  // await createSampleAssessment(school.id, classes[0], subjects[0], academicYear.id, academicCalendars[0], teachers[0]);
+  // await createSampleAssessment(school.id, classes[0], subjects[0], academicYear.id, academicCalendars[0], staff[0]);
 
   // 13. Create Guardians
   console.log('👨‍👩‍👧‍👦 Creating guardians...');
@@ -89,7 +89,7 @@ async function main() {
 - Classes: ${classes.length}
 - Subjects: ${subjects.length}
 - Assessments: ${assessments.length}
-- Teachers: ${teachers.length}
+- Staff: ${staff.length}
 - Students: ${students.length}
 
 🔐 Login Credentials:
@@ -102,15 +102,17 @@ async function main() {
 }
 
 async function clearExistingData() {
-  // Clear core tables in reverse dependency order
   try {
+    // Clear data in reverse dependency order (most dependent first)
+    console.log('🧹 Clearing existing data...');
+    
+    // Delete in dependency order (most dependent first)
     await prisma.grade.deleteMany();
     await prisma.assessment.deleteMany();
-    await prisma.attendance.deleteMany();
-    await prisma.studentClassHistory.deleteMany();
-    await prisma.student.deleteMany();
+    await prisma.classTeacher.deleteMany();
+    await prisma.classSubjectHistory.deleteMany();
     await prisma.teacherSubject.deleteMany();
-    await prisma.teacher.deleteMany();
+    await prisma.student.deleteMany();
     await prisma.staff.deleteMany();
     await prisma.subject.deleteMany();
     await prisma.class.deleteMany();
@@ -745,10 +747,10 @@ async function createAssessments(schoolId, subjects, academicCalendars) {
   });
 }
 
-async function createTeachers(schoolId, users) {
+async function createStaff(schoolId, users) {
   const teacherUsers = users.filter(user => user.role === 'TEACHER');
   
-  const teachersData = [
+  const staffData = [
     {
       employeeId: 'T001',
       firstName: 'John',
@@ -762,11 +764,13 @@ async function createTeachers(schoolId, users) {
       state: 'California',
       zipCode: '90210',
       country: 'United States',
+      position: 'Mathematics Teacher',
       qualification: 'M.Ed. Mathematics',
       experience: 8,
       joiningDate: new Date('2018-08-15'),
       salary: 65000.00,
       status: 'ACTIVE',
+      staffType: 'TEACHER',
       schoolId: schoolId,
       userId: teacherUsers[0].id
     },
@@ -782,11 +786,13 @@ async function createTeachers(schoolId, users) {
       state: 'California',
       zipCode: '90210',
       country: 'United States',
+      position: 'English Teacher',
       qualification: 'M.A. English Literature',
       experience: 6,
       joiningDate: new Date('2020-01-10'),
       salary: 62000.00,
       status: 'ACTIVE',
+      staffType: 'TEACHER',
       schoolId: schoolId,
       userId: teacherUsers[1].id
     },
@@ -802,25 +808,27 @@ async function createTeachers(schoolId, users) {
       state: 'California',
       zipCode: '90210',
       country: 'United States',
+      position: 'Biology Teacher',
       qualification: 'M.S. Biology',
       experience: 10,
       joiningDate: new Date('2016-09-01'),
       salary: 68000.00,
       status: 'ACTIVE',
+      staffType: 'TEACHER',
       schoolId: schoolId,
       userId: teacherUsers[2].id
     }
   ];
 
-  const teachers = [];
-  for (const teacherData of teachersData) {
-    const teacher = await prisma.teacher.create({
-      data: teacherData
+  const staff = [];
+  for (const staffMember of staffData) {
+    const staffRecord = await prisma.staff.create({
+      data: staffMember
     });
-    teachers.push(teacher);
+    staff.push(staffRecord);
   }
 
-  return teachers;
+  return staff;
 }
 
 async function createStudents(schoolId, users, classes, houses, academicYearId, sections) {
@@ -996,7 +1004,7 @@ async function createStudents(schoolId, users, classes, houses, academicYearId, 
         schoolId: schoolId,
         academicYearId: academicYearId,
         startDate: new Date('2024-09-01'),
-        status: 'active'
+        status: 'ACTIVE'
       }
     });
   }
@@ -1004,7 +1012,7 @@ async function createStudents(schoolId, users, classes, houses, academicYearId, 
   return students;
 }
 
-async function createClassSubjectHistory(schoolId, classes, subjects, teachers, academicYearId) {
+async function createClassSubjectHistory(schoolId, classes, subjects, staff, academicYearId) {
   // Assign core subjects to all classes and specific subjects to appropriate grades
   const coreSubjects = subjects.filter(s => ['MATH', 'ELA', 'SCI', 'SS', 'PE'].includes(s.code));
   const electiveSubjects = subjects.filter(s => !['MATH', 'ELA', 'SCI', 'SS', 'PE'].includes(s.code));
@@ -1025,7 +1033,7 @@ async function createClassSubjectHistory(schoolId, classes, subjects, teachers, 
           credits: subject.credits,
           hoursPerWeek: subject.code === 'MATH' || subject.code === 'ELA' ? 5 : 
                        subject.code === 'SCI' || subject.code === 'SS' ? 4 : 3,
-          teacherId: teachers[grade <= 3 ? 0 : grade <= 6 ? 1 : 2].id, // Assign teachers by grade level
+          staffId: staff[grade <= 3 ? 0 : grade <= 6 ? 1 : 2].id, // Assign staff by grade level
           status: 'ACTIVE',
           startDate: new Date('2024-09-01')
         }
@@ -1046,7 +1054,7 @@ async function createClassSubjectHistory(schoolId, classes, subjects, teachers, 
             isOptional: true,
             credits: subject.credits,
             hoursPerWeek: 2,
-            teacherId: teachers[1].id, // Mary Wilson for arts subjects
+            staffId: staff[1].id, // Mary Wilson for arts subjects
             status: 'ACTIVE',
             startDate: new Date('2024-09-01')
           }
@@ -1068,7 +1076,7 @@ async function createClassSubjectHistory(schoolId, classes, subjects, teachers, 
             isOptional: true,
             credits: subject.credits,
             hoursPerWeek: 3,
-            teacherId: teachers[2].id, // David Garcia for advanced subjects
+            staffId: staff[2].id, // David Garcia for advanced subjects
             status: 'ACTIVE',
             startDate: new Date('2024-09-01')
           }
@@ -1078,19 +1086,19 @@ async function createClassSubjectHistory(schoolId, classes, subjects, teachers, 
   }
 }
 
-async function createClassTeachers(schoolId, teachers, classes, academicYearId) {
+async function createClassTeachers(schoolId, staff, classes, academicYearId) {
   // Assign class teachers to different grade levels
   const assignments = [
-    { teacher: teachers[0], classes: classes.slice(0, 3), canManage: true }, // John Doe - Grades 1-3
-    { teacher: teachers[1], classes: classes.slice(3, 6), canManage: true }, // Mary Wilson - Grades 4-6
-    { teacher: teachers[2], classes: classes.slice(6, 8), canManage: true }  // David Garcia - Grades 7-8
+    { staff: staff[0], classes: classes.slice(0, 3), canManage: true }, // John Doe - Grades 1-3
+    { staff: staff[1], classes: classes.slice(3, 6), canManage: true }, // Mary Wilson - Grades 4-6
+    { staff: staff[2], classes: classes.slice(6, 8), canManage: true }  // David Garcia - Grades 7-8
   ];
 
   for (const assignment of assignments) {
     for (const cls of assignment.classes) {
       await prisma.classTeacher.create({
         data: {
-          teacherId: assignment.teacher.id,
+          staffId: assignment.staff.id,
           classId: cls.id,
           schoolId: schoolId,
           academicYearId: academicYearId,

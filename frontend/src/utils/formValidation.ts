@@ -233,7 +233,7 @@ export const createStaffValidationRules = () => ({
   dateOfBirth: CommonValidationRules.required,
   gender: CommonValidationRules.required,
   phone: { ...CommonValidationRules.phone, required: true },
-  department: CommonValidationRules.required,
+  department: { required: false }, // Department is optional
   position: { required: true, minLength: 2, maxLength: 100 },
   status: CommonValidationRules.required,
   // Address fields (optional)

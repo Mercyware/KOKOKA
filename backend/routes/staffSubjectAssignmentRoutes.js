@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const teacherSubjectAssignmentController = require('../controllers/teacherSubjectAssignmentController');
+const staffSubjectAssignmentController = require('../controllers/staffSubjectAssignmentController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 
@@ -10,15 +10,15 @@ router.use(authMiddleware.protect);
 /**
  * @swagger
  * tags:
- *   name: Teacher Subject Assignments
- *   description: Teacher subject assignment management endpoints
+ *   name: Staff Subject Assignments
+ *   description: Staff subject assignment management endpoints
  */
 
 /**
  * @swagger
- * /api/teacher-subject-assignments:
+ * /api/staff-subject-assignments:
  *   get:
- *     summary: Get all teacher subject assignments
+ *     summary: Get all staff subject assignments
  *     description: Retrieve a list of all teacher subject assignments. Accessible by all authenticated users.
  *     tags: [Teacher Subject Assignments]
  *     security:
@@ -105,7 +105,7 @@ router.use(authMiddleware.protect);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/', teacherSubjectAssignmentController.getAllAssignments);
+router.get('/', staffSubjectAssignmentController.getAllAssignments);
 
 /**
  * @swagger
@@ -202,7 +202,7 @@ router.get('/', teacherSubjectAssignmentController.getAllAssignments);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/:id', teacherSubjectAssignmentController.getAssignmentById);
+router.get('/:id', staffSubjectAssignmentController.getAssignmentById);
 
 /**
  * @swagger
@@ -276,7 +276,7 @@ router.get('/:id', teacherSubjectAssignmentController.getAssignmentById);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/teacher/:teacherId', teacherSubjectAssignmentController.getAssignmentsByTeacher);
+router.get('/teacher/:teacherId', staffSubjectAssignmentController.getAssignmentsByTeacher);
 
 /**
  * @swagger
@@ -350,7 +350,7 @@ router.get('/teacher/:teacherId', teacherSubjectAssignmentController.getAssignme
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/subject/:subjectId', teacherSubjectAssignmentController.getAssignmentsBySubject);
+router.get('/subject/:subjectId', staffSubjectAssignmentController.getAssignmentsBySubject);
 
 /**
  * @swagger
@@ -426,7 +426,7 @@ router.get('/subject/:subjectId', teacherSubjectAssignmentController.getAssignme
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/academic-year/:academicYearId', teacherSubjectAssignmentController.getAssignmentsByAcademicYear);
+router.get('/academic-year/:academicYearId', staffSubjectAssignmentController.getAssignmentsByAcademicYear);
 
 /**
  * @swagger
@@ -502,7 +502,7 @@ router.get('/academic-year/:academicYearId', teacherSubjectAssignmentController.
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/term/:termId', teacherSubjectAssignmentController.getAssignmentsByTerm);
+router.get('/term/:termId', staffSubjectAssignmentController.getAssignmentsByTerm);
 
 /**
  * @swagger
@@ -569,7 +569,7 @@ router.get('/term/:termId', teacherSubjectAssignmentController.getAssignmentsByT
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.get('/class/:classId', teacherSubjectAssignmentController.getAssignmentsByClass);
+router.get('/class/:classId', staffSubjectAssignmentController.getAssignmentsByClass);
 
 // Admin only routes
 router.use(roleMiddleware.restrictTo('admin'));
@@ -670,7 +670,7 @@ router.use(roleMiddleware.restrictTo('admin'));
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.post('/', teacherSubjectAssignmentController.createAssignment);
+router.post('/', staffSubjectAssignmentController.createAssignment);
 
 /**
  * @swagger
@@ -764,7 +764,7 @@ router.post('/', teacherSubjectAssignmentController.createAssignment);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.put('/:id', teacherSubjectAssignmentController.updateAssignment);
+router.put('/:id', staffSubjectAssignmentController.updateAssignment);
 
 /**
  * @swagger
@@ -802,6 +802,6 @@ router.put('/:id', teacherSubjectAssignmentController.updateAssignment);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.delete('/:id', teacherSubjectAssignmentController.deleteAssignment);
+router.delete('/:id', staffSubjectAssignmentController.deleteAssignment);
 
 module.exports = router;

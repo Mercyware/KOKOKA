@@ -387,7 +387,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                   <div>
                     <CardTitle className="text-lg">{formatStudentName(student)}</CardTitle>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {getStudentClass(student)}
+                      <span className="font-medium">Class:</span> {getStudentClass(student)}
                     </p>
                   </div>
                 </div>
@@ -428,7 +428,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                   size="sm"
                   variant="outline"
                   className="flex-1"
-                  onClick={() => handleViewStudent(student._id)} // Use handleViewStudent with id
+                  onClick={() => onViewStudent(student._id || student.id)} // Use proper ID field
                 >
                   <Eye className="h-4 w-4 mr-1" />
                   View
@@ -538,7 +538,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleViewStudent(student.id)} // Use handleViewStudent with id
+                        onClick={() => onViewStudent(student._id || student.id)} // Use onViewStudent prop
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -572,12 +572,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
     // Merge filterValues into filters, reset page to 1
     setFilters((prev) => ({ ...prev, ...filterValues, page: 1 }));
     setFilterMenuOpen(false);
-  };
-
-  // Handler for viewing a student
-  const handleViewStudent = (studentId: string) => {
-    if (!studentId) return; // Guard: only navigate if studentId is valid
-    window.location.href = `/students/${studentId}`;
   };
 
   // Show ViewStudent component when a student is selected

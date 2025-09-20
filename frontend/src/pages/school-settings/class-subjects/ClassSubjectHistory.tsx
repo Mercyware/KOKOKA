@@ -29,18 +29,11 @@ import {
 import { getAllClasses } from '@/services/classService';
 import { getAllSubjects } from '@/services/subjectService';
 import { getAllAcademicYears } from '@/services/academicYearService';
-import { getAllTeachers } from '@/services/teacherService';
+import { getTeachers, StaffMember } from '@/services/staffService';
 import { Class, Subject, AcademicYear } from '@/types';
 
-interface Teacher {
-  id: string;
-  firstName: string;
-  lastName: string;
-  user?: {
-    name: string;
-    email: string;
-  };
-}
+// Use StaffMember as Teacher type since teachers are now staff
+type Teacher = StaffMember;
 
 const ClassSubjectHistoryPage: React.FC = () => {
   const { toast } = useToast();
@@ -107,7 +100,7 @@ const ClassSubjectHistoryPage: React.FC = () => {
           getAllClasses(),
           getAllSubjects(),
           getAllAcademicYears(),
-          getAllTeachers()
+          getTeachers()
         ]);
         
         setClasses(classesRes.data || []);

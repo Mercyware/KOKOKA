@@ -74,7 +74,7 @@ export interface TeacherSubjectAssignmentFilter {
 // Get all teacher subject assignments with optional filtering
 export const getTeacherSubjectAssignments = async (filters: TeacherSubjectAssignmentFilter) => {
   try {
-    const response = await api.get('/teacher-subject-assignments', { params: filters });
+    const response = await api.get('/staff-subject-assignments', { params: filters });
     return response.data;
   } catch (error) {
     throw error;
@@ -84,7 +84,7 @@ export const getTeacherSubjectAssignments = async (filters: TeacherSubjectAssign
 // Get a single teacher subject assignment by ID
 export const getTeacherSubjectAssignment = async (id: string) => {
   try {
-    const response = await api.get(`/teacher-subject-assignments/${id}`);
+    const response = await api.get(`/staff-subject-assignments/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -95,7 +95,7 @@ export const getTeacherSubjectAssignment = async (id: string) => {
 export const getTeacherSubjectAssignmentsByTeacher = async (teacherId: string, academicYearId?: string) => {
   try {
     const params = academicYearId ? { academicYear: academicYearId } : {};
-    const response = await api.get(`/teacher-subject-assignments/teacher/${teacherId}`, { params });
+    const response = await api.get(`/staff-subject-assignments/teacher/${teacherId}`, { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -106,7 +106,7 @@ export const getTeacherSubjectAssignmentsByTeacher = async (teacherId: string, a
 export const getTeacherSubjectAssignmentsBySubject = async (subjectId: string, academicYearId?: string) => {
   try {
     const params = academicYearId ? { academicYear: academicYearId } : {};
-    const response = await api.get(`/teacher-subject-assignments/subject/${subjectId}`, { params });
+    const response = await api.get(`/staff-subject-assignments/subject/${subjectId}`, { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -117,7 +117,7 @@ export const getTeacherSubjectAssignmentsBySubject = async (subjectId: string, a
 export const getTeacherSubjectAssignmentsByClass = async (classId: string, academicYearId?: string) => {
   try {
     const params = academicYearId ? { academicYear: academicYearId } : {};
-    const response = await api.get(`/teacher-subject-assignments/class/${classId}`, { params });
+    const response = await api.get(`/staff-subject-assignments/class/${classId}`, { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -143,7 +143,7 @@ export const createTeacherSubjectAssignment = async (data: TeacherSubjectAssignm
     if (data.term !== undefined) transformedData.term = data.term;
     if (data.remarks !== undefined) transformedData.remarks = data.remarks;
     
-    const response = await api.post('/teacher-subject-assignments', transformedData);
+    const response = await api.post('/staff-subject-assignments', transformedData);
     return response.data;
   } catch (error) {
     throw error;
@@ -172,7 +172,7 @@ export const updateTeacherSubjectAssignment = async (id: string, data: Partial<T
       }));
     }
     
-    const response = await api.put(`/teacher-subject-assignments/${id}`, transformedData);
+    const response = await api.put(`/staff-subject-assignments/${id}`, transformedData);
     return response.data;
   } catch (error) {
     throw error;
@@ -182,7 +182,7 @@ export const updateTeacherSubjectAssignment = async (id: string, data: Partial<T
 // Delete a teacher subject assignment
 export const deleteTeacherSubjectAssignment = async (id: string) => {
   try {
-    const response = await api.delete(`/teacher-subject-assignments/${id}`);
+    const response = await api.delete(`/staff-subject-assignments/${id}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -192,7 +192,7 @@ export const deleteTeacherSubjectAssignment = async (id: string) => {
 // Get teacher subject assignments by academic year
 export const getTeacherSubjectAssignmentsByAcademicYear = async (academicYearId: string) => {
   try {
-    const response = await api.get(`/teacher-subject-assignments/academic-year/${academicYearId}`);
+    const response = await api.get(`/staff-subject-assignments/academic-year/${academicYearId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -202,7 +202,7 @@ export const getTeacherSubjectAssignmentsByAcademicYear = async (academicYearId:
 // Get teacher subject assignments by term
 export const getTeacherSubjectAssignmentsByTerm = async (termId: string) => {
   try {
-    const response = await api.get(`/teacher-subject-assignments/term/${termId}`);
+    const response = await api.get(`/staff-subject-assignments/term/${termId}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -212,7 +212,7 @@ export const getTeacherSubjectAssignmentsByTerm = async (termId: string) => {
 // Update teacher subject assignment status (active/inactive)
 export const updateTeacherSubjectAssignmentStatus = async (id: string, isActive: boolean) => {
   try {
-    const response = await api.patch(`/teacher-subject-assignments/${id}/status`, { isActive });
+    const response = await api.patch(`/staff-subject-assignments/${id}/status`, { isActive });
     return response.data;
   } catch (error) {
     throw error;

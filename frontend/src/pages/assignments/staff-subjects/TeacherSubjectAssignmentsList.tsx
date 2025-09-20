@@ -30,8 +30,8 @@ import {
   FilterList as FilterIcon,
 } from '@mui/icons-material';
 import Layout from '../../../components/layout/Layout';
-import * as teacherSubjectService from '../../../services/teacherSubjectService';
-import { TeacherSubjectAssignmentResponse } from '../../../services/teacherSubjectService';
+import * as staffSubjectService from '../../../services/staffSubjectService';
+import { TeacherSubjectAssignmentResponse } from '../../../services/staffSubjectService';
 import * as academicYearService from '../../../services/academicYearService';
 import * as classService from '../../../services/classService';
 import * as subjectService from '../../../services/subjectService';
@@ -136,13 +136,13 @@ const TeacherSubjectAssignmentsList: React.FC = () => {
       let response;
       if (isTeacher && filterByTeacher) {
         // If logged in as teacher and filter is on, show only their assignments
-        response = await teacherSubjectService.getTeacherSubjectAssignmentsByTeacher(
+        response = await staffSubjectService.getTeacherSubjectAssignmentsByTeacher(
           teacherId,
           selectedAcademicYear
         );
       } else {
         // Otherwise fetch based on filters
-        response = await teacherSubjectService.getTeacherSubjectAssignments({
+        response = await staffSubjectService.getTeacherSubjectAssignments({
           academicYear: selectedAcademicYear,
           class: selectedClass || undefined,
           subject: selectedSubject || undefined,
@@ -184,7 +184,7 @@ const TeacherSubjectAssignmentsList: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this teacher subject assignment?')) {
       try {
-        await teacherSubjectService.deleteTeacherSubjectAssignment(id);
+        await staffSubjectService.deleteTeacherSubjectAssignment(id);
         setAssignments(assignments.filter(assignment => assignment._id !== id));
       } catch (err) {
         setError('Failed to delete teacher subject assignment');

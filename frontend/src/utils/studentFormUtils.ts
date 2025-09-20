@@ -473,10 +473,10 @@ export function convertToBackendData(formData: FrontendFormData): any {
     tcDate: formData.tcDate || undefined,
 
     // Academic Assignment
-    currentClassId: formData.class,
-    currentSectionId: formData.section || undefined,
-    academicYearId: formData.academicYear || undefined,
-    houseId: formData.house || undefined,
+    class: formData.class,
+    section: formData.section || undefined,
+    academicYear: formData.academicYear || undefined,
+    house: formData.house || undefined,
 
     // Contact Information
     phone: formData.contactInfo.phone || undefined,
