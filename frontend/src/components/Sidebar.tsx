@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -12,7 +12,6 @@ import {
   NavigationSubitem,
   NavigationProfile,
 } from '@/components/ui/navigation';
-import ThemeToggle from './ThemeToggle';
 import {
   Users,
   Plus,
@@ -44,7 +43,8 @@ import {
   Eye,
   MessageSquare,
   Library,
-  QrCode
+  QrCode,
+  Shield
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -75,6 +75,8 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, hasSubmenu: false },
+    
+    // Core Management
     {
       id: 'students',
       label: 'Students',
@@ -85,7 +87,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'students-add', label: 'Add Student', icon: Plus },
       ]
     },
-   
     {
       id: 'staff',
       label: 'Staff',
@@ -97,68 +98,34 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'staff-reports', label: 'Reports', icon: FileText },
       ]
     },
-    {
-      id: 'teachers',
-      label: 'Teachers',
-      icon: GraduationCap,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'teacher-class-assignments', label: 'Class Assignments', icon: Users },
-        { id: 'teacher-subject-assignments', label: 'Subject Assignments', icon: BookOpen },
-        { id: 'teacher-schedule', label: 'Teaching Schedule', icon: Calendar },
-        { id: 'teacher-performance', label: 'Performance', icon: BarChart3 },
-      ]
-    },
-     {
-      id: 'academic',
-      label: 'Academic',
-      icon: BookOpen,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
-        { id: 'report-templates', label: 'Report Cards', icon: FileText },
-        { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen },
-        { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart },
-      ]
-    },
-    {
-      id: 'curriculum',
-      label: 'Curriculum',
-      icon: Target,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'curriculum-global', label: 'Global Registry', icon: Globe },
-        { id: 'curriculum-school', label: 'School Curricula', icon: BookOpen },
-        { id: 'curriculum-progress', label: 'Progress Tracking', icon: TrendingUp },
-        { id: 'curriculum-analytics', label: 'Analytics', icon: BarChart3 },
-      ]
-    },
+    
+    // Academic Operations
     {
       id: 'attendance',
       label: 'Attendance',
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { id: 'attendance-dashboard', label: 'Dashboard', icon: BarChart3 },
         { id: 'attendance-entry', label: 'Take Attendance', icon: UserCheck },
-        { id: 'attendance-reports', label: 'Reports & Analytics', icon: FileText },
-        { id: 'attendance-bulk', label: 'Bulk Operations', icon: ClipboardList },
-        { id: 'attendance-qr', label: 'QR Code Scanner', icon: QrCode },
+        { id: 'attendance-dashboard', label: 'Dashboard', icon: BarChart3 },
+        { id: 'attendance-reports', label: 'Reports', icon: FileText },
+        { id: 'attendance-qr', label: 'QR Scanner', icon: QrCode },
       ]
     },
     {
       id: 'gradebook',
-      label: 'Grade Management',
+      label: 'Gradebook',
       icon: Award,
       hasSubmenu: true,
       submenu: [
-        { id: 'gradebook-teacher', label: 'Grade Books', icon: BookOpen },
+        { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
         { id: 'gradebook-entry', label: 'Grade Entry', icon: Trophy },
-        { id: 'gradebook-reports', label: 'Grade Reports', icon: FileText },
-        { id: 'gradebook-analytics', label: 'Analytics', icon: BarChart3 },
-        { id: 'gradebook-parent', label: 'Parent Dashboard', icon: Users },
+        { id: 'gradebook-teacher', label: 'Grade Books', icon: BookOpen },
+        { id: 'gradebook-reports', label: 'Reports', icon: FileText },
       ]
     },
+    
+    // Analytics & Insights
     {
       id: 'analytics',
       label: 'Analytics',
@@ -168,155 +135,245 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'analytics-overview', label: 'Overview', icon: BarChart3 },
         { id: 'analytics-performance', label: 'Performance', icon: Trophy },
         { id: 'analytics-attendance', label: 'Attendance', icon: UserCheck },
-        { id: 'analytics-financial', label: 'Financial', icon: PieChart },
-      ]
-    },
-    {
-      id: 'school-settings',
-      label: 'School Settings',
-      icon: Building2,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'academic-years', label: 'Academic Years', icon: CalendarDays },
-        { id: 'academic-calendar', label: 'Academic Calendar', icon: Calendar },
-        { id: 'classes', label: 'Classes', icon: School },
-        { id: 'sections', label: 'Arms/Sections', icon: Layers },
-        { id: 'departments', label: 'Departments', icon: Building },
-        { id: 'subjects', label: 'Subjects', icon: BookOpen },
-        { id: 'curricula', label: 'Curricula', icon: Library },
-        { id: 'class-subjects', label: 'Class Subjects', icon: Target },
-        { id: 'houses', label: 'Houses', icon: HomeIcon },
+        { id: 'gradebook-parent', label: 'Parent Portal', icon: Users },
       ]
     },
     { id: 'ai-insights', label: 'AI Insights', icon: Brain, hasSubmenu: false },
-    { id: 'marketing', label: 'About', icon: Globe, hasSubmenu: false },
-    { id: 'settings', label: 'Settings', icon: Settings, hasSubmenu: false },
   ];
 
-  return (
-    <Navigation width={folded ? "sm" : "md"} className={`transition-all duration-200 ${folded ? "w-16" : "w-64"} bg-white dark:bg-gray-900 border-r`}>
-      {/* Fold/Unfold Button */}
-      <div className="flex items-center justify-end p-2">
-        <button
-          onClick={handleFoldToggle}
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label={folded ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {folded ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-        </button>
-      </div>
+  // General section items (matching the reference image)
+  const generalMenuItems = [
+    { id: 'settings', label: 'Settings', icon: Settings, hasSubmenu: false },
+    { id: 'security', label: 'Security', icon: Shield, hasSubmenu: false },
+  ];
 
-      {/* User Profile */}
-      {!folded && (
-        <NavigationProfile
-          name={user.name}
-          email={user.email}
-          role={user.role}
-          avatar={
-            <Avatar className="h-10 w-10">
-              <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-            </Avatar>
+  // Auto-expand parent menus when submenu is active
+  useEffect(() => {
+    // Find which parent menu should be expanded based on active tab
+    const parentMenuToExpand: string[] = [];
+    
+    menuItems.forEach(item => {
+      if (item.hasSubmenu && item.submenu) {
+        const hasActiveSubmenu = item.submenu.some(subItem => subItem.id === activeTab);
+        if (hasActiveSubmenu) {
+          parentMenuToExpand.push(item.id);
+        }
+      }
+    });
+    
+    // Update expanded menus to include the parent of active submenu
+    if (parentMenuToExpand.length > 0) {
+      setExpandedMenus(prev => {
+        const newExpanded = [...prev];
+        parentMenuToExpand.forEach(parentId => {
+          if (!newExpanded.includes(parentId)) {
+            newExpanded.push(parentId);
           }
-        />
+        });
+        return newExpanded;
+      });
+    }
+  }, [activeTab]);
+
+return (
+  <nav className={`siohioma-sidebar transition-all duration-200 ${folded ? "w-16" : "w-72"} flex flex-col min-h-screen shadow-siohioma-lg`}>
+    {/* Header / Logo */}
+    <div className="flex items-center justify-between px-siohioma-lg py-siohioma-xl border-b border-white/20 flex-shrink-0">
+      {!folded && (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-siohioma-lg bg-white/20 flex items-center justify-center">
+            <span className="text-white font-siohioma-bold text-lg">K</span>
+          </div>
+          <div>
+            <span className="siohioma-heading-3 text-white">KOKOKA</span>
+            <p className="siohioma-caption text-white">School Management</p>
+          </div>
+        </div>
       )}
+      <button
+        onClick={handleFoldToggle}
+        className="p-2 rounded-siohioma-lg hover:text-siohioma-light-green text-white transition-colors"
+        aria-label={folded ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {folded ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+      </button>
+    </div>
 
-      {/* Navigation Content */}
-      <NavigationContent>
-        <NavigationGroup>
-          {menuItems.map((item) => {
-            const IconComponent = item.icon;
-            const isExpanded = expandedMenus.includes(item.id);
-            const isActive = activeTab === item.id || (item.hasSubmenu && item.submenu?.some(sub => sub.id === activeTab));
+    {/* Menu Section Header */}
+    {!folded && (
+      <div className="px-siohioma-lg py-siohioma-md flex-shrink-0">
+        <span className="siohioma-caption text-white">MAIN MENU</span>
+      </div>
+    )}
 
-            return (
-              <div key={item.id}>
-                <NavigationItem
-                  icon={<IconComponent />}
-                  active={isActive && !item.hasSubmenu}
-                  hasSubmenu={item.hasSubmenu}
-                  expanded={isExpanded}
-                  onClick={() => {
-                    if (item.hasSubmenu) {
-                      toggleMenu(item.id);
-                    } else {
-                      onTabChange(item.id);
-                      if (item.id === 'dashboard') {
-                        navigate('/dashboard');
-                      }
-                    }
-                  }}
-                  className={`flex items-center gap-2 px-2 py-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${folded ? "justify-center" : ""}`}
-                >
-                  {!folded && item.label}
-                </NavigationItem>
+    {/* Navigation Content */}
+    <div className="flex-1 py-siohioma-sm px-siohioma-md overflow-y-auto">
+      {menuItems.map((item) => {
+        const IconComponent = item.icon;
+        const isExpanded = expandedMenus.includes(item.id);
+        const isActive = activeTab === item.id || (item.hasSubmenu && item.submenu?.some(sub => sub.id === activeTab));
 
-                {/* Submenu */}
-                {item.hasSubmenu && (
-                  <NavigationSubmenu open={isExpanded && !folded}>
-                    {item.submenu?.map((subItem) => {
-                      const SubIconComponent = subItem.icon;
-                      return (
-                        <NavigationSubitem
-                          key={subItem.id}
-                          icon={<SubIconComponent />}
-                          active={activeTab === subItem.id}
-                          onClick={() => {
-                            onTabChange(subItem.id);
-                            // ...submenu navigation logic unchanged...
-                            if (subItem.id === 'academic-years') navigate('/school-settings/academic-years');
-                            if (subItem.id === 'academic-calendar') navigate('/school-settings/academic-calendars');
-                            if (subItem.id === 'classes') navigate('/school-settings/classes');
-                            if (subItem.id === 'sections') navigate('/school-settings/sections');
-                            if (subItem.id === 'departments') navigate('/school-settings/departments');
-                            if (subItem.id === 'subjects') navigate('/school-settings/subjects');
-                            if (subItem.id === 'houses') navigate('/school-settings/houses');
-                            if (subItem.id === 'curricula') navigate('/school-settings/curricula');
-                            if (subItem.id === 'class-subjects') navigate('/school-settings/class-subjects');
-                            if (subItem.id === 'curriculum-global') navigate('/curriculum/global');
-                            if (subItem.id === 'curriculum-school') navigate('/curriculum/school');
-                            if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
-                            if (subItem.id === 'curriculum-analytics') navigate('/curriculum/analytics');
-                            if (subItem.id === 'gradebook-teacher') navigate('/gradebook/teacher');
-                            if (subItem.id === 'gradebook-entry') navigate('/gradebook/entry');
-                            if (subItem.id === 'gradebook-reports') navigate('/gradebook/reports');
-                            if (subItem.id === 'gradebook-analytics') navigate('/gradebook/analytics');
-                            if (subItem.id === 'gradebook-parent') navigate('/parent/dashboard');
-                            if (subItem.id === 'staff-list') navigate('/staff');
-                            if (subItem.id === 'staff-add') navigate('/staff/create');
-                            if (subItem.id === 'students-list') navigate('/students');
-                            if (subItem.id === 'students-add') navigate('/students/add');
-                            if (subItem.id === 'students-reports') navigate('/students');
-                            if (subItem.id === 'scores-add') navigate('/scores-add');
-                            if (subItem.id === 'attendance-dashboard') navigate('/attendance/dashboard');
-                            if (subItem.id === 'attendance-entry') navigate('/attendance/entry');
-                            if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
-                            if (subItem.id === 'attendance-bulk') navigate('/attendance/bulk');
-                            if (subItem.id === 'attendance-qr') navigate('/attendance/qr-scanner');
-                            if (subItem.id === 'teacher-class-assignments') navigate('/teachers/class-assignments');
-                            if (subItem.id === 'teacher-subject-assignments') navigate('/teachers/subject-assignments');
-                            if (subItem.id === 'teacher-schedule') navigate('/teachers/schedule');
-                            if (subItem.id === 'teacher-performance') navigate('/teachers/performance');
-                          }}
-                          className={`flex items-center gap-2 px-2 py-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${folded ? "justify-center" : ""}`}
-                        >
-                          {!folded && subItem.label}
-                        </NavigationSubitem>
-                      );
-                    })}
-                  </NavigationSubmenu>
-                )}
+        return (
+          <div key={item.id} className="mb-1">
+            <button
+              onClick={() => {
+                if (item.hasSubmenu) {
+                  toggleMenu(item.id);
+                } else {
+                  onTabChange(item.id);
+                  if (item.id === 'dashboard') {
+                    navigate('/dashboard');
+                  }
+                }
+              }}
+              className={`${
+                isActive && !item.hasSubmenu 
+                  ? "siohioma-nav-item-active" 
+                  : "siohioma-nav-item"
+              } w-full ${folded ? "justify-center px-3" : ""}`}
+            >
+              <IconComponent size={20} className="flex-shrink-0" />
+              {!folded && <span className="siohioma-body text-white">{item.label}</span>}
+              {item.hasSubmenu && !folded && (
+                <span className="ml-auto text-white">
+                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </span>
+              )}
+            </button>
+            {/* Submenu */}
+            {item.hasSubmenu && isExpanded && !folded && (
+              <div className="ml-siohioma-lg mt-1 space-y-1">
+                {item.submenu?.map((subItem) => {
+                  const SubIconComponent = subItem.icon;
+                  return (
+                    <button
+                      key={subItem.id}
+                      onClick={() => {
+                        onTabChange(subItem.id);
+                        // Routing logic
+                        if (subItem.id === 'academic-years') navigate('/school-settings/academic-years');
+                        if (subItem.id === 'classes') navigate('/school-settings/classes');
+                        if (subItem.id === 'subjects') navigate('/school-settings/subjects');
+                        if (subItem.id === 'departments') navigate('/school-settings/departments');
+                        if (subItem.id === 'houses') navigate('/school-settings/houses');
+                        if (subItem.id === 'curriculum-school') navigate('/curriculum/school');
+                        if (subItem.id === 'curriculum-global') navigate('/curriculum/global');
+                        if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
+                        if (subItem.id === 'gradebook-teacher') navigate('/gradebook/teacher');
+                        if (subItem.id === 'gradebook-entry') navigate('/gradebook/entry');
+                        if (subItem.id === 'gradebook-reports') navigate('/gradebook/reports');
+                        if (subItem.id === 'gradebook-parent') navigate('/parent/dashboard');
+                        if (subItem.id === 'staff-list') navigate('/staff');
+                        if (subItem.id === 'staff-add') navigate('/staff/create');
+                        if (subItem.id === 'students-list') navigate('/students');
+                        if (subItem.id === 'students-add') navigate('/students/add');
+                        if (subItem.id === 'scores-add') navigate('/scores-add');
+                        if (subItem.id === 'attendance-dashboard') navigate('/attendance/dashboard');
+                        if (subItem.id === 'attendance-entry') navigate('/attendance/entry');
+                        if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
+                        if (subItem.id === 'attendance-qr') navigate('/attendance/qr-scanner');
+                        if (subItem.id === 'analytics-overview') navigate('/analytics/overview');
+                        if (subItem.id === 'analytics-performance') navigate('/analytics/performance');
+                        if (subItem.id === 'analytics-attendance') navigate('/analytics/attendance');
+                      }}
+                      className={activeTab === subItem.id ? "siohioma-nav-subitem-active" : "siohioma-nav-subitem"}
+                    >
+                      <SubIconComponent size={16} className="flex-shrink-0" />
+                      <span className="siohioma-body-sm text-left text-white">{subItem.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })}
-        </NavigationGroup>
-      </NavigationContent>
+            )}
+          </div>
+        );
+      })}
 
-      {/* Footer */}
-      <NavigationFooter>
-        {!folded && <ThemeToggle />}
-      </NavigationFooter>
-    </Navigation>
-  );
-};
+      {/* General Section */}
+      {!folded && (
+        <div className="px-siohioma-lg py-siohioma-md mt-siohioma-md">
+          <span className="siohioma-caption text-white">GENERAL</span>
+        </div>
+      )}
+      
+      {generalMenuItems.map((item) => {
+        const IconComponent = item.icon;
+        const isActive = activeTab === item.id;
 
+        return (
+          <div key={item.id} className="mb-1">
+            <button
+              onClick={() => {
+                onTabChange(item.id);
+                if (item.id === 'settings') navigate('/settings');
+                if (item.id === 'security') navigate('/security');
+              }}
+              className={isActive ? "siohioma-nav-item-active" : "siohioma-nav-item"}
+              style={{ width: folded ? 'auto' : '100%' }}
+            >
+              <IconComponent size={20} className="flex-shrink-0" />
+              {!folded && <span className="siohioma-body text-white">{item.label}</span>}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* User Profile Section */}
+    <div className="px-siohioma-lg py-siohioma-lg border-t border-white/20 bg-white/5 flex-shrink-0">
+      {!folded ? (
+        <div className="space-y-siohioma-md">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12 flex-shrink-0 border-2 border-white/20">
+              <AvatarFallback className="text-sm font-siohioma-semibold bg-white/20 text-white">
+                {user.name.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="siohioma-body font-siohioma-semibold text-white truncate">{user.name}</div>
+              <div className="siohioma-caption text-white truncate">{user.role}</div>
+              <div className="siohioma-caption text-white/60 truncate">{user.email}</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between pt-siohioma-sm border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <button
+                className="p-2 rounded-siohioma-md hover:text-siohioma-light-green text-white transition-colors"
+                title="Settings"
+              >
+                <Settings size={16} />
+              </button>
+            </div>
+            <button
+              onClick={() => {/* Add logout functionality */}}
+              className="flex items-center gap-2 px-siohioma-sm py-1 rounded-siohioma-md hover:bg-red-500/20 text-white hover:text-red-400 transition-colors text-xs"
+              title="Sign out"
+            >
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-3">
+          <Avatar className="h-10 w-10 border-2 border-white/20">
+            <AvatarFallback className="text-sm font-siohioma-semibold bg-white/20 text-white">
+              {user.name.split(' ').map(n => n[0]).join('')}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-center gap-1">
+            <button
+              className="p-1 rounded-siohioma-md hover:text-siohioma-light-green text-white transition-colors"
+              title="Settings"
+            >
+              <Settings size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  </nav>
+);
+
+}
 export default Sidebar;

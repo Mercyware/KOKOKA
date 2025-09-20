@@ -110,53 +110,49 @@ const App = () => (
           }}
         >
           <Routes>
+            {/* Authentication and landing pages (no layout) */}
             <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/register-school" element={<RegisterSchool />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
+            
+            {/* Main application routes (pages handle their own layout) */}
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/students" element={<StudentsManager />} />
             <Route path="/students/add" element={<CreateStudent />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />
             <Route path="/students/:studentId/edit" element={<EditStudentFormWrapper />} />
-            {/* School Settings - Academic Years Routes */}
+            
+            {/* School Settings Routes */}
             <Route path="/school-settings/academic-years" element={<AcademicYearsList />} />
-            {/* School Settings - Academic Calendar Routes */}
             <Route path="/school-settings/academic-calendars" element={<AcademicCalendarsList />} />
             <Route path="/school-settings/academic-calendars/create" element={<CreateAcademicCalendar />} />
             <Route path="/school-settings/academic-calendars/edit/:id" element={<EditAcademicCalendar />} />
             
-            {/* School Settings - Classes Routes */}
             <Route path="/school-settings/classes" element={<ClassesList />} />
             <Route path="/school-settings/classes/create" element={<ClassForm />} />
             <Route path="/school-settings/classes/edit/:id" element={<ClassForm />} />
             
-            {/* School Settings - Sections Routes */}
             <Route path="/school-settings/sections" element={<SectionsList />} />
             <Route path="/school-settings/sections/create" element={<SectionForm />} />
             <Route path="/school-settings/sections/edit/:id" element={<SectionForm />} />
             
-            {/* School Settings - Departments Routes */}
             <Route path="/school-settings/departments" element={<DepartmentsList />} />
             
-            {/* School Settings - Subjects Routes */}
             <Route path="/school-settings/subjects" element={<SubjectsList />} />
             <Route path="/school-settings/subjects/create" element={<CreateSubject />} />
             <Route path="/school-settings/subjects/edit/:id" element={<EditSubject />} />
             
-            {/* School Settings - Curricula Routes */}
             <Route path="/school-settings/curricula" element={<CurriculumList />} />
             <Route path="/school-settings/curricula/create" element={<CreateCurriculum />} />
             <Route path="/school-settings/curricula/:id/edit" element={<EditCurriculum />} />
             
-            {/* School Settings - Class-Subject History Routes */}
             <Route path="/school-settings/class-subjects" element={<ClassSubjectHistory />} />
             <Route path="/school-settings/class-subjects-simple" element={<SimpleClassSubjectHistory />} />
             <Route path="/school-settings/class-subjects-test" element={<TestClassSubjectHistory />} />
             
-            {/* School Settings - Houses Routes */}
             <Route path="/school-settings/houses" element={<HousesList />} />
             
             {/* Staff Routes */}
@@ -176,7 +172,7 @@ const App = () => (
             <Route path="/teachers/class-assignments" element={<ClassAssignments />} />
             <Route path="/teachers/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
             
-            {/* Global Curriculum Registry Routes */}
+            {/* Curriculum Routes */}
             <Route path="/curriculum/global" element={<GlobalCurriculumRegistry />} />
             <Route path="/curriculum/school" element={<CurriculumList />} />
             <Route path="/curriculum/progress" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Curriculum Progress Page</h1><p className="text-gray-600 mt-2">Coming soon - curriculum progress tracking features</p></div></Layout>} />
@@ -209,7 +205,11 @@ const App = () => (
             <Route path="/attendance/bulk" element={<AttendanceEntry />} />
             <Route path="/attendance/qr-scanner" element={<QRAttendanceScanner />} />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* Settings and Security */}
+            <Route path="/settings" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Settings Page</h1><p className="text-gray-600 mt-2">Coming soon - settings configuration</p></div></Layout>} />
+            <Route path="/security" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Security Page</h1><p className="text-gray-600 mt-2">Coming soon - security settings</p></div></Layout>} />
+            
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
           <DevSubdomainSelector />

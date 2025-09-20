@@ -4,101 +4,134 @@
 
 @layer base {
   :root {
+    /* Background and text */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
+    /* Cards */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 
+    /* Popovers */
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Siohioma Green Theme */
+    --primary: 155 49% 24%;  /* #1a5f3f */
+    --primary-foreground: 0 0% 100%;
 
+    /* Secondary */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
+    /* Muted */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Orange theme */
+    --accent: 21 91% 55%;  /* #f97316 */
+    --accent-foreground: 0 0% 100%;
 
+    /* Destructive */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Cancel */
     --cancel: 210 20% 90%;
     --cancel-foreground: 222.2 47.4% 11.2%;
 
-    --link: 222.2 100% 50%;
+    /* Link */
+    --link: 155 49% 24%;
     --link-foreground: 210 40% 98%;
 
+    /* Borders and inputs */
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 155 49% 24%;
 
-    --radius: 0.5rem;
+    /* Border radius */
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Sidebar - Dark Green Theme */
+    --sidebar-background: 155 60% 15%;  /* Dark green like Siohioma */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 155 49% 24%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 155 40% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 155 30% 25%;
+    --sidebar-ring: 155 49% 24%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Custom Siohioma colors */
+    --siohioma-primary: 155 49% 24%;      /* #1a5f3f */
+    --siohioma-primary-dark: 155 60% 15%;  /* #0d4b3b */
+    --siohioma-orange: 21 91% 55%;         /* #f97316 */
+    --siohioma-light-green: 82 78% 42%;    /* #84cc16 */
+    --siohioma-yellow: 45 95% 35%;         /* #eab308 */
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart colors */
+    --chart-1: 155 49% 24%;   /* Primary green */
+    --chart-2: 21 91% 55%;    /* Orange */
+    --chart-3: 82 78% 42%;    /* Light green */
+    --chart-4: 45 95% 35%;    /* Yellow */
+    --chart-5: 210 40% 96.1%; /* Light gray */
   }
 
   .dark {
+    /* Background and text - darker for dark mode */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
+    /* Cards */
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
+    /* Popovers */
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    /* Primary - Keep green but adjust for dark mode */
+    --primary: 155 49% 35%;  /* Slightly lighter green */
     --primary-foreground: 222.2 47.4% 11.2%;
 
+    /* Secondary */
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
 
+    /* Muted */
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent */
+    --accent: 21 91% 55%;  /* Keep orange */
+    --accent-foreground: 222.2 47.4% 11.2%;
 
+    /* Destructive */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Cancel */
     --cancel: 217.2 32.6% 17.5%;
     --cancel-foreground: 210 40% 98%;
 
-    --link: 210 100% 70%;
+    /* Link */
+    --link: 155 49% 50%;
     --link-foreground: 222.2 47.4% 11.2%;
 
+    /* Borders */
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 155 49% 35%;
+
+    /* Sidebar - Dark mode adjustments */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 155 49% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 155 49% 35%;
   }
 }
 
@@ -109,5 +142,194 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Typography system */
+  .siohioma-heading-1 {
+    @apply text-siohioma-3xl font-siohioma-bold text-gray-900 tracking-tight;
+  }
+  
+  .siohioma-heading-2 {
+    @apply text-siohioma-2xl font-siohioma-semibold text-gray-900 tracking-tight;
+  }
+  
+  .siohioma-heading-3 {
+    @apply text-siohioma-xl font-siohioma-semibold text-gray-800;
+  }
+  
+  .siohioma-body-lg {
+    @apply text-siohioma-lg font-siohioma-normal text-gray-700 leading-relaxed;
+  }
+  
+  .siohioma-body {
+    @apply text-siohioma-base font-siohioma-normal text-gray-600;
+  }
+  
+  .siohioma-body-sm {
+    @apply text-siohioma-sm font-siohioma-normal text-gray-500;
+  }
+  
+  .siohioma-caption {
+    @apply text-siohioma-xs font-siohioma-medium text-gray-400 uppercase tracking-wide;
+  }
+
+  /* Siohioma-inspired component classes */
+  .siohioma-sidebar {
+    @apply bg-siohioma-primary-dark text-white;
+  }
+  
+  .siohioma-card {
+    @apply bg-white rounded-siohioma-xl shadow-siohioma-sm border border-gray-100;
+  }
+  
+  .siohioma-card-dark {
+    @apply bg-gray-50 rounded-siohioma-xl shadow-siohioma-sm border border-gray-100;
+  }
+  
+  .siohioma-button-primary {
+    @apply bg-siohioma-primary hover:bg-siohioma-primary-dark text-white font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-colors duration-200;
+  }
+  
+  .siohioma-button-secondary {
+    @apply bg-white hover:bg-gray-50 text-siohioma-primary border border-siohioma-primary font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-colors duration-200;
+  }
+  
+  /* Force sidebar text to be white */
+  .siohioma-sidebar * {
+    color: white;
+  }
+  
+  /* Keep email subdued */
+  .siohioma-sidebar .text-white\/60 {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  .siohioma-sidebar .siohioma-nav-item:hover,
+  .siohioma-sidebar .siohioma-nav-item:hover *,
+  .siohioma-sidebar .siohioma-nav-item-active,
+  .siohioma-sidebar .siohioma-nav-item-active *,
+  .siohioma-sidebar .siohioma-nav-subitem:hover,
+  .siohioma-sidebar .siohioma-nav-subitem:hover *,
+  .siohioma-sidebar .siohioma-nav-subitem-active,
+  .siohioma-sidebar .siohioma-nav-subitem-active * {
+    color: hsl(var(--siohioma-light-green)) !important;
+  }
+
+  .siohioma-nav-item {
+    @apply flex items-center gap-3 px-siohioma-md py-3 rounded-siohioma-lg transition-all duration-200 relative;
+    border-left: 4px solid transparent;
+    color: white !important;
+  }
+  
+  .siohioma-nav-item:hover {
+    border-left-color: hsl(var(--siohioma-light-green));
+    color: hsl(var(--siohioma-light-green)) !important;
+  }
+  
+  .siohioma-nav-item-active {
+    @apply flex items-center gap-3 px-siohioma-md py-3 rounded-siohioma-lg font-siohioma-medium relative;
+    border-left: 4px solid hsl(var(--siohioma-light-green));
+    color: hsl(var(--siohioma-light-green)) !important;
+  }
+
+  .siohioma-nav-subitem {
+    @apply flex items-center gap-3 px-siohioma-md py-2 w-full rounded-siohioma-lg transition-all duration-200;
+    border-left: 4px solid transparent;
+    color: white !important;
+  }
+  
+  .siohioma-nav-subitem:hover {
+    border-left-color: hsl(var(--siohioma-light-green));
+    color: hsl(var(--siohioma-light-green)) !important;
+  }
+  
+  .siohioma-nav-subitem-active {
+    @apply flex items-center gap-3 px-siohioma-md py-2 w-full rounded-siohioma-lg transition-all duration-200 font-siohioma-medium;
+    border-left: 4px solid hsl(var(--siohioma-light-green));
+    color: hsl(var(--siohioma-light-green)) !important;
+  }
+
+  .siohioma-metric-card {
+    @apply bg-white rounded-siohioma-xl p-siohioma-xl shadow-siohioma-sm border border-gray-100;
+  }
+  
+  .siohioma-status-completed {
+    @apply bg-siohioma-light-green/20 text-siohioma-light-green text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
+  }
+  
+  .siohioma-status-pending {
+    @apply bg-orange-100 text-orange-800 text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
+  }
+  
+  .siohioma-trend-up {
+    @apply text-siohioma-light-green font-siohioma-medium text-siohioma-sm flex items-center gap-1;
+  }
+  
+  .siohioma-trend-down {
+    @apply text-red-600 font-siohioma-medium text-siohioma-sm flex items-center gap-1;
+  }
+}
+
+@layer utilities {
+  /* Custom utility classes */
+  .text-siohioma-primary {
+    color: hsl(var(--siohioma-primary));
+  }
+  
+  .text-siohioma-orange {
+    color: hsl(var(--siohioma-orange));
+  }
+  
+  .text-siohioma-light-green {
+    color: hsl(var(--siohioma-light-green));
+  }
+  
+  .bg-siohioma-primary {
+    background-color: hsl(var(--siohioma-primary));
+  }
+  
+  .bg-siohioma-primary-dark {
+    background-color: hsl(var(--siohioma-primary-dark));
+  }
+  
+  .bg-siohioma-orange {
+    background-color: hsl(var(--siohioma-orange));
+  }
+  
+  .bg-siohioma-light-green {
+    background-color: hsl(var(--siohioma-light-green));
+  }
+  
+  .border-siohioma-primary {
+    border-color: hsl(var(--siohioma-primary));
+  }
+  
+  .border-siohioma-light-green {
+    border-color: hsl(var(--siohioma-light-green));
+  }
+  
+  .hover\:bg-siohioma-light-green:hover {
+    background-color: hsl(var(--siohioma-light-green));
+  }
+  
+  .hover\:text-siohioma-light-green:hover {
+    color: hsl(var(--siohioma-light-green));
+  }
+
+  /* Shadow utilities */
+  .shadow-siohioma {
+    box-shadow: 0 1px 3px 0 rgba(26, 95, 63, 0.1), 0 1px 2px 0 rgba(26, 95, 63, 0.06);
+  }
+  
+  .shadow-siohioma-lg {
+    box-shadow: 0 10px 15px -3px rgba(26, 95, 63, 0.1), 0 4px 6px -2px rgba(26, 95, 63, 0.05);
+  }
+
+  /* Header specific styles */
+  .siohioma-header {
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    backdrop-filter: blur(10px);
   }
 }

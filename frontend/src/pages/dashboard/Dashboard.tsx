@@ -85,7 +85,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <DashboardComponent />
+          <DashboardComponent user={user} />
         )}
       </div>
     </Layout>
