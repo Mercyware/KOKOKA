@@ -176,7 +176,7 @@ exports.createClassTeacherAssignment = async (req, res) => {
         status: 'ACTIVE'
       },
       include: {
-        teacher: {
+        staff: {
           select: {
             id: true,
             firstName: true,
@@ -287,7 +287,7 @@ exports.updateClassTeacherAssignment = async (req, res) => {
       where: { id },
       data: updateData,
       include: {
-        teacher: {
+        staff: {
           select: {
             id: true,
             firstName: true,
@@ -373,7 +373,7 @@ exports.getClassTeacherAssignment = async (req, res) => {
     const assignment = await prisma.classTeacher.findFirst({
       where: { id, schoolId },
       include: {
-        teacher: {
+        staff: {
           select: {
             id: true,
             firstName: true,
@@ -429,12 +429,12 @@ exports.getClassTeacherAssignment = async (req, res) => {
 // Get assignments by teacher ID
 exports.getTeacherAssignments = async (req, res) => {
   try {
-    const { teacherId } = req.params;
+    const { staffId } = req.params;
     const { academicYearId } = req.query;
     const schoolId = req.school.id;
 
     const whereClause = {
-      teacherId,
+      staffId,
       schoolId,
       ...(academicYearId && { academicYearId })
     };
@@ -495,7 +495,7 @@ exports.getClassAssignments = async (req, res) => {
     const assignments = await prisma.classTeacher.findMany({
       where: whereClause,
       include: {
-        teacher: {
+        staff: {
           select: {
             id: true,
             firstName: true,
@@ -520,7 +520,7 @@ exports.getClassAssignments = async (req, res) => {
       },
       orderBy: [
         { academicYear: { startDate: 'desc' } },
-        { teacher: { firstName: 'asc' } }
+        { staff: { firstName: 'asc' } }
       ]
     });
 
@@ -560,19 +560,19 @@ exports.getAvailableTeachers = async (req, res) => {
         status: 'ACTIVE'
       },
       select: {
-        teacherId: true
+        staffId: true
       }
     });
 
-    const assignedTeacherIds = assignedTeachers.map(assignment => assignment.teacherId);
+    const assignedStaffIds = assignedTeachers.map(assignment => assignment.staffId);
 
-    // Get all active teachers not assigned to this class
-    const availableTeachers = await prisma.teacher.findMany({
+    // Get all active staff not assigned to this class
+    const availableStaff = await prisma.staff.findMany({
       where: {
         schoolId,
         status: 'ACTIVE',
         id: {
-          notIn: assignedTeacherIds
+          notIn: assignedStaffIds
         }
       },
       select: {
@@ -593,7 +593,7 @@ exports.getAvailableTeachers = async (req, res) => {
 
     res.json({
       success: true,
-      data: availableTeachers
+      data: availableStaff
     });
   } catch (error) {
     console.error('Error fetching available teachers:', error);
@@ -610,13 +610,25 @@ exports.getFormData = async (req, res) => {
   try {
     const schoolId = req.school.id;
 
-    const [classes, academicYears, teachers] = await Promise.all([
+    const [classes, sections, academicYears, staff, subjects] = await Promise.all([
       prisma.class.findMany({
         where: { schoolId },
         select: {
           id: true,
           name: true,
           grade: true
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      }),
+      prisma.section.findMany({
+        where: { schoolId },
+        select: {
+          id: true,
+          name: true,
+          capacity: true,
+          description: true
         },
         orderBy: {
           name: 'asc'
@@ -635,7 +647,7 @@ exports.getFormData = async (req, res) => {
           startDate: 'desc'
         }
       }),
-      prisma.teacher.findMany({
+      prisma.staff.findMany({
         where: {
           schoolId,
           status: 'ACTIVE'
@@ -644,10 +656,22 @@ exports.getFormData = async (req, res) => {
           id: true,
           firstName: true,
           lastName: true,
-          employeeId: true
+          employeeId: true,
+          position: true
         },
         orderBy: {
           firstName: 'asc'
+        }
+      }),
+      prisma.subject.findMany({
+        where: { schoolId },
+        select: {
+          id: true,
+          name: true,
+          code: true
+        },
+        orderBy: {
+          name: 'asc'
         }
       })
     ]);
@@ -656,8 +680,10 @@ exports.getFormData = async (req, res) => {
       success: true,
       data: {
         classes,
+        sections,
         academicYears,
-        teachers
+        staff,
+        subjects
       }
     });
   } catch (error) {
@@ -665,6 +691,457 @@ exports.getFormData = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch form data',
+      error: error.message
+    });
+  }
+};
+
+// Bulk create assignments for multiple teachers/classes
+exports.bulkCreateAssignments = async (req, res) => {
+  try {
+    const { assignments, academicYearId } = req.body;
+    const schoolId = req.school.id;
+
+    if (!assignments || !Array.isArray(assignments) || assignments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Assignments array is required and cannot be empty'
+      });
+    }
+
+    if (!academicYearId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Academic year ID is required'
+      });
+    }
+
+    // Validate academic year exists
+    const academicYear = await prisma.academicYear.findFirst({
+      where: { id: academicYearId, schoolId }
+    });
+
+    if (!academicYear) {
+      return res.status(404).json({
+        success: false,
+        message: 'Academic year not found'
+      });
+    }
+
+    const results = {
+      successful: [],
+      failed: [],
+      skipped: []
+    };
+
+    // Process each assignment
+    for (const assignment of assignments) {
+      try {
+        const {
+          staffId,
+          classId,
+          isClassTeacher = true,
+          isSubjectTeacher = false,
+          subjects = [],
+          canMarkAttendance = true,
+          canGradeAssignments = true,
+          canManageClassroom = false,
+          notes
+        } = assignment;
+
+        // Validate required fields
+        if (!staffId || !classId) {
+          results.failed.push({
+            assignment,
+            error: 'Staff ID and Class ID are required'
+          });
+          continue;
+        }
+
+        // Check if assignment already exists
+        const existingAssignment = await prisma.classTeacher.findFirst({
+          where: {
+            staffId,
+            classId,
+            academicYearId,
+            schoolId
+          }
+        });
+
+        if (existingAssignment) {
+          results.skipped.push({
+            assignment,
+            reason: 'Assignment already exists'
+          });
+          continue;
+        }
+
+        // If assigning as class teacher with classroom management, check for conflicts
+        if (isClassTeacher && canManageClassroom) {
+          const existingClassTeacher = await prisma.classTeacher.findFirst({
+            where: {
+              classId,
+              academicYearId,
+              schoolId,
+              isClassTeacher: true,
+              canManageClassroom: true,
+              status: 'ACTIVE'
+            }
+          });
+
+          if (existingClassTeacher) {
+            results.failed.push({
+              assignment,
+              error: 'Class already has a class teacher'
+            });
+            continue;
+          }
+        }
+
+        // Create the assignment
+        const createdAssignment = await prisma.classTeacher.create({
+          data: {
+            staffId,
+            classId,
+            academicYearId,
+            schoolId,
+            isClassTeacher,
+            isSubjectTeacher,
+            subjects: subjects || [],
+            canMarkAttendance,
+            canGradeAssignments,
+            canManageClassroom: isClassTeacher ? canManageClassroom : false,
+            notes,
+            status: 'ACTIVE'
+          },
+          include: {
+            staff: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeId: true
+              }
+            },
+            class: {
+              select: {
+                id: true,
+                name: true,
+                grade: true
+              }
+            }
+          }
+        });
+
+        results.successful.push(createdAssignment);
+
+      } catch (error) {
+        results.failed.push({
+          assignment,
+          error: error.message
+        });
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Bulk assignment completed. ${results.successful.length} successful, ${results.failed.length} failed, ${results.skipped.length} skipped.`,
+      data: results
+    });
+
+  } catch (error) {
+    console.error('Error in bulk create assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process bulk assignments',
+      error: error.message
+    });
+  }
+};
+
+// Copy assignments from one academic year to another
+exports.copyAssignments = async (req, res) => {
+  try {
+    const { fromAcademicYearId, toAcademicYearId, classIds = [] } = req.body;
+    const schoolId = req.school.id;
+
+    if (!fromAcademicYearId || !toAcademicYearId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both source and target academic year IDs are required'
+      });
+    }
+
+    // Validate academic years exist
+    const [fromYear, toYear] = await Promise.all([
+      prisma.academicYear.findFirst({
+        where: { id: fromAcademicYearId, schoolId }
+      }),
+      prisma.academicYear.findFirst({
+        where: { id: toAcademicYearId, schoolId }
+      })
+    ]);
+
+    if (!fromYear || !toYear) {
+      return res.status(404).json({
+        success: false,
+        message: 'One or both academic years not found'
+      });
+    }
+
+    // Build where clause for source assignments
+    const whereClause = {
+      academicYearId: fromAcademicYearId,
+      schoolId,
+      status: 'ACTIVE'
+    };
+
+    if (classIds.length > 0) {
+      whereClause.classId = { in: classIds };
+    }
+
+    // Get assignments from source academic year
+    const sourceAssignments = await prisma.classTeacher.findMany({
+      where: whereClause,
+      include: {
+        staff: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            status: true
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        }
+      }
+    });
+
+    if (sourceAssignments.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No assignments found to copy',
+        data: { copied: 0, skipped: 0, failed: 0 }
+      });
+    }
+
+    const results = {
+      copied: [],
+      skipped: [],
+      failed: []
+    };
+
+    // Copy each assignment
+    for (const assignment of sourceAssignments) {
+      try {
+        // Check if staff is still active
+        if (assignment.staff.status !== 'ACTIVE') {
+          results.skipped.push({
+            assignment: assignment,
+            reason: 'Staff member is no longer active'
+          });
+          continue;
+        }
+
+        // Check if assignment already exists in target year
+        const existingAssignment = await prisma.classTeacher.findFirst({
+          where: {
+            staffId: assignment.staffId,
+            classId: assignment.classId,
+            academicYearId: toAcademicYearId,
+            schoolId
+          }
+        });
+
+        if (existingAssignment) {
+          results.skipped.push({
+            assignment: assignment,
+            reason: 'Assignment already exists in target academic year'
+          });
+          continue;
+        }
+
+        // Create new assignment
+        const newAssignment = await prisma.classTeacher.create({
+          data: {
+            staffId: assignment.staffId,
+            classId: assignment.classId,
+            academicYearId: toAcademicYearId,
+            schoolId,
+            isClassTeacher: assignment.isClassTeacher,
+            isSubjectTeacher: assignment.isSubjectTeacher,
+            subjects: assignment.subjects,
+            canMarkAttendance: assignment.canMarkAttendance,
+            canGradeAssignments: assignment.canGradeAssignments,
+            canManageClassroom: assignment.canManageClassroom,
+            notes: assignment.notes,
+            status: 'ACTIVE'
+          },
+          include: {
+            staff: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeId: true
+              }
+            },
+            class: {
+              select: {
+                id: true,
+                name: true,
+                grade: true
+              }
+            }
+          }
+        });
+
+        results.copied.push(newAssignment);
+
+      } catch (error) {
+        results.failed.push({
+          assignment: assignment,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Assignment copy completed. ${results.copied.length} copied, ${results.skipped.length} skipped, ${results.failed.length} failed.`,
+      data: results
+    });
+
+  } catch (error) {
+    console.error('Error copying assignments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to copy assignments',
+      error: error.message
+    });
+  }
+};
+
+// Get assignment summary for an academic year
+exports.getAssignmentSummary = async (req, res) => {
+  try {
+    const { academicYearId } = req.query;
+    const schoolId = req.school.id;
+
+    if (!academicYearId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Academic year ID is required'
+      });
+    }
+
+    const [
+      totalAssignments,
+      classTeacherAssignments,
+      subjectTeacherAssignments,
+      classesWithoutTeachers,
+      staffWithoutAssignments
+    ] = await Promise.all([
+      // Total assignments
+      prisma.classTeacher.count({
+        where: {
+          academicYearId,
+          schoolId,
+          status: 'ACTIVE'
+        }
+      }),
+
+      // Class teacher assignments
+      prisma.classTeacher.count({
+        where: {
+          academicYearId,
+          schoolId,
+          status: 'ACTIVE',
+          isClassTeacher: true
+        }
+      }),
+
+      // Subject teacher assignments
+      prisma.classTeacher.count({
+        where: {
+          academicYearId,
+          schoolId,
+          status: 'ACTIVE',
+          isSubjectTeacher: true
+        }
+      }),
+
+      // Classes without teachers
+      prisma.class.findMany({
+        where: {
+          schoolId,
+          NOT: {
+            classTeachers: {
+              some: {
+                academicYearId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        },
+        select: {
+          id: true,
+          name: true,
+          grade: true
+        }
+      }),
+
+      // Staff without assignments
+      prisma.staff.findMany({
+        where: {
+          schoolId,
+          status: 'ACTIVE',
+          NOT: {
+            classTeachers: {
+              some: {
+                academicYearId,
+                status: 'ACTIVE'
+              }
+            }
+          }
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          employeeId: true,
+          position: true
+        }
+      })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalAssignments,
+          classTeacherAssignments,
+          subjectTeacherAssignments,
+          unassignedClasses: classesWithoutTeachers.length,
+          unassignedStaff: staffWithoutAssignments.length
+        },
+        details: {
+          classesWithoutTeachers,
+          staffWithoutAssignments
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching assignment summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assignment summary',
       error: error.message
     });
   }

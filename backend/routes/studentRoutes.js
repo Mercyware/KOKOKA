@@ -4,7 +4,7 @@ const multer = require('multer');
 const studentController = require('../controllers/studentController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
-const schoolDataRoutes = require('./schoolDataRoutes');
+const { requireSchool, filterBySchool, scopeToSchool } = require('../middlewares/schoolMiddleware');
 
 // Configure multer for memory storage (we'll process in memory before S3 upload)
 const upload = multer({ 
@@ -23,7 +23,9 @@ const upload = multer({
 });
 
 // All routes require authentication and school context
-router.use(schoolDataRoutes.filterBySchoolMiddleware);
+router.use(authMiddleware.protect);
+router.use(requireSchool);
+router.use(filterBySchool);
 
 /**
  * @swagger
@@ -348,7 +350,7 @@ router.get(
  */
 router.post(
   '/',
-  schoolDataRoutes.scopeToSchoolMiddleware,
+  scopeToSchool,
   roleMiddleware.restrictTo('admin'),
   studentController.createStudent
 );
@@ -1096,7 +1098,7 @@ router.get(
  */
 router.post(
   '/:id/profile-picture',
-  roleMiddleware.restrictTo(['admin', 'teacher']),
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
   upload.single('profilePicture'),
   studentController.uploadProfilePicture
 );
@@ -1163,7 +1165,7 @@ router.post(
  */
 router.delete(
   '/:id/profile-picture',
-  roleMiddleware.restrictTo(['admin', 'teacher']),
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
   studentController.deleteProfilePicture
 );
 

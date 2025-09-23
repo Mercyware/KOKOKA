@@ -8,6 +8,16 @@ const logger = require('../utils/logger');
  */
 exports.extractSchoolFromSubdomain = async (req, res, next) => {
   try {
+    // Debug logging for profile picture upload
+    if (req.url.includes('profile-picture')) {
+      console.log('=== DEBUG: Profile Picture Upload Request ===');
+      console.log('URL:', req.url);
+      console.log('Headers:', req.headers);
+      console.log('X-School-Subdomain header:', req.headers['x-school-subdomain']);
+      console.log('Host header:', req.headers.host);
+      console.log('===========================================');
+    }
+    
     // Check for X-School-Subdomain header first (used by frontend in development)
     const headerSubdomain = req.headers['x-school-subdomain'];
     

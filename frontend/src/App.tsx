@@ -49,6 +49,11 @@ import EditStaff from "./pages/staff/EditStaff";
 import ViewStaff from "./pages/staff/ViewStaff";
 // Staff Subject Assignment Components
 import TeacherSubjectAssignmentsList from "./pages/assignments/staff-subjects/TeacherSubjectAssignmentsList";
+// Class Teacher Assignment Components
+import ClassAssignments from "./pages/assignments/class-teachers/ClassAssignments";
+import AssignmentForm from "./pages/assignments/class-teachers/AssignmentForm";
+import AssignmentHistory from "./pages/assignments/class-teachers/AssignmentHistory";
+import AssignmentDetails from "./pages/assignments/class-teachers/AssignmentDetails";
 // New Curriculum and Grade Management Components
 import GlobalCurriculumRegistry from "./pages/curriculum/GlobalCurriculumRegistry";
 import ReportCards from "./pages/gradebook/ReportCards";
@@ -166,7 +171,15 @@ const App = () => (
             <Route path="/academics/scores/quick-entry" element={<AddScoresQuickEntry />} />
             <Route path="/academics/scores/gradebook" element={<AddScoresGradeBook />} />
             
-            {/* Staff Routes */}
+            {/* Teacher Assignment Routes */}
+            <Route path="/teachers/class-assignments" element={<ClassAssignments />} />
+            <Route path="/teachers/class-assignments/create" element={<AssignmentForm mode="create" />} />
+            <Route path="/teachers/class-assignments/:id" element={<AssignmentDetails />} />
+            <Route path="/teachers/class-assignments/:id/edit" element={<AssignmentForm mode="edit" />} />
+            <Route path="/teachers/class-assignments/history" element={<AssignmentHistory />} />
+            <Route path="/teachers/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
+
+            {/* Legacy Staff Routes */}
             <Route path="/staff/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
             
             {/* Curriculum Routes */}

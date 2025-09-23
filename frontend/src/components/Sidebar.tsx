@@ -110,6 +110,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       submenu: [
         { id: 'teachers-class-assignments', label: 'Class Assignments', icon: School },
         { id: 'teachers-subject-assignments', label: 'Subject Assignments', icon: BookOpenCheck },
+        { id: 'teachers-assignment-history', label: 'Assignment History', icon: FileText },
       ]
     },
 
@@ -230,9 +231,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
     }
   }, [activeTab, menuItems]); // Added proper dependency array
 
-return (
-  <React.Fragment key="sidebar-wrapper">
-    <nav className={`siohioma-sidebar transition-all duration-200 ${folded ? "w-16" : "w-72"} flex flex-col min-h-screen shadow-siohioma-lg`}>
+  return (
+    <React.Fragment key="sidebar-wrapper">
+      <nav className={`siohioma-sidebar transition-all duration-200 ${folded ? "w-16" : "w-72"} flex flex-col min-h-screen shadow-siohioma-lg`}>
     {/* Header / Logo */}
     <div className="flex items-center justify-between px-siohioma-lg py-siohioma-xl border-b border-white/20 flex-shrink-0">
       {!folded && (
@@ -320,6 +321,7 @@ return (
                         if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
                         if (subItem.id === 'teachers-class-assignments') navigate('/teachers/class-assignments');
                         if (subItem.id === 'teachers-subject-assignments') navigate('/teachers/subject-assignments');
+                        if (subItem.id === 'teachers-assignment-history') navigate('/teachers/class-assignments/history');
                         if (subItem.id === 'notifications') navigate('/notifications');
                         if (subItem.id === 'messaging') navigate('/messaging');
                         if (subItem.id === 'gradebook-teacher') navigate('/gradebook/teacher');
@@ -434,10 +436,10 @@ return (
           </div>
         </div>
       )}
-    </div>
-  </nav>
-  </React.Fragment>
-);
+      </div>
+    </nav>
+    </React.Fragment>
+  );
+};
 
-}
 export default Sidebar;

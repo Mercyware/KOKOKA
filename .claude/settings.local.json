@@ -52,7 +52,11 @@
       "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate reset --force)",
       "Bash(start \"http://localhost:8081/students/add\")",
       "Bash(start \"http://localhost:8081/staff/create\")",
-      "Bash(start \"http://localhost:8081/staff\")"
+      "Bash(start \"http://localhost:8081/staff\")",
+      "Bash(start \"http://localhost:8081/teachers/class-assignments\")",
+      "Bash(start \"http://localhost:8081/teachers/class-assignments/create\")",
+      "Bash(start \"http://localhost:8083/teachers/class-assignments\")",
+      "Bash(start \"http://localhost:8083/teachers/class-assignments/create\")"
     ],
     "deny": [],
     "ask": [],

@@ -62,6 +62,28 @@ router.get('/form-data', classTeacherController.getFormData);
 
 /**
  * @swagger
+ * /api/class-teachers/summary:
+ *   get:
+ *     summary: Get assignment summary for an academic year
+ *     description: Get statistics and details about class assignments
+ *     tags: [Class Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: academicYearId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Academic Year ID
+ *     responses:
+ *       200:
+ *         description: Assignment summary with statistics and unassigned entities
+ */
+router.get('/summary', classTeacherController.getAssignmentSummary);
+
+/**
+ * @swagger
  * /api/class-teachers/available-teachers:
  *   get:
  *     summary: Get available teachers for assignment
@@ -90,7 +112,7 @@ router.get('/available-teachers', classTeacherController.getAvailableTeachers);
 
 /**
  * @swagger
- * /api/class-teachers/teacher/{teacherId}:
+ * /api/class-teachers/staff/{staffId}:
  *   get:
  *     summary: Get assignments by teacher
  *     description: Retrieve all class assignments for a specific teacher
@@ -99,11 +121,11 @@ router.get('/available-teachers', classTeacherController.getAvailableTeachers);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: teacherId
+ *         name: staffId
  *         schema:
  *           type: string
  *         required: true
- *         description: Teacher ID
+ *         description: Staff ID
  *       - in: query
  *         name: academicYearId
  *         schema:
@@ -113,7 +135,7 @@ router.get('/available-teachers', classTeacherController.getAvailableTeachers);
  *       200:
  *         description: List of class assignments for the teacher
  */
-router.get('/teacher/:teacherId', classTeacherController.getTeacherAssignments);
+router.get('/staff/:staffId', classTeacherController.getTeacherAssignments);
 
 /**
  * @swagger
@@ -187,9 +209,9 @@ router.use(roleMiddleware.restrictTo('admin', 'principal', 'vice_principal'));
  *               - classId
  *               - academicYearId
  *             properties:
- *               teacherId:
+ *               staffId:
  *                 type: string
- *                 description: Teacher ID
+ *                 description: Staff ID
  *               classId:
  *                 type: string
  *                 description: Class ID
@@ -237,6 +259,105 @@ router.use(roleMiddleware.restrictTo('admin', 'principal', 'vice_principal'));
  *         description: Teacher-class assignment created successfully
  */
 router.post('/', classTeacherController.createClassTeacherAssignment);
+
+/**
+ * @swagger
+ * /api/class-teachers/bulk:
+ *   post:
+ *     summary: Create multiple teacher-class assignments
+ *     description: Bulk assign multiple teachers to classes for an academic year
+ *     tags: [Class Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - assignments
+ *               - academicYearId
+ *             properties:
+ *               academicYearId:
+ *                 type: string
+ *                 description: Academic Year ID for all assignments
+ *               assignments:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - staffId
+ *                     - classId
+ *                   properties:
+ *                     staffId:
+ *                       type: string
+ *                       description: Staff ID
+ *                     classId:
+ *                       type: string
+ *                       description: Class ID
+ *                     isClassTeacher:
+ *                       type: boolean
+ *                       default: true
+ *                     isSubjectTeacher:
+ *                       type: boolean
+ *                       default: false
+ *                     subjects:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     canMarkAttendance:
+ *                       type: boolean
+ *                       default: true
+ *                     canGradeAssignments:
+ *                       type: boolean
+ *                       default: true
+ *                     canManageClassroom:
+ *                       type: boolean
+ *                       default: false
+ *                     notes:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Bulk assignment results with successful, failed, and skipped assignments
+ */
+router.post('/bulk', classTeacherController.bulkCreateAssignments);
+
+/**
+ * @swagger
+ * /api/class-teachers/copy:
+ *   post:
+ *     summary: Copy assignments from one academic year to another
+ *     description: Copy teacher-class assignments from a source academic year to a target academic year
+ *     tags: [Class Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fromAcademicYearId
+ *               - toAcademicYearId
+ *             properties:
+ *               fromAcademicYearId:
+ *                 type: string
+ *                 description: Source Academic Year ID
+ *               toAcademicYearId:
+ *                 type: string
+ *                 description: Target Academic Year ID
+ *               classIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Optional array of class IDs to copy (if empty, copies all)
+ *     responses:
+ *       200:
+ *         description: Copy operation results with copied, skipped, and failed assignments
+ */
+router.post('/copy', classTeacherController.copyAssignments);
 
 /**
  * @swagger

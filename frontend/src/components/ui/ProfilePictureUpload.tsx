@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { getDevSubdomain } from '@/utils/devSubdomain';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Camera, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -141,10 +142,29 @@ export function ProfilePictureUpload({
       const formData = new FormData();
       formData.append('profilePicture', uploadState.selectedFile);
 
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Add school subdomain header if available
+      const subdomain = getDevSubdomain() || 
+        (window.location.hostname.includes('.') && !window.location.hostname.includes('localhost') 
+          ? window.location.hostname.split('.')[0] 
+          : null);
+      
+      if (subdomain) {
+        headers['X-School-Subdomain'] = subdomain;
+      }
+
       const response = await fetch(`/api/students/${studentId}/profile-picture`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers,
       });
 
       if (!response.ok) {
@@ -200,9 +220,28 @@ export function ProfilePictureUpload({
     setUploadState(prev => ({ ...prev, isDeleting: true }));
 
     try {
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('token');
+      const headers: HeadersInit = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Add school subdomain header if available
+      const subdomain = getDevSubdomain() || 
+        (window.location.hostname.includes('.') && !window.location.hostname.includes('localhost') 
+          ? window.location.hostname.split('.')[0] 
+          : null);
+      
+      if (subdomain) {
+        headers['X-School-Subdomain'] = subdomain;
+      }
+
       const response = await fetch(`/api/students/${studentId}/profile-picture`, {
         method: 'DELETE',
         credentials: 'include',
+        headers,
       });
 
       if (!response.ok) {

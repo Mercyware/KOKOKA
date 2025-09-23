@@ -228,14 +228,14 @@ const EditSubject: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="department">Department (Optional)</Label>
                 <Select
-                  value={formData.departmentId || ''}
-                  onValueChange={(value) => handleInputChange('departmentId', value)}
+                  value={formData.departmentId || 'no-department'}
+                  onValueChange={(value) => handleInputChange('departmentId', value === 'no-department' ? null : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a department (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Department</SelectItem>
+                    <SelectItem value="no-department">No Department</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name} ({dept.code})

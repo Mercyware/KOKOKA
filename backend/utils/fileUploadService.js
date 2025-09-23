@@ -113,14 +113,15 @@ class FileUploadService {
         Key: fileKey,
         Body: fileData,
         ContentType: mimeType,
-        ACL: isPublic ? 'public-read' : 'private',
+        // Remove ACL setting as bucket has ACLs disabled
         Metadata: {
           ...metadata,
           originalName: originalName || fileName,
           schoolId,
           entityType: entityType || '',
           entityId: entityId || '',
-          uploadedBy: uploadedById || ''
+          uploadedBy: uploadedById || '',
+          isPublic: isPublic.toString()
         }
       });
 

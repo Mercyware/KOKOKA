@@ -423,14 +423,14 @@ const CreateCurriculum: React.FC = () => {
                 <div>
                   <Label htmlFor="endYear">End Year (Optional)</Label>
                   <Select
-                    value={formData.endYear?.toString() || ''}
-                    onValueChange={(value) => handleInputChange('endYear', value ? parseInt(value) : null)}
+                    value={formData.endYear?.toString() || 'no-end-year'}
+                    onValueChange={(value) => handleInputChange('endYear', value === 'no-end-year' ? null : parseInt(value))}
                   >
                     <SelectTrigger className={errors.endYear ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Select end year" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No end year</SelectItem>
+                      <SelectItem value="no-end-year">No end year</SelectItem>
                       {yearOptions.map((year) => (
                         <SelectItem key={year} value={year.toString()}>
                           {year}

@@ -2,7 +2,7 @@ import api from './api';
 
 export interface ClassTeacherAssignment {
   id: string;
-  teacherId: string;
+  staffId: string;
   classId: string;
   academicYearId: string;
   schoolId: string;
@@ -19,11 +19,12 @@ export interface ClassTeacherAssignment {
   notes?: string;
   createdAt: string;
   updatedAt: string;
-  teacher: {
+  staff: {
     id: string;
     firstName: string;
     lastName: string;
     employeeId: string;
+    position: string;
     user?: {
       email: string;
     };
@@ -43,8 +44,9 @@ export interface ClassTeacherAssignment {
 }
 
 export interface CreateAssignmentData {
-  teacherId: string;
+  staffId: string;
   classId: string;
+  sectionId?: string;
   academicYearId: string;
   isClassTeacher?: boolean;
   isSubjectTeacher?: boolean;
@@ -58,6 +60,7 @@ export interface CreateAssignmentData {
 }
 
 export interface UpdateAssignmentData {
+  sectionId?: string;
   isClassTeacher?: boolean;
   isSubjectTeacher?: boolean;
   subjects?: string[];
@@ -70,11 +73,12 @@ export interface UpdateAssignmentData {
   notes?: string;
 }
 
-export interface Teacher {
+export interface Staff {
   id: string;
   firstName: string;
   lastName: string;
   employeeId: string;
+  position: string;
   user?: {
     email: string;
   };
@@ -84,6 +88,13 @@ export interface Class {
   id: string;
   name: string;
   grade: string;
+}
+
+export interface Section {
+  id: string;
+  name: string;
+  capacity?: number;
+  description?: string;
 }
 
 export interface AcademicYear {
@@ -96,8 +107,41 @@ export interface AcademicYear {
 
 export interface FormData {
   classes: Class[];
+  sections: Section[];
   academicYears: AcademicYear[];
-  teachers: Teacher[];
+  staff: Staff[];
+  subjects: Subject[];
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface BulkAssignmentData {
+  academicYearId: string;
+  assignments: CreateAssignmentData[];
+}
+
+export interface CopyAssignmentData {
+  fromAcademicYearId: string;
+  toAcademicYearId: string;
+  classIds?: string[];
+}
+
+export interface AssignmentSummary {
+  summary: {
+    totalAssignments: number;
+    classTeacherAssignments: number;
+    subjectTeacherAssignments: number;
+    unassignedClasses: number;
+    unassignedStaff: number;
+  };
+  details: {
+    classesWithoutTeachers: Class[];
+    staffWithoutAssignments: Staff[];
+  };
 }
 
 class ClassTeacherService {
@@ -125,8 +169,8 @@ class ClassTeacherService {
     return response.data.data;
   }
 
-  // Get available teachers for assignment
-  async getAvailableTeachers(classId: string, academicYearId: string): Promise<Teacher[]> {
+  // Get available staff for assignment
+  async getAvailableStaff(classId: string, academicYearId: string): Promise<Staff[]> {
     const response = await api.get('/class-teachers/available-teachers', {
       params: { classId, academicYearId }
     });
@@ -139,10 +183,10 @@ class ClassTeacherService {
     return response.data.data;
   }
 
-  // Get assignments by teacher
-  async getTeacherAssignments(teacherId: string, academicYearId?: string) {
+  // Get assignments by staff member
+  async getStaffAssignments(staffId: string, academicYearId?: string) {
     const params = academicYearId ? { academicYearId } : {};
-    const response = await api.get(`/class-teachers/teacher/${teacherId}`, { params });
+    const response = await api.get(`/class-teachers/staff/${staffId}`, { params });
     return response.data;
   }
 
@@ -170,14 +214,14 @@ class ClassTeacherService {
     await api.delete(`/class-teachers/${id}`);
   }
 
-  // Helper method to get full teacher name
-  getTeacherFullName(teacher: Teacher): string {
-    return `${teacher.firstName} ${teacher.lastName}`;
+  // Legacy method for backward compatibility
+  getTeacherFullName(staff: Staff): string {
+    return this.getStaffFullName(staff);
   }
 
-  // Helper method to get teacher display name with employee ID
-  getTeacherDisplayName(teacher: Teacher): string {
-    return `${this.getTeacherFullName(teacher)} (${teacher.employeeId})`;
+  // Legacy method for backward compatibility
+  getTeacherDisplayName(staff: Staff): string {
+    return this.getStaffDisplayName(staff);
   }
 
   // Helper method to get class display name
@@ -225,18 +269,38 @@ class ClassTeacherService {
     return permissions;
   }
 
+  // Bulk create assignments
+  async bulkCreateAssignments(data: BulkAssignmentData) {
+    const response = await api.post('/class-teachers/bulk', data);
+    return response.data;
+  }
+
+  // Copy assignments from one academic year to another
+  async copyAssignments(data: CopyAssignmentData) {
+    const response = await api.post('/class-teachers/copy', data);
+    return response.data;
+  }
+
+  // Get assignment summary for an academic year
+  async getAssignmentSummary(academicYearId: string): Promise<AssignmentSummary> {
+    const response = await api.get('/class-teachers/summary', {
+      params: { academicYearId }
+    });
+    return response.data.data;
+  }
+
   // Helper method to validate assignment data
   validateAssignmentData(data: CreateAssignmentData | UpdateAssignmentData): string[] {
     const errors: string[] = [];
 
-    if ('teacherId' in data && !data.teacherId) {
-      errors.push('Teacher is required');
+    if ('staffId' in data && !data.staffId) {
+      errors.push('Staff member is required');
     }
-    
+
     if ('classId' in data && !data.classId) {
       errors.push('Class is required');
     }
-    
+
     if ('academicYearId' in data && !data.academicYearId) {
       errors.push('Academic Year is required');
     }
@@ -254,6 +318,16 @@ class ClassTeacherService {
     }
 
     return errors;
+  }
+
+  // Helper method to get full staff name
+  getStaffFullName(staff: Staff): string {
+    return `${staff.firstName} ${staff.lastName}`;
+  }
+
+  // Helper method to get staff display name with employee ID
+  getStaffDisplayName(staff: Staff): string {
+    return `${this.getStaffFullName(staff)} (${staff.employeeId})`;
   }
 }
 

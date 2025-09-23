@@ -127,7 +127,7 @@ const ReportCardsPage: React.FC = () => {
   const [terms, setTerms] = useState<Term[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>('');
-  const [selectedTerm, setSelectedTerm] = useState<string>('');
+  const [selectedTerm, setSelectedTerm] = useState<string>('all-terms');
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedTemplateForGeneration, setSelectedTemplateForGeneration] = useState<string>('');
   const [reportType, setReportType] = useState<string>('TERM_REPORT');
@@ -325,7 +325,7 @@ const ReportCardsPage: React.FC = () => {
         body: JSON.stringify({
           templateId: selectedTemplateForGeneration,
           academicYearId: selectedAcademicYear,
-          termId: selectedTerm || undefined,
+          termId: selectedTerm === 'all-terms' ? undefined : selectedTerm,
           reportType,
           reportPeriod
         })
@@ -567,7 +567,7 @@ const ReportCardsPage: React.FC = () => {
                         <SelectValue placeholder="Select term" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Terms</SelectItem>
+                        <SelectItem value="all-terms">All Terms</SelectItem>
                         {terms.map((term) => (
                           <SelectItem key={term.id} value={term.id}>
                             {term.name}
@@ -635,7 +635,7 @@ const ReportCardsPage: React.FC = () => {
                         <SelectValue placeholder="Select term" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Terms</SelectItem>
+                        <SelectItem value="all-terms">All Terms</SelectItem>
                         {terms.map((term) => (
                           <SelectItem key={term.id} value={term.id}>
                             {term.name}

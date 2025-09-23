@@ -230,6 +230,17 @@ export {
 export { Checkbox } from './checkbox';
 export { RadioGroup, RadioGroupItem } from './radio-group';
 export { Switch } from './switch';
+export {
+  Command,
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from './command';
 
 // Data Display
 export {

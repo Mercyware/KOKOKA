@@ -33,10 +33,10 @@ const AddScores = () => {
   const [existingScores, setExistingScores] = useState<Grade[]>([]);
   
   // Selected values
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
-  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState('all-classes');
+  const [selectedSubject, setSelectedSubject] = useState('all-subjects');
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState('all-years');
+  const [selectedTerm, setSelectedTerm] = useState('all-terms');
   const [selectedAssessment, setSelectedAssessment] = useState('');
   
   // Score data
@@ -52,13 +52,18 @@ const AddScores = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedClass || selectedSubject || selectedAcademicYear || selectedTerm) {
+    const hasSpecificClass = selectedClass && selectedClass !== 'all-classes';
+    const hasSpecificSubject = selectedSubject && selectedSubject !== 'all-subjects';
+    const hasSpecificYear = selectedAcademicYear && selectedAcademicYear !== 'all-years';
+    const hasSpecificTerm = selectedTerm && selectedTerm !== 'all-terms';
+    
+    if (hasSpecificClass || hasSpecificSubject || hasSpecificYear || hasSpecificTerm) {
       fetchAssessments();
     }
   }, [selectedClass, selectedSubject, selectedAcademicYear, selectedTerm]);
 
   useEffect(() => {
-    if (selectedClass && selectedAcademicYear) {
+    if (selectedClass && selectedClass !== 'all-classes' && selectedAcademicYear && selectedAcademicYear !== 'all-years') {
       fetchStudents();
     }
   }, [selectedClass, selectedAcademicYear]);
@@ -82,10 +87,10 @@ const AddScores = () => {
   const fetchAssessments = async () => {
     try {
       const params: any = {};
-      if (selectedClass) params.classId = selectedClass;
-      if (selectedSubject) params.subjectId = selectedSubject;
-      if (selectedAcademicYear) params.academicYearId = selectedAcademicYear;
-      if (selectedTerm) params.termId = selectedTerm;
+      if (selectedClass && selectedClass !== 'all-classes') params.classId = selectedClass;
+      if (selectedSubject && selectedSubject !== 'all-subjects') params.subjectId = selectedSubject;
+      if (selectedAcademicYear && selectedAcademicYear !== 'all-years') params.academicYearId = selectedAcademicYear;
+      if (selectedTerm && selectedTerm !== 'all-terms') params.termId = selectedTerm;
 
       const data = await scoreService.getAssessments(params);
       setAssessments(data);
@@ -342,7 +347,7 @@ const AddScores = () => {
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Classes</SelectItem>
+                  <SelectItem value="all-classes">All Classes</SelectItem>
                   {formData?.classes.map((cls) => (
                     <SelectItem key={cls.id} value={cls.id}>
                       {cls.name}
@@ -359,7 +364,7 @@ const AddScores = () => {
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Subjects</SelectItem>
+                  <SelectItem value="all-subjects">All Subjects</SelectItem>
                   {formData?.subjects.map((subject) => (
                     <SelectItem key={subject.id} value={subject.id}>
                       {subject.name}
@@ -376,7 +381,7 @@ const AddScores = () => {
                   <SelectValue placeholder="Select academic year" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Years</SelectItem>
+                  <SelectItem value="all-years">All Years</SelectItem>
                   {formData?.academicYears.map((year) => (
                     <SelectItem key={year.id} value={year.id}>
                       {year.name}
@@ -393,7 +398,7 @@ const AddScores = () => {
                   <SelectValue placeholder="Select term" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Terms</SelectItem>
+                  <SelectItem value="all-terms">All Terms</SelectItem>
                   {formData?.terms.map((term) => (
                     <SelectItem key={term.id} value={term.id}>
                       {term.name}
