@@ -69,7 +69,8 @@ model School {
   studentClassHistory  StudentClassHistory[]
   academicCalendars    AcademicCalendar[]
   classSubjectHistory  ClassSubjectHistory[]
-  
+  subjectAssignments   SubjectAssignment[]
+
   // Notification relationships
   notifications        Notification[]
   notificationTemplates NotificationTemplate[]
@@ -222,6 +223,7 @@ model AcademicYear {
   gradeReports        GradeReport[]
   classSubjectHistory ClassSubjectHistory[]
   classTeachers       ClassTeacher[]
+  subjectAssignments  SubjectAssignment[]
   reportCards         ReportCard[]
   reportBatches       ReportBatch[]
 
@@ -320,6 +322,7 @@ model Subject {
   curriculumSubjects   CurriculumSubject[]
   gradeBooks           GradeBook[]
   classSubjectHistory  ClassSubjectHistory[]
+  subjectAssignments   SubjectAssignment[]
 
   @@unique([schoolId, code])
   @@map("subjects")
@@ -981,6 +984,7 @@ model Section {
   // Relationships
   students            Student[]
   studentClassHistory StudentClassHistory[]
+  subjectAssignments  SubjectAssignment[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1014,6 +1018,7 @@ model Class {
   curriculumProgressTrackers CurriculumProgressTracker[]
   gradeBooks          GradeBook[]
   classSubjectHistory ClassSubjectHistory[]
+  subjectAssignments  SubjectAssignment[]
   reportCards         ReportCard[]
 
   @@unique([schoolId, name])
@@ -1188,6 +1193,7 @@ model Staff {
   // Grade Management relationships (for staff who are teachers)
   gradeBooks       GradeBook[]
   classSubjectHistory ClassSubjectHistory[]
+  subjectAssignments SubjectAssignment[]
 
   @@unique([schoolId, employeeId])
   @@map("staff")
@@ -1420,6 +1426,53 @@ model ClassSubjectHistory {
 
   @@unique([classId, subjectId, academicYearId, term])
   @@map("class_subject_history")
+}
+
+model SubjectAssignment {
+  id String @id @default(uuid())
+
+  // Core relationships
+  staffId        String
+  staff          Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subjectId      String
+  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classId        String
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  schoolId       String
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Optional section assignment (if null, teacher teaches entire class)
+  sectionId      String?
+  section        Section?     @relation(fields: [sectionId], references: [id])
+
+  // Assignment details
+  assignedDate   DateTime     @default(now())
+  startDate      DateTime?
+  endDate        DateTime?
+  status         SubjectAssignmentStatus @default(ACTIVE)
+
+  // Teaching configuration
+  hoursPerWeek   Int?                     // Weekly hours allocated for this assignment
+  term           Int?                     // Specific term (1, 2, 3) if applicable
+  semester       Int?                     // Specific semester if applicable
+
+  // Additional configuration
+  isMainTeacher  Boolean      @default(true)  // Whether this is the main teacher for the subject
+  canGrade       Boolean      @default(true)  // Whether teacher can grade this subject
+  canMarkAttendance Boolean   @default(true)  // Whether teacher can mark attendance
+
+  // Notes and description
+  notes          String?
+  description    String?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([staffId, subjectId, classId, sectionId, academicYearId])
+  @@map("subject_assignments")
 }
 
 model SittingPosition {
@@ -2508,4 +2561,13 @@ enum FileStatus {
   DELETED           // File is marked for deletion
   QUARANTINED       // File is quarantined (security/policy issues)
   PROCESSING        // File is being processed (e.g., being compressed)
+}
+
+enum SubjectAssignmentStatus {
+  ACTIVE            // Assignment is currently active
+  INACTIVE          // Assignment is temporarily inactive
+  COMPLETED         // Assignment has been completed for the academic year
+  TRANSFERRED       // Teacher has been transferred to another assignment
+  CANCELLED         // Assignment has been cancelled
+  SUSPENDED         // Assignment is suspended temporarily
 }

@@ -64,6 +64,7 @@ import AddScores from "./pages/academics/AddScores";
 import AddScoresQuickEntry from "./pages/academics/AddScores.QuickEntry";
 import AddScoresGradeBook from "./pages/academics/AddScores.GradeBook";
 import ScoreEntryModes from "./pages/academics/ScoreEntryModes";
+import SubjectAssignments from "./pages/academics/SubjectAssignments";
 // Attendance Components
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
 import AttendanceEntry from "./pages/attendance/AttendanceEntry";
@@ -178,6 +179,7 @@ const App = () => (
             <Route path="/teachers/class-assignments/:id/edit" element={<AssignmentForm mode="edit" />} />
             <Route path="/teachers/class-assignments/history" element={<AssignmentHistory />} />
             <Route path="/teachers/subject-assignments" element={<TeacherSubjectAssignmentsList />} />
+            <Route path="/academics/subject-assignments" element={<SubjectAssignments />} />
 
             {/* Legacy Staff Routes */}
             <Route path="/staff/subject-assignments" element={<TeacherSubjectAssignmentsList />} />

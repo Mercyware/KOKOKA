@@ -110,7 +110,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       submenu: [
         { id: 'teachers-class-assignments', label: 'Class Assignments', icon: School },
         { id: 'teachers-subject-assignments', label: 'Subject Assignments', icon: BookOpenCheck },
-        { id: 'teachers-assignment-history', label: 'Assignment History', icon: FileText },
       ]
     },
 
@@ -320,7 +319,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'curriculum-global') navigate('/curriculum/global');
                         if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
                         if (subItem.id === 'teachers-class-assignments') navigate('/teachers/class-assignments');
-                        if (subItem.id === 'teachers-subject-assignments') navigate('/teachers/subject-assignments');
+                        if (subItem.id === 'teachers-subject-assignments') navigate('/academics/subject-assignments');
                         if (subItem.id === 'teachers-assignment-history') navigate('/teachers/class-assignments/history');
                         if (subItem.id === 'notifications') navigate('/notifications');
                         if (subItem.id === 'messaging') navigate('/messaging');

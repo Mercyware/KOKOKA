@@ -78,6 +78,10 @@ async function main() {
   console.log('🌍 Creating global curricula...');
   await createGlobalCurricula();
 
+  // 16. Create Subject Assignments
+  console.log('📋 Creating subject assignments...');
+  const subjectAssignments = await createSubjectAssignments(school.id, staff, subjects, classes, sections, academicYear.id);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -91,6 +95,7 @@ async function main() {
 - Assessments: ${assessments.length}
 - Staff: ${staff.length}
 - Students: ${students.length}
+- Subject Assignments: ${subjectAssignments.length}
 
 🔐 Login Credentials:
 - Admin: admin@${school.subdomain}.com / admin123
@@ -1362,6 +1367,143 @@ async function createSampleAssessment(schoolId, targetClass, subject, academicYe
 
   console.log(`✅ Created sample assessment: ${assessment.title} for ${targetClass.name} - ${subject.name}`);
   return assessment;
+}
+
+async function createSubjectAssignments(schoolId, staff, subjects, classes, sections, academicYearId) {
+  console.log('📋 Creating subject assignments...');
+
+  // Define teacher specializations (based on their qualifications)
+  const teacherSpecializations = {
+    'john.doe@greenwood.com': ['MATH', 'SCI'],  // John Doe - Math & Science
+    'mary.johnson@greenwood.com': ['ELA', 'SS'], // Mary Johnson - English & Social Studies
+    'david.wilson@greenwood.com': ['PE', 'ART'], // David Wilson - PE & Art
+    'sarah.brown@greenwood.com': ['MUS', 'ART'], // Sarah Brown - Music & Art
+    'michael.davis@greenwood.com': ['SCI', 'MATH'], // Michael Davis - Science & Math
+    'emily.miller@greenwood.com': ['ELA', 'SS']  // Emily Miller - English & Social Studies
+  };
+
+  const assignments = [];
+
+  // Get teacher users to match with specializations
+  const teacherUsers = await prisma.user.findMany({
+    where: {
+      schoolId,
+      role: 'TEACHER'
+    }
+  });
+
+  for (const cls of classes) {
+    const grade = parseInt(cls.grade);
+
+    // For each class, assign teachers to subjects based on their specializations
+    for (const [teacherEmail, subjectCodes] of Object.entries(teacherSpecializations)) {
+      const teacherUser = teacherUsers.find(u => u.email === teacherEmail);
+      if (!teacherUser) continue;
+
+      const teacher = staff.find(s => s.userId === teacherUser.id);
+      if (!teacher) continue;
+
+      for (const subjectCode of subjectCodes) {
+        const subject = subjects.find(s => s.code === subjectCode);
+        if (!subject) continue;
+
+        // Skip PE and Art for lower grades if needed
+        if ((subjectCode === 'PE' || subjectCode === 'ART') && grade < 3) continue;
+
+        // Create assignment for the entire class
+        try {
+          const assignment = await prisma.subjectAssignment.create({
+            data: {
+              staffId: teacher.id,
+              subjectId: subject.id,
+              classId: cls.id,
+              academicYearId,
+              schoolId,
+              sectionId: null, // Teaching entire class
+              startDate: new Date('2024-09-01'),
+              endDate: new Date('2025-06-30'),
+              status: 'ACTIVE',
+              hoursPerWeek: getHoursPerWeek(subjectCode, grade),
+              isMainTeacher: true,
+              canGrade: true,
+              canMarkAttendance: true,
+              notes: `Assigned to teach ${subject.name} for ${cls.name}`,
+              description: `Academic year assignment for ${subject.name} in ${cls.name}`
+            }
+          });
+
+          assignments.push(assignment);
+          console.log(`✅ Assigned ${teacher.firstName} ${teacher.lastName} to teach ${subject.name} in ${cls.name}`);
+
+        } catch (error) {
+          if (error.code === 'P2002') {
+            // Skip duplicate assignments
+            console.log(`⚠️ Assignment already exists: ${teacher.firstName} ${teacher.lastName} - ${subject.name} - ${cls.name}`);
+          } else {
+            console.error(`❌ Error creating assignment: ${error.message}`);
+          }
+        }
+      }
+    }
+
+    // Also create some section-specific assignments for demonstration
+    // For example, assign a teacher to teach Math to only Section A of Grade 1
+    if (grade === 1) {
+      const sectionA = sections.find(s => s.name === 'A');
+      const mathSubject = subjects.find(s => s.code === 'MATH');
+      const johnDoe = staff.find(s => s.firstName === 'John' && s.lastName === 'Doe');
+
+      if (sectionA && mathSubject && johnDoe) {
+        try {
+          const sectionAssignment = await prisma.subjectAssignment.create({
+            data: {
+              staffId: johnDoe.id,
+              subjectId: mathSubject.id,
+              classId: cls.id,
+              academicYearId,
+              schoolId,
+              sectionId: sectionA.id, // Teaching only Section A
+              startDate: new Date('2024-09-01'),
+              endDate: new Date('2025-06-30'),
+              status: 'ACTIVE',
+              hoursPerWeek: 5,
+              isMainTeacher: false, // This is a section-specific assignment
+              canGrade: true,
+              canMarkAttendance: true,
+              notes: `Section-specific assignment for Math in ${cls.name} Section A`,
+              description: `Teaching Math to Section A students only`
+            }
+          });
+
+          assignments.push(sectionAssignment);
+          console.log(`✅ Created section-specific assignment: ${johnDoe.firstName} ${johnDoe.lastName} - Math - ${cls.name} Section A`);
+
+        } catch (error) {
+          if (error.code !== 'P2002') {
+            console.error(`❌ Error creating section assignment: ${error.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  console.log(`✅ Created ${assignments.length} subject assignments`);
+  return assignments;
+}
+
+function getHoursPerWeek(subjectCode, grade) {
+  // Define hours per week based on subject and grade level
+  const hoursMap = {
+    'MATH': grade <= 2 ? 6 : grade <= 5 ? 5 : 4,
+    'ELA': grade <= 2 ? 6 : grade <= 5 ? 5 : 4,
+    'SCI': grade <= 2 ? 3 : grade <= 5 ? 4 : 4,
+    'SS': grade <= 2 ? 3 : grade <= 5 ? 3 : 4,
+    'PE': 2,
+    'ART': 2,
+    'MUS': 2
+  };
+
+  return hoursMap[subjectCode] || 3;
 }
 
 main()

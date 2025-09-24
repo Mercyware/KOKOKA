@@ -50,6 +50,7 @@ const attendanceRoutes = require('./routes/attendanceRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const scoreRoutes = require('./routes/scoreRoutes');
+const subjectAssignmentRoutes = require('./routes/subjectAssignmentRoutes');
 
 // New Grade Management and Curriculum Routes
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
@@ -199,6 +200,7 @@ app.use('/api/class-subject-history', classSubjectHistoryRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/staff-subject-assignments', staffSubjectAssignmentRoutes);
 app.use('/api/class-teachers', classTeacherRoutes);
+app.use('/api/subject-assignments', subjectAssignmentRoutes);
 // app.use('/api/sitting-positions', sittingPositionRoutes);
 app.use('/api/houses', houseRoutes);
 app.use('/api/sections', sectionRoutes);

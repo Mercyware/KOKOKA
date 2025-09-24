@@ -56,7 +56,14 @@
       "Bash(start \"http://localhost:8081/teachers/class-assignments\")",
       "Bash(start \"http://localhost:8081/teachers/class-assignments/create\")",
       "Bash(start \"http://localhost:8083/teachers/class-assignments\")",
-      "Bash(start \"http://localhost:8083/teachers/class-assignments/create\")"
+      "Bash(start \"http://localhost:8083/teachers/class-assignments/create\")",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate dev --name add_subject_assignments)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma db push --accept-data-loss)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" REDIS_URL=\"redis://:redis_password@localhost:6380\" npm run db:seed)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" REDIS_URL=\"redis://:redis_password@localhost:6380\" PORT=5005 npm run dev)",
+      "Bash(start \"http://localhost:8081/academics/subject-assignments\")",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [],
