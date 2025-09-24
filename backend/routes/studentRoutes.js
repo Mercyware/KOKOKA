@@ -6,6 +6,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 const { requireSchool, filterBySchool, scopeToSchool } = require('../middlewares/schoolMiddleware');
 
+// Import attendance dashboard controller for enhanced student attendance
+const { getStudentDetailedAttendance } = require('../controllers/attendanceDashboardController');
+
 // Configure multer for memory storage (we'll process in memory before S3 upload)
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -538,7 +541,7 @@ router.delete(
 router.get(
   '/:id/attendance',
   roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher']),
-  studentController.getStudentAttendance
+  getStudentDetailedAttendance
 );
 
 /**

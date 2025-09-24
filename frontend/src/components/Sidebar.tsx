@@ -120,9 +120,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { id: 'attendance-entry', label: 'Take Attendance', icon: UserCheck },
         { id: 'attendance-dashboard', label: 'Dashboard', icon: BarChart3 },
-        { id: 'attendance-reports', label: 'Reports', icon: FileText },
+        { id: 'attendance-take', label: 'Take Attendance', icon: UserCheck },
+        { id: 'attendance-reports', label: 'Reports & Analytics', icon: FileText },
         { id: 'attendance-qr', label: 'QR Scanner', icon: QrCode },
       ]
     },
@@ -332,8 +332,8 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'students-list') navigate('/students');
                         if (subItem.id === 'students-add') navigate('/students/add');
                         if (subItem.id === 'scores-add') navigate('/scores-add');
-                        if (subItem.id === 'attendance-dashboard') navigate('/attendance/dashboard');
-                        if (subItem.id === 'attendance-entry') navigate('/attendance/entry');
+                        if (subItem.id === 'attendance-dashboard') navigate('/attendance');
+                        if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
                         if (subItem.id === 'attendance-qr') navigate('/attendance/qr-scanner');
                         if (subItem.id === 'analytics-overview') navigate('/analytics/overview');

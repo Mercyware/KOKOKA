@@ -18,6 +18,13 @@ const {
   geofenceCheckIn,
   correctAttendance
 } = require('../controllers/attendanceController');
+
+// Import new dashboard controllers
+const {
+  getAttendanceDashboardNew,
+  getAttendanceReportsDashboard,
+  getStudentDetailedAttendance
+} = require('../controllers/attendanceDashboardController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
 
@@ -42,11 +49,19 @@ router.route('/stats')
 router.route('/dashboard')
   .get(authorize('admin', 'teacher', 'principal'), getAttendanceDashboard);
 
+// New enhanced dashboard
+router.route('/dashboard-new')
+  .get(authorize('admin', 'teacher', 'principal'), getAttendanceDashboardNew);
+
 router.route('/qr-code/:classId')
   .get(authorize('admin', 'teacher'), generateQRCode);
 
 router.route('/reports')
   .get(authorize('admin', 'teacher', 'principal'), getAttendanceReports);
+
+// New enhanced reports dashboard
+router.route('/reports/dashboard')
+  .get(authorize('admin', 'teacher', 'principal'), getAttendanceReportsDashboard);
 
 router.route('/reports/generate')
   .post(authorize('admin', 'teacher', 'principal'), generateAttendanceReport);

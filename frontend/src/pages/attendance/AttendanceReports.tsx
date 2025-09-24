@@ -25,6 +25,8 @@ import {
   Eye
 } from 'lucide-react';
 import api from '../../services/api';
+import { getAllClasses } from '../../services/classService';
+import { Class } from '../../types';
 import {
   PieChart,
   Pie,
@@ -93,12 +95,25 @@ const AttendanceReports: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(7);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [trendData, setTrendData] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchClasses();
   }, [selectedPeriod, selectedClass]);
+
+  const fetchClasses = async () => {
+    try {
+      const response = await getAllClasses();
+      if (response.success) {
+        setClasses(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -227,18 +242,42 @@ const AttendanceReports: React.FC = () => {
         </div>
       </div>
 
-      {/* Period Filter */}
-      <div className="flex space-x-2">
-        {[7, 14, 30].map((period) => (
-          <Button
-            key={period}
-            intent={selectedPeriod === period ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setSelectedPeriod(period)}
-          >
-            Last {period} days
-          </Button>
-        ))}
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Period Filter */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Period</Label>
+          <div className="flex space-x-2">
+            {[7, 14, 30].map((period) => (
+              <Button
+                key={period}
+                intent={selectedPeriod === period ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => setSelectedPeriod(period)}
+              >
+                Last {period} days
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Class Filter */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Class Filter</Label>
+          <Select value={selectedClass || "all"} onValueChange={(value) => setSelectedClass(value === "all" ? null : value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map((classItem) => (
+                <SelectItem key={classItem.id} value={classItem.id}>
+                  {classItem.name} {classItem.grade ? `- ${classItem.grade}` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Overview Cards */}

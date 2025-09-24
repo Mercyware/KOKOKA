@@ -66,10 +66,11 @@ import AddScoresGradeBook from "./pages/academics/AddScores.GradeBook";
 import ScoreEntryModes from "./pages/academics/ScoreEntryModes";
 import SubjectAssignments from "./pages/academics/SubjectAssignments";
 // Attendance Components
-import AttendanceDashboard from "./pages/attendance/AttendanceDashboard";
-import AttendanceEntry from "./pages/attendance/AttendanceEntry";
-import AttendanceReports from "./pages/attendance/AttendanceReports";
+import AttendanceDashboard from "./pages/attendance/AttendanceDashboardNew";
+import AttendanceEntry from "./pages/attendance/TakeAttendanceNew";
+import AttendanceReports from "./pages/attendance/AttendanceReportsNew";
 import QRAttendanceScanner from "./pages/attendance/QRAttendanceScanner";
+import StudentAttendanceView from "./pages/attendance/StudentAttendanceView";
 
 const queryClient = new QueryClient();
 
@@ -199,7 +200,7 @@ const App = () => (
             <Route path="/gradebook/parent" element={<ParentDashboard />} />
             <Route path="/parent/students/:studentId/grades" element={<StudentGradeView />} />
             <Route path="/parent/students/:studentId/progress" element={<StudentGradeView />} />
-            <Route path="/parent/students/:studentId/attendance" element={<div>Student Attendance Page</div>} />
+            <Route path="/parent/students/:studentId/attendance" element={<StudentAttendanceView />} />
             
             {/* Student Grade Views */}
             <Route path="/student/grades" element={<StudentGradeView />} />
@@ -210,9 +211,11 @@ const App = () => (
             <Route path="/attendance/dashboard" element={<AttendanceDashboard />} />
             <Route path="/attendance/entry" element={<AttendanceEntry />} />
             <Route path="/attendance/take" element={<AttendanceEntry />} />
+            <Route path="/attendance/take/:classId" element={<AttendanceEntry />} />
             <Route path="/attendance/reports" element={<AttendanceReports />} />
             <Route path="/attendance/bulk" element={<AttendanceEntry />} />
             <Route path="/attendance/qr-scanner" element={<QRAttendanceScanner />} />
+            <Route path="/students/:studentId/attendance" element={<StudentAttendanceView />} />
             
             {/* Settings and Security */}
             <Route path="/settings" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Settings Page</h1><p className="text-gray-600 mt-2">Coming soon - settings configuration</p></div></Layout>} />
