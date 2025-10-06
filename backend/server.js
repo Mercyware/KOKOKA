@@ -44,7 +44,7 @@ const houseRoutes = require('./routes/houseRoutes');
 const sectionRoutes = require('./routes/sectionRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
-// const assessmentRoutes = require('./routes/assessmentRoutes');
+const assessmentRoutes = require('./routes/assessmentRoutes');
 // const gradeRoutes = require('./routes/gradeRoutes');
 // const documentRoutes = require('./routes/documentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
@@ -54,7 +54,6 @@ const subjectAssignmentRoutes = require('./routes/subjectAssignmentRoutes');
 
 // New Grade Management and Curriculum Routes
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
-const gradeBookRoutes = require('./routes/gradeBookRoutes');
 const reportCardRoutes = require('./routes/reportCardRoutes');
 const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 
@@ -206,7 +205,7 @@ app.use('/api/houses', houseRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
-// app.use('/api/assessments', assessmentRoutes);
+app.use('/api/assessments', assessmentRoutes);
 // app.use('/api/grades', gradeRoutes);
 // app.use('/api/documents', documentRoutes);
 // app.use('/api/parent-portal', parentPortalRoutes);
@@ -219,7 +218,6 @@ app.use('/api/scores', scoreRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);
-app.use('/api/gradebooks', gradeBookRoutes);
 app.use('/api/report-cards', reportCardRoutes);
 app.use('/api/parent', parentDashboardRoutes);
 

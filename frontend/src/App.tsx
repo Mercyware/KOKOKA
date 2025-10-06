@@ -65,6 +65,9 @@ import AddScoresQuickEntry from "./pages/academics/AddScores.QuickEntry";
 import AddScoresGradeBook from "./pages/academics/AddScores.GradeBook";
 import ScoreEntryModes from "./pages/academics/ScoreEntryModes";
 import SubjectAssignments from "./pages/academics/SubjectAssignments";
+// Assessment Components
+import AssessmentsList from "./pages/assessments/AssessmentsList";
+import CreateAssessment from "./pages/assessments/CreateAssessment";
 // Attendance Components
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboardNew";
 import AttendanceEntry from "./pages/attendance/TakeAttendanceNew";
@@ -172,7 +175,11 @@ const App = () => (
             <Route path="/academics/scores/standard" element={<AddScores />} />
             <Route path="/academics/scores/quick-entry" element={<AddScoresQuickEntry />} />
             <Route path="/academics/scores/gradebook" element={<AddScoresGradeBook />} />
-            
+
+            {/* Assessment Routes */}
+            <Route path="/assessments" element={<AssessmentsList />} />
+            <Route path="/assessments/create" element={<CreateAssessment />} />
+
             {/* Teacher Assignment Routes */}
             <Route path="/teachers/class-assignments" element={<ClassAssignments />} />
             <Route path="/teachers/class-assignments/create" element={<AssignmentForm mode="create" />} />
@@ -193,7 +200,6 @@ const App = () => (
             
             {/* Grade Book Routes */}
             <Route path="/gradebook/reports" element={<ReportCards />} />
-            <Route path="/gradebook/analytics" element={<div>Grade Analytics Page</div>} />
             
             {/* Parent Dashboard Routes */}
             <Route path="/parent/dashboard" element={<ParentDashboard />} />

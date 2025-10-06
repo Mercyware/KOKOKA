@@ -60,7 +60,7 @@ exports.getAssessments = async (req, res) => {
         term: {
           select: { id: true, name: true }
         },
-        teacher: {
+        staff: {
           select: { id: true, firstName: true, lastName: true }
         }
       },
@@ -823,6 +823,117 @@ exports.getFormData = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch form data',
+      error: error.message
+    });
+  }
+};
+
+// Create Assessment
+exports.createAssessment = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      type,
+      totalMarks,
+      passingMarks,
+      weight,
+      duration,
+      scheduledDate,
+      dueDate,
+      instructions,
+      subjectId,
+      classId,
+      academicYearId,
+      termId,
+      status
+    } = req.body;
+
+    // Validation
+    if (!title || !type || !totalMarks || !subjectId || !classId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Required fields: title, type, totalMarks, subjectId, classId'
+      });
+    }
+
+    // Ensure academicYearId is provided (required by schema)
+    if (!academicYearId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Academic Year is required for creating assessments'
+      });
+    }
+
+    // Get school from middleware
+    const schoolId = req.school.id;
+
+    // Use current user ID for createdBy, but need a valid staffId
+    const userId = req.user.id;
+
+    // Find any staff member in the school to use as staffId (required by schema)
+    const staff = await prisma.staff.findFirst({
+      where: { schoolId }
+    });
+
+    if (!staff) {
+      return res.status(500).json({
+        success: false,
+        message: 'No staff members found in the school'
+      });
+    }
+
+    // Create assessment
+    const assessment = await prisma.assessment.create({
+      data: {
+        title,
+        description,
+        type: type.toUpperCase(),
+        totalMarks: parseInt(totalMarks),
+        passingMarks: passingMarks ? parseInt(passingMarks) : Math.floor(parseInt(totalMarks) * 0.4),
+        weight: weight ? parseFloat(weight) : 1.0,
+        duration: duration ? parseInt(duration) : null,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        instructions,
+        status: status ? status.toUpperCase() : 'DRAFT',
+        schoolId,
+        subjectId,
+        classId,
+        academicYearId: academicYearId,
+        termId: (termId && termId.trim() !== '' && termId !== '1') ? termId : null,
+        staffId: staff.id,
+        createdById: userId
+      },
+      include: {
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            grade: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Assessment created successfully',
+      data: assessment
+    });
+
+  } catch (error) {
+    console.error('Error creating assessment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create assessment',
       error: error.message
     });
   }

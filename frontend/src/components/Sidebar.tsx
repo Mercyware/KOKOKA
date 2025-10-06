@@ -43,6 +43,7 @@ import {
   Eye,
   MessageSquare,
   Library,
+  CheckSquare,
   QrCode,
   Shield,
   Bell,
@@ -133,9 +134,19 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       hasSubmenu: true,
       submenu: [
         { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
-        { id: 'gradebook-entry', label: 'Grade Entry', icon: Trophy },
-        { id: 'gradebook-teacher', label: 'Grade Books', icon: BookOpen },
         { id: 'gradebook-reports', label: 'Reports', icon: FileText },
+      ]
+    },
+    {
+      id: 'assessments',
+      label: 'Assessments',
+      icon: CheckSquare,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'assessments-list', label: 'All Assessments', icon: ClipboardList },
+        { id: 'assessments-create', label: 'Create Assessment', icon: Plus },
+        { id: 'assessments-schedule', label: 'Schedule Assessment', icon: Calendar },
+        { id: 'assessments-reports', label: 'Assessment Reports', icon: FileText },
       ]
     },
     {
@@ -332,6 +343,10 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'students-list') navigate('/students');
                         if (subItem.id === 'students-add') navigate('/students/add');
                         if (subItem.id === 'scores-add') navigate('/scores-add');
+                        if (subItem.id === 'assessments-list') navigate('/assessments');
+                        if (subItem.id === 'assessments-create') navigate('/assessments/create');
+                        if (subItem.id === 'assessments-schedule') navigate('/assessments/schedule');
+                        if (subItem.id === 'assessments-reports') navigate('/assessments/reports');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');
                         if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
