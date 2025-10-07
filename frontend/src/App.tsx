@@ -68,6 +68,9 @@ import SubjectAssignments from "./pages/academics/SubjectAssignments";
 // Assessment Components
 import AssessmentsList from "./pages/assessments/AssessmentsList";
 import CreateAssessment from "./pages/assessments/CreateAssessment";
+// Behavioral Assessment Components
+import BehavioralAssessmentsList from "./pages/behavioral/BehavioralAssessmentsList";
+import RecordBehavioralScores from "./pages/behavioral/RecordBehavioralScores";
 // Attendance Components
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboardNew";
 import AttendanceEntry from "./pages/attendance/TakeAttendanceNew";
@@ -179,6 +182,10 @@ const App = () => (
             {/* Assessment Routes */}
             <Route path="/assessments" element={<AssessmentsList />} />
             <Route path="/assessments/create" element={<CreateAssessment />} />
+
+            {/* Behavioral Assessment Routes */}
+            <Route path="/behavioral/record" element={<RecordBehavioralScores />} />
+            <Route path="/behavioral-assessments" element={<BehavioralAssessmentsList />} />
 
             {/* Teacher Assignment Routes */}
             <Route path="/teachers/class-assignments" element={<ClassAssignments />} />

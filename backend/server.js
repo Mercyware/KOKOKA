@@ -51,6 +51,7 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const scoreRoutes = require('./routes/scoreRoutes');
 const subjectAssignmentRoutes = require('./routes/subjectAssignmentRoutes');
+const behavioralAssessmentRoutes = require('./routes/behavioralAssessmentRoutes');
 
 // New Grade Management and Curriculum Routes
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
@@ -215,6 +216,9 @@ app.use('/api/notifications', notificationRoutes);
 
 // Score Management Routes
 app.use('/api/scores', scoreRoutes);
+
+// Behavioral Assessment Routes
+app.use('/api/behavioral-assessments', behavioralAssessmentRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);

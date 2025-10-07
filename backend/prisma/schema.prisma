@@ -2185,6 +2185,8 @@ enum AssessmentType {
   PRACTICAL
   ORAL
   CONTINUOUS_ASSESSMENT
+  AFFECTIVE
+  PSYCHOMOTOR
 }
 
 enum AssessmentStatus {

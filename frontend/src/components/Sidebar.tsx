@@ -135,6 +135,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       submenu: [
         { id: 'scores-add', label: 'Add Scores', icon: ClipboardList },
         { id: 'gradebook-reports', label: 'Reports', icon: FileText },
+        { id: 'behavioral-record-gradebook', label: 'Behavioral Scores', icon: Target },
       ]
     },
     {
@@ -343,6 +344,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'students-list') navigate('/students');
                         if (subItem.id === 'students-add') navigate('/students/add');
                         if (subItem.id === 'scores-add') navigate('/scores-add');
+                        if (subItem.id === 'behavioral-record') navigate('/behavioral/record');
+                        if (subItem.id === 'behavioral-record-gradebook') navigate('/behavioral/record');
+                        if (subItem.id === 'behavioral-assessments') navigate('/behavioral-assessments');
                         if (subItem.id === 'assessments-list') navigate('/assessments');
                         if (subItem.id === 'assessments-create') navigate('/assessments/create');
                         if (subItem.id === 'assessments-schedule') navigate('/assessments/schedule');

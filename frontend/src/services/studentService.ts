@@ -67,6 +67,24 @@ export const getStudentById = async (id: string): Promise<{ success: boolean; st
   }
 };
 
+// Get students by class ID
+export const getStudentsByClass = async (classId: string): Promise<ApiResponse<any>> => {
+  try {
+    const response = await api.get(`/students`, { params: { classId } });
+    return {
+      success: true,
+      data: response.data.students || response.data.data || response.data || []
+    };
+  } catch (error) {
+    console.error('Error fetching students by class:', error);
+    return {
+      success: false,
+      data: [],
+      message: 'Failed to fetch students'
+    };
+  }
+};
+
 // Create new student
 export const createStudent = async (studentData: Partial<Student>): Promise<ApiResponse<Student>> => {
   try {
