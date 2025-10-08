@@ -90,6 +90,22 @@ async function main() {
   console.log('📖 Creating book issues...');
   const bookIssues = await createBookIssues(school.id, books, students, users);
 
+  // 19. Create Hostels
+  console.log('🏠 Creating hostels...');
+  const hostels = await createHostels(school.id, staff);
+
+  // 20. Create Hostel Rooms
+  console.log('🚪 Creating hostel rooms...');
+  const rooms = await createHostelRooms(school.id, hostels);
+
+  // 21. Create Hostel Allocations
+  console.log('🛏️ Creating hostel allocations...');
+  const allocations = await createHostelAllocations(school.id, hostels, rooms, students, academicYear.id);
+
+  // 22. Create Hostel Fees
+  console.log('💰 Creating hostel fees...');
+  const hostelFees = await createHostelFees(school.id, hostels, academicYear.id);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -97,7 +113,7 @@ async function main() {
 - Users: ${users.length} (including admin, teachers, students, parents)
 - Academic Year: ${academicYear.name}
 - Houses: ${houses.length}
-- Sections: ${sections.length}  
+- Sections: ${sections.length}
 - Classes: ${classes.length}
 - Subjects: ${subjects.length}
 - Assessments: ${assessments.length}
@@ -106,6 +122,10 @@ async function main() {
 - Subject Assignments: ${subjectAssignments.length}
 - Library Books: ${books.length}
 - Book Issues: ${bookIssues.length}
+- Hostels: ${hostels.length}
+- Hostel Rooms: ${rooms.length}
+- Hostel Allocations: ${allocations.length}
+- Hostel Fees: ${hostelFees.length}
 
 🔐 Login Credentials:
 - Admin: admin@${school.subdomain}.com / admin123
@@ -1809,6 +1829,264 @@ async function createBookIssues(schoolId, books, students, users) {
 
   console.log(`✅ Created ${bookIssues.length} book issues`);
   return bookIssues;
+}
+
+async function createHostels(schoolId, staff) {
+  const hostels = [];
+
+  // Get some staff members to be wardens
+  const wardens = staff.slice(0, 3); // Use first 3 staff members as wardens
+
+  const hostelData = [
+    {
+      name: "Phoenix Boys Hostel",
+      hostelType: 'BOYS',
+      gender: 'MALE',
+      address: "123 Campus Road, Near Main Building",
+      capacity: 100,
+      wardenId: wardens[0]?.id || null,
+      facilities: ['WiFi', 'Laundry', 'Study Room', 'Recreation Room', 'Library', 'Gym'],
+      description: "Modern boys hostel with excellent facilities and 24/7 security",
+      status: 'ACTIVE'
+    },
+    {
+      name: "Athena Girls Hostel",
+      hostelType: 'GIRLS',
+      gender: 'FEMALE',
+      address: "456 Garden Avenue, East Campus",
+      capacity: 80,
+      wardenId: wardens[1]?.id || null,
+      facilities: ['WiFi', 'Laundry', 'Study Room', 'Common Room', 'Library', 'Yoga Room'],
+      description: "Safe and secure girls hostel with all modern amenities",
+      status: 'ACTIVE'
+    },
+    {
+      name: "International Mixed Hostel",
+      hostelType: 'MIXED',
+      gender: null,
+      address: "789 University Drive, South Campus",
+      capacity: 60,
+      wardenId: wardens[2]?.id || null,
+      facilities: ['WiFi', 'Laundry', 'Study Room', 'Common Room', 'Library', 'Cafeteria'],
+      description: "Mixed hostel for international students with separate floors for boys and girls",
+      status: 'ACTIVE'
+    }
+  ];
+
+  for (const data of hostelData) {
+    try {
+      const hostel = await prisma.hostel.create({
+        data: {
+          ...data,
+          schoolId,
+          availableBeds: data.capacity,
+          occupiedBeds: 0
+        }
+      });
+      hostels.push(hostel);
+      console.log(`✅ Created hostel: ${hostel.name}`);
+    } catch (error) {
+      console.error(`❌ Error creating hostel ${data.name}:`, error.message);
+    }
+  }
+
+  console.log(`✅ Created ${hostels.length} hostels`);
+  return hostels;
+}
+
+async function createHostelRooms(schoolId, hostels) {
+  const rooms = [];
+
+  for (const hostel of hostels) {
+    // Create different types of rooms for each hostel
+    const roomConfigs = [
+      { count: 10, type: 'SINGLE', capacity: 1, floor: 1, facilities: ['AC', 'Attached Bathroom', 'Study Table', 'Wardrobe'] },
+      { count: 15, type: 'DOUBLE', capacity: 2, floor: 1, facilities: ['AC', 'Attached Bathroom', 'Study Table', 'Wardrobe'] },
+      { count: 10, type: 'DOUBLE', capacity: 2, floor: 2, facilities: ['Study Table', 'Wardrobe', 'Shared Bathroom'] },
+      { count: 8, type: 'TRIPLE', capacity: 3, floor: 2, facilities: ['Fan', 'Study Table', 'Wardrobe', 'Shared Bathroom'] },
+      { count: 5, type: 'QUAD', capacity: 4, floor: 3, facilities: ['Fan', 'Study Table', 'Wardrobe', 'Shared Bathroom'] }
+    ];
+
+    let roomCounter = 1;
+    for (const config of roomConfigs) {
+      for (let i = 0; i < config.count; i++) {
+        const roomNumber = `${config.floor}${String(roomCounter).padStart(2, '0')}`;
+        try {
+          const room = await prisma.hostelRoom.create({
+            data: {
+              roomNumber,
+              floor: config.floor,
+              roomType: config.type,
+              capacity: config.capacity,
+              availableBeds: config.capacity,
+              occupiedBeds: 0,
+              facilities: config.facilities,
+              status: 'AVAILABLE',
+              hostelId: hostel.id
+            }
+          });
+          rooms.push(room);
+          roomCounter++;
+        } catch (error) {
+          console.error(`❌ Error creating room ${roomNumber} in ${hostel.name}:`, error.message);
+        }
+      }
+    }
+    console.log(`✅ Created rooms for ${hostel.name}`);
+  }
+
+  console.log(`✅ Created ${rooms.length} hostel rooms`);
+  return rooms;
+}
+
+async function createHostelAllocations(schoolId, hostels, rooms, students, academicYearId) {
+  const allocations = [];
+
+  // Allocate some students to hostels
+  // Boys to Phoenix hostel, Girls to Athena hostel
+  const boysHostel = hostels.find(h => h.hostelType === 'BOYS');
+  const girlsHostel = hostels.find(h => h.hostelType === 'GIRLS');
+  const mixedHostel = hostels.find(h => h.hostelType === 'MIXED');
+
+  // Allocate 10 male students to boys hostel
+  const maleStudents = students.filter(s => s.gender === 'MALE').slice(0, 10);
+  const boysRooms = rooms.filter(r => r.hostelId === boysHostel?.id && r.availableBeds > 0);
+
+  let roomIndex = 0;
+  for (const student of maleStudents) {
+    if (roomIndex >= boysRooms.length) break;
+    const room = boysRooms[roomIndex];
+
+    try {
+      const allocation = await prisma.hostelAllocation.create({
+        data: {
+          studentId: student.id,
+          hostelId: boysHostel.id,
+          roomId: room.id,
+          bedNumber: `B${room.occupiedBeds + 1}`,
+          startDate: new Date('2024-09-01'),
+          endDate: new Date('2025-06-30'),
+          status: 'ACTIVE',
+          academicYearId,
+          schoolId
+        }
+      });
+
+      // Update room occupancy
+      await prisma.hostelRoom.update({
+        where: { id: room.id },
+        data: {
+          occupiedBeds: room.occupiedBeds + 1,
+          availableBeds: room.availableBeds - 1,
+          status: room.availableBeds - 1 === 0 ? 'OCCUPIED' : 'AVAILABLE'
+        }
+      });
+
+      allocations.push(allocation);
+      console.log(`✅ Allocated ${student.firstName} ${student.lastName} to ${boysHostel.name} - Room ${room.roomNumber}`);
+
+      if (room.occupiedBeds + 1 >= room.capacity) roomIndex++;
+    } catch (error) {
+      console.error(`❌ Error allocating student:`, error.message);
+    }
+  }
+
+  // Allocate 8 female students to girls hostel
+  const femaleStudents = students.filter(s => s.gender === 'FEMALE').slice(0, 8);
+  const girlsRooms = rooms.filter(r => r.hostelId === girlsHostel?.id && r.availableBeds > 0);
+
+  roomIndex = 0;
+  for (const student of femaleStudents) {
+    if (roomIndex >= girlsRooms.length) break;
+    const room = girlsRooms[roomIndex];
+
+    try {
+      const allocation = await prisma.hostelAllocation.create({
+        data: {
+          studentId: student.id,
+          hostelId: girlsHostel.id,
+          roomId: room.id,
+          bedNumber: `B${room.occupiedBeds + 1}`,
+          startDate: new Date('2024-09-01'),
+          endDate: new Date('2025-06-30'),
+          status: 'ACTIVE',
+          academicYearId,
+          schoolId
+        }
+      });
+
+      // Update room occupancy
+      await prisma.hostelRoom.update({
+        where: { id: room.id },
+        data: {
+          occupiedBeds: room.occupiedBeds + 1,
+          availableBeds: room.availableBeds - 1,
+          status: room.availableBeds - 1 === 0 ? 'OCCUPIED' : 'AVAILABLE'
+        }
+      });
+
+      allocations.push(allocation);
+      console.log(`✅ Allocated ${student.firstName} ${student.lastName} to ${girlsHostel.name} - Room ${room.roomNumber}`);
+
+      if (room.occupiedBeds + 1 >= room.capacity) roomIndex++;
+    } catch (error) {
+      console.error(`❌ Error allocating student:`, error.message);
+    }
+  }
+
+  // Update hostel occupancy
+  for (const hostel of hostels) {
+    const hostelAllocations = allocations.filter(a => a.hostelId === hostel.id);
+    await prisma.hostel.update({
+      where: { id: hostel.id },
+      data: {
+        occupiedBeds: hostelAllocations.length,
+        availableBeds: hostel.capacity - hostelAllocations.length
+      }
+    });
+  }
+
+  console.log(`✅ Created ${allocations.length} hostel allocations`);
+  return allocations;
+}
+
+async function createHostelFees(schoolId, hostels, academicYearId) {
+  const fees = [];
+
+  const roomTypeFees = {
+    SINGLE: { amount: 5000, securityDeposit: 1000, admissionFee: 500 },
+    DOUBLE: { amount: 3500, securityDeposit: 750, admissionFee: 500 },
+    TRIPLE: { amount: 2500, securityDeposit: 500, admissionFee: 500 },
+    QUAD: { amount: 2000, securityDeposit: 500, admissionFee: 500 },
+    DORMITORY: { amount: 1500, securityDeposit: 300, admissionFee: 500 }
+  };
+
+  for (const hostel of hostels) {
+    for (const [roomType, feeData] of Object.entries(roomTypeFees)) {
+      try {
+        const fee = await prisma.hostelFee.create({
+          data: {
+            hostelId: hostel.id,
+            roomType,
+            amount: feeData.amount,
+            frequency: 'MONTHLY',
+            securityDeposit: feeData.securityDeposit,
+            admissionFee: feeData.admissionFee,
+            status: 'ACTIVE',
+            academicYearId,
+            schoolId
+          }
+        });
+        fees.push(fee);
+      } catch (error) {
+        console.error(`❌ Error creating hostel fee:`, error.message);
+      }
+    }
+    console.log(`✅ Created fees for ${hostel.name}`);
+  }
+
+  console.log(`✅ Created ${fees.length} hostel fees`);
+  return fees;
 }
 
 function getHoursPerWeek(subjectCode, grade) {

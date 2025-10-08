@@ -84,6 +84,12 @@ import BooksList from "./pages/library/BooksList";
 import AddBook from "./pages/library/AddBook";
 import BookIssues from "./pages/library/BookIssues";
 import ViewBook from "./pages/library/ViewBook";
+// Hostel Components
+import HostelList from "./pages/hostel/HostelList";
+import AddHostel from "./pages/hostel/AddHostel";
+import RoomManagement from "./pages/hostel/RoomManagement";
+import Allocations from "./pages/hostel/Allocations";
+import HostelFees from "./pages/hostel/HostelFees";
 
 const queryClient = new QueryClient();
 
@@ -246,6 +252,14 @@ const App = () => (
             <Route path="/library/books/:bookId" element={<ViewBook />} />
             <Route path="/library/add-book" element={<AddBook />} />
             <Route path="/library/issues" element={<BookIssues />} />
+
+            {/* Hostel Routes */}
+            <Route path="/hostel" element={<HostelList />} />
+            <Route path="/hostel/add" element={<AddHostel />} />
+            <Route path="/hostel/edit/:id" element={<AddHostel />} />
+            <Route path="/hostel/rooms" element={<RoomManagement />} />
+            <Route path="/hostel/allocations" element={<Allocations />} />
+            <Route path="/hostel/fees" element={<HostelFees />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

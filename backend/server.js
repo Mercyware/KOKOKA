@@ -61,6 +61,9 @@ const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 // Library Management Routes
 const libraryRoutes = require('./routes/libraryRoutes');
 
+// Hostel Management Routes
+const hostelRoutes = require('./routes/hostelRoutes');
+
 // Import utilities
 const logger = require('./utils/logger');
 
@@ -225,6 +228,9 @@ app.use('/api/behavioral-assessments', behavioralAssessmentRoutes);
 
 // Library Management Routes
 app.use('/api/library', libraryRoutes);
+
+// Hostel Management Routes
+app.use('/api/hostel', hostelRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);

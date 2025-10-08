@@ -90,6 +90,11 @@ model School {
   books                Book[]
   bookIssues           BookIssue[]
 
+  // Hostel relationships
+  hostels              Hostel[]
+  hostelAllocations    HostelAllocation[]
+  hostelFees           HostelFee[]
+
   @@map("schools")
 }
 
@@ -234,6 +239,8 @@ model AcademicYear {
   subjectAssignments  SubjectAssignment[]
   reportCards         ReportCard[]
   reportBatches       ReportBatch[]
+  hostelAllocations   HostelAllocation[]
+  hostelFees          HostelFee[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -1154,6 +1161,9 @@ model Student {
   // Library relationships
   bookIssues           BookIssue[]
 
+  // Hostel relationships
+  hostelAllocations    HostelAllocation[]
+
   @@unique([schoolId, admissionNumber])
   @@map("students")
 }
@@ -1205,6 +1215,9 @@ model Staff {
   gradeBooks       GradeBook[]
   classSubjectHistory ClassSubjectHistory[]
   subjectAssignments SubjectAssignment[]
+
+  // Hostel Management (for staff who are wardens)
+  hostels          Hostel[]
 
   @@unique([schoolId, employeeId])
   @@map("staff")
@@ -2207,6 +2220,148 @@ model BookIssue {
 }
 
 // ================================
+// HOSTEL MANAGEMENT
+// ================================
+
+model Hostel {
+  id              String    @id @default(uuid())
+  name            String
+  hostelType      HostelType
+  gender          Gender?   // null for mixed hostels
+  address         String?
+  capacity        Int       @default(0)
+  occupiedBeds    Int       @default(0)
+  availableBeds   Int       @default(0)
+
+  // Warden (Staff Member)
+  wardenId        String?
+  warden          Staff?    @relation(fields: [wardenId], references: [id], onDelete: SetNull)
+
+  // Facilities
+  facilities      String[]  // WiFi, Laundry, Gym, etc.
+  description     String?
+
+  // Status
+  status          HostelStatus @default(ACTIVE)
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  rooms           HostelRoom[]
+  allocations     HostelAllocation[]
+  fees            HostelFee[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("hostels")
+}
+
+model HostelRoom {
+  id              String    @id @default(uuid())
+  roomNumber      String
+  floor           Int?
+  roomType        RoomType  @default(STANDARD)
+  capacity        Int       @default(1)
+  occupiedBeds    Int       @default(0)
+  availableBeds   Int       @default(0)
+
+  // Room Details
+  facilities      String[]  // AC, Attached Bathroom, Balcony, etc.
+
+  // Status
+  status          RoomStatus @default(AVAILABLE)
+
+  // Relationships
+  hostelId        String
+  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  allocations     HostelAllocation[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([hostelId, roomNumber])
+  @@map("hostel_rooms")
+}
+
+model HostelAllocation {
+  id              String    @id @default(uuid())
+
+  // Student
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Hostel and Room
+  hostelId        String
+  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  roomId          String
+  room            HostelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  bedNumber       String?
+
+  // Allocation Period
+  startDate       DateTime
+  endDate         DateTime?
+
+  // Status
+  status          AllocationStatus @default(ACTIVE)
+
+  // Academic Context
+  academicYearId  String?
+  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  // Additional Info
+  remarks         String?
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("hostel_allocations")
+}
+
+model HostelFee {
+  id              String    @id @default(uuid())
+
+  // Hostel
+  hostelId        String
+  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+
+  // Fee Structure
+  roomType        RoomType
+  amount          Float
+  currency        String    @default("KES")
+  frequency       FeeFrequency @default(MONTHLY)
+  description     String?
+
+  // Academic Context
+  academicYearId  String?
+  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  // Additional Charges
+  securityDeposit Float?
+  admissionFee    Float?
+
+  // Status
+  status          HostelStatus @default(ACTIVE)
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("hostel_fees")
+}
+
+// ================================
 // ENUMS
 // ================================
 
@@ -2741,4 +2896,53 @@ enum BookCondition {
   FAIR
   POOR
   DAMAGED
+}
+
+// Hostel Management Enums
+enum HostelType {
+  BOYS
+  GIRLS
+  MIXED
+  STAFF
+}
+
+enum HostelStatus {
+  ACTIVE
+  INACTIVE
+  UNDER_MAINTENANCE
+  CLOSED
+}
+
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TRIPLE
+  QUAD
+  DORMITORY
+  STANDARD
+  DELUXE
+  SUITE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  UNDER_MAINTENANCE
+  RESERVED
+}
+
+enum AllocationStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  CANCELLED
+  TRANSFERRED
+}
+
+enum FeeFrequency {
+  MONTHLY
+  QUARTERLY
+  SEMESTERLY
+  YEARLY
+  ONE_TIME
 }

@@ -47,6 +47,8 @@ import {
   QrCode,
   Shield,
   Bell,
+  DoorOpen,
+  DollarSign,
   Send,
   UserPlus,
   BookOpenCheck,
@@ -159,6 +161,18 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'library-books', label: 'All Books', icon: BookOpen },
         { id: 'library-add-book', label: 'Add Book', icon: Plus },
         { id: 'library-issues', label: 'Book Issues', icon: ClipboardList },
+      ]
+    },
+    {
+      id: 'hostel',
+      label: 'Hostel',
+      icon: Home,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'hostel-list', label: 'All Hostels', icon: Home },
+        { id: 'hostel-rooms', label: 'Rooms', icon: DoorOpen },
+        { id: 'hostel-allocations', label: 'Allocations', icon: UserCheck },
+        { id: 'hostel-fees', label: 'Fees', icon: DollarSign },
       ]
     },
     {
@@ -365,6 +379,10 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'library-books') navigate('/library/books');
                         if (subItem.id === 'library-add-book') navigate('/library/add-book');
                         if (subItem.id === 'library-issues') navigate('/library/issues');
+                        if (subItem.id === 'hostel-list') navigate('/hostel');
+                        if (subItem.id === 'hostel-rooms') navigate('/hostel/rooms');
+                        if (subItem.id === 'hostel-allocations') navigate('/hostel/allocations');
+                        if (subItem.id === 'hostel-fees') navigate('/hostel/fees');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');
                         if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
