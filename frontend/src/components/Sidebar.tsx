@@ -151,6 +151,17 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
     {
+      id: 'library',
+      label: 'Library',
+      icon: BookOpen,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'library-books', label: 'All Books', icon: BookOpen },
+        { id: 'library-add-book', label: 'Add Book', icon: Plus },
+        { id: 'library-issues', label: 'Book Issues', icon: ClipboardList },
+      ]
+    },
+    {
       id: 'curriculum',
       label: 'Curriculum',
       icon: Library,
@@ -351,6 +362,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'assessments-create') navigate('/assessments/create');
                         if (subItem.id === 'assessments-schedule') navigate('/assessments/schedule');
                         if (subItem.id === 'assessments-reports') navigate('/assessments/reports');
+                        if (subItem.id === 'library-books') navigate('/library/books');
+                        if (subItem.id === 'library-add-book') navigate('/library/add-book');
+                        if (subItem.id === 'library-issues') navigate('/library/issues');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');
                         if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');

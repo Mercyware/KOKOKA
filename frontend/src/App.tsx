@@ -77,6 +77,13 @@ import AttendanceEntry from "./pages/attendance/TakeAttendanceNew";
 import AttendanceReports from "./pages/attendance/AttendanceReportsNew";
 import QRAttendanceScanner from "./pages/attendance/QRAttendanceScanner";
 import StudentAttendanceView from "./pages/attendance/StudentAttendanceView";
+// Settings Components
+import SchoolSettings from "./pages/settings/SchoolSettings";
+// Library Components
+import BooksList from "./pages/library/BooksList";
+import AddBook from "./pages/library/AddBook";
+import BookIssues from "./pages/library/BookIssues";
+import ViewBook from "./pages/library/ViewBook";
 
 const queryClient = new QueryClient();
 
@@ -231,9 +238,15 @@ const App = () => (
             <Route path="/students/:studentId/attendance" element={<StudentAttendanceView />} />
             
             {/* Settings and Security */}
-            <Route path="/settings" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Settings Page</h1><p className="text-gray-600 mt-2">Coming soon - settings configuration</p></div></Layout>} />
+            <Route path="/settings" element={<SchoolSettings />} />
             <Route path="/security" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Security Page</h1><p className="text-gray-600 mt-2">Coming soon - security settings</p></div></Layout>} />
-            
+
+            {/* Library Routes */}
+            <Route path="/library/books" element={<BooksList />} />
+            <Route path="/library/books/:bookId" element={<ViewBook />} />
+            <Route path="/library/add-book" element={<AddBook />} />
+            <Route path="/library/issues" element={<BookIssues />} />
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -605,24 +605,24 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
 
       {/* Search and Filter Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="space-y-4">
           {/* Search Bar */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5 pointer-events-none" />
             <Input
               placeholder="Search students by name, email, or admission number..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-11 h-11 text-base border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+              className="pl-12 h-12 text-base border-gray-300 dark:border-gray-600 focus:border-siohioma-primary focus:ring-2 focus:ring-siohioma-primary/20 dark:focus:ring-siohioma-primary/30"
             />
           </div>
 
-          {/* Filter and View Controls */}
-          <div className="flex items-center gap-3">
+          {/* Filter Controls Row */}
+          <div className="flex flex-wrap items-center gap-3">
             {/* Quick Filters */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               <Select value={filters.status || 'all'} onValueChange={(value) => applyFilter('status', value === 'all' ? undefined : value)}>
-                <SelectTrigger className="w-32 h-11">
+                <SelectTrigger className="h-10 min-w-[140px] border-gray-300 dark:border-gray-600">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -634,7 +634,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
               </Select>
 
               <Select value={filters.class || 'all'} onValueChange={(value) => applyFilter('class', value === 'all' ? undefined : value)}>
-                <SelectTrigger className="w-32 h-11">
+                <SelectTrigger className="h-10 min-w-[140px] border-gray-300 dark:border-gray-600">
                   <SelectValue placeholder="Class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -648,22 +648,24 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
               </Select>
             </div>
 
-            {/* Advanced Filter Button */}
-            <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  intent={activeFilters.length > 0 ? "primary" : "secondary"}
-                  className="h-11 min-w-[100px]"
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  {activeFilters.length > 0 && (
-                    <Badge variant="secondary" className="ml-2 bg-white text-blue-600 dark:bg-blue-900 dark:text-blue-200">
-                      {activeFilters.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
+            {/* Right Side Controls */}
+            <div className="flex items-center gap-3">
+              {/* Advanced Filter Button */}
+              <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`h-10 gap-2 ${activeFilters.length > 0 ? 'border-siohioma-primary text-siohioma-primary' : ''}`}
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Advanced</span>
+                    {activeFilters.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 bg-siohioma-primary text-white">
+                        {activeFilters.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
                 <PopoverContent className="w-96 max-h-[80vh] overflow-y-auto">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -1128,34 +1130,35 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                   </div>
                 </PopoverContent>
               </Popover>
-            {/* View Toggle */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('cards')}
-                className={`h-9 px-4 rounded-md transition-all ${
-                  viewMode === 'cards'
-                    ? 'bg-white dark:bg-gray-800 shadow-sm text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                Cards
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={`h-9 px-4 rounded-md transition-all ${
-                  viewMode === 'table'
-                    ? 'bg-white dark:bg-gray-800 shadow-sm text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-              >
-                <List className="h-4 w-4 mr-2" />
-                Table
-              </Button>
+
+              {/* View Toggle */}
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden h-10">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                    viewMode === 'cards'
+                      ? 'bg-siohioma-primary text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  title="Card View"
+                >
+                  <Grid className="h-4 w-4" />
+                  <span className="hidden md:inline">Cards</span>
+                </button>
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                    viewMode === 'table'
+                      ? 'bg-siohioma-primary text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                  title="Table View"
+                >
+                  <List className="h-4 w-4" />
+                  <span className="hidden md:inline">Table</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

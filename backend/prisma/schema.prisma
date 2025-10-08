@@ -86,6 +86,10 @@ model School {
   // File Management relationships
   files                FileManager[]
 
+  // Library relationships
+  books                Book[]
+  bookIssues           BookIssue[]
+
   @@map("schools")
 }
 
@@ -145,6 +149,10 @@ model User {
 
   // File Management relationships
   uploadedFiles            FileManager[]
+
+  // Library relationships
+  issuedBooks              BookIssue[] @relation("IssuedBy")
+  returnedBooks            BookIssue[] @relation("ReturnedBy")
 
   @@map("users")
 }
@@ -1143,6 +1151,9 @@ model Student {
   reportCards          ReportCard[]
   parentGradeAccess    ParentGradeAccess[]
 
+  // Library relationships
+  bookIssues           BookIssue[]
+
   @@unique([schoolId, admissionNumber])
   @@map("students")
 }
@@ -2086,6 +2097,116 @@ model WebhookDeliveryLog {
 }
 
 // ================================
+// LIBRARY MANAGEMENT
+// ================================
+
+model Book {
+  id              String    @id @default(uuid())
+  title           String
+  author          String
+  isbn            String?   @unique
+  publisher       String?
+  publishedDate   DateTime?
+  edition         String?
+  language        String    @default("English")
+
+  // Book Type - Physical or Digital
+  bookType        BookType  @default(PHYSICAL)
+
+  // E-book specific fields
+  fileUrl         String?   // URL to the e-book file (PDF, EPUB, etc.)
+  fileFormat      String?   // PDF, EPUB, MOBI, etc.
+  fileSize        Int?      // File size in bytes
+  downloadLimit   Int?      // Max downloads per issue (null = unlimited)
+
+  // Book Details
+  category        BookCategory @default(GENERAL)
+  subcategory     String?
+  description     String?
+  pages           Int?
+  coverImageUrl   String?
+
+  // Inventory Management (for physical books)
+  totalCopies     Int       @default(1)
+  availableCopies Int       @default(1)
+  issuedCopies    Int       @default(0)
+  location        String?   // Shelf location
+  rackNumber      String?
+
+  // Pricing and Procurement
+  price           Float?
+  procuredDate    DateTime?
+  vendor          String?
+
+  // Status
+  status          BookStatus @default(AVAILABLE)
+
+  // Metadata
+  tags            String[]
+  subjects        String[]  // Related subjects
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Issue History
+  bookIssues      BookIssue[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("books")
+}
+
+model BookIssue {
+  id              String    @id @default(uuid())
+
+  // Book and Student
+  bookId          String
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Issue Details
+  issueDate       DateTime  @default(now())
+  dueDate         DateTime
+  returnDate      DateTime?
+
+  // Status
+  status          IssueStatus @default(ISSUED)
+
+  // Fine Management
+  fine            Float     @default(0.0)
+  fineReason      String?
+  finePaid        Boolean   @default(false)
+
+  // E-book specific tracking
+  downloadCount   Int       @default(0)
+  lastDownloadAt  DateTime?
+  accessExpiry    DateTime? // For time-limited e-book access
+
+  // Notes
+  issueNotes      String?
+  returnNotes     String?
+  condition       BookCondition? // Condition at return (for physical books)
+
+  // Issued/Returned By
+  issuedById      String
+  issuedBy        User      @relation("IssuedBy", fields: [issuedById], references: [id])
+  returnedById    String?
+  returnedBy      User?     @relation("ReturnedBy", fields: [returnedById], references: [id])
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("book_issues")
+}
+
+// ================================
 // ENUMS
 // ================================
 
@@ -2572,4 +2693,52 @@ enum SubjectAssignmentStatus {
   TRANSFERRED       // Teacher has been transferred to another assignment
   CANCELLED         // Assignment has been cancelled
   SUSPENDED         // Assignment is suspended temporarily
+}
+
+// Library Management Enums
+enum BookType {
+  PHYSICAL    // Physical book that needs to be returned
+  EBOOK       // Digital book that can be downloaded
+  BOTH        // Hybrid - available in both formats
+}
+
+enum BookCategory {
+  FICTION
+  NON_FICTION
+  SCIENCE
+  MATHEMATICS
+  HISTORY
+  GEOGRAPHY
+  LITERATURE
+  BIOGRAPHY
+  REFERENCE
+  TEXTBOOK
+  MAGAZINE
+  JOURNAL
+  GENERAL
+}
+
+enum BookStatus {
+  AVAILABLE
+  ISSUED
+  LOST
+  DAMAGED
+  UNDER_REPAIR
+  WITHDRAWN
+}
+
+enum IssueStatus {
+  ISSUED
+  RETURNED
+  OVERDUE
+  LOST
+  DAMAGED
+}
+
+enum BookCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
 }

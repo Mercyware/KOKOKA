@@ -82,6 +82,14 @@ async function main() {
   console.log('📋 Creating subject assignments...');
   const subjectAssignments = await createSubjectAssignments(school.id, staff, subjects, classes, sections, academicYear.id);
 
+  // 17. Create Library Books
+  console.log('📚 Creating library books...');
+  const books = await createLibraryBooks(school.id, subjects);
+
+  // 18. Create Book Issues
+  console.log('📖 Creating book issues...');
+  const bookIssues = await createBookIssues(school.id, books, students, users);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -96,6 +104,8 @@ async function main() {
 - Staff: ${staff.length}
 - Students: ${students.length}
 - Subject Assignments: ${subjectAssignments.length}
+- Library Books: ${books.length}
+- Book Issues: ${bookIssues.length}
 
 🔐 Login Credentials:
 - Admin: admin@${school.subdomain}.com / admin123
@@ -1489,6 +1499,316 @@ async function createSubjectAssignments(schoolId, staff, subjects, classes, sect
 
   console.log(`✅ Created ${assignments.length} subject assignments`);
   return assignments;
+}
+
+async function createLibraryBooks(schoolId, subjects) {
+  const books = [];
+
+  const libraryBooks = [
+    // Physical Books
+    {
+      title: "The Great Gatsby",
+      author: "F. Scott Fitzgerald",
+      isbn: "978-0743273565",
+      publisher: "Scribner",
+      publishedDate: new Date('1925-04-10'),
+      bookType: 'PHYSICAL',
+      category: 'LITERATURE',
+      description: "A classic American novel set in the Jazz Age",
+      pages: 180,
+      totalCopies: 5,
+      availableCopies: 5,
+      location: "Shelf A1",
+      rackNumber: "A1-001",
+      price: 15.99,
+      subjects: ['LITERATURE', 'ENGLISH'],
+      tags: ['Classic', 'Fiction', 'American Literature']
+    },
+    {
+      title: "Introduction to Algorithms",
+      author: "Thomas H. Cormen",
+      isbn: "978-0262033848",
+      publisher: "MIT Press",
+      publishedDate: new Date('2009-07-31'),
+      bookType: 'PHYSICAL',
+      category: 'TEXTBOOK',
+      description: "Comprehensive guide to algorithms and data structures",
+      pages: 1312,
+      totalCopies: 3,
+      availableCopies: 3,
+      location: "Shelf C3",
+      rackNumber: "C3-015",
+      price: 89.99,
+      subjects: ['COMPUTER SCIENCE'],
+      tags: ['Computer Science', 'Algorithms', 'Textbook']
+    },
+    {
+      title: "A Brief History of Time",
+      author: "Stephen Hawking",
+      isbn: "978-0553380163",
+      publisher: "Bantam",
+      publishedDate: new Date('1988-04-01'),
+      bookType: 'PHYSICAL',
+      category: 'SCIENCE',
+      description: "Exploration of the universe from the Big Bang to black holes",
+      pages: 256,
+      totalCopies: 4,
+      availableCopies: 4,
+      location: "Shelf B2",
+      rackNumber: "B2-020",
+      price: 18.99,
+      subjects: ['PHYSICS', 'SCIENCE'],
+      tags: ['Science', 'Physics', 'Cosmology']
+    },
+    {
+      title: "Pride and Prejudice",
+      author: "Jane Austen",
+      isbn: "978-0141439518",
+      publisher: "Penguin Classics",
+      publishedDate: new Date('1813-01-28'),
+      bookType: 'PHYSICAL',
+      category: 'LITERATURE',
+      description: "Classic romance and social commentary",
+      pages: 432,
+      totalCopies: 6,
+      availableCopies: 6,
+      location: "Shelf A2",
+      rackNumber: "A2-005",
+      price: 12.99,
+      subjects: ['LITERATURE', 'ENGLISH'],
+      tags: ['Classic', 'Romance', 'British Literature']
+    },
+    // E-books
+    {
+      title: "Digital Mathematics: An Interactive Guide",
+      author: "Dr. Sarah Chen",
+      isbn: "978-1234567890",
+      publisher: "Digital Press",
+      publishedDate: new Date('2023-01-15'),
+      bookType: 'EBOOK',
+      category: 'MATHEMATICS',
+      description: "Interactive e-book for learning mathematics with digital exercises",
+      pages: 450,
+      fileUrl: "https://storage.example.com/ebooks/digital-mathematics.pdf",
+      fileFormat: "PDF",
+      fileSize: 15728640, // 15 MB
+      downloadLimit: null, // Unlimited downloads
+      totalCopies: 1,
+      availableCopies: 1,
+      price: 29.99,
+      subjects: ['MATHEMATICS'],
+      tags: ['E-book', 'Mathematics', 'Interactive', 'Digital']
+    },
+    {
+      title: "Modern Physics: A Digital Journey",
+      author: "Prof. Michael Roberts",
+      isbn: "978-9876543210",
+      publisher: "Science Digital",
+      publishedDate: new Date('2023-06-01'),
+      bookType: 'EBOOK',
+      category: 'SCIENCE',
+      description: "Comprehensive digital physics textbook with multimedia content",
+      pages: 680,
+      fileUrl: "https://storage.example.com/ebooks/modern-physics.epub",
+      fileFormat: "EPUB",
+      fileSize: 25165824, // 24 MB
+      downloadLimit: 5, // Max 5 downloads per issue
+      totalCopies: 1,
+      availableCopies: 1,
+      price: 39.99,
+      subjects: ['PHYSICS', 'SCIENCE'],
+      tags: ['E-book', 'Physics', 'Science', 'Digital', 'Multimedia']
+    },
+    {
+      title: "World Literature Collection",
+      author: "Various Authors",
+      isbn: "978-5555555555",
+      publisher: "Global Books Digital",
+      publishedDate: new Date('2024-01-01'),
+      bookType: 'EBOOK',
+      category: 'LITERATURE',
+      description: "A comprehensive collection of world literature classics in digital format",
+      pages: 2400,
+      fileUrl: "https://storage.example.com/ebooks/world-literature.pdf",
+      fileFormat: "PDF",
+      fileSize: 35651584, // 34 MB
+      downloadLimit: null,
+      totalCopies: 1,
+      availableCopies: 1,
+      price: 49.99,
+      subjects: ['LITERATURE'],
+      tags: ['E-book', 'Literature', 'Classics', 'Collection']
+    },
+    {
+      title: "Calculus: Early Transcendentals",
+      author: "James Stewart",
+      isbn: "978-1285741550",
+      publisher: "Cengage Learning",
+      publishedDate: new Date('2015-01-01'),
+      bookType: 'PHYSICAL',
+      category: 'MATHEMATICS',
+      description: "Comprehensive calculus textbook",
+      pages: 1368,
+      totalCopies: 10,
+      availableCopies: 10,
+      location: "Shelf C1",
+      rackNumber: "C1-010",
+      price: 299.99,
+      subjects: ['MATHEMATICS'],
+      tags: ['Mathematics', 'Calculus', 'Textbook']
+    },
+    {
+      title: "World History: Patterns of Interaction",
+      author: "Roger B. Beck",
+      isbn: "978-0547491127",
+      publisher: "Houghton Mifflin Harcourt",
+      publishedDate: new Date('2012-01-01'),
+      bookType: 'PHYSICAL',
+      category: 'HISTORY',
+      description: "Comprehensive world history textbook",
+      pages: 1120,
+      totalCopies: 8,
+      availableCopies: 8,
+      location: "Shelf D1",
+      rackNumber: "D1-008",
+      price: 79.99,
+      subjects: ['HISTORY', 'SOCIAL STUDIES'],
+      tags: ['History', 'World History', 'Textbook']
+    },
+    {
+      title: "The Oxford English Dictionary",
+      author: "Oxford University Press",
+      isbn: "978-0198611868",
+      publisher: "Oxford University Press",
+      publishedDate: new Date('1989-03-30'),
+      bookType: 'PHYSICAL',
+      category: 'REFERENCE',
+      description: "Comprehensive English language dictionary",
+      pages: 21730,
+      totalCopies: 2,
+      availableCopies: 2,
+      location: "Reference Section",
+      rackNumber: "REF-001",
+      price: 1200.00,
+      subjects: ['ENGLISH', 'REFERENCE'],
+      tags: ['Reference', 'Dictionary', 'English']
+    },
+    {
+      title: "National Geographic Magazine - January 2024",
+      author: "National Geographic Society",
+      isbn: null,
+      publisher: "National Geographic",
+      publishedDate: new Date('2024-01-01'),
+      bookType: 'PHYSICAL',
+      category: 'MAGAZINE',
+      description: "Monthly geography and science magazine",
+      pages: 128,
+      totalCopies: 3,
+      availableCopies: 3,
+      location: "Magazine Rack",
+      rackNumber: "MAG-001",
+      price: 6.99,
+      subjects: ['GEOGRAPHY', 'SCIENCE'],
+      tags: ['Magazine', 'Geography', 'Science', 'Current']
+    },
+  ];
+
+  for (const bookData of libraryBooks) {
+    try {
+      const book = await prisma.book.create({
+        data: {
+          ...bookData,
+          schoolId,
+          status: 'AVAILABLE'
+        }
+      });
+      books.push(book);
+      console.log(`✅ Created book: ${book.title}`);
+    } catch (error) {
+      console.error(`❌ Error creating book ${bookData.title}:`, error.message);
+    }
+  }
+
+  console.log(`✅ Created ${books.length} library books`);
+  return books;
+}
+
+async function createBookIssues(schoolId, books, students, users) {
+  const bookIssues = [];
+
+  // Issue some books to students
+  if (students.length > 0 && books.length > 0) {
+    // Issue first book to first student
+    const book1 = books[0];
+    const student1 = students[0];
+    const issuer = users[0]; // Admin user
+
+    try {
+      const issue1 = await prisma.bookIssue.create({
+        data: {
+          bookId: book1.id,
+          studentId: student1.id,
+          schoolId,
+          issueDate: new Date(),
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+          status: 'ISSUED',
+          issuedById: issuer.id,
+          issueNotes: 'First book issue for testing'
+        }
+      });
+
+      // Update book available copies
+      await prisma.book.update({
+        where: { id: book1.id },
+        data: {
+          availableCopies: book1.availableCopies - 1,
+          issuedCopies: book1.issuedCopies + 1,
+          status: book1.availableCopies - 1 > 0 ? 'AVAILABLE' : 'ISSUED'
+        }
+      });
+
+      bookIssues.push(issue1);
+      console.log(`✅ Issued book "${book1.title}" to ${student1.firstName} ${student1.lastName}`);
+    } catch (error) {
+      console.error(`❌ Error issuing book:`, error.message);
+    }
+
+    // Issue and return a book (for history)
+    if (books.length > 2 && students.length > 1) {
+      const book2 = books[2];
+      const student2 = students[1];
+
+      try {
+        const issue2 = await prisma.bookIssue.create({
+          data: {
+            bookId: book2.id,
+            studentId: student2.id,
+            schoolId,
+            issueDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20 days ago
+            dueDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago (overdue when returned)
+            returnDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // Returned 2 days ago
+            status: 'RETURNED',
+            condition: 'GOOD',
+            fine: 2.00, // Late return fine
+            fineReason: 'Late return - 4 days overdue',
+            finePaid: true,
+            issuedById: issuer.id,
+            returnedById: issuer.id,
+            issueNotes: 'Regular issue',
+            returnNotes: 'Returned in good condition, 4 days overdue'
+          }
+        });
+
+        bookIssues.push(issue2);
+        console.log(`✅ Created returned book issue for "${book2.title}"`);
+      } catch (error) {
+        console.error(`❌ Error creating returned book issue:`, error.message);
+      }
+    }
+  }
+
+  console.log(`✅ Created ${bookIssues.length} book issues`);
+  return bookIssues;
 }
 
 function getHoursPerWeek(subjectCode, grade) {

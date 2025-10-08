@@ -58,6 +58,9 @@ const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
 const reportCardRoutes = require('./routes/reportCardRoutes');
 const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 
+// Library Management Routes
+const libraryRoutes = require('./routes/libraryRoutes');
+
 // Import utilities
 const logger = require('./utils/logger');
 
@@ -219,6 +222,9 @@ app.use('/api/scores', scoreRoutes);
 
 // Behavioral Assessment Routes
 app.use('/api/behavioral-assessments', behavioralAssessmentRoutes);
+
+// Library Management Routes
+app.use('/api/library', libraryRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);

@@ -83,7 +83,8 @@
       "Bash(start \"http://localhost:8081/assessments/create?v=9\")",
       "Bash(start \"http://localhost:8085/assessments/create\")",
       "Bash(start \"http://localhost:8086/assessments/create\")",
-      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma db push --accept-data-loss --skip-generate)"
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma db push --accept-data-loss --skip-generate)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate dev --name add_library_module)"
     ],
     "deny": [],
     "ask": [],

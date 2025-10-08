@@ -171,6 +171,10 @@ router.post('/register', schoolController.registerSchool);
  */
 router.get('/check-subdomain/:subdomain', schoolController.checkSubdomainAvailability);
 
+// School settings routes - must be before /:id routes to avoid matching conflict
+router.get('/settings', protect, extractSchoolFromSubdomain, schoolController.getSchoolSettings);
+router.put('/settings', protect, extractSchoolFromSubdomain, schoolController.updateSchoolSettings);
+
 // Protected routes - Super admin only
 router.use(protect);
 // router.use(restrictTo('superadmin')); // Temporarily disabled for migration

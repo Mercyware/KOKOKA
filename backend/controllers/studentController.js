@@ -9,10 +9,10 @@ const {
 // Get all students with pagination, filtering, and sorting via class history and academic year
 exports.getAllStudents = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      sort = 'firstName', 
+    const {
+      page = 1,
+      limit = 10,
+      sort = 'firstName',
       order = 'asc',
       status,
       class: classId,
@@ -29,9 +29,9 @@ exports.getAllStudents = async (req, res) => {
     if (!academicYearId) {
       // Get current academic year for the school
       const activeYear = await prisma.academicYear.findFirst({
-        where: { 
-          schoolId: req.school.id, 
-          isCurrent: true 
+        where: {
+          schoolId: req.school.id,
+          isCurrent: true
         }
       });
       if (!activeYear) {
@@ -40,89 +40,120 @@ exports.getAllStudents = async (req, res) => {
       academicYearId = activeYear.id;
     }
 
-    // Build where clause for filtering
-    const where = {
-      schoolId: req.school.id
+    // Build where clause for student class history
+    const historyWhere = {
+      schoolId: req.school.id,
+      academicYearId: academicYearId,
+      status: 'ACTIVE' // Only get active class assignments
     };
+
+    // Filter by class if provided
+    if (classId) {
+      historyWhere.classId = classId;
+    }
+
+    // Filter by section if provided
+    if (section) {
+      historyWhere.sectionId = section;
+    }
+
+    // Build where clause for student filtering
+    const studentWhere = {};
 
     // Filter by status if provided
     if (status) {
-      where.status = status;
+      studentWhere.status = status;
     }
 
-    // Filter by current class if provided
-    if (classId) {
-      where.currentClassId = classId;
-    }
-
-    // Filter by current section if provided
-    if (section) {
-      where.currentSectionId = section;
-    }
-
-    // Filter by gender if provided  
+    // Filter by gender if provided
     if (gender) {
-      where.gender = gender;
+      studentWhere.gender = gender;
     }
 
     // Filter by admission date range if provided
     if (admissionDateFrom || admissionDateTo) {
-      where.admissionDate = {};
+      studentWhere.admissionDate = {};
       if (admissionDateFrom) {
-        where.admissionDate.gte = new Date(admissionDateFrom);
+        studentWhere.admissionDate.gte = new Date(admissionDateFrom);
       }
       if (admissionDateTo) {
-        where.admissionDate.lte = new Date(admissionDateTo);
+        studentWhere.admissionDate.lte = new Date(admissionDateTo);
       }
     }
 
     // Search by name or admission number
     if (search) {
-      where.OR = [
+      studentWhere.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } },
         { admissionNumber: { contains: search, mode: 'insensitive' } }
       ];
     }
 
+    // Add student where conditions to history where
+    if (Object.keys(studentWhere).length > 0) {
+      historyWhere.student = studentWhere;
+    }
+
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    // Build order by clause
-    const orderBy = {};
-    orderBy[sort] = order === 'desc' ? 'desc' : 'asc';
 
-    // Execute query with pagination and sorting
-    const [students, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
+    // Build order by clause - need to handle student fields
+    const orderBy = {};
+    if (sort === 'firstName' || sort === 'lastName' || sort === 'admissionNumber' || sort === 'admissionDate') {
+      orderBy.student = { [sort]: order === 'desc' ? 'desc' : 'asc' };
+    } else {
+      orderBy[sort] = order === 'desc' ? 'desc' : 'asc';
+    }
+
+    // Execute query with pagination and sorting - Query from StudentClassHistory
+    const [classHistoryRecords, total] = await Promise.all([
+      prisma.studentClassHistory.findMany({
+        where: historyWhere,
         orderBy,
         skip,
         take: parseInt(limit),
         include: {
-          school: { select: { name: true } },
-          currentClass: { select: { name: true, grade: true } },
-          currentSection: { select: { name: true } },
-          academicYear: { select: { name: true } },
-          house: { select: { name: true } },
-          user: { select: { name: true, email: true } },
-          guardianStudents: {
-            where: { isPrimary: true },
+          student: {
             include: {
-              guardian: { 
-                select: { 
-                  firstName: true, 
-                  lastName: true, 
-                  phone: true, 
-                  email: true 
-                } 
+              school: { select: { name: true } },
+              academicYear: { select: { name: true } },
+              house: { select: { name: true } },
+              user: { select: { name: true, email: true } },
+              guardianStudents: {
+                where: { isPrimary: true },
+                include: {
+                  guardian: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                      phone: true,
+                      email: true
+                    }
+                  }
+                }
               }
             }
-          }
+          },
+          class: { select: { name: true, grade: true } },
+          section: { select: { name: true } },
+          academicYear: { select: { name: true, startDate: true, endDate: true } }
         }
       }),
-      prisma.student.count({ where })
+      prisma.studentClassHistory.count({ where: historyWhere })
     ]);
+
+    // Transform the data to match the expected format
+    const students = classHistoryRecords.map(record => ({
+      ...record.student,
+      currentClass: record.class,
+      currentSection: record.section,
+      classHistoryId: record.id,
+      classStartDate: record.startDate,
+      classEndDate: record.endDate,
+      // Override academicYear with the one from class history
+      academicYear: record.academicYear
+    }));
 
     res.json({
       success: true,
@@ -135,6 +166,7 @@ exports.getAllStudents = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error fetching students from class history:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };

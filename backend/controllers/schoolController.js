@@ -511,7 +511,7 @@ exports.updateSchoolSubscription = async (req, res) => {
   } catch (error) {
     logger.error(`Update school subscription error: ${error.message}`);
     logger.logError(error, { component: 'controller', operation: 'updateSchoolSubscription' });
-    
+
     res.status(500).json({
       success: false,
       message: 'Server error updating school subscription',
@@ -519,3 +519,173 @@ exports.updateSchoolSubscription = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get current school settings
+ * @route GET /api/schools/settings
+ * @access Private (School Admin)
+ */
+exports.getSchoolSettings = async (req, res) => {
+  try {
+    if (!req.school || !req.school.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'School context not found'
+      });
+    }
+
+    const school = await prisma.school.findUnique({
+      where: { id: req.school.id },
+      select: {
+        id: true,
+        name: true,
+        subdomain: true,
+        logo: true,
+        description: true,
+        established: true,
+        type: true,
+        status: true,
+        email: true,
+        phone: true,
+        website: true,
+        streetAddress: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        country: true,
+        settings: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!school) {
+      return res.status(404).json({
+        success: false,
+        message: 'School not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      school
+    });
+  } catch (error) {
+    logger.error(`Get school settings error: ${error.message}`);
+    logger.logError(error, { component: 'controller', operation: 'getSchoolSettings' });
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching school settings',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update school settings
+ * @route PUT /api/schools/settings
+ * @access Private (School Admin)
+ */
+exports.updateSchoolSettings = async (req, res) => {
+  try {
+    if (!req.school || !req.school.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'School context not found'
+      });
+    }
+
+    const {
+      // General Information
+      name,
+      logo,
+      description,
+      established,
+      type,
+      email,
+      phone,
+      website,
+      streetAddress,
+      city,
+      state,
+      zipCode,
+      country,
+      // Settings Object
+      settings
+    } = req.body;
+
+    // Build update data object
+    const updateData = {};
+
+    // General information updates
+    if (name !== undefined) updateData.name = name;
+    if (logo !== undefined) updateData.logo = logo;
+    if (description !== undefined) updateData.description = description;
+    if (established !== undefined) updateData.established = new Date(established);
+    if (type !== undefined) updateData.type = type;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (website !== undefined) updateData.website = website;
+    if (streetAddress !== undefined) updateData.streetAddress = streetAddress;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (zipCode !== undefined) updateData.zipCode = zipCode;
+    if (country !== undefined) updateData.country = country;
+
+    // Settings updates (merge with existing settings)
+    if (settings !== undefined) {
+      const currentSchool = await prisma.school.findUnique({
+        where: { id: req.school.id },
+        select: { settings: true }
+      });
+
+      updateData.settings = {
+        ...(currentSchool.settings || {}),
+        ...settings
+      };
+    }
+
+    // Update the school
+    const updatedSchool = await prisma.school.update({
+      where: { id: req.school.id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        subdomain: true,
+        logo: true,
+        description: true,
+        established: true,
+        type: true,
+        status: true,
+        email: true,
+        phone: true,
+        website: true,
+        streetAddress: true,
+        city: true,
+        state: true,
+        zipCode: true,
+        country: true,
+        settings: true,
+        updatedAt: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'School settings updated successfully',
+      school: updatedSchool
+    });
+  } catch (error) {
+    logger.error(`Update school settings error: ${error.message}`);
+    logger.logError(error, { component: 'controller', operation: 'updateSchoolSettings' });
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating school settings',
+      error: error.message
+    });
+  }
+};
+
