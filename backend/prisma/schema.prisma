@@ -95,6 +95,21 @@ model School {
   hostelAllocations    HostelAllocation[]
   hostelFees           HostelFee[]
 
+  // Messaging relationships
+  messageThreads       MessageThread[]
+  messages             Message[]
+
+  // Transportation relationships
+  transportRoutes      TransportRoute[]
+  vehicles             Vehicle[]
+  studentTransportAssignments StudentTransportAssignment[]
+
+  // Inventory relationships
+  inventoryCategories  InventoryCategory[]
+  inventoryItems       InventoryItem[]
+  inventoryTransactions InventoryTransaction[]
+  inventoryAllocations InventoryAllocation[]
+
   @@map("schools")
 }
 
@@ -158,6 +173,16 @@ model User {
   // Library relationships
   issuedBooks              BookIssue[] @relation("IssuedBy")
   returnedBooks            BookIssue[] @relation("ReturnedBy")
+
+  // Messaging relationships
+  sentMessages             Message[] @relation("MessageSender")
+  receivedMessages         MessageRecipient[] @relation("MessageRecipient")
+  createdThreads           MessageThread[] @relation("ThreadCreator")
+  threadParticipants       MessageThreadParticipant[]
+
+  // Inventory relationships
+  inventoryTransactions    InventoryTransaction[]
+  inventoryAllocations     InventoryAllocation[]
 
   @@map("users")
 }
@@ -241,6 +266,7 @@ model AcademicYear {
   reportBatches       ReportBatch[]
   hostelAllocations   HostelAllocation[]
   hostelFees          HostelFee[]
+  studentTransportAssignments StudentTransportAssignment[]
 
   @@unique([schoolId, name])
   @@unique([schoolId, isCurrent]) // Only one current academic year per school
@@ -1163,6 +1189,9 @@ model Student {
 
   // Hostel relationships
   hostelAllocations    HostelAllocation[]
+
+  // Transportation relationships
+  transportAssignments StudentTransportAssignment[]
 
   @@unique([schoolId, admissionNumber])
   @@map("students")
@@ -2362,6 +2391,535 @@ model HostelFee {
 }
 
 // ================================
+// MESSAGING SYSTEM
+// ================================
+
+model MessageThread {
+  id              String    @id @default(uuid())
+  subject         String?
+  type            MessageThreadType @default(DIRECT)
+
+  // Thread metadata
+  isGroup         Boolean   @default(false)
+  groupName       String?   // For named group conversations
+  groupAvatar     String?
+
+  // Status and Settings
+  status          MessageThreadStatus @default(ACTIVE)
+  isArchived      Boolean   @default(false)
+  isPinned        Boolean   @default(false)
+
+  // Context references (optional - for linking to specific entities)
+  classId         String?
+  subjectId       String?
+  entityType      String?   // "Class", "Subject", "Assignment", etc.
+  entityId        String?   // ID of the related entity
+
+  // Last message tracking
+  lastMessageAt   DateTime?
+  lastMessagePreview String?
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdById     String
+  createdBy       User      @relation("ThreadCreator", fields: [createdById], references: [id])
+
+  messages        Message[]
+  participants    MessageThreadParticipant[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("message_threads")
+}
+
+model MessageThreadParticipant {
+  id              String    @id @default(uuid())
+
+  threadId        String
+  thread          MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Participant settings
+  isAdmin         Boolean   @default(false)
+  isMuted         Boolean   @default(false)
+  isArchived      Boolean   @default(false)
+  isPinned        Boolean   @default(false)
+
+  // Tracking
+  joinedAt        DateTime  @default(now())
+  lastReadAt      DateTime?
+  unreadCount     Int       @default(0)
+
+  // Status
+  status          ParticipantStatus @default(ACTIVE)
+  leftAt          DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([threadId, userId])
+  @@map("message_thread_participants")
+}
+
+model Message {
+  id              String    @id @default(uuid())
+
+  threadId        String
+  thread          MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  // Message content
+  content         String
+  messageType     MessageType @default(TEXT)
+
+  // Parent message (for replies/threading)
+  parentMessageId String?
+  parentMessage   Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies         Message[] @relation("MessageReplies")
+
+  // Attachments
+  attachments     Json?     // Array of attachment objects { url, name, type, size }
+
+  // Message metadata
+  isEdited        Boolean   @default(false)
+  editedAt        DateTime?
+  isDeleted       Boolean   @default(false)
+  deletedAt       DateTime?
+
+  // Priority and flags
+  priority        MessagePriority @default(NORMAL)
+  isImportant     Boolean   @default(false)
+  isPinned        Boolean   @default(false)
+
+  // Sender info
+  senderId        String
+  sender          User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  // School context
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Delivery tracking
+  recipients      MessageRecipient[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("messages")
+}
+
+model MessageRecipient {
+  id              String    @id @default(uuid())
+
+  messageId       String
+  message         Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  recipientId     String
+  recipient       User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  // Read status
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+
+  // Delivery status
+  deliveryStatus  MessageDeliveryStatus @default(PENDING)
+  deliveredAt     DateTime?
+
+  // Actions
+  isStarred       Boolean   @default(false)
+  isArchived      Boolean   @default(false)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([messageId, recipientId])
+  @@map("message_recipients")
+}
+
+// ================================
+// TRANSPORTATION SYSTEM
+// ================================
+
+model TransportRoute {
+  id              String    @id @default(uuid())
+  routeName       String
+  routeNumber     String?
+  description     String?
+
+  // Route path
+  startPoint      String
+  endPoint        String
+  stops           Json      // Array of stops with coordinates and timings
+  distance        Float?    // Distance in kilometers
+  estimatedTime   Int?      // Time in minutes
+
+  // Fare
+  fare            Float     @default(0)
+  currency        String    @default("KES")
+
+  // Status
+  status          TransportStatus @default(ACTIVE)
+  isActive        Boolean   @default(true)
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  vehicles        RouteVehicleAssignment[]
+  studentAssignments StudentTransportAssignment[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("transport_routes")
+}
+
+model Vehicle {
+  id              String    @id @default(uuid())
+  vehicleNumber   String    @unique
+  vehicleName     String?
+  vehicleType     VehicleType
+
+  // Vehicle Details
+  make            String?
+  model           String?
+  year            Int?
+  color           String?
+  registrationNumber String?
+
+  // Capacity
+  seatingCapacity Int       @default(0)
+  currentOccupancy Int      @default(0)
+
+  // Driver Information
+  driverName      String?
+  driverPhone     String?
+  driverLicense   String?
+
+  // Maintenance
+  lastServiceDate DateTime?
+  nextServiceDate DateTime?
+  insuranceExpiry DateTime?
+  roadworthyExpiry DateTime?
+
+  // GPS Tracking
+  gpsEnabled      Boolean   @default(false)
+  gpsDeviceId     String?
+
+  // Status
+  status          VehicleStatus @default(ACTIVE)
+  condition       VehicleCondition @default(GOOD)
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  routeAssignments RouteVehicleAssignment[]
+  studentAssignments StudentTransportAssignment[]
+  maintenanceRecords VehicleMaintenance[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("vehicles")
+}
+
+model RouteVehicleAssignment {
+  id              String    @id @default(uuid())
+
+  // Route
+  routeId         String
+  route           TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  // Vehicle
+  vehicleId       String
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Schedule
+  dayOfWeek       String[]  // ["MONDAY", "TUESDAY", etc.]
+  departureTime   String?   // Time in HH:MM format
+  arrivalTime     String?
+  direction       RouteDirection @default(BOTH) // TO_SCHOOL, FROM_SCHOOL, BOTH
+
+  // Period
+  startDate       DateTime
+  endDate         DateTime?
+
+  // Status
+  status          TransportStatus @default(ACTIVE)
+  isActive        Boolean   @default(true)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([routeId, vehicleId, direction])
+  @@map("route_vehicle_assignments")
+}
+
+model StudentTransportAssignment {
+  id              String    @id @default(uuid())
+
+  // Student
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Route
+  routeId         String
+  route           TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  // Vehicle (optional - can be assigned dynamically)
+  vehicleId       String?
+  vehicle         Vehicle?  @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  // Pickup/Drop Details
+  pickupPoint     String
+  pickupTime      String?   // Expected time
+  dropoffPoint    String
+  dropoffTime     String?
+
+  // Guardian Contact for emergencies
+  guardianName    String?
+  guardianPhone   String?
+
+  // Period
+  startDate       DateTime
+  endDate         DateTime?
+
+  // Academic Context
+  academicYearId  String?
+  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
+
+  // Status
+  status          TransportStatus @default(ACTIVE)
+  isActive        Boolean   @default(true)
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("student_transport_assignments")
+}
+
+model VehicleMaintenance {
+  id              String    @id @default(uuid())
+
+  // Vehicle
+  vehicleId       String
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  // Maintenance Details
+  maintenanceType MaintenanceType
+  description     String?
+  cost            Float?
+  currency        String    @default("KES")
+
+  // Service Provider
+  serviceProvider String?
+  mechanicName    String?
+  mechanicPhone   String?
+
+  // Dates
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  nextServiceDate DateTime?
+
+  // Status
+  status          MaintenanceStatus @default(SCHEDULED)
+
+  // Odometer
+  odometerReading Int?
+
+  // Notes
+  notes           String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("vehicle_maintenance")
+}
+
+// ================================
+// INVENTORY MANAGEMENT
+// ================================
+
+model InventoryCategory {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+
+  // Parent Category for hierarchical structure
+  parentId    String?
+  parent      InventoryCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    InventoryCategory[] @relation("CategoryHierarchy")
+
+  // Relationships
+  schoolId    String
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  items       InventoryItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("inventory_categories")
+}
+
+model InventoryItem {
+  id              String    @id @default(uuid())
+
+  // Basic Info
+  name            String
+  description     String?
+  itemCode        String    @unique
+  barcode         String?
+
+  // Category
+  categoryId      String
+  category        InventoryCategory @relation(fields: [categoryId], references: [id])
+
+  // Stock Management
+  quantity        Int       @default(0)
+  minimumStock    Int       @default(0)
+  maximumStock    Int?
+  reorderLevel    Int?
+  unit            String    // e.g., "pieces", "boxes", "kg", "liters"
+
+  // Location
+  location        String?   // Storage location
+  shelf           String?
+  bin             String?
+
+  // Financial
+  unitPrice       Float     @default(0)
+  totalValue      Float     @default(0)
+  currency        String    @default("KES")
+
+  // Supplier Info
+  supplierName    String?
+  supplierContact String?
+
+  // Status and Type
+  itemType        InventoryItemType
+  status          InventoryItemStatus @default(ACTIVE)
+  condition       ItemCondition       @default(GOOD)
+
+  // Additional Fields
+  expiryDate      DateTime?
+  warrantyExpiry  DateTime?
+  notes           String?
+  tags            String[]          // Array of tags for easy filtering
+
+  // Images
+  imageUrl        String?
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  transactions    InventoryTransaction[]
+  allocations     InventoryAllocation[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id              String    @id @default(uuid())
+
+  // Transaction Details
+  transactionType TransactionType
+  quantity        Int
+  unitPrice       Float?
+  totalAmount     Float?
+
+  // Item Reference
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // Previous and New Quantities
+  previousQty     Int
+  newQty          Int
+
+  // Reference Information
+  referenceType   String?   // e.g., "PURCHASE_ORDER", "ISSUE_NOTE", "RETURN"
+  referenceId     String?   // ID of related document
+  referenceNumber String?   // Human-readable reference number
+
+  // User who performed the transaction
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+
+  // Supplier/Recipient Info
+  supplierName    String?
+  recipientName   String?
+  recipientType   String?   // e.g., "STUDENT", "TEACHER", "DEPARTMENT"
+  recipientId     String?
+
+  // Additional Info
+  reason          String?
+  notes           String?
+  transactionDate DateTime  @default(now())
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("inventory_transactions")
+}
+
+model InventoryAllocation {
+  id              String    @id @default(uuid())
+
+  // Item
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  // Allocation Details
+  quantity        Int
+  allocatedTo     String    // Name of person/department
+  allocatedToType AllocationTargetType
+  allocatedToId   String?   // ID reference (student, teacher, department)
+
+  // Dates
+  allocationDate  DateTime  @default(now())
+  expectedReturn  DateTime?
+  actualReturn    DateTime?
+
+  // Status
+  status          InventoryAllocationStatus @default(ALLOCATED)
+
+  // Condition Tracking
+  issuedCondition ItemCondition @default(GOOD)
+  returnCondition ItemCondition?
+
+  // User who allocated
+  allocatedBy     String
+  allocatedByUser User      @relation(fields: [allocatedBy], references: [id])
+
+  // Notes
+  purpose         String?
+  notes           String?
+  returnNotes     String?
+
+  // Relationships
+  schoolId        String
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("inventory_allocations")
+}
+
+// ================================
 // ENUMS
 // ================================
 
@@ -2945,4 +3503,179 @@ enum FeeFrequency {
   SEMESTERLY
   YEARLY
   ONE_TIME
+}
+
+// Messaging Enums
+enum MessageThreadType {
+  DIRECT          // One-on-one conversation
+  GROUP           // Group conversation
+  CLASS           // Class-wide messaging
+  ANNOUNCEMENT    // Announcement thread
+  BROADCAST       // Broadcast message
+}
+
+enum MessageThreadStatus {
+  ACTIVE
+  ARCHIVED
+  CLOSED
+  DELETED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  FILE
+  LINK
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  READ
+}
+
+enum ParticipantStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+  BLOCKED
+}
+
+enum VehicleType {
+  BUS
+  VAN
+  CAR
+  MINIBUS
+  COACH
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  OUT_OF_SERVICE
+  RETIRED
+}
+
+enum VehicleCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  NEEDS_REPAIR
+}
+
+enum TransportStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum RouteDirection {
+  TO_SCHOOL
+  FROM_SCHOOL
+  BOTH
+}
+
+enum MaintenanceType {
+  ROUTINE_SERVICE
+  REPAIR
+  INSPECTION
+  OIL_CHANGE
+  TIRE_REPLACEMENT
+  BRAKE_SERVICE
+  ENGINE_REPAIR
+  BODY_WORK
+  ELECTRICAL
+  EMERGENCY
+  OTHER
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+// Inventory Management Enums
+enum InventoryItemType {
+  ASSET           // Fixed assets (furniture, equipment)
+  CONSUMABLE      // Items that get used up (stationery, cleaning supplies)
+  EQUIPMENT       // Reusable equipment
+  FURNITURE       // Furniture items
+  ELECTRONICS     // Electronic devices
+  SPORTS          // Sports equipment
+  BOOKS           // Books and reading materials
+  UNIFORMS        // Uniform items
+  LABORATORY      // Lab equipment and supplies
+  OFFICE          // Office supplies
+  MEDICAL         // Medical supplies
+  OTHER
+}
+
+enum InventoryItemStatus {
+  ACTIVE          // Item is available for use
+  LOW_STOCK       // Below minimum stock level
+  OUT_OF_STOCK    // No stock available
+  DISCONTINUED    // Item is discontinued
+  ON_ORDER        // Item is on order
+  INACTIVE        // Item is not currently in use
+  EXPIRED         // Item has expired
+  RESERVED        // Item is reserved
+}
+
+enum ItemCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  NEEDS_REPAIR
+  UNDER_REPAIR
+}
+
+enum TransactionType {
+  PURCHASE        // Adding stock through purchase
+  ISSUE           // Issuing items to users
+  RETURN          // Items returned
+  ADJUSTMENT      // Manual adjustment (corrections)
+  WRITE_OFF       // Damaged/lost items written off
+  TRANSFER        // Transfer between locations
+  DONATION        // Donated items
+  DISPOSAL        // Items disposed
+}
+
+enum AllocationTargetType {
+  STUDENT
+  TEACHER
+  STAFF
+  DEPARTMENT
+  CLASS
+  HOSTEL
+  LIBRARY
+  LABORATORY
+  OTHER
+}
+
+enum InventoryAllocationStatus {
+  ALLOCATED       // Item is currently allocated
+  RETURNED        // Item has been returned
+  OVERDUE         // Return date passed
+  LOST            // Item reported as lost
+  DAMAGED         // Item returned damaged
+  CANCELLED       // Allocation cancelled
 }

@@ -52,7 +52,16 @@ import {
   Send,
   UserPlus,
   BookOpenCheck,
-  Cog
+  Cog,
+  Bus,
+  MapPin,
+  Car,
+  Users as UsersIcon,
+  Wrench,
+  Package,
+  Boxes,
+  ArrowRightLeft,
+  UserCog
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -175,6 +184,37 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'hostel-fees', label: 'Fees', icon: DollarSign },
       ]
     },
+
+    // Messaging
+    { id: 'messaging', label: 'Messages', icon: MessageSquare, hasSubmenu: false },
+
+    // Transportation
+    {
+      id: 'transportation',
+      label: 'Transportation',
+      icon: Bus,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'transportation-routes', label: 'Routes', icon: MapPin },
+        { id: 'transportation-vehicles', label: 'Vehicles', icon: Car },
+        { id: 'transportation-assignments', label: 'Assignments', icon: UsersIcon },
+        { id: 'transportation-maintenance', label: 'Maintenance', icon: Wrench },
+      ]
+    },
+
+    // Inventory
+    {
+      id: 'inventory',
+      label: 'Inventory',
+      icon: Package,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'inventory-items', label: 'Items', icon: Boxes },
+        { id: 'inventory-transactions', label: 'Transactions', icon: ArrowRightLeft },
+        { id: 'inventory-allocations', label: 'Allocations', icon: UserCog },
+      ]
+    },
+
     {
       id: 'curriculum',
       label: 'Curriculum',
@@ -317,6 +357,12 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                   if (item.id === 'dashboard') {
                     navigate('/dashboard');
                   }
+                  if (item.id === 'messaging') {
+                    navigate('/messaging');
+                  }
+                  if (item.id === 'inventory') {
+                    navigate('/inventory');
+                  }
                 }
               }}
               className={`${
@@ -383,6 +429,13 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'hostel-rooms') navigate('/hostel/rooms');
                         if (subItem.id === 'hostel-allocations') navigate('/hostel/allocations');
                         if (subItem.id === 'hostel-fees') navigate('/hostel/fees');
+                        if (subItem.id === 'transportation-routes') navigate('/transportation/routes');
+                        if (subItem.id === 'transportation-vehicles') navigate('/transportation/vehicles');
+                        if (subItem.id === 'transportation-assignments') navigate('/transportation/assignments');
+                        if (subItem.id === 'transportation-maintenance') navigate('/transportation/maintenance');
+                        if (subItem.id === 'inventory-items') navigate('/inventory/items');
+                        if (subItem.id === 'inventory-transactions') navigate('/inventory/transactions');
+                        if (subItem.id === 'inventory-allocations') navigate('/inventory/allocations');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');
                         if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');

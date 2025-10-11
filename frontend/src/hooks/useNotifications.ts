@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+// import { io, Socket } from 'socket.io-client'; // Disabled - not using real-time connections
+type Socket = any; // Type placeholder
 
 export interface Notification {
   id: string;
@@ -80,8 +81,9 @@ export interface SendNotificationData {
   metadata?: any;
 }
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Use relative URLs to leverage Vite proxy in development
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const useNotifications = (): UseNotificationsReturn => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -96,8 +98,8 @@ export const useNotifications = (): UseNotificationsReturn => {
 
   // Get auth token
   const getAuthToken = useCallback(() => {
-    // Get token from localStorage, context, or wherever you store it
-    return localStorage.getItem('authToken') || '';
+    // Get token from localStorage
+    return localStorage.getItem('token') || '';
   }, []);
 
   // API request helper
@@ -123,8 +125,14 @@ export const useNotifications = (): UseNotificationsReturn => {
     return response.json();
   }, [getAuthToken]);
 
-  // Initialize Socket.IO connection
+  // Initialize Socket.IO connection (disabled - not used)
   const connect = useCallback(() => {
+    // Socket.IO connection disabled
+    // To enable: Set WEBSOCKET_NOTIFICATIONS_ENABLED=true on backend
+    console.log('Socket.IO connection disabled. Using API polling only.');
+    return;
+
+    /* Socket.IO connection code (disabled)
     if (socketRef.current?.connected) return;
 
     const token = getAuthToken();
@@ -134,7 +142,7 @@ export const useNotifications = (): UseNotificationsReturn => {
     }
 
     tokenRef.current = token;
-    
+
     const subdomain = localStorage.getItem('schoolSubdomain') || 'demo';
 
     socketRef.current = io(SOCKET_URL, {
@@ -224,16 +232,13 @@ export const useNotifications = (): UseNotificationsReturn => {
       console.log('Emergency alert:', data);
       // Handle emergency alerts with higher priority
     });
+    */
 
-  }, [getAuthToken]);
+  }, []);
 
-  // Disconnect socket
+  // Disconnect socket (disabled - no connection to disconnect)
   const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-    setConnected(false);
+    // No socket to disconnect
   }, []);
 
   // Mark notification as read
@@ -300,10 +305,17 @@ export const useNotifications = (): UseNotificationsReturn => {
       if (options.type) params.append('type', options.type);
       if (options.category) params.append('category', options.category);
 
+      console.log('Fetching notifications from:', `/notifications/user/me?${params.toString()}`);
+
       const response = await apiRequest(`/notifications/user/me?${params.toString()}`);
-      
-      if (response.success) {
-        setNotifications(response.data.notifications.map((un: any) => ({
+
+      console.log('Notifications response:', response);
+
+      if (response.success && response.data) {
+        const notificationsList = response.data.notifications || [];
+        console.log('Processing notifications:', notificationsList);
+
+        const mappedNotifications = notificationsList.map((un: any) => ({
           id: un.notification.id,
           title: un.notification.title,
           message: un.notification.message,
@@ -313,12 +325,26 @@ export const useNotifications = (): UseNotificationsReturn => {
           timestamp: un.createdAt,
           isRead: un.isRead,
           metadata: un.notification.metadata,
-        })));
+        }));
+
+        console.log('Mapped notifications:', mappedNotifications);
+        setNotifications(mappedNotifications);
+
+        // Update unread count
+        const unread = mappedNotifications.filter((n: any) => !n.isRead).length;
+        setUnreadCount(unread);
+      } else {
+        console.warn('No notifications data in response:', response);
+        setNotifications([]);
+        setUnreadCount(0);
       }
 
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to fetch notifications');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch notifications';
+      setError(errorMessage);
       console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -389,31 +415,18 @@ export const useNotifications = (): UseNotificationsReturn => {
     }
   }, []);
 
-  // Initialize
+  // Initialize - fetch data only, no socket connection
   useEffect(() => {
-    fetchPreferences();
-    fetchNotifications();
-    requestNotificationPermission();
-
-    // Auto-connect if token is available
-    const token = getAuthToken();
-    if (token) {
-      connect();
-    }
-
-    return () => {
-      disconnect();
+    const initializeNotifications = async () => {
+      await fetchPreferences();
+      await fetchNotifications();
+      requestNotificationPermission();
     };
-  }, [fetchPreferences, fetchNotifications, requestNotificationPermission, getAuthToken, connect, disconnect]);
 
-  // Reconnect when token changes
-  useEffect(() => {
-    const currentToken = getAuthToken();
-    if (currentToken && currentToken !== tokenRef.current) {
-      disconnect();
-      setTimeout(connect, 100);
-    }
-  }, [getAuthToken, connect, disconnect]);
+    initializeNotifications();
+
+    // No socket cleanup needed since we're not connecting
+  }, []); // Empty deps - run once on mount
 
   return {
     notifications,

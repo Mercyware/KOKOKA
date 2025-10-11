@@ -106,6 +106,50 @@ async function main() {
   console.log('💰 Creating hostel fees...');
   const hostelFees = await createHostelFees(school.id, hostels, academicYear.id);
 
+  // 23. Create Message Threads and Messages
+  console.log('💬 Creating message threads and messages...');
+  const { threads, messages } = await createMessaging(school.id, users, classes, students);
+
+  // 24. Create Transport Routes
+  console.log('🚌 Creating transport routes...');
+  const routes = await createTransportRoutes(school.id);
+
+  // 25. Create Vehicles
+  console.log('🚐 Creating vehicles...');
+  const vehicles = await createVehicles(school.id);
+
+  // 26. Create Route-Vehicle Assignments
+  console.log('🗺️  Creating route-vehicle assignments...');
+  const routeVehicleAssignments = await createRouteVehicleAssignments(routes, vehicles);
+
+  // 27. Create Student Transport Assignments
+  console.log('🎒 Creating student transport assignments...');
+  const studentTransportAssignments = await createStudentTransportAssignments(school.id, routes, vehicles, students, academicYear.id);
+
+  // 28. Create Vehicle Maintenance Records
+  console.log('🔧 Creating vehicle maintenance records...');
+  const maintenanceRecords = await createVehicleMaintenance(vehicles);
+
+  // 29. Create Inventory Categories
+  console.log('📦 Creating inventory categories...');
+  const inventoryCategories = await createInventoryCategories(school.id);
+
+  // 30. Create Inventory Items
+  console.log('📋 Creating inventory items...');
+  const inventoryItems = await createInventoryItems(school.id, inventoryCategories);
+
+  // 31. Create Inventory Transactions
+  console.log('💱 Creating inventory transactions...');
+  const inventoryTransactions = await createInventoryTransactions(school.id, inventoryItems, users[0].id);
+
+  // 32. Create Inventory Allocations
+  console.log('🏷️  Creating inventory allocations...');
+  const inventoryAllocations = await createInventoryAllocations(school.id, inventoryItems, students, teachers, users[0].id);
+
+  // 33. Create Notifications
+  console.log('🔔 Creating notifications...');
+  const notifications = await createNotifications(school.id, users, students, classes);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -126,6 +170,14 @@ async function main() {
 - Hostel Rooms: ${rooms.length}
 - Hostel Allocations: ${allocations.length}
 - Hostel Fees: ${hostelFees.length}
+- Message Threads: ${threads.length}
+- Messages: ${messages.length}
+- Transport Routes: ${routes.length}
+- Vehicles: ${vehicles.length}
+- Route-Vehicle Assignments: ${routeVehicleAssignments.length}
+- Student Transport Assignments: ${studentTransportAssignments.length}
+- Maintenance Records: ${maintenanceRecords.length}
+- Notifications: ${notifications.length}
 
 🔐 Login Credentials:
 - Admin: admin@${school.subdomain}.com / admin123
@@ -140,8 +192,12 @@ async function clearExistingData() {
   try {
     // Clear data in reverse dependency order (most dependent first)
     console.log('🧹 Clearing existing data...');
-    
+
     // Delete in dependency order (most dependent first)
+    await prisma.messageRecipient.deleteMany();
+    await prisma.message.deleteMany();
+    await prisma.messageThreadParticipant.deleteMany();
+    await prisma.messageThread.deleteMany();
     await prisma.grade.deleteMany();
     await prisma.assessment.deleteMany();
     await prisma.classTeacher.deleteMany();
@@ -2102,6 +2158,1792 @@ function getHoursPerWeek(subjectCode, grade) {
   };
 
   return hoursMap[subjectCode] || 3;
+}
+
+async function createMessaging(schoolId, users, classes, allStudents) {
+  const threads = [];
+  const messages = [];
+
+  try {
+    // Find specific users for demo conversations
+    const admin = users.find(u => u.role === 'ADMIN');
+    const teachers = users.filter(u => u.role === 'TEACHER');
+    const students = users.filter(u => u.role === 'STUDENT');
+    const parents = users.filter(u => u.role === 'PARENT');
+
+    // 1. Create a direct message thread between admin and teacher
+    if (admin && teachers.length > 0) {
+      const thread1 = await prisma.messageThread.create({
+        data: {
+          subject: 'Welcome to the new academic year',
+          type: 'DIRECT',
+          isGroup: false,
+          status: 'ACTIVE',
+          schoolId,
+          createdById: admin.id,
+          lastMessageAt: new Date(),
+          lastMessagePreview: 'Thank you for the warm welcome!',
+        }
+      });
+      threads.push(thread1);
+
+      // Add participants
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread1.id, userId: admin.id, isAdmin: true, unreadCount: 0 },
+          { threadId: thread1.id, userId: teachers[0].id, isAdmin: false, unreadCount: 0 },
+        ]
+      });
+
+      // Create messages in the thread
+      const msg1 = await prisma.message.create({
+        data: {
+          threadId: thread1.id,
+          content: 'Welcome to the new academic year! We are excited to have you on board.',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: admin.id,
+          schoolId,
+        }
+      });
+      messages.push(msg1);
+
+      // Create recipient records
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: msg1.id,
+          recipientId: teachers[0].id,
+          isRead: true,
+          readAt: new Date(),
+          deliveryStatus: 'READ',
+        }
+      });
+
+      const msg2 = await prisma.message.create({
+        data: {
+          threadId: thread1.id,
+          content: 'Thank you for the warm welcome! Looking forward to a great year.',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: teachers[0].id,
+          schoolId,
+        }
+      });
+      messages.push(msg2);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: msg2.id,
+          recipientId: admin.id,
+          isRead: true,
+          readAt: new Date(),
+          deliveryStatus: 'READ',
+        }
+      });
+    }
+
+    // 2. Create a group message thread for teachers
+    if (teachers.length >= 2) {
+      const thread2 = await prisma.messageThread.create({
+        data: {
+          subject: 'Teachers Group Discussion',
+          type: 'GROUP',
+          isGroup: true,
+          groupName: 'All Teachers',
+          status: 'ACTIVE',
+          schoolId,
+          createdById: admin.id,
+          lastMessageAt: new Date(),
+          lastMessagePreview: 'Great idea! Let\'s schedule it for next week.',
+        }
+      });
+      threads.push(thread2);
+
+      // Add all teachers as participants
+      const teacherParticipants = teachers.slice(0, 3).map((teacher, index) => ({
+        threadId: thread2.id,
+        userId: teacher.id,
+        isAdmin: index === 0,
+        unreadCount: 0,
+      }));
+
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread2.id, userId: admin.id, isAdmin: true, unreadCount: 0 },
+          ...teacherParticipants,
+        ]
+      });
+
+      // Create group messages
+      const groupMsg1 = await prisma.message.create({
+        data: {
+          threadId: thread2.id,
+          content: 'Hello everyone! Let\'s plan our curriculum meeting for this month.',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: admin.id,
+          schoolId,
+        }
+      });
+      messages.push(groupMsg1);
+
+      // Create recipients for all participants except sender
+      const recipientsData = teachers.slice(0, 3).map(teacher => ({
+        messageId: groupMsg1.id,
+        recipientId: teacher.id,
+        isRead: true,
+        readAt: new Date(),
+        deliveryStatus: 'READ',
+      }));
+
+      await prisma.messageRecipient.createMany({ data: recipientsData });
+
+      if (teachers.length > 0) {
+        const groupMsg2 = await prisma.message.create({
+          data: {
+            threadId: thread2.id,
+            content: 'Great idea! Let\'s schedule it for next week.',
+            messageType: 'TEXT',
+            priority: 'NORMAL',
+            senderId: teachers[0].id,
+            schoolId,
+          }
+        });
+        messages.push(groupMsg2);
+
+        await prisma.messageRecipient.createMany({
+          data: [
+            { messageId: groupMsg2.id, recipientId: admin.id, isRead: true, readAt: new Date(), deliveryStatus: 'READ' },
+            ...teachers.slice(1, 3).map(t => ({
+              messageId: groupMsg2.id,
+              recipientId: t.id,
+              isRead: false,
+              deliveryStatus: 'DELIVERED',
+            })),
+          ]
+        });
+      }
+    }
+
+    // 3. Create a class announcement thread
+    if (classes.length > 0 && teachers.length > 0 && students.length > 0) {
+      const thread3 = await prisma.messageThread.create({
+        data: {
+          subject: 'Class Assignment Reminder',
+          type: 'CLASS',
+          isGroup: true,
+          groupName: classes[0].name,
+          status: 'ACTIVE',
+          classId: classes[0].id,
+          entityType: 'Class',
+          entityId: classes[0].id,
+          schoolId,
+          createdById: teachers[0].id,
+          lastMessageAt: new Date(),
+          lastMessagePreview: 'Please submit your assignments by Friday.',
+        }
+      });
+      threads.push(thread3);
+
+      // Add teacher and students as participants
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread3.id, userId: teachers[0].id, isAdmin: true, unreadCount: 0 },
+          ...students.slice(0, 5).map(student => ({
+            threadId: thread3.id,
+            userId: student.id,
+            isAdmin: false,
+            unreadCount: 1,
+          })),
+        ]
+      });
+
+      const classMsg = await prisma.message.create({
+        data: {
+          threadId: thread3.id,
+          content: 'Please submit your assignments by Friday. Make sure to include all required sections.',
+          messageType: 'TEXT',
+          priority: 'HIGH',
+          isImportant: true,
+          senderId: teachers[0].id,
+          schoolId,
+        }
+      });
+      messages.push(classMsg);
+
+      await prisma.messageRecipient.createMany({
+        data: students.slice(0, 5).map(student => ({
+          messageId: classMsg.id,
+          recipientId: student.id,
+          isRead: false,
+          deliveryStatus: 'DELIVERED',
+        }))
+      });
+    }
+
+    // 4. Create a parent-teacher conversation
+    if (teachers.length > 0 && parents.length > 0) {
+      const thread4 = await prisma.messageThread.create({
+        data: {
+          subject: 'Student Progress Discussion',
+          type: 'DIRECT',
+          isGroup: false,
+          status: 'ACTIVE',
+          schoolId,
+          createdById: parents[0].id,
+          lastMessageAt: new Date(),
+          lastMessagePreview: 'I would be happy to meet. How about Tuesday at 3 PM?',
+        }
+      });
+      threads.push(thread4);
+
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread4.id, userId: parents[0].id, isAdmin: false, unreadCount: 0 },
+          { threadId: thread4.id, userId: teachers[0].id, isAdmin: false, unreadCount: 0 },
+        ]
+      });
+
+      const parentMsg1 = await prisma.message.create({
+        data: {
+          threadId: thread4.id,
+          content: 'Hello, I would like to discuss my child\'s recent test scores. Can we schedule a meeting?',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: parents[0].id,
+          schoolId,
+        }
+      });
+      messages.push(parentMsg1);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: parentMsg1.id,
+          recipientId: teachers[0].id,
+          isRead: true,
+          readAt: new Date(),
+          deliveryStatus: 'READ',
+        }
+      });
+
+      const teacherReply = await prisma.message.create({
+        data: {
+          threadId: thread4.id,
+          content: 'I would be happy to meet. How about Tuesday at 3 PM?',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: teachers[0].id,
+          parentMessageId: parentMsg1.id,
+          schoolId,
+        }
+      });
+      messages.push(teacherReply);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: teacherReply.id,
+          recipientId: parents[0].id,
+          isRead: true,
+          readAt: new Date(),
+          deliveryStatus: 'READ',
+        }
+      });
+    }
+
+    // 5. Create more direct conversations between different users
+    if (teachers.length >= 2) {
+      const thread5 = await prisma.messageThread.create({
+        data: {
+          subject: 'Midterm Exam Coordination',
+          type: 'DIRECT',
+          isGroup: false,
+          status: 'ACTIVE',
+          schoolId,
+          createdById: teachers[0].id,
+          lastMessageAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+          lastMessagePreview: 'Sounds good! I\'ll prepare the questions by Friday.',
+        }
+      });
+      threads.push(thread5);
+
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread5.id, userId: teachers[0].id, isAdmin: false, unreadCount: 0 },
+          { threadId: thread5.id, userId: teachers[1].id, isAdmin: false, unreadCount: 1 },
+        ]
+      });
+
+      const coordMsg1 = await prisma.message.create({
+        data: {
+          threadId: thread5.id,
+          content: 'Hi! Can we coordinate on the midterm exam schedule? I think we should align our exam dates.',
+          messageType: 'TEXT',
+          priority: 'HIGH',
+          isImportant: true,
+          senderId: teachers[0].id,
+          schoolId,
+          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        }
+      });
+      messages.push(coordMsg1);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: coordMsg1.id,
+          recipientId: teachers[1].id,
+          isRead: true,
+          readAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
+          deliveryStatus: 'READ',
+        }
+      });
+
+      const coordMsg2 = await prisma.message.create({
+        data: {
+          threadId: thread5.id,
+          content: 'Sounds good! I\'ll prepare the questions by Friday.',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: teachers[1].id,
+          schoolId,
+          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        }
+      });
+      messages.push(coordMsg2);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: coordMsg2.id,
+          recipientId: teachers[0].id,
+          isRead: false,
+          deliveryStatus: 'DELIVERED',
+        }
+      });
+    }
+
+    // 6. Create a student-to-student conversation
+    if (students.length >= 2) {
+      const thread6 = await prisma.messageThread.create({
+        data: {
+          subject: 'Study Group',
+          type: 'DIRECT',
+          isGroup: false,
+          status: 'ACTIVE',
+          schoolId,
+          createdById: students[0].id,
+          lastMessageAt: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
+          lastMessagePreview: 'Perfect! See you at 3 PM in the library.',
+        }
+      });
+      threads.push(thread6);
+
+      await prisma.messageThreadParticipant.createMany({
+        data: [
+          { threadId: thread6.id, userId: students[0].id, isAdmin: false, unreadCount: 0 },
+          { threadId: thread6.id, userId: students[1].id, isAdmin: false, unreadCount: 2 },
+        ]
+      });
+
+      const studyMsg1 = await prisma.message.create({
+        data: {
+          threadId: thread6.id,
+          content: 'Hey! Want to join our study group for the math exam?',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: students[0].id,
+          schoolId,
+          createdAt: new Date(Date.now() - 45 * 60 * 1000),
+        }
+      });
+      messages.push(studyMsg1);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: studyMsg1.id,
+          recipientId: students[1].id,
+          isRead: true,
+          readAt: new Date(Date.now() - 40 * 60 * 1000),
+          deliveryStatus: 'READ',
+        }
+      });
+
+      const studyMsg2 = await prisma.message.create({
+        data: {
+          threadId: thread6.id,
+          content: 'Yes! When and where?',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: students[1].id,
+          schoolId,
+          createdAt: new Date(Date.now() - 35 * 60 * 1000),
+        }
+      });
+      messages.push(studyMsg2);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: studyMsg2.id,
+          recipientId: students[0].id,
+          isRead: true,
+          readAt: new Date(Date.now() - 32 * 60 * 1000),
+          deliveryStatus: 'READ',
+        }
+      });
+
+      const studyMsg3 = await prisma.message.create({
+        data: {
+          threadId: thread6.id,
+          content: 'Perfect! See you at 3 PM in the library.',
+          messageType: 'TEXT',
+          priority: 'NORMAL',
+          senderId: students[0].id,
+          schoolId,
+          createdAt: new Date(Date.now() - 30 * 60 * 1000),
+        }
+      });
+      messages.push(studyMsg3);
+
+      await prisma.messageRecipient.create({
+        data: {
+          messageId: studyMsg3.id,
+          recipientId: students[1].id,
+          isRead: false,
+          deliveryStatus: 'DELIVERED',
+        }
+      });
+    }
+
+    console.log(`✅ Created ${threads.length} message threads and ${messages.length} messages`);
+    return { threads, messages };
+  } catch (error) {
+    console.error('❌ Error creating messaging data:', error);
+    return { threads: [], messages: [] };
+  }
+}
+
+async function createTransportRoutes(schoolId) {
+  const routes = [];
+
+  try {
+    // Route 1: Downtown - School
+    const route1 = await prisma.transportRoute.create({
+      data: {
+        routeName: 'Downtown Route',
+        routeNumber: 'R001',
+        description: 'Main route covering downtown and central business district',
+        startPoint: 'Downtown Central Bus Station',
+        endPoint: 'School Main Gate',
+        stops: [
+          { name: 'Downtown Central', time: '06:30', coordinates: { lat: -1.2864, lng: 36.8172 } },
+          { name: 'City Mall', time: '06:45', coordinates: { lat: -1.2921, lng: 36.8219 } },
+          { name: 'Library Corner', time: '07:00', coordinates: { lat: -1.2985, lng: 36.8245 } },
+          { name: 'School Main Gate', time: '07:20', coordinates: { lat: -1.3031, lng: 36.8281 } },
+        ],
+        distance: 12.5,
+        estimatedTime: 50,
+        fare: 150.00,
+        currency: 'KES',
+        status: 'ACTIVE',
+        isActive: true,
+        schoolId,
+      },
+    });
+    routes.push(route1);
+
+    // Route 2: Westlands - School
+    const route2 = await prisma.transportRoute.create({
+      data: {
+        routeName: 'Westlands Route',
+        routeNumber: 'R002',
+        description: 'Covering Westlands, Parklands, and surrounding areas',
+        startPoint: 'Westlands Square',
+        endPoint: 'School Main Gate',
+        stops: [
+          { name: 'Westlands Square', time: '06:20', coordinates: { lat: -1.2673, lng: 36.8103 } },
+          { name: 'Parklands', time: '06:35', coordinates: { lat: -1.2755, lng: 36.8201 } },
+          { name: 'Museum Hill', time: '06:50', coordinates: { lat: -1.2852, lng: 36.8234 } },
+          { name: 'School Main Gate', time: '07:15', coordinates: { lat: -1.3031, lng: 36.8281 } },
+        ],
+        distance: 10.2,
+        estimatedTime: 55,
+        fare: 130.00,
+        currency: 'KES',
+        status: 'ACTIVE',
+        isActive: true,
+        schoolId,
+      },
+    });
+    routes.push(route2);
+
+    // Route 3: Eastlands - School
+    const route3 = await prisma.transportRoute.create({
+      data: {
+        routeName: 'Eastlands Route',
+        routeNumber: 'R003',
+        description: 'Serving Eastlands estates and surrounding neighborhoods',
+        startPoint: 'Eastlands Plaza',
+        endPoint: 'School Main Gate',
+        stops: [
+          { name: 'Eastlands Plaza', time: '06:00', coordinates: { lat: -1.2845, lng: 36.8912 } },
+          { name: 'Savannah Junction', time: '06:20', coordinates: { lat: -1.2901, lng: 36.8756 } },
+          { name: 'Industrial Area', time: '06:40', coordinates: { lat: -1.2967, lng: 36.8512 } },
+          { name: 'School Main Gate', time: '07:10', coordinates: { lat: -1.3031, lng: 36.8281 } },
+        ],
+        distance: 15.8,
+        estimatedTime: 70,
+        fare: 180.00,
+        currency: 'KES',
+        status: 'ACTIVE',
+        isActive: true,
+        schoolId,
+      },
+    });
+    routes.push(route3);
+
+    // Route 4: Karen - School
+    const route4 = await prisma.transportRoute.create({
+      data: {
+        routeName: 'Karen Route',
+        routeNumber: 'R004',
+        description: 'Premium route covering Karen, Langata, and surrounding suburbs',
+        startPoint: 'Karen Shopping Center',
+        endPoint: 'School Main Gate',
+        stops: [
+          { name: 'Karen Shopping Center', time: '06:15', coordinates: { lat: -1.3234, lng: 36.7112 } },
+          { name: 'Langata', time: '06:35', coordinates: { lat: -1.3145, lng: 36.7489 } },
+          { name: 'Adams Arcade', time: '06:50', coordinates: { lat: -1.3089, lng: 36.7823 } },
+          { name: 'School Main Gate', time: '07:20', coordinates: { lat: -1.3031, lng: 36.8281 } },
+        ],
+        distance: 18.5,
+        estimatedTime: 65,
+        fare: 200.00,
+        currency: 'KES',
+        status: 'ACTIVE',
+        isActive: true,
+        schoolId,
+      },
+    });
+    routes.push(route4);
+
+    console.log(`✅ Created ${routes.length} transport routes`);
+    return routes;
+  } catch (error) {
+    console.error('❌ Error creating transport routes:', error);
+    return [];
+  }
+}
+
+async function createVehicles(schoolId) {
+  const vehicles = [];
+
+  try {
+    // Vehicle 1: School Bus 1
+    const vehicle1 = await prisma.vehicle.create({
+      data: {
+        vehicleNumber: 'BUS-001',
+        vehicleName: 'Green Valley Express',
+        vehicleType: 'BUS',
+        make: 'Toyota',
+        model: 'Coaster',
+        year: 2020,
+        color: 'White with Green Stripes',
+        registrationNumber: 'KCA 123A',
+        seatingCapacity: 45,
+        currentOccupancy: 0,
+        driverName: 'John Kamau',
+        driverPhone: '+254712345001',
+        driverLicense: 'DL-2019-001234',
+        lastServiceDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        nextServiceDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+        insuranceExpiry: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+        roadworthyExpiry: new Date(Date.now() + 150 * 24 * 60 * 60 * 1000),
+        gpsEnabled: true,
+        gpsDeviceId: 'GPS-BUS001',
+        status: 'ACTIVE',
+        condition: 'EXCELLENT',
+        schoolId,
+      },
+    });
+    vehicles.push(vehicle1);
+
+    // Vehicle 2: School Bus 2
+    const vehicle2 = await prisma.vehicle.create({
+      data: {
+        vehicleNumber: 'BUS-002',
+        vehicleName: 'Sunshine Cruiser',
+        vehicleType: 'BUS',
+        make: 'Isuzu',
+        model: 'NQR',
+        year: 2019,
+        color: 'Yellow with Blue Stripes',
+        registrationNumber: 'KCB 456B',
+        seatingCapacity: 40,
+        currentOccupancy: 0,
+        driverName: 'Peter Omondi',
+        driverPhone: '+254712345002',
+        driverLicense: 'DL-2018-005678',
+        lastServiceDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        nextServiceDate: new Date(Date.now() + 70 * 24 * 60 * 60 * 1000),
+        insuranceExpiry: new Date(Date.now() + 200 * 24 * 60 * 60 * 1000),
+        roadworthyExpiry: new Date(Date.now() + 170 * 24 * 60 * 60 * 1000),
+        gpsEnabled: true,
+        gpsDeviceId: 'GPS-BUS002',
+        status: 'ACTIVE',
+        condition: 'GOOD',
+        schoolId,
+      },
+    });
+    vehicles.push(vehicle2);
+
+    // Vehicle 3: Minibus
+    const vehicle3 = await prisma.vehicle.create({
+      data: {
+        vehicleNumber: 'VAN-001',
+        vehicleName: 'Quick Shuttle',
+        vehicleType: 'MINIBUS',
+        make: 'Nissan',
+        model: 'Civilian',
+        year: 2021,
+        color: 'White',
+        registrationNumber: 'KCC 789C',
+        seatingCapacity: 25,
+        currentOccupancy: 0,
+        driverName: 'Mary Njeri',
+        driverPhone: '+254712345003',
+        driverLicense: 'DL-2020-009012',
+        lastServiceDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+        nextServiceDate: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
+        insuranceExpiry: new Date(Date.now() + 220 * 24 * 60 * 60 * 1000),
+        roadworthyExpiry: new Date(Date.now() + 190 * 24 * 60 * 60 * 1000),
+        gpsEnabled: true,
+        gpsDeviceId: 'GPS-VAN001',
+        status: 'ACTIVE',
+        condition: 'EXCELLENT',
+        schoolId,
+      },
+    });
+    vehicles.push(vehicle3);
+
+    // Vehicle 4: School Van
+    const vehicle4 = await prisma.vehicle.create({
+      data: {
+        vehicleNumber: 'VAN-002',
+        vehicleName: 'Swift Runner',
+        vehicleType: 'VAN',
+        make: 'Toyota',
+        model: 'Hiace',
+        year: 2018,
+        color: 'Silver',
+        registrationNumber: 'KCD 012D',
+        seatingCapacity: 14,
+        currentOccupancy: 0,
+        driverName: 'David Mwangi',
+        driverPhone: '+254712345004',
+        driverLicense: 'DL-2017-003456',
+        lastServiceDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
+        nextServiceDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+        insuranceExpiry: new Date(Date.now() + 160 * 24 * 60 * 60 * 1000),
+        roadworthyExpiry: new Date(Date.now() + 130 * 24 * 60 * 60 * 1000),
+        gpsEnabled: false,
+        gpsDeviceId: null,
+        status: 'ACTIVE',
+        condition: 'FAIR',
+        schoolId,
+      },
+    });
+    vehicles.push(vehicle4);
+
+    console.log(`✅ Created ${vehicles.length} vehicles`);
+    return vehicles;
+  } catch (error) {
+    console.error('❌ Error creating vehicles:', error);
+    return [];
+  }
+}
+
+async function createRouteVehicleAssignments(routes, vehicles) {
+  const assignments = [];
+
+  try {
+    // Assign vehicles to routes
+    if (routes[0] && vehicles[0]) {
+      const assignment1 = await prisma.routeVehicleAssignment.create({
+        data: {
+          routeId: routes[0].id,
+          vehicleId: vehicles[0].id,
+          dayOfWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
+          departureTime: '06:30',
+          arrivalTime: '07:20',
+          direction: 'BOTH',
+          startDate: new Date(),
+          status: 'ACTIVE',
+          isActive: true,
+        },
+      });
+      assignments.push(assignment1);
+    }
+
+    if (routes[1] && vehicles[1]) {
+      const assignment2 = await prisma.routeVehicleAssignment.create({
+        data: {
+          routeId: routes[1].id,
+          vehicleId: vehicles[1].id,
+          dayOfWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
+          departureTime: '06:20',
+          arrivalTime: '07:15',
+          direction: 'BOTH',
+          startDate: new Date(),
+          status: 'ACTIVE',
+          isActive: true,
+        },
+      });
+      assignments.push(assignment2);
+    }
+
+    if (routes[2] && vehicles[2]) {
+      const assignment3 = await prisma.routeVehicleAssignment.create({
+        data: {
+          routeId: routes[2].id,
+          vehicleId: vehicles[2].id,
+          dayOfWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
+          departureTime: '06:00',
+          arrivalTime: '07:10',
+          direction: 'BOTH',
+          startDate: new Date(),
+          status: 'ACTIVE',
+          isActive: true,
+        },
+      });
+      assignments.push(assignment3);
+    }
+
+    if (routes[3] && vehicles[3]) {
+      const assignment4 = await prisma.routeVehicleAssignment.create({
+        data: {
+          routeId: routes[3].id,
+          vehicleId: vehicles[3].id,
+          dayOfWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
+          departureTime: '06:15',
+          arrivalTime: '07:20',
+          direction: 'BOTH',
+          startDate: new Date(),
+          status: 'ACTIVE',
+          isActive: true,
+        },
+      });
+      assignments.push(assignment4);
+    }
+
+    console.log(`✅ Created ${assignments.length} route-vehicle assignments`);
+    return assignments;
+  } catch (error) {
+    console.error('❌ Error creating route-vehicle assignments:', error);
+    return [];
+  }
+}
+
+async function createStudentTransportAssignments(schoolId, routes, vehicles, students, academicYearId) {
+  const assignments = [];
+
+  try {
+    const studentsPerRoute = Math.floor(students.length / routes.length);
+
+    for (let i = 0; i < routes.length && i < vehicles.length; i++) {
+      const route = routes[i];
+      const vehicle = vehicles[i];
+      const routeStudents = students.slice(i * studentsPerRoute, (i + 1) * studentsPerRoute);
+
+      for (const student of routeStudents) {
+        try {
+          const assignment = await prisma.studentTransportAssignment.create({
+            data: {
+              studentId: student.id,
+              routeId: route.id,
+              vehicleId: vehicle.id,
+              pickupPoint: route.stops[0]?.name || route.startPoint,
+              pickupTime: route.stops[0]?.time || '06:30',
+              dropoffPoint: route.stops[route.stops.length - 1]?.name || route.endPoint,
+              dropoffTime: route.stops[route.stops.length - 1]?.time || '07:30',
+              startDate: new Date(),
+              academicYearId,
+              status: 'ACTIVE',
+              isActive: true,
+              schoolId,
+            },
+          });
+          assignments.push(assignment);
+
+          await prisma.vehicle.update({
+            where: { id: vehicle.id },
+            data: { currentOccupancy: { increment: 1 } },
+          });
+        } catch (err) {
+          console.error(`Error assigning student:`, err.message);
+        }
+      }
+    }
+
+    console.log(`✅ Created ${assignments.length} student transport assignments`);
+    return assignments;
+  } catch (error) {
+    console.error('❌ Error creating student transport assignments:', error);
+    return [];
+  }
+}
+
+async function createVehicleMaintenance(vehicles) {
+  const records = [];
+
+  try {
+    for (const vehicle of vehicles.slice(0, 3)) {
+      const maintenance1 = await prisma.vehicleMaintenance.create({
+        data: {
+          vehicleId: vehicle.id,
+          maintenanceType: 'ROUTINE_SERVICE',
+          description: 'Regular service - oil change, filter replacement, general inspection',
+          cost: 8500.00,
+          currency: 'KES',
+          serviceProvider: 'AutoCare Services Ltd',
+          mechanicName: 'James Otieno',
+          mechanicPhone: '+254722111222',
+          scheduledDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          completedDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          nextServiceDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+          status: 'COMPLETED',
+          odometerReading: 45000,
+          notes: 'All systems checked and running smoothly',
+        },
+      });
+      records.push(maintenance1);
+
+      const maintenance2 = await prisma.vehicleMaintenance.create({
+        data: {
+          vehicleId: vehicle.id,
+          maintenanceType: 'TIRE_REPLACEMENT',
+          description: 'Replaced front tires due to wear',
+          cost: 12000.00,
+          currency: 'KES',
+          serviceProvider: 'TirePro Kenya',
+          mechanicName: 'Samuel Kibet',
+          mechanicPhone: '+254733222333',
+          scheduledDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+          status: 'SCHEDULED',
+          odometerReading: 46500,
+          notes: 'Front tires showing signs of wear, replacement recommended',
+        },
+      });
+      records.push(maintenance2);
+    }
+
+    console.log(`✅ Created ${records.length} vehicle maintenance records`);
+    return records;
+  } catch (error) {
+    console.error('❌ Error creating vehicle maintenance records:', error);
+    return [];
+  }
+}
+
+// ================================
+// INVENTORY MANAGEMENT FUNCTIONS
+// ================================
+
+async function createInventoryCategories(schoolId) {
+  const categories = [];
+
+  try {
+    // Main Categories
+    const electronics = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Electronics',
+        description: 'Electronic devices and accessories',
+        schoolId,
+      }
+    });
+    categories.push(electronics);
+
+    const furniture = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Furniture',
+        description: 'School furniture and fixtures',
+        schoolId,
+      }
+    });
+    categories.push(furniture);
+
+    const laboratory = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Laboratory Equipment',
+        description: 'Science lab equipment and supplies',
+        schoolId,
+      }
+    });
+    categories.push(laboratory);
+
+    const sports = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Sports Equipment',
+        description: 'Sports and physical education equipment',
+        schoolId,
+      }
+    });
+    categories.push(sports);
+
+    const stationery = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Stationery',
+        description: 'Office and school stationery supplies',
+        schoolId,
+      }
+    });
+    categories.push(stationery);
+
+    const uniforms = await prisma.inventoryCategory.create({
+      data: {
+        name: 'Uniforms',
+        description: 'School uniforms and accessories',
+        schoolId,
+      }
+    });
+    categories.push(uniforms);
+
+    console.log(`✅ Created ${categories.length} inventory categories`);
+    return categories;
+  } catch (error) {
+    console.error('❌ Error creating inventory categories:', error);
+    return [];
+  }
+}
+
+async function createInventoryItems(schoolId, categories) {
+  const items = [];
+
+  try {
+    if (categories.length === 0) {
+      console.warn('⚠️ No categories found for inventory items');
+      return items;
+    }
+
+    // Electronics items
+    const electronicsCategory = categories.find(c => c.name === 'Electronics');
+    if (electronicsCategory) {
+      const laptop = await prisma.inventoryItem.create({
+        data: {
+          name: 'Dell Laptop - Core i5',
+          description: 'Dell Inspiron 15, Intel Core i5, 8GB RAM, 256GB SSD',
+          itemCode: 'ELEC-LAP-001',
+          barcode: '123456789001',
+          categoryId: electronicsCategory.id,
+          quantity: 25,
+          minimumStock: 5,
+          maximumStock: 50,
+          reorderLevel: 10,
+          unit: 'pieces',
+          location: 'IT Store Room',
+          shelf: 'A1',
+          bin: '001',
+          unitPrice: 45000,
+          totalValue: 1125000,
+          currency: 'KES',
+          supplierName: 'TechSupply Kenya',
+          supplierContact: '+254700123456',
+          itemType: 'ELECTRONICS',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          warrantyExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          tags: ['computer', 'laptop', 'education'],
+          schoolId,
+        }
+      });
+      items.push(laptop);
+
+      const projector = await prisma.inventoryItem.create({
+        data: {
+          name: 'Epson Projector EB-X41',
+          description: 'Epson EB-X41 XGA 3LCD Projector, 3600 lumens',
+          itemCode: 'ELEC-PROJ-001',
+          barcode: '123456789002',
+          categoryId: electronicsCategory.id,
+          quantity: 12,
+          minimumStock: 2,
+          maximumStock: 20,
+          reorderLevel: 5,
+          unit: 'pieces',
+          location: 'IT Store Room',
+          shelf: 'B2',
+          bin: '005',
+          unitPrice: 55000,
+          totalValue: 660000,
+          currency: 'KES',
+          supplierName: 'Office Electronics Ltd',
+          supplierContact: '+254711234567',
+          itemType: 'ELECTRONICS',
+          status: 'ACTIVE',
+          condition: 'GOOD',
+          warrantyExpiry: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000),
+          tags: ['projector', 'presentation', 'classroom'],
+          schoolId,
+        }
+      });
+      items.push(projector);
+    }
+
+    // Furniture items
+    const furnitureCategory = categories.find(c => c.name === 'Furniture');
+    if (furnitureCategory) {
+      const desk = await prisma.inventoryItem.create({
+        data: {
+          name: 'Student Desk - Standard',
+          description: 'Wooden student desk with attached chair',
+          itemCode: 'FURN-DESK-001',
+          barcode: '123456789003',
+          categoryId: furnitureCategory.id,
+          quantity: 150,
+          minimumStock: 20,
+          maximumStock: 200,
+          reorderLevel: 30,
+          unit: 'pieces',
+          location: 'Furniture Storage',
+          shelf: 'Ground Floor',
+          bin: 'Zone A',
+          unitPrice: 3500,
+          totalValue: 525000,
+          currency: 'KES',
+          supplierName: 'School Furniture Co.',
+          supplierContact: '+254722345678',
+          itemType: 'FURNITURE',
+          status: 'ACTIVE',
+          condition: 'GOOD',
+          tags: ['desk', 'student', 'classroom'],
+          schoolId,
+        }
+      });
+      items.push(desk);
+
+      const chair = await prisma.inventoryItem.create({
+        data: {
+          name: 'Office Chair - Ergonomic',
+          description: 'Ergonomic office chair with adjustable height',
+          itemCode: 'FURN-CHAIR-001',
+          barcode: '123456789004',
+          categoryId: furnitureCategory.id,
+          quantity: 45,
+          minimumStock: 10,
+          maximumStock: 60,
+          reorderLevel: 15,
+          unit: 'pieces',
+          location: 'Furniture Storage',
+          shelf: 'First Floor',
+          bin: 'Zone B',
+          unitPrice: 8500,
+          totalValue: 382500,
+          currency: 'KES',
+          supplierName: 'Office Furniture Kenya',
+          supplierContact: '+254733456789',
+          itemType: 'FURNITURE',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['chair', 'office', 'staff'],
+          schoolId,
+        }
+      });
+      items.push(chair);
+    }
+
+    // Laboratory Equipment
+    const labCategory = categories.find(c => c.name === 'Laboratory Equipment');
+    if (labCategory) {
+      const microscope = await prisma.inventoryItem.create({
+        data: {
+          name: 'Compound Microscope',
+          description: 'Binocular compound microscope, 40x-1000x magnification',
+          itemCode: 'LAB-MICR-001',
+          barcode: '123456789005',
+          categoryId: labCategory.id,
+          quantity: 20,
+          minimumStock: 5,
+          maximumStock: 30,
+          reorderLevel: 8,
+          unit: 'pieces',
+          location: 'Science Lab 1',
+          shelf: 'Cabinet A',
+          bin: 'Drawer 1',
+          unitPrice: 25000,
+          totalValue: 500000,
+          currency: 'KES',
+          supplierName: 'Scientific Supplies Ltd',
+          supplierContact: '+254744567890',
+          itemType: 'LABORATORY',
+          status: 'ACTIVE',
+          condition: 'GOOD',
+          warrantyExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          tags: ['microscope', 'biology', 'science'],
+          schoolId,
+        }
+      });
+      items.push(microscope);
+
+      const beaker = await prisma.inventoryItem.create({
+        data: {
+          name: 'Beaker Set - 250ml',
+          description: 'Glass beakers, 250ml capacity, pack of 12',
+          itemCode: 'LAB-BEAK-001',
+          barcode: '123456789006',
+          categoryId: labCategory.id,
+          quantity: 60,
+          minimumStock: 15,
+          maximumStock: 100,
+          reorderLevel: 20,
+          unit: 'pieces',
+          location: 'Science Lab 2',
+          shelf: 'Cabinet B',
+          bin: 'Drawer 2',
+          unitPrice: 150,
+          totalValue: 9000,
+          currency: 'KES',
+          supplierName: 'Lab Glass Supplies',
+          supplierContact: '+254755678901',
+          itemType: 'LABORATORY',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['beaker', 'chemistry', 'glassware'],
+          schoolId,
+        }
+      });
+      items.push(beaker);
+    }
+
+    // Sports Equipment
+    const sportsCategory = categories.find(c => c.name === 'Sports Equipment');
+    if (sportsCategory) {
+      const football = await prisma.inventoryItem.create({
+        data: {
+          name: 'Football - Size 5',
+          description: 'Professional quality football, size 5',
+          itemCode: 'SPORT-FB-001',
+          barcode: '123456789007',
+          categoryId: sportsCategory.id,
+          quantity: 30,
+          minimumStock: 10,
+          maximumStock: 50,
+          reorderLevel: 15,
+          unit: 'pieces',
+          location: 'Sports Store',
+          shelf: 'Rack 1',
+          bin: 'Ball Section',
+          unitPrice: 1500,
+          totalValue: 45000,
+          currency: 'KES',
+          supplierName: 'Sports World Kenya',
+          supplierContact: '+254766789012',
+          itemType: 'SPORTS',
+          status: 'ACTIVE',
+          condition: 'GOOD',
+          tags: ['football', 'soccer', 'ball'],
+          schoolId,
+        }
+      });
+      items.push(football);
+
+      const basketballHoop = await prisma.inventoryItem.create({
+        data: {
+          name: 'Basketball Hoop - Adjustable',
+          description: 'Portable basketball hoop with adjustable height',
+          itemCode: 'SPORT-BBH-001',
+          barcode: '123456789008',
+          categoryId: sportsCategory.id,
+          quantity: 4,
+          minimumStock: 1,
+          maximumStock: 6,
+          reorderLevel: 2,
+          unit: 'pieces',
+          location: 'Sports Store',
+          shelf: 'Ground',
+          bin: 'Large Equipment',
+          unitPrice: 45000,
+          totalValue: 180000,
+          currency: 'KES',
+          supplierName: 'Pro Sports Equipment',
+          supplierContact: '+254777890123',
+          itemType: 'SPORTS',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['basketball', 'hoop', 'court'],
+          schoolId,
+        }
+      });
+      items.push(basketballHoop);
+    }
+
+    // Stationery
+    const stationeryCategory = categories.find(c => c.name === 'Stationery');
+    if (stationeryCategory) {
+      const notebooks = await prisma.inventoryItem.create({
+        data: {
+          name: 'Exercise Books - A4',
+          description: 'A4 exercise books, 96 pages',
+          itemCode: 'STAT-NB-001',
+          barcode: '123456789009',
+          categoryId: stationeryCategory.id,
+          quantity: 500,
+          minimumStock: 100,
+          maximumStock: 1000,
+          reorderLevel: 150,
+          unit: 'pieces',
+          location: 'Stationery Store',
+          shelf: 'S1',
+          bin: 'B01',
+          unitPrice: 50,
+          totalValue: 25000,
+          currency: 'KES',
+          supplierName: 'Stationery World',
+          supplierContact: '+254788901234',
+          itemType: 'CONSUMABLE',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['notebook', 'stationery', 'student'],
+          schoolId,
+        }
+      });
+      items.push(notebooks);
+
+      const pens = await prisma.inventoryItem.create({
+        data: {
+          name: 'Ballpoint Pens - Blue',
+          description: 'Blue ballpoint pens, box of 50',
+          itemCode: 'STAT-PEN-001',
+          barcode: '123456789010',
+          categoryId: stationeryCategory.id,
+          quantity: 200,
+          minimumStock: 50,
+          maximumStock: 500,
+          reorderLevel: 75,
+          unit: 'boxes',
+          location: 'Stationery Store',
+          shelf: 'S2',
+          bin: 'B02',
+          unitPrice: 500,
+          totalValue: 100000,
+          currency: 'KES',
+          supplierName: 'Office Supplies Kenya',
+          supplierContact: '+254799012345',
+          itemType: 'CONSUMABLE',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['pen', 'stationery', 'writing'],
+          schoolId,
+        }
+      });
+      items.push(pens);
+    }
+
+    // Uniforms
+    const uniformsCategory = categories.find(c => c.name === 'Uniforms');
+    if (uniformsCategory) {
+      const shirt = await prisma.inventoryItem.create({
+        data: {
+          name: 'School Shirt - White (Medium)',
+          description: 'White school shirt, medium size',
+          itemCode: 'UNIF-SH-M-001',
+          barcode: '123456789011',
+          categoryId: uniformsCategory.id,
+          quantity: 80,
+          minimumStock: 20,
+          maximumStock: 150,
+          reorderLevel: 30,
+          unit: 'pieces',
+          location: 'Uniform Store',
+          shelf: 'U1',
+          bin: 'Shirts-M',
+          unitPrice: 800,
+          totalValue: 64000,
+          currency: 'KES',
+          supplierName: 'School Uniforms Ltd',
+          supplierContact: '+254700111222',
+          itemType: 'UNIFORMS',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['uniform', 'shirt', 'medium'],
+          schoolId,
+        }
+      });
+      items.push(shirt);
+
+      const tie = await prisma.inventoryItem.create({
+        data: {
+          name: 'School Tie - Blue Striped',
+          description: 'Blue striped school tie',
+          itemCode: 'UNIF-TIE-001',
+          barcode: '123456789012',
+          categoryId: uniformsCategory.id,
+          quantity: 120,
+          minimumStock: 30,
+          maximumStock: 200,
+          reorderLevel: 50,
+          unit: 'pieces',
+          location: 'Uniform Store',
+          shelf: 'U2',
+          bin: 'Accessories',
+          unitPrice: 300,
+          totalValue: 36000,
+          currency: 'KES',
+          supplierName: 'School Uniforms Ltd',
+          supplierContact: '+254700111222',
+          itemType: 'UNIFORMS',
+          status: 'ACTIVE',
+          condition: 'EXCELLENT',
+          tags: ['uniform', 'tie', 'accessory'],
+          schoolId,
+        }
+      });
+      items.push(tie);
+    }
+
+    console.log(`✅ Created ${items.length} inventory items`);
+    return items;
+  } catch (error) {
+    console.error('❌ Error creating inventory items:', error);
+    return [];
+  }
+}
+
+async function createInventoryTransactions(schoolId, items, userId) {
+  const transactions = [];
+
+  try {
+    if (items.length === 0 || !userId) {
+      console.warn('⚠️ No items or user found for transactions');
+      return transactions;
+    }
+
+    // Create purchase transactions for some items
+    for (let i = 0; i < Math.min(5, items.length); i++) {
+      const item = items[i];
+      const purchaseQty = Math.floor(item.quantity * 0.3);
+
+      const transaction = await prisma.inventoryTransaction.create({
+        data: {
+          transactionType: 'PURCHASE',
+          quantity: purchaseQty,
+          unitPrice: item.unitPrice,
+          totalAmount: purchaseQty * item.unitPrice,
+          itemId: item.id,
+          previousQty: item.quantity - purchaseQty,
+          newQty: item.quantity,
+          referenceType: 'PURCHASE_ORDER',
+          referenceNumber: `PO-2025-${String(i + 1).padStart(4, '0')}`,
+          userId,
+          supplierName: item.supplierName,
+          notes: `Initial stock purchase for ${item.name}`,
+          transactionDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          schoolId,
+        }
+      });
+      transactions.push(transaction);
+    }
+
+    // Create issue transactions
+    if (items.length > 2) {
+      const issueTransaction = await prisma.inventoryTransaction.create({
+        data: {
+          transactionType: 'ISSUE',
+          quantity: 5,
+          itemId: items[0].id,
+          previousQty: items[0].quantity,
+          newQty: items[0].quantity - 5,
+          referenceType: 'ISSUE_NOTE',
+          referenceNumber: 'ISS-2025-0001',
+          userId,
+          recipientName: 'Computer Lab',
+          recipientType: 'DEPARTMENT',
+          notes: 'Issued laptops to computer lab',
+          transactionDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          schoolId,
+        }
+      });
+      transactions.push(issueTransaction);
+    }
+
+    // Create adjustment transaction
+    if (items.length > 3) {
+      const adjustTransaction = await prisma.inventoryTransaction.create({
+        data: {
+          transactionType: 'ADJUSTMENT',
+          quantity: -2,
+          itemId: items[3].id,
+          previousQty: items[3].quantity + 2,
+          newQty: items[3].quantity,
+          userId,
+          reason: 'Stock count correction',
+          notes: 'Adjusted stock after physical count',
+          transactionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          schoolId,
+        }
+      });
+      transactions.push(adjustTransaction);
+    }
+
+    console.log(`✅ Created ${transactions.length} inventory transactions`);
+    return transactions;
+  } catch (error) {
+    console.error('❌ Error creating inventory transactions:', error);
+    return [];
+  }
+}
+
+async function createInventoryAllocations(schoolId, items, students, teachers, userId) {
+  const allocations = [];
+
+  try {
+    if (items.length === 0 || students.length === 0 || !userId) {
+      console.warn('⚠️ No items, students, or user found for allocations');
+      return allocations;
+    }
+
+    // Allocate laptops to students
+    const laptop = items.find(i => i.itemCode === 'ELEC-LAP-001');
+    if (laptop && students.length > 0) {
+      for (let i = 0; i < Math.min(3, students.length); i++) {
+        const student = students[i];
+        const allocation = await prisma.inventoryAllocation.create({
+          data: {
+            itemId: laptop.id,
+            quantity: 1,
+            allocatedTo: `${student.firstName} ${student.lastName}`,
+            allocatedToType: 'STUDENT',
+            allocatedToId: student.id,
+            allocationDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+            expectedReturn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: 'ALLOCATED',
+            issuedCondition: 'GOOD',
+            allocatedBy: userId,
+            purpose: 'Learning and assignments',
+            notes: `Laptop allocated for academic year`,
+            schoolId,
+          }
+        });
+        allocations.push(allocation);
+      }
+    }
+
+    // Allocate sports equipment
+    const football = items.find(i => i.itemCode === 'SPORT-FB-001');
+    if (football) {
+      const allocation = await prisma.inventoryAllocation.create({
+        data: {
+          itemId: football.id,
+          quantity: 10,
+          allocatedTo: 'Sports Department',
+          allocatedToType: 'DEPARTMENT',
+          allocationDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+          status: 'ALLOCATED',
+          issuedCondition: 'EXCELLENT',
+          allocatedBy: userId,
+          purpose: 'Sports training and matches',
+          notes: 'Footballs for the sports season',
+          schoolId,
+        }
+      });
+      allocations.push(allocation);
+    }
+
+    // Allocate some items to teachers
+    if (teachers.length > 0 && items.length > 5) {
+      const teacher = teachers[0];
+      const teacherUser = await prisma.user.findFirst({
+        where: { email: teacher.email }
+      });
+
+      if (teacherUser) {
+        const projector = items.find(i => i.itemCode === 'ELEC-PROJ-001');
+        if (projector) {
+          const allocation = await prisma.inventoryAllocation.create({
+            data: {
+              itemId: projector.id,
+              quantity: 1,
+              allocatedTo: `${teacher.firstName} ${teacher.lastName}`,
+              allocatedToType: 'TEACHER',
+              allocatedToId: teacherUser.id,
+              allocationDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+              expectedReturn: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+              status: 'ALLOCATED',
+              issuedCondition: 'GOOD',
+              allocatedBy: userId,
+              purpose: 'Classroom presentations',
+              notes: 'Projector for teaching',
+              schoolId,
+            }
+          });
+          allocations.push(allocation);
+        }
+      }
+    }
+
+    // Create a returned allocation
+    if (items.length > 0 && students.length > 1) {
+      const student = students[1];
+      const item = items.find(i => i.itemType === 'SPORTS');
+      if (item) {
+        const returnedAllocation = await prisma.inventoryAllocation.create({
+          data: {
+            itemId: item.id,
+            quantity: 1,
+            allocatedTo: `${student.firstName} ${student.lastName}`,
+            allocatedToType: 'STUDENT',
+            allocatedToId: student.id,
+            allocationDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+            expectedReturn: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            actualReturn: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+            status: 'RETURNED',
+            issuedCondition: 'GOOD',
+            returnCondition: 'GOOD',
+            allocatedBy: userId,
+            purpose: 'Sports practice',
+            notes: 'Equipment for practice sessions',
+            returnNotes: 'Returned in good condition',
+            schoolId,
+          }
+        });
+        allocations.push(returnedAllocation);
+      }
+    }
+
+    console.log(`✅ Created ${allocations.length} inventory allocations`);
+    return allocations;
+  } catch (error) {
+    console.error('❌ Error creating inventory allocations:', error);
+    return [];
+  }
+}
+
+async function createNotifications(schoolId, users, students, classes) {
+  const notifications = [];
+
+  try {
+    const admin = users.find(u => u.role === 'ADMIN');
+    const teachers = users.filter(u => u.role === 'TEACHER');
+    const studentUsers = users.filter(u => u.role === 'STUDENT');
+    const parents = users.filter(u => u.role === 'PARENT');
+
+    // 1. System-wide announcement
+    const notif1 = await prisma.notification.create({
+      data: {
+        title: 'Welcome to the New Academic Year',
+        message: 'We are excited to begin a new academic year! Please check your schedules and prepare for the first day of classes.',
+        type: 'ANNOUNCEMENT',
+        priority: 'HIGH',
+        category: 'GENERAL',
+        channels: ['IN_APP', 'EMAIL'],
+        targetType: 'ALL_USERS',
+        targetUsers: [],
+        targetRoles: [],
+        targetClasses: [],
+        status: 'SENT',
+        sentAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        schoolId,
+        createdById: admin.id,
+      }
+    });
+    notifications.push(notif1);
+
+    // Create user notifications for this announcement
+    const allUsers = [...teachers, ...studentUsers, ...parents, admin];
+    for (const user of allUsers.slice(0, 10)) { // Limit to 10 users for demo
+      await prisma.userNotification.create({
+        data: {
+          notificationId: notif1.id,
+          userId: user.id,
+          isRead: Math.random() > 0.5,
+          readAt: Math.random() > 0.5 ? new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) : null,
+          isDelivered: true,
+          deliveredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        }
+      });
+    }
+
+    // 2. Fee payment reminder
+    const notif2 = await prisma.notification.create({
+      data: {
+        title: 'Fee Payment Reminder',
+        message: 'This is a reminder that school fees are due by the end of this month. Please ensure timely payment to avoid late fees.',
+        type: 'FEE_REMINDER',
+        priority: 'NORMAL',
+        category: 'FINANCIAL',
+        channels: ['IN_APP', 'EMAIL', 'SMS'],
+        targetType: 'ROLE_BASED',
+        targetUsers: [],
+        targetRoles: ['PARENT'],
+        targetClasses: [],
+        status: 'SENT',
+        sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        schoolId,
+        createdById: admin.id,
+      }
+    });
+    notifications.push(notif2);
+
+    // Create notifications for parents
+    for (const parent of parents) {
+      await prisma.userNotification.create({
+        data: {
+          notificationId: notif2.id,
+          userId: parent.id,
+          isRead: false,
+          isDelivered: true,
+          deliveredAt: new Date(),
+        }
+      });
+    }
+
+    // 3. Assignment deadline notification
+    if (classes.length > 0) {
+      const notif3 = await prisma.notification.create({
+        data: {
+          title: 'Assignment Due Soon',
+          message: 'Reminder: Your Mathematics assignment is due tomorrow. Please submit before 11:59 PM.',
+          type: 'ALERT',
+          priority: 'HIGH',
+          category: 'ACADEMIC',
+          channels: ['IN_APP', 'PUSH'],
+          targetType: 'CLASS_BASED',
+          targetUsers: [],
+          targetRoles: [],
+          targetClasses: [classes[0].id],
+          status: 'SENT',
+          sentAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expires in 24 hours
+          schoolId,
+          createdById: teachers[0].id,
+        }
+      });
+      notifications.push(notif3);
+
+      // Create notifications for students in the class
+      const classStudents = students.filter(s => s.currentClassId === classes[0].id).slice(0, 5);
+      for (const student of classStudents) {
+        const studentUser = users.find(u => u.email === `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@${student.school.subdomain}.com`);
+        if (studentUser) {
+          await prisma.userNotification.create({
+            data: {
+              notificationId: notif3.id,
+              userId: studentUser.id,
+              isRead: Math.random() < 0.7,
+              readAt: Math.random() < 0.7 ? new Date(Date.now() - 30 * 60 * 1000) : null,
+              isDelivered: true,
+              deliveredAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            }
+          });
+        }
+      }
+    }
+
+    // 4. Event notification
+    const notif4 = await prisma.notification.create({
+      data: {
+        title: 'Sports Day Next Week',
+        message: 'Get ready for our annual Sports Day event next Friday! All students are encouraged to participate. Registration is now open.',
+        type: 'EVENT',
+        priority: 'NORMAL',
+        category: 'EVENT',
+        channels: ['IN_APP', 'EMAIL'],
+        targetType: 'ROLE_BASED',
+        targetUsers: [],
+        targetRoles: ['STUDENT', 'TEACHER', 'PARENT'],
+        targetClasses: [],
+        status: 'SENT',
+        sentAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+        schoolId,
+        createdById: admin.id,
+      }
+    });
+    notifications.push(notif4);
+
+    // Create notifications for students, teachers, and parents
+    const eventTargets = [...studentUsers.slice(0, 8), ...teachers.slice(0, 3), ...parents.slice(0, 3)];
+    for (const user of eventTargets) {
+      await prisma.userNotification.create({
+        data: {
+          notificationId: notif4.id,
+          userId: user.id,
+          isRead: Math.random() > 0.6,
+          readAt: Math.random() > 0.6 ? new Date(Date.now() - 4 * 60 * 60 * 1000) : null,
+          isDelivered: true,
+          deliveredAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        }
+      });
+    }
+
+    // 5. Grade published notification
+    const notif5 = await prisma.notification.create({
+      data: {
+        title: 'Grades Published',
+        message: 'Your midterm exam grades have been published. Check your gradebook to see your results.',
+        type: 'GRADE',
+        priority: 'HIGH',
+        category: 'ACADEMIC',
+        channels: ['IN_APP', 'EMAIL'],
+        targetType: 'ROLE_BASED',
+        targetUsers: [],
+        targetRoles: ['STUDENT'],
+        targetClasses: [],
+        status: 'SENT',
+        sentAt: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
+        schoolId,
+        createdById: teachers[0].id,
+      }
+    });
+    notifications.push(notif5);
+
+    // Create notifications for students
+    for (const student of studentUsers.slice(0, 6)) {
+      await prisma.userNotification.create({
+        data: {
+          notificationId: notif5.id,
+          userId: student.id,
+          isRead: false,
+          isDelivered: true,
+          deliveredAt: new Date(),
+        }
+      });
+    }
+
+    // 6. Attendance alert
+    const notif6 = await prisma.notification.create({
+      data: {
+        title: 'Attendance Alert',
+        message: 'Your child was marked absent today. If this is incorrect, please contact the school office.',
+        type: 'ALERT',
+        priority: 'URGENT',
+        category: 'ATTENDANCE',
+        channels: ['IN_APP', 'SMS', 'EMAIL'],
+        targetType: 'SPECIFIC_USERS',
+        targetUsers: parents.length > 0 ? [parents[0].id] : [],
+        targetRoles: [],
+        targetClasses: [],
+        status: 'SENT',
+        sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        schoolId,
+        createdById: admin.id,
+      }
+    });
+    notifications.push(notif6);
+
+    if (parents.length > 0) {
+      await prisma.userNotification.create({
+        data: {
+          notificationId: notif6.id,
+          userId: parents[0].id,
+          isRead: false,
+          isDelivered: true,
+          deliveredAt: new Date(),
+        }
+      });
+    }
+
+    console.log(`✅ Created ${notifications.length} notifications`);
+    return notifications;
+  } catch (error) {
+    console.error('❌ Error creating notifications:', error);
+    return [];
+  }
 }
 
 main()

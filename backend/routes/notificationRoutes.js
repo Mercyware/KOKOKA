@@ -83,6 +83,38 @@ router.get('/user/me', getUserNotifications);
 router.post('/read-all', markAllAsRead);
 
 /**
+ * @desc    Get user notification preferences
+ * @route   GET /api/notifications/preferences
+ * @access  Private
+ */
+router.get('/preferences', getPreferences);
+
+/**
+ * @desc    Update user notification preferences
+ * @route   PUT /api/notifications/preferences
+ * @access  Private
+ */
+router.put('/preferences', updatePreferences);
+
+/**
+ * @desc    Reset preferences to defaults
+ * @route   POST /api/notifications/preferences/reset
+ * @access  Private
+ */
+router.post('/preferences/reset', resetPreferences);
+
+/**
+ * @desc    Get preferences summary for school
+ * @route   GET /api/notifications/preferences/summary
+ * @access  Private (Admin, Principal)
+ */
+router.get(
+  '/preferences/summary',
+  roleMiddleware.restrictTo('ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'),
+  getPreferencesSummary
+);
+
+/**
  * @desc    Get single notification
  * @route   GET /api/notifications/:id
  * @access  Private
@@ -159,42 +191,6 @@ router.delete(
   '/templates/:id',
   roleMiddleware.restrictTo('ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'),
   deleteTemplate
-);
-
-// =================================
-// PREFERENCES ROUTES
-// =================================
-
-/**
- * @desc    Get user notification preferences
- * @route   GET /api/notifications/preferences
- * @access  Private
- */
-router.get('/preferences', getPreferences);
-
-/**
- * @desc    Update user notification preferences
- * @route   PUT /api/notifications/preferences
- * @access  Private
- */
-router.put('/preferences', updatePreferences);
-
-/**
- * @desc    Reset preferences to defaults
- * @route   POST /api/notifications/preferences/reset
- * @access  Private
- */
-router.post('/preferences/reset', resetPreferences);
-
-/**
- * @desc    Get preferences summary for school
- * @route   GET /api/notifications/preferences/summary
- * @access  Private (Admin, Principal)
- */
-router.get(
-  '/preferences/summary',
-  roleMiddleware.restrictTo('ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'),
-  getPreferencesSummary
 );
 
 module.exports = router;

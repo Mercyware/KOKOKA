@@ -90,6 +90,10 @@ import AddHostel from "./pages/hostel/AddHostel";
 import RoomManagement from "./pages/hostel/RoomManagement";
 import Allocations from "./pages/hostel/Allocations";
 import HostelFees from "./pages/hostel/HostelFees";
+import { MessagingPage } from "./pages/messaging";
+import NotificationsPage from "./pages/NotificationsPage";
+import { TransportationPage, RoutesPage, VehiclesPage, AssignmentsPage, MaintenancePage } from "./pages/transportation";
+import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./pages/inventory";
 
 const queryClient = new QueryClient();
 
@@ -260,6 +264,25 @@ const App = () => (
             <Route path="/hostel/rooms" element={<RoomManagement />} />
             <Route path="/hostel/allocations" element={<Allocations />} />
             <Route path="/hostel/fees" element={<HostelFees />} />
+
+            {/* Messaging */}
+            <Route path="/messaging" element={<MessagingPage />} />
+
+            {/* Transportation */}
+            <Route path="/transportation" element={<TransportationPage />} />
+            <Route path="/transportation/routes" element={<RoutesPage />} />
+            <Route path="/transportation/vehicles" element={<VehiclesPage />} />
+            <Route path="/transportation/assignments" element={<AssignmentsPage />} />
+            <Route path="/transportation/maintenance" element={<MaintenancePage />} />
+
+            {/* Inventory */}
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/inventory/items" element={<ItemsPage />} />
+            <Route path="/inventory/transactions" element={<TransactionsPage />} />
+            <Route path="/inventory/allocations" element={<AllocationsPage />} />
+
+            {/* Notifications */}
+            <Route path="/notifications" element={<NotificationsPage />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

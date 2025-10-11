@@ -674,21 +674,30 @@ class NotificationService {
 
     const skip = (page - 1) * limit;
     const where = { userId };
-    
+
     if (unreadOnly) where.isRead = false;
 
-    const notificationWhere = {};
-    if (type) notificationWhere.type = type;
-    if (category) notificationWhere.category = category;
+    // Build notification filter for the relation
+    if (type || category) {
+      where.notification = {};
+      if (type) where.notification.type = type;
+      if (category) where.notification.category = category;
+    }
 
     const userNotifications = await prisma.userNotification.findMany({
       where,
       include: {
         notification: {
-          where: notificationWhere,
           include: {
             school: true,
-            createdBy: true
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true
+              }
+            }
           }
         }
       },

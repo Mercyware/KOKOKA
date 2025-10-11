@@ -64,6 +64,15 @@ const libraryRoutes = require('./routes/libraryRoutes');
 // Hostel Management Routes
 const hostelRoutes = require('./routes/hostelRoutes');
 
+// Messaging Routes
+const messagingRoutes = require('./routes/messagingRoutes');
+
+// Transportation Routes
+const transportationRoutes = require('./routes/transportationRoutes');
+
+// Inventory Routes
+const inventoryRoutes = require('./routes/inventoryRoutes');
+
 // Import utilities
 const logger = require('./utils/logger');
 
@@ -231,6 +240,15 @@ app.use('/api/library', libraryRoutes);
 
 // Hostel Management Routes
 app.use('/api/hostel', hostelRoutes);
+
+// Messaging Routes
+app.use('/api/messaging', messagingRoutes);
+
+// Transportation Routes
+app.use('/api/transportation', transportationRoutes);
+
+// Inventory Routes
+app.use('/api/inventory', inventoryRoutes);
 
 // New Grade Management and Curriculum Routes
 app.use('/api/global-curricula', globalCurriculumRoutes);
