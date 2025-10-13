@@ -6,6 +6,7 @@ const { JWT_SECRET } = require('../config/jwt');
 // Protect routes
 exports.protect = async (req, res, next) => {
   try {
+    console.log('DEBUG authMiddleware.protect headers:', req.headers);
     // Development bypass - DISABLED FOR TESTING
     if (false && process.env.NODE_ENV === 'development' && process.env.AUTH_BYPASS === 'true') {
       req.user = {
@@ -106,8 +107,16 @@ exports.authorize = (...roles) => {
     }
     
     // Convert both user role and expected roles to lowercase for case-insensitive comparison
-    const userRole = req.user.role.toLowerCase();
+    const userRole = req.user.role?.toLowerCase();
     const allowedRoles = roles.map(role => role.toLowerCase());
+    
+    // Check if user has a valid role
+    if (!userRole) {
+      return res.status(403).json({
+        success: false,
+        message: 'User has no assigned role'
+      });
+    }
     
     if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({

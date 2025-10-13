@@ -508,7 +508,14 @@ exports.setActiveAcademicYear = exports.setCurrentAcademicYear;
 exports.getTermsForAcademicYear = async (req, res) => {
   try {
     const { academicYearId } = req.params;
-    const { schoolId } = req.user;
+    const schoolId = req.school?.id;
+
+    if (!schoolId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'School context required' 
+      });
+    }
 
     // Verify the academic year exists and belongs to the school
     const academicYear = await prisma.academicYear.findFirst({

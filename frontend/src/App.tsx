@@ -223,7 +223,8 @@ const App = () => (
             <Route path="/curriculum/analytics" element={<Layout><div className="container mx-auto px-4 py-8"><h1 className="text-3xl font-bold text-gray-900">Curriculum Analytics Page</h1><p className="text-gray-600 mt-2">Coming soon - curriculum analytics and insights</p></div></Layout>} />
             
             {/* Grade Book Routes */}
-            <Route path="/gradebook/reports" element={<ReportCards />} />
+            <Route path="/gradebook/reports" element={<Layout><ReportCards /></Layout>} />
+            <Route path="/gradebook/report-cards" element={<Layout><ReportCards /></Layout>} />
             
             {/* Parent Dashboard Routes */}
             <Route path="/parent/dashboard" element={<ParentDashboard />} />

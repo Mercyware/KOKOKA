@@ -8,92 +8,38 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 router.use(authMiddleware.protect);
 
 // ================================
-// REPORT CARD TEMPLATES ROUTES
+// REPORT CARD ROUTES
 // ================================
 
-// Get all templates for school
-router.get('/templates', reportCardController.getTemplates);
-
-// Get template by ID
-router.get('/templates/:templateId', reportCardController.getTemplateById);
-
-// Create new template (Admin/Teacher only)
-router.post('/templates', 
-  roleMiddleware.restrictTo('ADMIN', 'TEACHER'), 
-  reportCardController.createTemplate
+// Get report card for a student for a term
+router.get('/student/:studentId/term/:termId',
+  reportCardController.generateReportCard
 );
 
-// Update template (Admin/Teacher only)
-router.put('/templates/:templateId', 
-  roleMiddleware.restrictTo('ADMIN', 'TEACHER'), 
-  reportCardController.updateTemplate
-);
-
-// Delete template (Admin only)
-router.delete('/templates/:templateId', 
-  roleMiddleware.restrictTo('ADMIN'), 
-  reportCardController.deleteTemplate
-);
-
-// ================================
-// REPORT CARD GENERATION ROUTES
-// ================================
-
-// Generate report card for individual student
-router.post('/generate/student/:studentId',
-  roleMiddleware.restrictTo('ADMIN', 'TEACHER'),
-  reportCardController.generateStudentReport
-);
-
-// Generate report cards for entire class (bulk)
-router.post('/generate/class/:classId',
-  roleMiddleware.restrictTo('ADMIN', 'TEACHER'),
-  reportCardController.generateClassReports
-);
-
-// Get batch processing status
-router.get('/batch/:batchId/status',
-  reportCardController.getBatchStatus
-);
-
-// Get all batches for school
-router.get('/batches',
-  reportCardController.getAllBatches
-);
-
-// ================================
-// REPORT CARD RETRIEVAL ROUTES
-// ================================
-
-// Get report cards for a student
+// Get all report cards for a student
 router.get('/student/:studentId',
   reportCardController.getStudentReports
 );
 
-// Get report cards for a class
+// Get report cards for a class (requires termId query param)
 router.get('/class/:classId',
   reportCardController.getClassReports
 );
 
-// ================================
-// REPORT CARD MANAGEMENT ROUTES
-// ================================
-
-// Approve report card (Admin/Teacher only)
-router.post('/:reportId/approve',
-  roleMiddleware.restrictTo('ADMIN', 'TEACHER'),
-  reportCardController.approveReport
+// Get published results
+router.get('/published',
+  reportCardController.getPublishedResults
 );
 
-// Publish report card (Admin only)
-router.post('/:reportId/publish',
-  roleMiddleware.restrictTo('ADMIN'),
-  reportCardController.publishReport
-);
-
-// Generate PDF for report card
-router.get('/:reportId/pdf',
+// Generate PDF for a report card
+router.get('/student/:studentId/term/:termId/pdf',
   reportCardController.generatePDF
+);
+
+// Publish report cards for a term (Admin/Teacher only)
+router.post('/publish',
+  roleMiddleware.restrictTo('ADMIN', 'TEACHER'),
+  reportCardController.publishReports
 );
 
 module.exports = router;

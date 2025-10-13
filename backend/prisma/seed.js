@@ -41,20 +41,24 @@ async function main() {
   console.log('📖 Creating subjects...');
   const subjects = await createSubjects(school.id);
 
-  // 9. Create Assessments - TEMPORARILY DISABLED DUE TO SCHEMA COMPLEXITY
+  // 9. Create Grade Scales
+  console.log('📊 Creating grade scales...');
+  const gradeScales = await createGradeScales(school.id);
+
+  // 10. Create Assessments - TEMPORARILY DISABLED DUE TO SCHEMA COMPLEXITY
   // console.log('📝 Creating assessments...');
   // const assessments = await createAssessments(school.id, subjects, academicCalendars);
   const assessments = []; // Placeholder for now
 
-  // 10. Create Staff (including teachers)
+  // 11. Create Staff (including teachers)
   console.log('👨‍🏫 Creating staff...');
   const staff = await createStaff(school.id, users);
 
-    // 10. Create Students
+  // 12. Create Students
   console.log('👨‍🎓 Creating students...');
   const students = await createStudents(school.id, users, classes, houses, academicYear.id, sections);
 
-  // 11. Create Class-Subject History - TEMPORARILY DISABLED
+  // 13. Create Class-Subject History - TEMPORARILY DISABLED
   // console.log('📋 Creating class-subject history...');
   // await createClassSubjectHistory(school.id, classes, subjects, staff, academicYear.id);
 
@@ -149,6 +153,10 @@ async function main() {
   // 33. Create Notifications
   console.log('🔔 Creating notifications...');
   const notifications = await createNotifications(school.id, users, students, classes);
+
+  // 34. Create Results (Report Cards)
+  console.log('📝 Creating student results...');
+  const results = await createResults(school.id, students, classes, subjects, academicCalendars, gradeScales[0]);
 
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
@@ -769,6 +777,60 @@ async function createSubjects(schoolId) {
   }
 
   return subjects;
+}
+
+async function createGradeScales(schoolId) {
+  const gradeScalesData = [
+    {
+      name: 'Primary School Grading (100%)',
+      isActive: true,
+      schoolId: schoolId,
+      gradeRanges: [
+        { grade: 'A', minScore: 90, maxScore: 100, gradePoint: 4.0, remark: 'Excellent', color: '#10B981' },
+        { grade: 'B', minScore: 80, maxScore: 89, gradePoint: 3.0, remark: 'Very Good', color: '#3B82F6' },
+        { grade: 'C', minScore: 70, maxScore: 79, gradePoint: 2.5, remark: 'Good', color: '#F59E0B' },
+        { grade: 'D', minScore: 60, maxScore: 69, gradePoint: 2.0, remark: 'Fair', color: '#EF4444' },
+        { grade: 'F', minScore: 0, maxScore: 59, gradePoint: 0.0, remark: 'Poor', color: '#6B7280' }
+      ]
+    },
+    {
+      name: 'Secondary School Grading (WAEC/NECO)',
+      isActive: false,
+      schoolId: schoolId,
+      gradeRanges: [
+        { grade: 'A1', minScore: 90, maxScore: 100, gradePoint: 4.0, remark: 'Excellent', color: '#10B981' },
+        { grade: 'A2', minScore: 85, maxScore: 89, gradePoint: 3.8, remark: 'Very Good', color: '#059669' },
+        { grade: 'B1', minScore: 80, maxScore: 84, gradePoint: 3.5, remark: 'Good', color: '#3B82F6' },
+        { grade: 'B2', minScore: 75, maxScore: 79, gradePoint: 3.2, remark: 'Good', color: '#2563EB' },
+        { grade: 'C1', minScore: 70, maxScore: 74, gradePoint: 3.0, remark: 'Credit', color: '#F59E0B' },
+        { grade: 'C2', minScore: 65, maxScore: 69, gradePoint: 2.5, remark: 'Credit', color: '#D97706' },
+        { grade: 'C3', minScore: 60, maxScore: 64, gradePoint: 2.2, remark: 'Credit', color: '#B45309' },
+        { grade: 'D', minScore: 50, maxScore: 59, gradePoint: 2.0, remark: 'Pass', color: '#EF4444' },
+        { grade: 'F', minScore: 0, maxScore: 49, gradePoint: 0.0, remark: 'Fail', color: '#6B7280' }
+      ]
+    }
+  ];
+
+  const gradeScales = [];
+  for (const gradeScaleData of gradeScalesData) {
+    const { gradeRanges, ...gradeScaleInfo } = gradeScaleData;
+    
+    const gradeScale = await prisma.gradeScale.create({
+      data: {
+        ...gradeScaleInfo,
+        gradeRanges: {
+          create: gradeRanges
+        }
+      },
+      include: {
+        gradeRanges: true
+      }
+    });
+    gradeScales.push(gradeScale);
+  }
+
+  console.log(`✅ Created ${gradeScales.length} grade scales`);
+  return gradeScales;
 }
 
 async function createAssessments(schoolId, subjects, academicCalendars) {
@@ -3942,6 +4004,126 @@ async function createNotifications(schoolId, users, students, classes) {
     return notifications;
   } catch (error) {
     console.error('❌ Error creating notifications:', error);
+    return [];
+  }
+}
+
+async function createResults(schoolId, students, classes, subjects, academicCalendars, gradeScale) {
+  try {
+    const results = [];
+
+    // Create results for the first term of each class
+    const firstTerm = academicCalendars[0]; // Use first academic calendar as term
+
+    // Get students grouped by class
+    const studentsByClass = {};
+    for (const student of students) {
+      if (!studentsByClass[student.currentClassId]) {
+        studentsByClass[student.currentClassId] = [];
+      }
+      studentsByClass[student.currentClassId].push(student);
+    }
+
+    // Create results for each student in each class
+    for (const cls of classes) {
+      const classStudents = studentsByClass[cls.id] || [];
+      const classSubjects = subjects.slice(0, 6); // Use first 6 subjects for each class
+
+      for (const student of classStudents) {
+        // Generate random scores for the student
+        const subjectResults = [];
+        let totalScore = 0;
+
+        for (const subject of classSubjects) {
+          // Generate realistic random scores
+          const firstCA = Math.floor(Math.random() * 11) + 10; // 10-20
+          const secondCA = Math.floor(Math.random() * 11) + 10; // 10-20
+          const thirdCA = Math.floor(Math.random() * 11) + 10; // 10-20
+          const exam = Math.floor(Math.random() * 31) + 40; // 40-70
+
+          const totalCA = firstCA + secondCA + thirdCA;
+          const subjectTotal = totalCA + exam;
+
+          // Find grade for this score
+          const gradeRange = gradeScale.gradeRanges.find(range =>
+            subjectTotal >= range.minScore && subjectTotal <= range.maxScore
+          );
+
+          subjectResults.push({
+            subjectId: subject.id,
+            firstCA,
+            secondCA,
+            thirdCA,
+            exam,
+            totalCA,
+            totalScore: subjectTotal,
+            grade: gradeRange?.grade || 'F',
+            gradePoint: gradeRange?.gradePoint || 0,
+            remark: gradeRange?.remark || 'Poor',
+          });
+
+          totalScore += subjectTotal;
+        }
+
+        const averageScore = totalScore / classSubjects.length;
+
+        // Create result
+        const result = await prisma.result.create({
+          data: {
+            studentId: student.id,
+            termId: firstTerm.id,
+            classId: cls.id,
+            schoolId: schoolId,
+            gradeScaleId: gradeScale.id,
+            totalScore,
+            totalSubjects: classSubjects.length,
+            averageScore,
+            daysPresent: Math.floor(Math.random() * 11) + 55, // 55-65 days
+            daysAbsent: Math.floor(Math.random() * 5), // 0-4 days
+            timesLate: Math.floor(Math.random() * 3), // 0-2 times
+            conductGrade: averageScore >= 80 ? 'A' : averageScore >= 70 ? 'B' : averageScore >= 60 ? 'C' : 'D',
+            teacherComment: averageScore >= 80
+              ? 'Excellent performance. Keep up the good work!'
+              : averageScore >= 70
+              ? 'Good effort. Continue to work hard.'
+              : averageScore >= 60
+              ? 'Fair performance. More effort is needed.'
+              : 'Needs significant improvement.',
+            isPublished: false,
+          }
+        });
+
+        // Create subject results
+        if (subjectResults.length > 0) {
+          await prisma.subjectResult.createMany({
+            data: subjectResults.map(sr => ({
+              resultId: result.id,
+              ...sr
+            }))
+          });
+        }
+
+        results.push(result);
+      }
+    }
+
+    // Calculate positions for all classes
+    for (const cls of classes) {
+      const classResults = results.filter(r => r.classId === cls.id);
+      classResults.sort((a, b) => b.averageScore - a.averageScore);
+
+      for (let i = 0; i < classResults.length; i++) {
+        await prisma.result.update({
+          where: { id: classResults[i].id },
+          data: { position: i + 1 }
+        });
+      }
+    }
+
+    console.log(`✅ Created ${results.length} student results`);
+    return results;
+  } catch (error) {
+    console.error('❌ Error creating results:', error);
     return [];
   }
 }

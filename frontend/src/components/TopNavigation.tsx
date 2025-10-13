@@ -46,7 +46,7 @@ const TopNavigation = ({ activeTab, onTabChange }: TopNavigationProps) => {
       title: 'Academic',
       items: [
         { id: 'scores-add', label: 'Add Scores', icon: ClipboardList, description: 'Record student scores' },
-        { id: 'report-templates', label: 'Report Cards', icon: FileText, description: 'Generate report cards' },
+        { id: 'report-cards', label: 'Report Cards', icon: FileText, description: 'Generate report cards' },
         { id: 'grades-entry', label: 'Grade Entry', icon: BookOpen, description: 'Enter student grades' },
         { id: 'grades-analytics', label: 'Grade Analytics', icon: PieChart, description: 'Analyze grade performance' },
       ]

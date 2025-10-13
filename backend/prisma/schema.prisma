@@ -110,6 +110,10 @@ model School {
   inventoryTransactions InventoryTransaction[]
   inventoryAllocations InventoryAllocation[]
 
+  // Result and grading relationships
+  gradeScales          GradeScale[]
+  results              Result[]
+
   @@map("schools")
 }
 
@@ -294,6 +298,7 @@ model Term {
   gradeReports GradeReport[]
   reportCards ReportCard[]
   reportBatches ReportBatch[]
+  results     Result[]
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
@@ -364,6 +369,7 @@ model Subject {
   gradeBooks           GradeBook[]
   classSubjectHistory  ClassSubjectHistory[]
   subjectAssignments   SubjectAssignment[]
+  subjectResults       SubjectResult[]
 
   @@unique([schoolId, code])
   @@map("subjects")
@@ -1061,6 +1067,7 @@ model Class {
   classSubjectHistory ClassSubjectHistory[]
   subjectAssignments  SubjectAssignment[]
   reportCards         ReportCard[]
+  results             Result[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -1192,6 +1199,9 @@ model Student {
 
   // Transportation relationships
   transportAssignments StudentTransportAssignment[]
+
+  // Result relationships
+  results              Result[]
 
   @@unique([schoolId, admissionNumber])
   @@map("students")
@@ -2917,6 +2927,112 @@ model InventoryAllocation {
   updatedAt       DateTime  @updatedAt
 
   @@map("inventory_allocations")
+}
+
+// ================================
+// RESULT AND GRADING SYSTEM
+// ================================
+
+model GradeScale {
+  id          String   @id @default(uuid())
+  schoolId    String
+  name        String   // e.g., "Primary Grading", "Secondary Grading"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  gradeRanges GradeRange[]
+  results     Result[]
+
+  @@map("grade_scales")
+}
+
+model GradeRange {
+  id           String     @id @default(uuid())
+  gradeScaleId String
+  grade        String     // A, B, C, D, F
+  minScore     Float      // Minimum score for this grade
+  maxScore     Float      // Maximum score for this grade
+  gradePoint   Float      // GPA points (e.g., 4.0, 3.0, etc.)
+  remark       String     // Excellent, Good, Fair, Poor
+  color        String?    // For UI display
+  createdAt    DateTime   @default(now())
+
+  gradeScale   GradeScale @relation(fields: [gradeScaleId], references: [id], onDelete: Cascade)
+
+  @@map("grade_ranges")
+}
+
+model Result {
+  id           String   @id @default(uuid())
+  studentId    String
+  termId       String
+  classId      String
+  schoolId     String
+  gradeScaleId String
+  
+  // Academic performance
+  totalScore     Float
+  totalSubjects  Int
+  averageScore   Float
+  position       Int?
+  
+  // Attendance
+  daysPresent    Int      @default(0)
+  daysAbsent     Int      @default(0)
+  timesLate      Int      @default(0)
+  
+  // Behavior/Conduct
+  conductGrade   String?  // A, B, C, D, F
+  teacherComment String?
+  principalComment String?
+  
+  // Status
+  promoted       Boolean  @default(false)
+  isPublished    Boolean  @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student        Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  term           Term        @relation(fields: [termId], references: [id], onDelete: Cascade)
+  class          Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  gradeScale     GradeScale  @relation(fields: [gradeScaleId], references: [id])
+  subjectResults SubjectResult[]
+
+  @@unique([studentId, termId])
+  @@map("results")
+}
+
+model SubjectResult {
+  id           String   @id @default(uuid())
+  resultId     String
+  subjectId    String
+  
+  // Assessment scores
+  firstCA      Float?   // First Continuous Assessment
+  secondCA     Float?   // Second Continuous Assessment
+  thirdCA      Float?   // Third Continuous Assessment
+  exam         Float?   // Examination score
+  
+  // Calculated fields
+  totalCA      Float?   // Sum of all CA scores
+  totalScore   Float?   // CA + Exam total
+  grade        String?  // A, B, C, D, F
+  gradePoint   Float?   // GPA points
+  remark       String?  // Excellent, Good, etc.
+  
+  position     Int?     // Position in subject
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  result       Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([resultId, subjectId])
+  @@map("subject_results")
 }
 
 // ================================

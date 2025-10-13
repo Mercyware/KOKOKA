@@ -50,6 +50,7 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const scoreRoutes = require('./routes/scoreRoutes');
+const resultRoutes = require('./routes/resultRoutes');
 const subjectAssignmentRoutes = require('./routes/subjectAssignmentRoutes');
 const behavioralAssessmentRoutes = require('./routes/behavioralAssessmentRoutes');
 
@@ -231,6 +232,9 @@ app.use('/api/notifications', notificationRoutes);
 
 // Score Management Routes
 app.use('/api/scores', scoreRoutes);
+
+// Result and Grading Routes
+app.use('/api/results', resultRoutes);
 
 // Behavioral Assessment Routes
 app.use('/api/behavioral-assessments', behavioralAssessmentRoutes);
