@@ -148,7 +148,7 @@ async function main() {
 
   // 32. Create Inventory Allocations
   console.log('🏷️  Creating inventory allocations...');
-  const inventoryAllocations = await createInventoryAllocations(school.id, inventoryItems, students, teachers, users[0].id);
+  const inventoryAllocations = await createInventoryAllocations(school.id, inventoryItems, students, staff, users[0].id);
 
   // 33. Create Notifications
   console.log('🔔 Creating notifications...');
@@ -156,7 +156,11 @@ async function main() {
 
   // 34. Create Results (Report Cards)
   console.log('📝 Creating student results...');
-  const results = await createResults(school.id, students, classes, subjects, academicCalendars, gradeScales[0]);
+  // Fetch terms first
+  const terms = await prisma.term.findMany({ where: { schoolId: school.id } });
+  if (terms.length > 0) {
+    const results = await createResults(school.id, students, classes, subjects, terms[0], gradeScales[0]);
+  }
 
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
@@ -3861,7 +3865,7 @@ async function createNotifications(schoolId, users, students, classes) {
         data: {
           title: 'Assignment Due Soon',
           message: 'Reminder: Your Mathematics assignment is due tomorrow. Please submit before 11:59 PM.',
-          type: 'ALERT',
+          type: 'ACADEMIC',
           priority: 'HIGH',
           category: 'ACADEMIC',
           channels: ['IN_APP', 'PUSH'],
@@ -4008,12 +4012,9 @@ async function createNotifications(schoolId, users, students, classes) {
   }
 }
 
-async function createResults(schoolId, students, classes, subjects, academicCalendars, gradeScale) {
+async function createResults(schoolId, students, classes, subjects, term, gradeScale) {
   try {
     const results = [];
-
-    // Create results for the first term of each class
-    const firstTerm = academicCalendars[0]; // Use first academic calendar as term
 
     // Get students grouped by class
     const studentsByClass = {};
@@ -4071,7 +4072,7 @@ async function createResults(schoolId, students, classes, subjects, academicCale
         const result = await prisma.result.create({
           data: {
             studentId: student.id,
-            termId: firstTerm.id,
+            termId: term.id,
             classId: cls.id,
             schoolId: schoolId,
             gradeScaleId: gradeScale.id,

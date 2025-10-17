@@ -20,19 +20,23 @@ exports.protect = async (req, res, next) => {
     }
     
     let token;
-    
+
     // Get token from Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer')
     ) {
       token = req.headers.authorization.split(' ')[1];
-    } 
+    }
     // Get token from cookie
     else if (req.cookies && req.cookies.token) {
       token = req.cookies.token;
     }
-    
+    // Get token from query parameter (for PDF downloads and similar)
+    else if (req.query && req.query.token) {
+      token = req.query.token;
+    }
+
     // Check if token exists
     if (!token) {
       return res.status(401).json({

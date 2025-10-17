@@ -8,6 +8,7 @@ import { getDevSubdomain } from '@/utils/devSubdomain';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Camera, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { resolveImageUrl, getInitials, isValidImageFile, isValidImageSize, formatFileSize } from '@/utils/imageUtils';
 
 interface ProfilePictureUploadProps {
   studentId: string;
@@ -65,17 +66,14 @@ export function ProfilePictureUpload({
 
   // Validate file before processing
   const validateFile = (file: File): string | null => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
-    if (!allowedTypes.includes(file.type)) {
-      return 'Please select a valid image file (JPEG, PNG, or WebP)';
+    if (!isValidImageFile(file)) {
+      return 'Please select a valid image file (JPEG, PNG, WebP)';
     }
-
-    if (file.size > maxSize) {
-      return 'File size must be less than 5MB';
+    
+    if (!isValidImageSize(file, 5)) {
+      return 'Image size must be less than 5MB';
     }
-
+    
     return null;
   };
 
@@ -304,17 +302,10 @@ export function ProfilePictureUpload({
     }
   };
 
-  // Get initials for fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  // Remove the local getInitials function since we're importing it from utils
+  // const getInitials = (name: string) => { ... }
 
-  const displayImageUrl = uploadState.previewUrl || currentImageUrl;
+  const displayImageUrl = uploadState.previewUrl || resolveImageUrl(currentImageUrl);
   const hasImage = Boolean(displayImageUrl);
   const canDelete = hasImage && showDeleteButton && !readonly;
 
@@ -369,7 +360,7 @@ export function ProfilePictureUpload({
                 {uploadState.selectedFile.name}
               </Badge>
               <p className="text-xs text-gray-500">
-                {(uploadState.selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                {formatFileSize(uploadState.selectedFile.size)}
               </p>
             </div>
           )}

@@ -36,6 +36,8 @@ import {
   Printer,
 } from 'lucide-react';
 import { toast } from '../../components/ui/use-toast';
+import api from '../../services/api';
+import { API_CONFIG } from '../../config/api';
 
 interface AcademicYear {
   id: string;
@@ -54,7 +56,7 @@ interface Class {
   grade: string;
 }
 
-interface ReportCard {
+interface Result {
   id: string;
   studentId: string;
   termId: string;
@@ -66,6 +68,11 @@ interface ReportCard {
   conductGrade: string | null;
   isPublished: boolean;
   publishedAt: string | null;
+  daysPresent?: number;
+  daysAbsent?: number;
+  timesLate?: number;
+  teacherComment?: string | null;
+  principalComment?: string | null;
   student: {
     user: {
       name: string;
@@ -111,16 +118,40 @@ const ReportCardsPage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string>('');
 
   // State for data
-  const [reports, setReports] = useState<ReportCard[]>([]);
-  const [publishedReports, setPublishedReports] = useState<ReportCard[]>([]);
+  const [reports, setReports] = useState<Result[]>([]);
+  const [publishedReports, setPublishedReports] = useState<Result[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Loading flags to prevent concurrent requests
+  const [loadingAcademicYears, setLoadingAcademicYears] = useState(false);
+  const [loadingTerms, setLoadingTerms] = useState(false);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+
+  // Debug logging
   useEffect(() => {
-    fetchAcademicYears();
-    fetchClasses();
-    fetchPublishedReports();
+    console.log('📊 State Update:', {
+      academicYears: academicYears.length,
+      selectedAcademicYear,
+      terms: terms.length,
+      selectedTerm,
+      classes: classes.length,
+      selectedClass
+    });
+  }, [academicYears, selectedAcademicYear, terms, selectedTerm, classes, selectedClass]);
+
+  useEffect(() => {
+    console.log('🚀 Component mounted - initializing data');
+    const initializeData = async () => {
+      console.log('🔄 Starting parallel data fetch...');
+      await Promise.all([
+        fetchAcademicYears(),
+        fetchClasses()
+      ]);
+      console.log('✅ Initial data fetch complete');
+    };
+    initializeData();
   }, []);
 
   useEffect(() => {
@@ -131,86 +162,137 @@ const ReportCardsPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedClass && selectedTerm) {
-      fetchClassReports();
+      // Debounce the API call to prevent rapid requests
+      const timer = setTimeout(() => {
+        fetchClassReports();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    } else {
+      setReports([]);
     }
   }, [selectedClass, selectedTerm]);
 
   const fetchAcademicYears = async () => {
-    try {
-      const response = await fetch('/api/academic-years', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        }
-      });
-      const data = await response.json();
+    if (loadingAcademicYears) {
+      console.log('⏸️ Already loading academic years, skipping...');
+      return;
+    }
 
-      if (data.success) {
-        setAcademicYears(data.data);
-        const current = data.data.find((year: AcademicYear) => year.isCurrent);
+    try {
+      console.log('🔄 Starting fetchAcademicYears...');
+      setLoadingAcademicYears(true);
+      const response = await api.get<AcademicYear[]>('/academic-years');
+
+      console.log('📅 Academic Years Response:', JSON.stringify(response, null, 2));
+
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
+
+      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
+        console.log('✅ Response valid, setting academic years...', apiResponse.data);
+        setAcademicYears(apiResponse.data);
+
+        const current = apiResponse.data.find((year: AcademicYear) => year.isCurrent);
         if (current) {
+          console.log('✅ Setting current academic year:', current.id, current.name);
           setSelectedAcademicYear(current.id);
+        } else if (apiResponse.data.length > 0) {
+          console.log('✅ Setting first academic year:', apiResponse.data[0].id, apiResponse.data[0].name);
+          setSelectedAcademicYear(apiResponse.data[0].id);
         }
+      } else {
+        console.warn('⚠️ No academic years data or unsuccessful response');
+        setAcademicYears([]);
       }
-    } catch (error) {
-      console.error('Error fetching academic years:', error);
+    } catch (error: any) {
+      console.error('❌ Error fetching academic years:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load academic years',
+        variant: 'destructive',
+      });
+    } finally {
+      console.log('🏁 Finished fetchAcademicYears');
+      setLoadingAcademicYears(false);
     }
   };
 
   const fetchTerms = async (academicYearId: string) => {
-    try {
-      const response = await fetch(`/api/academic-years/${academicYearId}/terms`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        }
-      });
-      const data = await response.json();
+    if (loadingTerms) return;
 
-      if (data.success) {
-        setTerms(data.data);
+    try {
+      setLoadingTerms(true);
+      const response = await api.get<Term[]>(`/academic-years/${academicYearId}/terms`);
+
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
+
+      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
+        setTerms(apiResponse.data);
+        // Auto-select first term if none selected
+        if (!selectedTerm || !apiResponse.data.find(t => t.id === selectedTerm)) {
+          setSelectedTerm(apiResponse.data[0].id);
+        }
+      } else {
+        setTerms([]);
+        setSelectedTerm('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching terms:', error);
+      setTerms([]);
+      setSelectedTerm('');
+    } finally {
+      setLoadingTerms(false);
     }
   };
 
   const fetchClasses = async () => {
-    try {
-      const response = await fetch('/api/classes', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        }
-      });
-      const data = await response.json();
+    if (loadingClasses) return;
 
-      if (data.success) {
-        setClasses(data.data);
+    try {
+      setLoadingClasses(true);
+      const response = await api.get<Class[]>('/classes');
+
+      console.log('🏫 Classes Response:', response);
+
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
+
+      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
+        console.log('✅ Setting classes:', apiResponse.data.length, 'classes');
+        setClasses(apiResponse.data);
+      } else {
+        setClasses([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching classes:', error);
+      setClasses([]);
+    } finally {
+      setLoadingClasses(false);
     }
   };
 
   const fetchClassReports = async () => {
+    if (!selectedClass || !selectedTerm) return;
+
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/report-cards/class/${selectedClass}?termId=${selectedTerm}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        }
-      });
-      const data = await response.json();
 
-      if (data.success) {
-        setReports(data.data);
+      const response = await api.get(`/report-cards/class/${selectedClass}`, {
+        params: { termId: selectedTerm }
+      });
+
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
+
+      if (apiResponse.success) {
+        setReports(apiResponse.data);
       } else {
-        setError(data.message);
+        setError(apiResponse.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching class reports:', error);
       setError('Failed to fetch reports');
     } finally {
@@ -220,22 +302,17 @@ const ReportCardsPage: React.FC = () => {
 
   const fetchPublishedReports = async () => {
     try {
-      const url = selectedTerm
-        ? `/api/report-cards/published?termId=${selectedTerm}`
-        : '/api/report-cards/published';
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        }
+      const response = await api.get('/report-cards/published', {
+        params: selectedTerm ? { termId: selectedTerm } : undefined
       });
-      const data = await response.json();
 
-      if (data.success) {
-        setPublishedReports(data.data);
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
+
+      if (apiResponse.success) {
+        setPublishedReports(apiResponse.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching published reports:', error);
     }
   };
@@ -252,22 +329,15 @@ const ReportCardsPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('/api/report-cards/publish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-School-Subdomain': localStorage.getItem('schoolSubdomain') || 'greenwood'
-        },
-        body: JSON.stringify({
-          classId: selectedClass,
-          termId: selectedTerm
-        })
+      const response = await api.post('/report-cards/publish', {
+        classId: selectedClass,
+        termId: selectedTerm
       });
 
-      const data = await response.json();
+      // Extract the actual API response from axios wrapper
+      const apiResponse = response.data || response;
 
-      if (data.success) {
+      if (apiResponse.success) {
         toast({
           title: 'Success',
           description: 'Reports published successfully',
@@ -277,7 +347,7 @@ const ReportCardsPage: React.FC = () => {
       } else {
         toast({
           title: 'Error',
-          description: data.message,
+          description: apiResponse.message,
           variant: 'destructive',
         });
       }
@@ -294,12 +364,16 @@ const ReportCardsPage: React.FC = () => {
   };
 
   const handleDownloadPDF = (studentId: string, termId: string) => {
-    const url = `/api/report-cards/student/${studentId}/term/${termId}/pdf`;
+    const token = localStorage.getItem('token');
+    const subdomain = localStorage.getItem('schoolSubdomain') || 'greenwood';
+    const baseUrl = API_CONFIG.BASE_URL;
+    const url = `${baseUrl}/report-cards/student/${studentId}/term/${termId}/pdf?token=${token}&subdomain=${subdomain}`;
     window.open(url, '_blank');
   };
 
   const handleViewReport = (studentId: string, termId: string) => {
-    navigate(`/report-card/${studentId}/${termId}`);
+    // Open PDF in new tab instead of navigating to non-existent route
+    handleDownloadPDF(studentId, termId);
   };
 
   return (
@@ -346,12 +420,19 @@ const ReportCardsPage: React.FC = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="space-y-2">
-                    <Label>Academic Year</Label>
-                    <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
-                      <SelectTrigger>
+                    <Label>Academic Year ({academicYears.length} items)</Label>
+                    <Select
+                      value={selectedAcademicYear || undefined}
+                      onValueChange={setSelectedAcademicYear}
+                      disabled={academicYears.length === 0}
+                    >
+                      <SelectTrigger disabled={academicYears.length === 0}>
                         <SelectValue placeholder="Select year" />
                       </SelectTrigger>
                       <SelectContent>
+                        {academicYears.length === 0 && (
+                          <div className="p-2 text-sm text-gray-500">No academic years available</div>
+                        )}
                         {academicYears.map((year) => (
                           <SelectItem key={year.id} value={year.id}>
                             {year.name} {year.isCurrent && '(Current)'}
@@ -362,12 +443,19 @@ const ReportCardsPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Term</Label>
-                    <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select term" />
+                    <Label>Term ({terms.length} items)</Label>
+                    <Select
+                      value={selectedTerm || undefined}
+                      onValueChange={setSelectedTerm}
+                      disabled={!selectedAcademicYear || terms.length === 0}
+                    >
+                      <SelectTrigger disabled={!selectedAcademicYear || terms.length === 0}>
+                        <SelectValue placeholder={!selectedAcademicYear ? "Select year first" : "Select term"} />
                       </SelectTrigger>
                       <SelectContent>
+                        {terms.length === 0 && (
+                          <div className="p-2 text-sm text-gray-500">No terms available</div>
+                        )}
                         {terms.map((term) => (
                           <SelectItem key={term.id} value={term.id}>
                             {term.name}
@@ -378,12 +466,19 @@ const ReportCardsPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Class</Label>
-                    <Select value={selectedClass} onValueChange={setSelectedClass}>
-                      <SelectTrigger>
+                    <Label>Class ({classes.length} items)</Label>
+                    <Select
+                      value={selectedClass || undefined}
+                      onValueChange={setSelectedClass}
+                      disabled={classes.length === 0}
+                    >
+                      <SelectTrigger disabled={classes.length === 0}>
                         <SelectValue placeholder="Select class" />
                       </SelectTrigger>
                       <SelectContent>
+                        {classes.length === 0 && (
+                          <div className="p-2 text-sm text-gray-500">No classes available</div>
+                        )}
                         {classes.map((cls) => (
                           <SelectItem key={cls.id} value={cls.id}>
                             {cls.name} - Grade {cls.grade}
@@ -482,8 +577,12 @@ const ReportCardsPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Academic Year</Label>
-                      <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
-                        <SelectTrigger>
+                      <Select
+                        value={selectedAcademicYear || undefined}
+                        onValueChange={setSelectedAcademicYear}
+                        disabled={academicYears.length === 0}
+                      >
+                        <SelectTrigger disabled={academicYears.length === 0}>
                           <SelectValue placeholder="Select year" />
                         </SelectTrigger>
                         <SelectContent>
@@ -498,9 +597,13 @@ const ReportCardsPage: React.FC = () => {
 
                     <div className="space-y-2">
                       <Label>Term</Label>
-                      <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select term" />
+                      <Select
+                        value={selectedTerm || undefined}
+                        onValueChange={setSelectedTerm}
+                        disabled={!selectedAcademicYear || terms.length === 0}
+                      >
+                        <SelectTrigger disabled={!selectedAcademicYear || terms.length === 0}>
+                          <SelectValue placeholder={!selectedAcademicYear ? "Select year first" : "Select term"} />
                         </SelectTrigger>
                         <SelectContent>
                           {terms.map((term) => (
@@ -514,8 +617,12 @@ const ReportCardsPage: React.FC = () => {
 
                     <div className="space-y-2">
                       <Label>Class</Label>
-                      <Select value={selectedClass} onValueChange={setSelectedClass}>
-                        <SelectTrigger>
+                      <Select
+                        value={selectedClass || undefined}
+                        onValueChange={setSelectedClass}
+                        disabled={classes.length === 0}
+                      >
+                        <SelectTrigger disabled={classes.length === 0}>
                           <SelectValue placeholder="Select class" />
                         </SelectTrigger>
                         <SelectContent>

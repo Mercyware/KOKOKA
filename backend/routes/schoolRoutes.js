@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 
 // Import controllers
 const schoolController = require('../controllers/schoolController');
@@ -8,6 +9,21 @@ const schoolController = require('../controllers/schoolController');
 const { protect } = require('../middlewares/authMiddleware');
 // const { restrictTo } = require('../middlewares/roleMiddleware'); // Temporarily disabled for migration
 const { extractSchoolFromSubdomain, requireSchool } = require('../middlewares/schoolMiddleware');
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 /**
  * @swagger
@@ -174,6 +190,10 @@ router.get('/check-subdomain/:subdomain', schoolController.checkSubdomainAvailab
 // School settings routes - must be before /:id routes to avoid matching conflict
 router.get('/settings', protect, extractSchoolFromSubdomain, schoolController.getSchoolSettings);
 router.put('/settings', protect, extractSchoolFromSubdomain, schoolController.updateSchoolSettings);
+router.post('/settings/upload-logo', protect, extractSchoolFromSubdomain, upload.single('logo'), schoolController.uploadSchoolLogo);
+
+// Public route for school logo (no auth required)
+router.get('/logo/:schoolId', schoolController.getSchoolLogo);
 
 // Protected routes - Super admin only
 router.use(protect);

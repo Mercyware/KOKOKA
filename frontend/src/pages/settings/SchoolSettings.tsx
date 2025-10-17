@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Building,
   Save,
@@ -14,7 +14,9 @@ import {
   GraduationCap,
   Users,
   DollarSign,
-  Loader2
+  Loader2,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import {
@@ -38,15 +40,20 @@ import {
   updateAcademicSettings as updateAcademicSettingsService,
   updateSystemPreferences as updateSystemPreferencesService,
   updateNotificationSettings as updateNotificationSettingsService,
-  updateFeatureToggles as updateFeatureTogglesService
+  updateFeatureToggles as updateFeatureTogglesService,
+  uploadSchoolLogo
 } from '@/services/schoolSettingsService';
 import { useToast } from '@/hooks/use-toast';
+import { resolveImageUrl, isValidImageFile, isValidImageSize } from '@/utils/imageUtils';
 
 const SchoolSettings: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // General Information State
   const [generalInfo, setGeneralInfo] = useState({
@@ -143,6 +150,11 @@ const SchoolSettings: React.FC = () => {
         zipCode: school.zipCode || '',
         country: school.country || ''
       });
+
+      // Set logo preview if exists
+      if (school.logo) {
+        setLogoPreview(resolveImageUrl(school.logo));
+      }
 
       // Set academic settings
       if (school.settings?.academic) {
@@ -320,6 +332,64 @@ const SchoolSettings: React.FC = () => {
     }
   };
 
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type and size
+    if (!isValidImageFile(file)) {
+      toast({
+        title: 'Error',
+        description: 'Please select a valid image file (JPEG, PNG, WebP)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!isValidImageSize(file, 5)) {
+      toast({
+        title: 'Error',
+        description: 'Image size must be less than 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload logo
+    setUploadingLogo(true);
+    try {
+      const result = await uploadSchoolLogo(file);
+      setGeneralInfo({ ...generalInfo, logo: result.logo });
+      setLogoPreview(result.logo); // Update preview with AWS URL
+      toast({
+        title: 'Success',
+        description: 'School logo uploaded successfully',
+      });
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to upload logo',
+        variant: 'destructive',
+      });
+      // Revert preview on error
+      setLogoPreview(generalInfo.logo || null);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -382,6 +452,54 @@ const SchoolSettings: React.FC = () => {
                   <CardDescription>Basic details about your school</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Logo Upload Section */}
+                  <div className="space-y-2">
+                    <Label>School Logo</Label>
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+                          {logoPreview ? (
+                            <img
+                              src={logoPreview}
+                              alt="School logo"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="h-12 w-12 text-gray-400" />
+                          )}
+                        </div>
+                        {uploadingLogo && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoChange}
+                          className="hidden"
+                        />
+                        <Button
+                          intent="action"
+                          onClick={handleLogoClick}
+                          disabled={uploadingLogo}
+                          className="w-full sm:w-auto"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                        </Button>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Recommended: Square image, max 5MB (PNG, JPG, WEBP)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">School Name *</Label>

@@ -98,7 +98,13 @@
       "Bash(start \"http://localhost:8080/messaging\")",
       "Bash(set PORT=5000)",
       "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate dev --name add_inventory_module)",
-      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" node seed-inventory.js)"
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" node seed-inventory.js)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate reset --force --skip-generate)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" REDIS_URL=\"redis://:redis_password@localhost:6380\" node prisma/seed.js)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma migrate dev --name add_results_and_grade_scales --skip-generate)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" npx prisma db push --skip-generate --accept-data-loss)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" REDIS_URL=\"redis://:redis_password@localhost:6380\" PORT=5000 npm run dev)",
+      "Bash(DATABASE_URL=\"postgresql://kokoka_user:kokoka_password@localhost:5433/kokoka\" REDIS_URL=\"redis://:redis_password@localhost:6380\" PORT=5010 npm run dev)"
     ],
     "deny": [],
     "ask": [],

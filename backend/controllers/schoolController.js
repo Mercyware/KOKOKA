@@ -689,3 +689,172 @@ exports.updateSchoolSettings = async (req, res) => {
   }
 };
 
+/**
+ * Get school logo from S3
+ * @route GET /api/schools/logo/:schoolId
+ * @access Public
+ */
+exports.getSchoolLogo = async (req, res) => {
+  try {
+    const { schoolId } = req.params;
+    const { S3Client, GetObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    const bucket = process.env.AWS_S3_BUCKET_NAME;
+    const prefix = `${schoolId}/school-logo/`;
+
+    // List objects to find the latest logo
+    const listCommand = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+      MaxKeys: 1
+    });
+
+    const listResponse = await s3Client.send(listCommand);
+
+    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'School logo not found'
+      });
+    }
+
+    // Get the latest logo file
+    const logoKey = listResponse.Contents[0].Key;
+    const getCommand = new GetObjectCommand({
+      Bucket: bucket,
+      Key: logoKey
+    });
+
+    const response = await s3Client.send(getCommand);
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+
+    // Stream the image
+    response.Body.pipe(res);
+  } catch (error) {
+    logger.error(`Get school logo error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve school logo'
+    });
+  }
+};
+
+/**
+ * Upload school logo
+ * @route POST /api/schools/settings/upload-logo
+ * @access Private (School Admin)
+ */
+exports.uploadSchoolLogo = async (req, res) => {
+  try {
+    if (!req.school || !req.school.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'School context not found'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const fileUploadService = require('../utils/fileUploadService');
+    const sharp = require('sharp');
+    const path = require('path');
+
+    // Validate image
+    const validation = await fileUploadService.validateImage(req.file.buffer, {
+      maxSize: 5242880, // 5MB
+      minWidth: 100,
+      minHeight: 100,
+      maxWidth: 2000,
+      maxHeight: 2000
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error
+      });
+    }
+
+    // Optimize logo
+    const optimizedImage = await fileUploadService.optimizeImage(req.file.buffer, {
+      width: 500,
+      height: 500,
+      quality: 90,
+      format: 'png'
+    });
+
+    // Upload to S3 directly without FileManager record
+    const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    const bucket = process.env.AWS_S3_BUCKET_NAME;
+    const fileName = `${req.school.id}/school-logo/${Date.now()}_${req.school.id}.png`;
+
+    await s3Client.send(new PutObjectCommand({
+      Bucket: bucket,
+      Key: fileName,
+      Body: optimizedImage,
+      ContentType: 'image/png',
+      ACL: 'public-read', // Ensure the image is publicly readable
+      Metadata: {
+        'schoolId': req.school.id,
+        'uploadedBy': req.user.id
+      }
+    }));
+
+    // Construct the full S3 URL using the public URL from environment
+    const logoUrl = `${process.env.AWS_S3_PUBLIC_URL}/${fileName}`;
+
+    // Update school logo URL
+    const updatedSchool = await prisma.school.update({
+      where: { id: req.school.id },
+      data: { logo: logoUrl },
+      select: {
+        id: true,
+        name: true,
+        subdomain: true,
+        logo: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'School logo uploaded successfully',
+      logo: logoUrl,
+      school: updatedSchool
+    });
+  } catch (error) {
+    logger.error(`Upload school logo error: ${error.message}`);
+    logger.logError(error, { component: 'controller', operation: 'uploadSchoolLogo' });
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error uploading school logo',
+      error: error.message
+    });
+  }
+};
+

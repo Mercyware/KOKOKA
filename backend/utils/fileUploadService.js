@@ -113,7 +113,7 @@ class FileUploadService {
         Key: fileKey,
         Body: fileData,
         ContentType: mimeType,
-        // Remove ACL setting as bucket has ACLs disabled
+        ACL: isPublic ? 'public-read' : 'private', // Set ACL based on isPublic flag
         Metadata: {
           ...metadata,
           originalName: originalName || fileName,

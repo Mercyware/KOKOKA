@@ -3498,6 +3498,7 @@ enum ClassTeacherStatus {
 
 enum FileCategory {
   PROFILE_PICTURE    // Student/Teacher profile pictures
+  SCHOOL_LOGO       // School logo
   DOCUMENT          // Documents (PDFs, Word docs, etc.)
   IMAGE             // General images
   AUDIO             // Audio files

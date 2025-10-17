@@ -162,3 +162,18 @@ export const updateFeatureToggles = async (featureToggles: any): Promise<SchoolS
     settings: { features: featureToggles }
   });
 };
+
+/**
+ * Upload school logo
+ */
+export const uploadSchoolLogo = async (file: File): Promise<{ success: boolean; logo: string; school: SchoolSettings }> => {
+  const formData = new FormData();
+  formData.append('logo', file);
+
+  const response = await api.post('/schools/settings/upload-logo', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};

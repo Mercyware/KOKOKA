@@ -58,6 +58,7 @@ const behavioralAssessmentRoutes = require('./routes/behavioralAssessmentRoutes'
 const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
 const reportCardRoutes = require('./routes/reportCardRoutes');
 const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
+const imageProxyRoutes = require('./routes/imageProxyRoutes');
 
 // Library Management Routes
 const libraryRoutes = require('./routes/libraryRoutes');
@@ -123,6 +124,9 @@ if (env.XSS_PROTECTION_ENABLED) {
 
 // Compress responses
 app.use(compression());
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Request logging
 app.use(morgan('combined', { stream: logger.stream }));
@@ -197,6 +201,7 @@ app.get('/api/debug/routes', (req, res) => {
 });
 
 // API routes (temporarily disabled for migration)
+app.use('/api/images', imageProxyRoutes); // Image proxy for serving S3 images
 app.use('/api/schools', schoolRoutes); // School routes enabled
 app.use('/api/auth', authRoutes);
 app.use('/api/academic-years', academicYearRoutes);
@@ -339,3 +344,5 @@ process.on('SIGTERM', () => {
 });
 
 module.exports = server;
+
+
