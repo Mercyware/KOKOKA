@@ -189,17 +189,31 @@ const ReportCardsPage: React.FC = () => {
       // Extract the actual API response from axios wrapper
       const apiResponse = response.data || response;
 
-      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
-        console.log('✅ Response valid, setting academic years...', apiResponse.data);
-        setAcademicYears(apiResponse.data);
+      // Handle different response structures
+      let yearsData: AcademicYear[] = [];
 
-        const current = apiResponse.data.find((year: AcademicYear) => year.isCurrent);
+      if (apiResponse.success && apiResponse.data) {
+        // Check if data has academicYears property (paginated response)
+        if (apiResponse.data.academicYears && Array.isArray(apiResponse.data.academicYears)) {
+          yearsData = apiResponse.data.academicYears;
+        }
+        // Check if data is directly an array
+        else if (Array.isArray(apiResponse.data)) {
+          yearsData = apiResponse.data;
+        }
+      }
+
+      if (yearsData.length > 0) {
+        console.log('✅ Response valid, setting academic years...', yearsData);
+        setAcademicYears(yearsData);
+
+        const current = yearsData.find((year: AcademicYear) => year.isCurrent);
         if (current) {
           console.log('✅ Setting current academic year:', current.id, current.name);
           setSelectedAcademicYear(current.id);
-        } else if (apiResponse.data.length > 0) {
-          console.log('✅ Setting first academic year:', apiResponse.data[0].id, apiResponse.data[0].name);
-          setSelectedAcademicYear(apiResponse.data[0].id);
+        } else if (yearsData.length > 0) {
+          console.log('✅ Setting first academic year:', yearsData[0].id, yearsData[0].name);
+          setSelectedAcademicYear(yearsData[0].id);
         }
       } else {
         console.warn('⚠️ No academic years data or unsuccessful response');
@@ -228,11 +242,25 @@ const ReportCardsPage: React.FC = () => {
       // Extract the actual API response from axios wrapper
       const apiResponse = response.data || response;
 
-      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
-        setTerms(apiResponse.data);
+      // Handle different response structures
+      let termsData: Term[] = [];
+
+      if (apiResponse.success && apiResponse.data) {
+        // Check if data has terms property
+        if (apiResponse.data.terms && Array.isArray(apiResponse.data.terms)) {
+          termsData = apiResponse.data.terms;
+        }
+        // Check if data is directly an array
+        else if (Array.isArray(apiResponse.data)) {
+          termsData = apiResponse.data;
+        }
+      }
+
+      if (termsData.length > 0) {
+        setTerms(termsData);
         // Auto-select first term if none selected
-        if (!selectedTerm || !apiResponse.data.find(t => t.id === selectedTerm)) {
-          setSelectedTerm(apiResponse.data[0].id);
+        if (!selectedTerm || !termsData.find(t => t.id === selectedTerm)) {
+          setSelectedTerm(termsData[0].id);
         }
       } else {
         setTerms([]);
@@ -372,8 +400,12 @@ const ReportCardsPage: React.FC = () => {
   };
 
   const handleViewReport = (studentId: string, termId: string) => {
-    // Open PDF in new tab instead of navigating to non-existent route
-    handleDownloadPDF(studentId, termId);
+    // Navigate to the report card viewer page
+    navigate(`/results/report-card/${studentId}/${termId}`);
+  };
+
+  const handleViewTerminalReport = (studentId: string, termId: string) => {
+    navigate(`/results/terminal-report/${studentId}/${termId}`);
   };
 
   return (
@@ -538,6 +570,14 @@ const ReportCardsPage: React.FC = () => {
                               >
                                 <Eye className="h-3 w-3 mr-1" />
                                 View
+                              </Button>
+                              <Button
+                                intent="action"
+                                size="sm"
+                                onClick={() => handleViewTerminalReport(report.studentId, report.termId)}
+                              >
+                                <FileText className="h-3 w-3 mr-1" />
+                                Terminal
                               </Button>
                               <Button
                                 intent="action"

@@ -417,7 +417,7 @@ const getResultSummary = async (req, res) => {
 
         subjectPerformance[subjectResult.subjectId].totalScore += subjectResult.totalScore || 0;
         subjectPerformance[subjectResult.subjectId].count += 1;
-        subjectPerformance[subjectResult.subjectId].grades[grade] = 
+        subjectPerformance[subjectResult.subjectId].grades[grade] =
           (subjectPerformance[subjectResult.subjectId].grades[grade] || 0) + 1;
       });
     });
@@ -451,11 +451,182 @@ const getResultSummary = async (req, res) => {
   }
 };
 
+// Get terminal report for a student
+const getTerminalReport = async (req, res) => {
+  try {
+    const { studentId, termId } = req.params;
+    const schoolId = req.school.id;
+
+    // Get result with all related data
+    const result = await prisma.result.findUnique({
+      where: {
+        studentId_termId: {
+          studentId,
+          termId
+        }
+      },
+      include: {
+        student: {
+          include: {
+            profilePicture: {
+              select: {
+                fileUrl: true
+              }
+            }
+          }
+        },
+        term: {
+          include: {
+            academicYear: true
+          }
+        },
+        class: true,
+        gradeScale: {
+          include: { gradeRanges: true }
+        },
+        subjectResults: {
+          include: {
+            subject: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: {
+            subject: { name: 'asc' }
+          }
+        }
+      }
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Result not found for this student and term'
+      });
+    }
+
+    // Get school information
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: {
+        id: true,
+        name: true,
+        logo: true,
+        streetAddress: true,
+        city: true,
+        state: true,
+        phone: true,
+        email: true
+      }
+    });
+
+    // Get total students in class for ranking
+    const classSize = await prisma.result.count({
+      where: {
+        classId: result.classId,
+        termId,
+        schoolId
+      }
+    });
+
+    // Get next term start date (if exists)
+    const nextTerm = await prisma.term.findFirst({
+      where: {
+        schoolId,
+        startDate: { gt: result.term.endDate }
+      },
+      orderBy: { startDate: 'asc' }
+    });
+
+    // Format subject grades for the terminal report
+    const subjectGrades = result.subjectResults.map(sr => ({
+      subjectName: sr.subject.name,
+      subjectCode: sr.subject.code,
+      ca1: sr.firstCA,
+      ca2: sr.secondCA,
+      fat: sr.thirdCA, // Using thirdCA as FAT (Formative Assessment Test)
+      sat: sr.exam, // Using exam as SAT (Summative Assessment Test)
+      total: sr.totalScore || 0,
+      maxScore: 100, // Standard max score
+      grade: sr.grade || 'F',
+      remark: sr.remark || 'N/A',
+      position: sr.position
+    }));
+
+    // Build school address
+    let schoolAddress = school.streetAddress || '';
+    if (school.city) schoolAddress += (schoolAddress ? ', ' : '') + school.city;
+    if (school.state) schoolAddress += (schoolAddress ? ', ' : '') + school.state;
+
+    const reportData = {
+      student: {
+        id: result.student.id,
+        firstName: result.student.firstName,
+        lastName: result.student.lastName,
+        middleName: result.student.middleName,
+        registrationNumber: result.student.admissionNumber,
+        profilePictureUrl: result.student.profilePicture?.fileUrl,
+        dateOfBirth: result.student.dateOfBirth,
+        gender: result.student.gender
+      },
+      class: {
+        id: result.class.id,
+        name: result.class.name,
+        level: result.class.level
+      },
+      term: {
+        id: result.term.id,
+        name: result.term.name
+      },
+      academicYear: {
+        id: result.term.academicYear.id,
+        name: result.term.academicYear.name
+      },
+      school: {
+        id: school.id,
+        name: school.name,
+        logo: school.logo,
+        address: schoolAddress,
+        phone: school.phone,
+        email: school.email
+      },
+      subjectGrades,
+      totalScore: result.totalScore,
+      averageScore: result.averageScore,
+      position: result.position,
+      classSize,
+      daysPresent: result.daysPresent,
+      daysAbsent: result.daysAbsent,
+      timesLate: result.timesLate,
+      conductGrade: result.conductGrade,
+      teacherComment: result.teacherComment,
+      principalComment: result.principalComment,
+      nextTermBegins: nextTerm?.startDate
+    };
+
+    res.json({
+      success: true,
+      data: reportData
+    });
+
+  } catch (error) {
+    console.error('Error fetching terminal report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch terminal report'
+    });
+  }
+};
+
 module.exports = {
   createOrUpdateResult,
   getStudentResult,
   getClassResults,
   publishResults,
   generateReportCard,
-  getResultSummary
+  getResultSummary,
+  getTerminalReport
 };

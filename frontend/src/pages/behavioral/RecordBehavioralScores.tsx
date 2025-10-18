@@ -114,9 +114,13 @@ const RecordBehavioralScores: React.FC = () => {
       if (classesRes?.success && classesRes.data) setClasses(classesRes.data);
       if (subjectsRes?.success && subjectsRes.data) setSubjects(subjectsRes.data);
       if (academicYearsRes?.success && academicYearsRes.data) {
-        setAcademicYears(academicYearsRes.data);
+        // Handle both array and nested response formats
+        const yearsData = Array.isArray(academicYearsRes.data)
+          ? academicYearsRes.data
+          : academicYearsRes.data.academicYears || [];
+        setAcademicYears(yearsData);
         // Auto-select current academic year
-        const current = academicYearsRes.data.find((y: AcademicYear) => y.isCurrent);
+        const current = yearsData.find((y: AcademicYear) => y.isCurrent);
         if (current) setSelectedAcademicYear(current.id);
       }
       if (termsRes) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,7 @@ interface ViewStudentProps {
 }
 
 const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [student, setStudent] = useState<any>(null);
@@ -463,6 +465,16 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Terminal Report Button */}
+              <Button
+                variant="outline"
+                className="bg-green-500/90 border-green-600/30 text-white hover:bg-green-600"
+                onClick={() => navigate(`/results/terminal-report-select/${studentId}`)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Terminal Report
+              </Button>
 
               <Button
                 onClick={onEdit}

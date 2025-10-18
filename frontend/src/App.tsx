@@ -94,6 +94,10 @@ import { MessagingPage } from "./pages/messaging";
 import NotificationsPage from "./pages/NotificationsPage";
 import { TransportationPage, RoutesPage, VehiclesPage, AssignmentsPage, MaintenancePage } from "./pages/transportation";
 import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./pages/inventory";
+// Results Components
+import TerminalReport from "./pages/results/TerminalReport";
+import TerminalReportSelector from "./pages/results/TerminalReportSelector";
+import StandardReportCard from "./pages/results/StandardReportCard";
 
 const queryClient = new QueryClient();
 
@@ -284,6 +288,11 @@ const App = () => (
 
             {/* Notifications */}
             <Route path="/notifications" element={<NotificationsPage />} />
+
+            {/* Results Routes */}
+            <Route path="/results/terminal-report-select/:studentId" element={<TerminalReportSelector />} />
+            <Route path="/results/terminal-report/:studentId/:termId" element={<TerminalReport />} />
+            <Route path="/results/report-card/:studentId/:termId" element={<StandardReportCard />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

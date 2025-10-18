@@ -20,5 +20,6 @@ router.get('/class/:classId/term/:termId', protect, resultController.getClassRes
 router.get('/class/:classId/term/:termId/summary', protect, resultController.getResultSummary);
 router.post('/publish', protect, authorize(['ADMIN', 'PRINCIPAL']), resultController.publishResults);
 router.get('/report-card/:studentId/:termId', protect, resultController.generateReportCard);
+router.get('/terminal-report/:studentId/:termId', protect, resultController.getTerminalReport);
 
 module.exports = router;
