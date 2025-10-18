@@ -1,155 +1,164 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-  IconButton,
-  Tooltip,
-  Snackbar,
-  Alert
-} from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
-import { getDevSubdomain, setDevSubdomain } from '../utils/devSubdomain';
-import api, { updateSubdomainHeader } from '../services/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { School, Settings, X } from 'lucide-react';
+import { getDevSubdomain, setDevSubdomain, clearDevSubdomain } from '../utils/devSubdomain';
+import { updateSubdomainHeader } from '../services/api';
 
 /**
  * A component that allows developers to select and change the development subdomain
  * This is only shown in development environments
  */
 const DevSubdomainSelector: React.FC = () => {
-  const [open, setOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [subdomain, setSubdomain] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [currentSubdomain, setCurrentSubdomain] = useState<string | null>(null);
 
   // Check if we're in development environment
-  const isDevelopment = () => {
+  const isDevelopment = (): boolean => {
     const hostname = window.location.hostname;
-    return hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/);
+    return hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/) !== null;
   };
 
-  // Use effect to initialize the subdomain
   useEffect(() => {
     if (isDevelopment()) {
-      const currentSubdomain = getDevSubdomain();
-      if (currentSubdomain) {
-        setSubdomain(currentSubdomain);
-      }
+      const current = getDevSubdomain();
+      setCurrentSubdomain(current);
+      setSubdomain(current || '');
     }
   }, []);
 
-  // If not in development, don't render anything
+  // Don't render in production
   if (!isDevelopment()) {
     return null;
   }
 
-  const handleOpen = () => {
-    setOpen(true);
-    const currentSubdomain = getDevSubdomain();
-    if (currentSubdomain) {
-      setSubdomain(currentSubdomain);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (subdomain.trim()) {
+      setDevSubdomain(subdomain.trim());
+      setCurrentSubdomain(subdomain.trim());
+      updateSubdomainHeader();
+      setIsVisible(false);
+      
+      // Optionally reload the page to apply changes
+      if (window.confirm('Reload the page to apply the subdomain changes?')) {
+        window.location.reload();
+      }
     }
   };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleSave = () => {
-    if (!subdomain.trim()) {
-      setSnackbarMessage('Subdomain cannot be empty');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    setDevSubdomain(subdomain.trim());
-    
-    // Update the API headers with the new subdomain
+  const handleClear = () => {
+    clearDevSubdomain();
+    setCurrentSubdomain(null);
+    setSubdomain('');
     updateSubdomainHeader();
+    setIsVisible(false);
     
-    setOpen(false);
-    setSnackbarMessage(`Development subdomain set to: ${subdomain.trim()}`);
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
-    
-    // Reload the page to apply the new subdomain
-    setTimeout(() => {
+    // Optionally reload the page to apply changes
+    if (window.confirm('Reload the page to clear the subdomain?')) {
       window.location.reload();
-    }, 1500);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
+    }
   };
 
   return (
     <>
-      <Tooltip title="Set Development School">
-        <IconButton 
-          color="primary" 
-          onClick={handleOpen}
-          sx={{ 
-            position: 'fixed', 
-            bottom: 16, 
-            right: 16, 
-            bgcolor: 'background.paper',
-            boxShadow: 2,
-            '&:hover': {
-              bgcolor: 'primary.light',
-            }
-          }}
+      {/* Floating trigger button */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button
+          onClick={() => setIsVisible(!isVisible)}
+          size="sm"
+          variant="outline"
+          className="rounded-full w-12 h-12 p-0 shadow-lg border-2 border-primary/20 bg-background/90 backdrop-blur-sm hover:bg-primary/10"
+          title="Development Subdomain Selector"
         >
-          <SchoolIcon />
-        </IconButton>
-      </Tooltip>
+          <School className="h-5 w-5" />
+        </Button>
+      </div>
 
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Set Development School</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Set the school subdomain for local development. This will be used to identify the school in API requests.
-          </Typography>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="School Subdomain"
-            fullWidth
-            variant="outlined"
-            value={subdomain}
-            onChange={(e) => setSubdomain(e.target.value)}
-            helperText="Enter the subdomain of the school you want to work with"
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Current subdomain: {getDevSubdomain() || 'None'}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">Save</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar 
-        open={snackbarOpen} 
-        autoHideDuration={6000} 
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleSnackbarClose} 
-          severity={snackbarSeverity} 
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      {/* Subdomain selector panel */}
+      {isVisible && (
+        <div className="fixed bottom-20 right-4 z-50">
+          <Card className="w-80 shadow-xl border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Dev Subdomain
+                </CardTitle>
+                <Button
+                  onClick={() => setIsVisible(false)}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              {currentSubdomain && (
+                <Badge variant="secondary" className="w-fit">
+                  Current: {currentSubdomain}
+                </Badge>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div>
+                  <Label htmlFor="subdomain">School Subdomain</Label>
+                  <Input
+                    id="subdomain"
+                    type="text"
+                    value={subdomain}
+                    onChange={(e) => setSubdomain(e.target.value)}
+                    placeholder="e.g., greenwood, demo, school1"
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter the school subdomain for testing
+                  </p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button type="submit" size="sm" className="flex-1">
+                    Set Subdomain
+                  </Button>
+                  {currentSubdomain && (
+                    <Button 
+                      type="button" 
+                      onClick={handleClear}
+                      size="sm" 
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </form>
+              
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p><strong>Common subdomains:</strong></p>
+                <div className="flex flex-wrap gap-1">
+                  {['greenwood', 'demo', 'test', 'school1'].map((sub) => (
+                    <Button
+                      key={sub}
+                      onClick={() => setSubdomain(sub)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                    >
+                      {sub}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </>
   );
 };

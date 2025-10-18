@@ -130,8 +130,6 @@ api.interceptors.request.use((config) => {
   const normalizedSubdomain = subdomain.toLowerCase().trim();
   config.headers['X-School-Subdomain'] = normalizedSubdomain;
   
-  console.log('API Request - Class Subject History - Subdomain:', normalizedSubdomain);
-  
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

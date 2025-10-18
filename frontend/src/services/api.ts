@@ -1,17 +1,17 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, PaginatedResponse, House } from '../types';
 import { Section } from '../types/Section';
-import { getDevSubdomain, initDevSubdomain } from '../utils/devSubdomain';
+import { getEffectiveSubdomain, initDevSubdomain } from '../utils/devSubdomain';
 import { API_CONFIG } from '../config/api';
 
-// Get the current subdomain from the hostname or localStorage
+// Get the current subdomain from the hostname or development override
 const getSubdomain = (): string | null => {
   const hostname = window.location.hostname;
   
   // For development environment, check if subdomain is in localStorage
   if (hostname === 'localhost' || hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
     // Initialize with a default subdomain if none exists
-    // You can change 'demo' to any default subdomain you want to use for development
+    // You can change 'greenwood' to any default subdomain you want to use for development
     const devSubdomain = initDevSubdomain('greenwood');
     if (devSubdomain) {
       console.log(`Using development subdomain: ${devSubdomain}`);
@@ -47,7 +47,7 @@ if (subdomain) {
 
 // Export a function to update the subdomain header
 export const updateSubdomainHeader = () => {
-  const subdomain = getDevSubdomain();
+  const subdomain = getSubdomain();
   if (subdomain) {
     api.defaults.headers.common['X-School-Subdomain'] = subdomain;
     console.log(`API headers updated with subdomain: ${subdomain}`);

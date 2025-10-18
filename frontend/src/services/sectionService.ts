@@ -25,10 +25,8 @@ export const getSections = async (params?: SectionQueryParams): Promise<ApiRespo
   if (params?.search) queryParams.append('search', params.search);
 
   const url = queryParams.toString() ? `/sections?${queryParams}` : '/sections';
-  console.log('Making sections API call to:', url);
   
   const response = await get<PaginatedResponse<Section>>(url);
-  console.log('Sections API response:', response);
   return response;
 };
 

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { getDevSubdomain } from '@/utils/devSubdomain';
+import { getEffectiveSubdomain } from '@/utils/devSubdomain';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Camera, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -149,10 +149,7 @@ export function ProfilePictureUpload({
       }
 
       // Add school subdomain header if available
-      const subdomain = getDevSubdomain() || 
-        (window.location.hostname.includes('.') && !window.location.hostname.includes('localhost') 
-          ? window.location.hostname.split('.')[0] 
-          : null);
+      const subdomain = getEffectiveSubdomain() || localStorage.getItem('schoolSubdomain');
       
       if (subdomain) {
         headers['X-School-Subdomain'] = subdomain;
@@ -227,10 +224,7 @@ export function ProfilePictureUpload({
       }
 
       // Add school subdomain header if available
-      const subdomain = getDevSubdomain() || 
-        (window.location.hostname.includes('.') && !window.location.hostname.includes('localhost') 
-          ? window.location.hostname.split('.')[0] 
-          : null);
+      const subdomain = getEffectiveSubdomain() || localStorage.getItem('schoolSubdomain');
       
       if (subdomain) {
         headers['X-School-Subdomain'] = subdomain;
