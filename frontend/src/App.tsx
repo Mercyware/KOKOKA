@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, useParams, useNavigate } from "react-rout
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Layout from "@/components/layout/Layout";
 import DevSubdomainSelector from "@/components/DevSubdomainSelector";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -143,7 +142,7 @@ const App = () => (
         >
           <Routes>
             {/* Authentication and landing pages (no layout) */}
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/register-school" element={<RegisterSchool />} />
