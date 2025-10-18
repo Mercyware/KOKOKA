@@ -10,23 +10,16 @@ import {
   Clock,
   Star,
   CheckCircle,
-  TrendingUp,
   BookOpen,
   Award,
-  Smartphone,
-  Cloud,
   Heart,
-  Target,
   Menu,
   X,
   ArrowRight,
-  Zap,
   Globe,
-  Brain,
-  Sparkles,
-  Lightbulb
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getAppURL } from './config/env';
 
 const MarketingPage = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -35,7 +28,7 @@ const MarketingPage = () => {
 
   const handleGetStarted = () => {
     // Redirect to the main application login page
-    window.location.href = 'https://app.kokoka.com/login';
+    window.location.href = getAppURL('/login');
   };
 
   const navigation = [
@@ -43,46 +36,45 @@ const MarketingPage = () => {
     { name: 'Features', id: 'features' },
     { name: 'Pricing', id: 'pricing' },
     { name: 'Solutions', id: 'solutions' },
-    { name: 'Resources', id: 'resources' },
     { name: 'Contact', id: 'contact' }
   ];
 
   const features = [
     {
-      icon: Brain,
-      title: 'AI-Powered Student Management',
-      description: 'Revolutionary AI algorithms analyze student data to provide personalized insights and recommendations.',
-      benefits: ['AI-generated student portfolios', 'Predictive academic performance', 'Intelligent parent communication']
+      icon: Users,
+      title: 'Student Management',
+      description: 'Comprehensive student information system with enrollment, demographics, and academic records.',
+      benefits: ['Student profiles & portfolios', 'Enrollment management', 'Parent communication hub']
     },
     {
       icon: BarChart3,
-      title: 'Advanced AI Analytics',
-      description: 'Machine learning algorithms provide deep insights and predictive analytics for performance optimization.',
-      benefits: ['Real-time AI performance metrics', 'Predictive dropout prevention', 'Automated custom reporting']
+      title: 'Advanced Analytics',
+      description: 'Powerful reporting and analytics tools to track performance and make data-driven decisions.',
+      benefits: ['Real-time performance metrics', 'Custom reports', 'Trend analysis']
     },
     {
       icon: BookOpen,
-      title: 'Smart Grade Management',
-      description: 'AI-enhanced grading system with intelligent assessment templates and automated feedback.',
-      benefits: ['AI-assisted grading', 'Automated progress tracking', 'Intelligent performance insights']
+      title: 'Grade Management',
+      description: 'Streamlined grading system with multiple assessment types and automated calculations.',
+      benefits: ['Flexible grading scales', 'Progress tracking', 'Report card generation']
     },
     {
       icon: Clock,
-      title: 'AI Attendance Tracking',
-      description: 'Smart attendance management with facial recognition and automated pattern analysis.',
-      benefits: ['Facial recognition attendance', 'Pattern analysis alerts', 'Predictive attendance modeling']
+      title: 'Attendance Tracking',
+      description: 'Efficient attendance management with multiple marking options and automated reports.',
+      benefits: ['Quick attendance entry', 'Absence notifications', 'Attendance analytics']
     },
     {
       icon: Award,
-      title: 'AI-Generated Report Cards',
-      description: 'Intelligent report card generation with personalized comments and performance insights.',
-      benefits: ['AI-written personalized comments', 'Dynamic template selection', 'Performance trend analysis']
+      title: 'Academic Management',
+      description: 'Complete academic year, term, and class management with subject assignments.',
+      benefits: ['Academic calendars', 'Class scheduling', 'Subject management']
     },
     {
       icon: Shield,
-      title: 'AI-Secured & Intelligent',
-      description: 'AI-powered security with intelligent threat detection and automated data protection.',
-      benefits: ['AI threat detection', 'Intelligent backup scheduling', 'Smart compliance monitoring']
+      title: 'Secure & Reliable',
+      description: 'Enterprise-grade security with role-based access control and data encryption.',
+      benefits: ['Data encryption', 'Regular backups', 'GDPR compliant']
     }
   ];
 
@@ -91,23 +83,21 @@ const MarketingPage = () => {
       name: 'Starter',
       price: '$29',
       period: '/month',
-      description: 'Perfect for small schools and individual teachers',
+      description: 'Perfect for small schools',
       features: [
         'Up to 100 students',
         'Basic reporting',
         'Email support',
         '5 report templates',
-        'Mobile app access',
-        'Basic analytics'
+        'Mobile access'
       ],
       popular: false,
-      cta: 'Start Free Trial'
     },
     {
       name: 'Professional',
       price: '$79',
       period: '/month',
-      description: 'Ideal for medium-sized schools and institutions',
+      description: 'Ideal for medium schools',
       features: [
         'Up to 500 students',
         'Advanced analytics',
@@ -115,29 +105,25 @@ const MarketingPage = () => {
         'All report templates',
         'Custom branding',
         'API access',
-        'Bulk operations',
         'Parent portal'
       ],
       popular: true,
-      cta: 'Start Free Trial'
     },
     {
       name: 'Enterprise',
       price: '$199',
       period: '/month',
-      description: 'For large institutions and school districts',
+      description: 'For large institutions',
       features: [
         'Unlimited students',
-        'AI-powered insights',
-        '24/7 phone support',
-        'Custom templates',
+        'Custom features',
+        '24/7 support',
         'White-label solution',
         'Advanced integrations',
-        'Dedicated account manager',
+        'Dedicated support',
         'Custom training'
       ],
       popular: false,
-      cta: 'Contact Sales'
     }
   ];
 
@@ -145,161 +131,80 @@ const MarketingPage = () => {
     {
       icon: GraduationCap,
       title: 'K-12 Schools',
-      description: 'Complete school management for primary and secondary education.',
+      description: 'Complete management for primary and secondary education.',
       features: ['Multi-grade support', 'Parent engagement', 'Curriculum tracking']
     },
     {
       icon: Users,
       title: 'Universities',
-      description: 'Advanced features for higher education institutions.',
+      description: 'Advanced features for higher education.',
       features: ['Course management', 'Research tracking', 'Alumni network']
     },
     {
       icon: Globe,
       title: 'International Schools',
       description: 'Multi-language support and global compliance.',
-      features: ['Multi-currency', 'Global standards', 'Cultural adaptability']
+      features: ['Multi-currency', 'Global standards', 'Multi-language']
     },
     {
       icon: Heart,
       title: 'Special Education',
       description: 'Specialized tools for inclusive education.',
-      features: ['IEP tracking', 'Accessibility features', 'Therapy scheduling']
+      features: ['IEP tracking', 'Accessibility', 'Therapy scheduling']
     }
   ];
 
   const stats = [
     { number: '10,000+', label: 'Students Managed' },
-    { number: '500+', label: 'Schools Using' },
+    { number: '500+', label: 'Schools Worldwide' },
     { number: '99.9%', label: 'Uptime' },
-    { number: '24/7', label: 'Support' }
+    { number: '24/7', label: 'Support Available' }
   ];
 
   const renderHomePage = () => (
     <div className="space-y-16">
       {/* Hero Section */}
-      <div className="text-center space-y-6 py-16">
-        <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          🤖 AI-Powered Education Revolution
+      <div className="text-center space-y-6 py-12 md:py-20">
+        <Badge className="mb-4 bg-primary text-white border-primary-600">
+          Trusted by Schools Worldwide
         </Badge>
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white">
-          The World's First
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 block">
-            AI-Powered School Management
+          Modern School Management
+          <span className="text-primary block mt-2">
+            Made Simple
           </span>
-          <span className="block">Platform</span>
         </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
-          Transform your educational institution with cutting-edge artificial intelligence.
-          Experience unprecedented insights, automation, and efficiency that's revolutionizing education worldwide.
+        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          Streamline your educational institution with our comprehensive school management system.
+          Everything you need in one powerful platform.
         </p>
 
-        {/* AI Features Highlight */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-2xl max-w-4xl mx-auto my-8">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <Brain className="h-8 w-8 text-blue-600" />
-            <Sparkles className="h-8 w-8 text-purple-600" />
-            <Lightbulb className="h-8 w-8 text-yellow-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Revolutionary AI Features for Schools
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            <div className="space-y-2">
-              <h4 className="font-semibold text-blue-600">AI Student Insights</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Predict student performance, identify at-risk students, and personalize learning paths with advanced machine learning.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-purple-600">Intelligent Automation</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Automate report generation, attendance tracking, and parent communications with smart AI algorithms.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-semibold text-yellow-600">Smart Analytics</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Get real-time insights, predictive analytics, and data-driven recommendations to optimize your school's performance.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <Button
             size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3"
+            className="bg-primary hover:bg-primary-700 text-white text-lg px-8 py-6 h-auto rounded-xl shadow-lg hover:shadow-xl transition-all"
             onClick={handleGetStarted}
           >
-            Experience AI Magic
+            Get Started Free
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-          <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-            Watch AI Demo
+          <Button
+            variant="outline"
+            size="lg"
+            className="text-lg px-8 py-6 h-auto rounded-xl border-2 border-primary text-primary hover:bg-primary-50"
+          >
+            Schedule Demo
           </Button>
         </div>
       </div>
 
-      {/* Why Schools Choose Us */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 p-8 rounded-2xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Why Schools Choose EduManage AI
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Unlike traditional school management systems, we're powered by cutting-edge AI technology
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="text-center">
-            <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Brain className="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 className="font-bold mb-2">AI-First Design</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Built from the ground up with artificial intelligence at its core
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="bg-purple-100 dark:bg-purple-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Zap className="h-8 w-8 text-purple-600" />
-            </div>
-            <h3 className="font-bold mb-2">Lightning Fast</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              AI-optimized performance that's 10x faster than traditional systems
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="bg-green-100 dark:bg-green-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Target className="h-8 w-8 text-green-600" />
-            </div>
-            <h3 className="font-bold mb-2">Predictive Insights</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Predict and prevent issues before they happen with smart analytics
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-yellow-600" />
-            </div>
-            <h3 className="font-bold mb-2">Magical Experience</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Intuitive AI interface that feels like magic, not complicated software
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-gray-200 dark:border-gray-700">
         {stats.map((stat, index) => (
           <div key={index} className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            <div className="text-3xl md:text-4xl font-bold text-primary">
               {stat.number}
             </div>
             <div className="text-gray-600 dark:text-gray-400 mt-2">
@@ -310,13 +215,13 @@ const MarketingPage = () => {
       </div>
 
       {/* Features Preview */}
-      <div className="space-y-8">
+      <div className="space-y-12">
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            AI-Powered Features That Will Amaze You
+            Everything You Need
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Experience the future of education management with features you've never seen before.
+            Powerful features designed to simplify school administration and enhance learning.
           </p>
         </div>
 
@@ -324,11 +229,11 @@ const MarketingPage = () => {
           {features.slice(0, 3).map((feature, index) => {
             const IconComponent = feature.icon;
             return (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800">
+              <Card key={index} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary-200">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 rounded-lg">
-                      <IconComponent className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div className="p-3 bg-primary-50 rounded-lg">
+                      <IconComponent className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
                   </div>
@@ -338,7 +243,7 @@ const MarketingPage = () => {
                   <div className="space-y-2">
                     {feature.benefits.map((benefit, idx) => (
                       <div key={idx} className="flex items-center text-sm">
-                        <Sparkles className="h-4 w-4 text-yellow-500 mr-2 flex-shrink-0" />
+                        <CheckCircle className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                         {benefit}
                       </div>
                     ))}
@@ -356,10 +261,10 @@ const MarketingPage = () => {
     <div className="space-y-12">
       <div className="text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-          Complete AI-Powered Feature Set
+          Complete Feature Set
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-          Discover all the revolutionary AI tools and features that make EduManage AI the leading choice for educational institutions worldwide.
+          Discover all the tools and features that make KOKOKA the leading choice for schools worldwide.
         </p>
       </div>
 
@@ -417,27 +322,27 @@ const MarketingPage = () => {
             )}
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-4xl font-bold text-primary mt-4">
                 {plan.price}
                 <span className="text-lg text-gray-600 dark:text-gray-400">{plan.period}</span>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">{plan.description}</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">{plan.description}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-3">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
                     <span className="text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
               <Button
-                className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary-700 text-white' : ''}`}
                 variant={plan.popular ? 'default' : 'outline'}
                 onClick={handleGetStarted}
               >
-                {plan.cta}
+                Get Started
               </Button>
             </CardContent>
           </Card>
@@ -501,60 +406,6 @@ const MarketingPage = () => {
     </div>
   );
 
-  const renderResourcesPage = () => (
-    <div className="space-y-12">
-      <div className="text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-          Resources & Support
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-          Get the most out of EduManage AI with our comprehensive resources and support materials.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <BookOpen className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-            <CardTitle>Documentation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Comprehensive guides and tutorials to help you get started.
-            </p>
-            <Button variant="outline">Browse Docs</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <Users className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-            <CardTitle>Community Forum</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Connect with other educators and share best practices.
-            </p>
-            <Button variant="outline">Join Community</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <Zap className="h-8 w-8 text-blue-600 dark:text-blue-400 mb-2" />
-            <CardTitle>Training Videos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Step-by-step video tutorials for all features.
-            </p>
-            <Button variant="outline">Watch Videos</Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
   const renderContactPage = () => (
     <div className="space-y-12">
       <div className="text-center">
@@ -572,22 +423,22 @@ const MarketingPage = () => {
 
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-primary-50 rounded-lg">
+                <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium">Sales Team</p>
-                <p className="text-gray-600 dark:text-gray-400">sales@edumanage.ai</p>
+                <p className="text-gray-600 dark:text-gray-400">sales@kokoka.com</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-primary-50 rounded-lg">
+                <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium">Support Team</p>
-                <p className="text-gray-600 dark:text-gray-400">support@edumanage.ai</p>
+                <p className="text-gray-600 dark:text-gray-400">support@kokoka.com</p>
               </div>
             </div>
           </div>
@@ -610,7 +461,7 @@ const MarketingPage = () => {
               <label className="text-sm font-medium">Message</label>
               <textarea className="w-full p-2 border rounded-md h-24" placeholder="Your message"></textarea>
             </div>
-            <Button className="w-full">Send Message</Button>
+            <Button className="w-full bg-primary hover:bg-primary-700 text-white">Send Message</Button>
           </CardContent>
         </Card>
       </div>
@@ -623,7 +474,6 @@ const MarketingPage = () => {
       case 'features': return renderFeaturesPage();
       case 'pricing': return renderPricingPage();
       case 'solutions': return renderSolutionsPage();
-      case 'resources': return renderResourcesPage();
       case 'contact': return renderContactPage();
       default: return renderHomePage();
     }
@@ -632,15 +482,15 @@ const MarketingPage = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Navigation Header */}
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <nav className="bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+              <div className="p-2 bg-primary rounded-lg shadow-md">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">EduManage AI</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">KOKOKA</span>
             </div>
 
             {/* Desktop Navigation */}
@@ -661,10 +511,10 @@ const MarketingPage = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" onClick={() => window.location.href = 'https://app.kokoka.com/login'}>
+              <Button variant="outline" onClick={() => window.location.href = getAppURL('/login')}>
                 Sign In
               </Button>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" onClick={handleGetStarted}>
+              <Button className="bg-primary hover:bg-primary-700 text-white" onClick={handleGetStarted}>
                 Get Started
               </Button>
             </div>
@@ -725,13 +575,13 @@ const MarketingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
+                <div className="p-2 bg-primary rounded-lg shadow-md">
                   <GraduationCap className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">EduManage AI</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">KOKOKA</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                Transforming education with cutting-edge AI technology and intelligent solutions.
+                Modern school management made simple. Trusted by institutions worldwide.
               </p>
             </div>
 
@@ -764,7 +614,7 @@ const MarketingPage = () => {
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
-            <p>&copy; 2024 EduManage AI. All rights reserved.</p>
+            <p>&copy; 2024 KOKOKA School Management System. All rights reserved.</p>
           </div>
         </div>
       </footer>

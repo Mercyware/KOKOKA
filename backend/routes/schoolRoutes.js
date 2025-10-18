@@ -147,6 +147,9 @@ const upload = multer({
  */
 router.post('/register', schoolController.registerSchool);
 
+// Public route to get school branding info by subdomain (for login page)
+router.get('/branding/:subdomain', schoolController.getSchoolBranding);
+
 /**
  * @swagger
  * /schools/check-subdomain/{subdomain}:

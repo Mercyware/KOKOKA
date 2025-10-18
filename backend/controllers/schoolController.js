@@ -858,3 +858,74 @@ exports.uploadSchoolLogo = async (req, res) => {
   }
 };
 
+/**
+ * Get school branding info by subdomain (public endpoint for login page)
+ * @route GET /api/schools/branding/:subdomain
+ * @access Public
+ */
+exports.getSchoolBranding = async (req, res) => {
+  try {
+    const { subdomain } = req.params;
+
+    if (!subdomain) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subdomain is required'
+      });
+    }
+
+    // Find school by subdomain
+    const school = await prisma.school.findFirst({
+      where: {
+        subdomain: subdomain.toLowerCase().trim(),
+        status: { in: ['ACTIVE', 'PENDING'] }
+      },
+      select: {
+        id: true,
+        name: true,
+        subdomain: true,
+        settings: true,
+        email: true,
+        phone: true,
+        website: true
+      }
+    });
+
+    if (!school) {
+      return res.status(404).json({
+        success: false,
+        message: 'School not found'
+      });
+    }
+
+    // Check if logo exists (optional - can remove logo URL if not configured)
+    // For now, we'll include it and let the frontend handle the fallback
+    const logoUrl = school.settings?.logoUrl || null;
+
+    // Return branding information
+    res.json({
+      success: true,
+      school: {
+        id: school.id,
+        name: school.name,
+        subdomain: school.subdomain,
+        logo: logoUrl, // Only return if logoUrl is set in settings
+        primaryColor: school.settings?.theme?.primaryColor || '#3B82F6',
+        secondaryColor: school.settings?.theme?.secondaryColor || '#8B5CF6',
+        contactEmail: school.email || null,
+        contactPhone: school.phone || null,
+        website: school.website || null
+      }
+    });
+  } catch (error) {
+    logger.error(`Get school branding error: ${error.message}`);
+    logger.logError(error, { component: 'controller', operation: 'getSchoolBranding' });
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching school branding',
+      error: error.message
+    });
+  }
+};
+
