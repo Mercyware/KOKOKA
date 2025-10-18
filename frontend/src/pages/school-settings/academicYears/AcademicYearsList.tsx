@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, CalendarDays, Edit, Trash2, CheckCircle, Loader2, Clock, Save, AlertTriangle, X } from 'lucide-react';
+import { Plus, CalendarDays, Edit, Trash2, CheckCircle, Loader2, Clock, Save, AlertTriangle, X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { get, del, put, post } from '../../../services/api';
 import { AcademicYear } from '../../../types';
@@ -52,6 +59,12 @@ const AcademicYearsList: React.FC = () => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [yearToDelete, setYearToDelete] = useState<string | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 10;
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -74,7 +87,7 @@ const AcademicYearsList: React.FC = () => {
 
   useEffect(() => {
     fetchAcademicYears();
-  }, []);
+  }, [currentPage]);
 
   // Auto-generate academic year name when dates change (only in create mode)
   useEffect(() => {
@@ -144,9 +157,30 @@ const AcademicYearsList: React.FC = () => {
   const fetchAcademicYears = async () => {
     setLoading(true);
     try {
-      const response = await get<AcademicYear[]>('/academic-years');
+      // Add pagination and sorting params
+      const response = await get<any>('/academic-years', {
+        page: currentPage,
+        limit: itemsPerPage,
+        sort: 'startDate',
+        order: 'desc', // Latest first
+      });
+
       if (response.data) {
-        setAcademicYears(response.data);
+        // Check if response has pagination structure
+        if (response.data.academicYears) {
+          // Paginated response
+          setAcademicYears(response.data.academicYears);
+          setTotalCount(response.data.pagination?.total || 0);
+          setTotalPages(response.data.pagination?.pages || 1);
+        } else if (Array.isArray(response.data)) {
+          // Simple array response - sort manually
+          const sortedData = [...response.data].sort((a, b) => {
+            return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+          });
+          setAcademicYears(sortedData);
+          setTotalCount(sortedData.length);
+          setTotalPages(Math.ceil(sortedData.length / itemsPerPage));
+        }
       }
     } catch (error) {
       console.error('Error fetching academic years:', error);
@@ -383,35 +417,10 @@ const AcademicYearsList: React.FC = () => {
           description: `Academic year ${editingYear ? 'updated' : 'created'} successfully`,
         });
 
-        // Update local state immediately to prevent stale data issues
-        if (editingYear) {
-          // Update the existing year in the local state
-          const updatedYear = {
-            ...editingYear,
-            ...dataToSubmit,
-            id: editingYear.id,
-            // Use server response data if available
-            ...(response.data || {}),
-          };
-          
-          setAcademicYears(prevYears =>
-            prevYears.map(year =>
-              year.id === editingYear.id ? updatedYear : year
-            )
-          );
-          
-          // Also update the editing year reference
-          setEditingYear(updatedYear);
-        } else {
-          // For create, we still need to fetch to get the new ID and any server-generated data
-          await fetchAcademicYears();
-        }
-        
-        // Refresh from server to ensure data consistency (but local state is already updated)
-        if (editingYear) {
-          fetchAcademicYears(); // Don't await this for edit operations
-        }
-        
+        // Reset to page 1 and refresh data
+        setCurrentPage(1);
+        await fetchAcademicYears();
+
         closeModals();
       } else {
         toast({
@@ -442,7 +451,8 @@ const AcademicYearsList: React.FC = () => {
           title: "Success",
           description: 'Academic year deleted successfully',
         });
-        setAcademicYears(academicYears.filter(year => year.id !== yearToDelete));
+        // Refresh current page
+        await fetchAcademicYears();
       } else {
         toast({
           title: "Error",
@@ -470,12 +480,8 @@ const AcademicYearsList: React.FC = () => {
           title: "Success",
           description: 'Academic year set as active successfully',
         });
-        setAcademicYears(prevYears =>
-          prevYears.map(year => ({
-            ...year,
-            isCurrent: year.id === id,
-          }))
-        );
+        // Refresh the data from the server to ensure consistency
+        await fetchAcademicYears();
       } else {
         toast({
           title: "Error",
@@ -549,7 +555,7 @@ const AcademicYearsList: React.FC = () => {
               Manage academic year periods and settings
             </p>
           </div>
-          <Button onClick={openCreateModal} className="bg-blue-600 hover:bg-blue-700">
+          <Button intent="primary" onClick={openCreateModal}>
             <Plus className="h-4 w-4 mr-2" />
             Create Academic Year
           </Button>
@@ -571,7 +577,7 @@ const AcademicYearsList: React.FC = () => {
                 <p className="text-gray-500 dark:text-gray-500 mb-4">
                   Get started by creating your first academic year
                 </p>
-                <Button onClick={openCreateModal} className="bg-blue-600 hover:bg-blue-700">
+                <Button intent="primary" onClick={openCreateModal}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Academic Year
                 </Button>
@@ -608,7 +614,7 @@ const AcademicYearsList: React.FC = () => {
                           </Badge>
                         ) : (
                           <Button
-                            variant="outline"
+                            intent="action"
                             size="sm"
                             onClick={() => handleSetActive(year.id)}
                           >
@@ -621,54 +627,93 @@ const AcademicYearsList: React.FC = () => {
                         {year.description || '-'}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditModal(year)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700"
-                                disabled={year.isCurrent}
-                                onClick={() => setYearToDelete(year.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this academic year? This action cannot be undone.
-                                  {year.isCurrent && " You cannot delete the current academic year."}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setYearToDelete(null)}>
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={handleDeleteConfirm}
-                                  className="bg-red-600 hover:bg-red-700"
-                                  disabled={year.isCurrent}
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => openEditModal(year)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            {!year.isCurrent && (
+                              <DropdownMenuItem onClick={() => handleSetActive(year.id)}>
+                                <Clock className="h-4 w-4 mr-2" />
+                                Set as Current
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setYearToDelete(year.id)}
+                              disabled={year.isCurrent}
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && academicYears.length > 0 && totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} academic years
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    intent="action"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            intent={currentPage === page ? "primary" : "action"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="min-w-[40px]"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      } else if (page === currentPage - 2 || page === currentPage + 2) {
+                        return <span key={page} className="px-2 text-gray-400">...</span>;
+                      }
+                      return null;
+                    })}
+                  </div>
+                  <Button
+                    intent="action"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -679,7 +724,7 @@ const AcademicYearsList: React.FC = () => {
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {academicYears.length}
+                  {totalCount}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total Years</p>
               </CardContent>
@@ -852,7 +897,7 @@ const AcademicYearsList: React.FC = () => {
               <DialogFooter className="gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  intent="cancel"
                   onClick={closeModals}
                   disabled={modalLoading}
                 >
@@ -860,8 +905,8 @@ const AcademicYearsList: React.FC = () => {
                 </Button>
                 <Button
                   type="submit"
+                  intent="primary"
                   disabled={modalLoading || isDuplicate}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {modalLoading ? (
                     <>
@@ -889,20 +934,49 @@ const AcademicYearsList: React.FC = () => {
                 Set as Current Academic Year?
               </DialogTitle>
               <DialogDescription>
-                Setting this academic year as current will automatically deactivate all other academic years for your school. 
+                Setting this academic year as current will automatically deactivate all other academic years for your school.
                 Only one academic year can be current at a time. Are you sure you want to continue?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowActiveWarning(false)}>
+              <Button intent="cancel" onClick={() => setShowActiveWarning(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleActiveConfirm} className="bg-blue-600 hover:bg-blue-700">
+              <Button intent="primary" onClick={handleActiveConfirm}>
                 Continue
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!yearToDelete} onOpenChange={(open) => !open && setYearToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this academic year? This action cannot be undone.
+                {yearToDelete && academicYears.find(y => y.id === yearToDelete)?.isCurrent &&
+                  " You cannot delete the current academic year."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => setYearToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                intent="danger"
+                onClick={handleDeleteConfirm}
+                disabled={yearToDelete && academicYears.find(y => y.id === yearToDelete)?.isCurrent}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

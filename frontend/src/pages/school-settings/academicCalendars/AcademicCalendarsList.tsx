@@ -1,65 +1,130 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Calendar, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Plus, Calendar, Edit, Trash2, Eye, Loader2, Filter, X, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  getAllAcademicCalendars, 
+import {
+  getAllAcademicCalendars,
   deleteAcademicCalendar,
   AcademicCalendar
 } from '../../../services/academicCalendarService';
+import { getAllAcademicYears } from '../../../services/academicYearService';
+import { AcademicYear } from '../../../types';
 
 const AcademicCalendarsList: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [academicCalendars, setAcademicCalendars] = useState<AcademicCalendar[]>([]);
+  const [filteredCalendars, setFilteredCalendars] = useState<AcademicCalendar[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [calendarToDelete, setCalendarToDelete] = useState<string | null>(null);
 
+  // Filter states
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>('all');
+  const [selectedTerm, setSelectedTerm] = useState<string>('all');
+
   useEffect(() => {
-    fetchAcademicCalendars();
+    fetchInitialData();
   }, []);
 
-  const fetchAcademicCalendars = async () => {
+  useEffect(() => {
+    applyFilters();
+  }, [selectedAcademicYear, selectedTerm, academicCalendars]);
+
+  const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const response = await getAllAcademicCalendars();
-      if (response.success && response.data) {
-        setAcademicCalendars(response.data);
+      const [calendarsResponse, yearsResponse] = await Promise.all([
+        getAllAcademicCalendars(),
+        getAllAcademicYears()
+      ]);
+
+      if (calendarsResponse.success && calendarsResponse.data) {
+        setAcademicCalendars(calendarsResponse.data);
+        setFilteredCalendars(calendarsResponse.data);
       } else {
         toast({
           title: "Error",
-          description: response.message || 'Failed to fetch academic calendars',
+          description: calendarsResponse.message || 'Failed to fetch academic calendars',
           variant: "destructive",
         });
       }
+
+      if (yearsResponse.success && yearsResponse.data) {
+        const yearsData = Array.isArray(yearsResponse.data)
+          ? yearsResponse.data
+          : yearsResponse.data.academicYears || [];
+        setAcademicYears(yearsData);
+      }
     } catch (error) {
-      console.error('Error fetching academic calendars:', error);
+      console.error('Error fetching data:', error);
       toast({
         title: "Error",
-        description: 'An error occurred while fetching academic calendars',
+        description: 'An error occurred while fetching data',
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    let filtered = [...academicCalendars];
+
+    if (selectedAcademicYear !== 'all') {
+      filtered = filtered.filter(calendar => {
+        const yearId = typeof calendar.academicYear === 'string'
+          ? calendar.academicYear
+          : calendar.academicYear.id;
+        return yearId === selectedAcademicYear;
+      });
+    }
+
+    if (selectedTerm !== 'all') {
+      filtered = filtered.filter(calendar =>
+        calendar.term.toUpperCase() === selectedTerm.toUpperCase()
+      );
+    }
+
+    setFilteredCalendars(filtered);
+  };
+
+  const clearFilters = () => {
+    setSelectedAcademicYear('all');
+    setSelectedTerm('all');
+  };
+
+  const hasActiveFilters = selectedAcademicYear !== 'all' || selectedTerm !== 'all';
 
   const handleCreateCalendar = () => {
     navigate('/school-settings/academic-calendars/create');
@@ -79,7 +144,7 @@ const AcademicCalendarsList: React.FC = () => {
           title: "Success",
           description: 'Academic calendar deleted successfully',
         });
-        fetchAcademicCalendars();
+        fetchInitialData();
       } else {
         toast({
           title: "Error",
@@ -140,11 +205,78 @@ const AcademicCalendarsList: React.FC = () => {
               Manage academic calendar schedules and holidays
             </p>
           </div>
-          <Button onClick={handleCreateCalendar} className="bg-blue-600 hover:bg-blue-700">
+          <Button intent="primary" onClick={handleCreateCalendar}>
             <Plus className="h-4 w-4 mr-2" />
             Add Academic Calendar
           </Button>
         </div>
+
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Filter by:
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                {/* Academic Year Filter */}
+                <div className="w-full sm:w-64">
+                  <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Academic Years" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Academic Years</SelectItem>
+                      {academicYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Term Filter */}
+                <div className="w-full sm:w-48">
+                  <Select value={selectedTerm} onValueChange={setSelectedTerm}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Terms</SelectItem>
+                      <SelectItem value="FIRST">First Term</SelectItem>
+                      <SelectItem value="SECOND">Second Term</SelectItem>
+                      <SelectItem value="THIRD">Third Term</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="w-full sm:w-auto"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+
+              {/* Results Count */}
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {filteredCalendars.length} of {academicCalendars.length}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="p-0">
@@ -153,19 +285,28 @@ const AcademicCalendarsList: React.FC = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                 <span className="ml-2 text-lg">Loading academic calendars...</span>
               </div>
-            ) : academicCalendars.length === 0 ? (
+            ) : filteredCalendars.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  No academic calendars found
+                  {hasActiveFilters ? 'No calendars match your filters' : 'No academic calendars found'}
                 </p>
                 <p className="text-gray-500 dark:text-gray-500 mb-4">
-                  Get started by creating your first academic calendar
+                  {hasActiveFilters
+                    ? 'Try adjusting your filters or clear them to see all calendars'
+                    : 'Get started by creating your first academic calendar'}
                 </p>
-                <Button onClick={handleCreateCalendar} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Academic Calendar
-                </Button>
+                {hasActiveFilters ? (
+                  <Button onClick={clearFilters} intent="cancel">
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Filters
+                  </Button>
+                ) : (
+                  <Button onClick={handleCreateCalendar} intent="primary">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Academic Calendar
+                  </Button>
+                )}
               </div>
             ) : (
               <Table>
@@ -180,7 +321,7 @@ const AcademicCalendarsList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {academicCalendars.map((calendar) => (
+                  {filteredCalendars.map((calendar) => (
                     <TableRow key={calendar.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <TableCell className="font-medium">
                         {getAcademicYearName(calendar.academicYear)}
@@ -198,46 +339,27 @@ const AcademicCalendarsList: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditCalendar(calendar.id || '')}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() => setCalendarToDelete(calendar.id || '')}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this academic calendar? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setCalendarToDelete(null)}>
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={handleDeleteConfirm}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => handleEditCalendar(calendar.id || '')}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setCalendarToDelete(calendar.id || '')}
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -276,6 +398,32 @@ const AcademicCalendarsList: React.FC = () => {
             </Card>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!calendarToDelete} onOpenChange={(open) => !open && setCalendarToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this academic calendar? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => setCalendarToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                intent="danger"
+                onClick={handleDeleteConfirm}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

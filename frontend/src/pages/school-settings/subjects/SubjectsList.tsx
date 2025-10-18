@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Edit, Trash2, Loader2, Search } from 'lucide-react';
+import { Plus, BookOpen, Edit, Trash2, Loader2, Search, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,15 +25,19 @@ import {
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -54,7 +58,7 @@ const SubjectsList: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -191,17 +195,18 @@ const SubjectsList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (subject: Subject) => {
+  const handleDelete = async () => {
+    if (!subjectToDelete) return;
+
     try {
-      setDeleteLoading(subject.id);
-      const response = await deleteSubject(subject.id);
+      const response = await deleteSubject(subjectToDelete.id);
 
       if (response.success) {
         toast({
           title: 'Success',
           description: 'Subject deleted successfully',
         });
-        setSubjects(subjects.filter(d => d.id !== subject.id));
+        setSubjects(subjects.filter(d => d.id !== subjectToDelete.id));
       } else {
         toast({
           title: 'Error',
@@ -217,7 +222,7 @@ const SubjectsList: React.FC = () => {
         variant: 'destructive',
       });
     } finally {
-      setDeleteLoading(null);
+      setSubjectToDelete(null);
     }
   };
 
@@ -231,7 +236,7 @@ const SubjectsList: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="container mx-auto p-6 space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -246,7 +251,7 @@ const SubjectsList: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-<Button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+<Button intent="primary" onClick={() => handleOpenModal()} className="flex items-center gap-2">
   <Plus className="h-4 w-4" />
   Add Subject
 </Button>
@@ -359,43 +364,27 @@ const SubjectsList: React.FC = () => {
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-2">
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={() => handleOpenModal(subject)}
->
-  <Edit className="h-4 w-4" />
-</Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    {deleteLoading === subject.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Subject</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete "{subject.name}"? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDelete(subject)}
-                                      className="bg-red-600 hover:bg-red-700"
-                                    >
-                                      Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => handleOpenModal(subject)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setSubjectToDelete(subject)}
+                                  className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))
@@ -470,11 +459,11 @@ const SubjectsList: React.FC = () => {
                 rows={3}
               />
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseModal}>
+            <DialogFooter className="gap-2">
+              <Button type="button" intent="cancel" onClick={handleCloseModal}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={modalLoading}>
+              <Button type="submit" intent="primary" disabled={modalLoading}>
                 {modalLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {editingSubject ? 'Update' : 'Create'} Subject
               </Button>
@@ -482,6 +471,32 @@ const SubjectsList: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Subject</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{subjectToDelete?.name}"? This action cannot be undone and will remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              intent="cancel"
+              onClick={() => setSubjectToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              intent="danger"
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

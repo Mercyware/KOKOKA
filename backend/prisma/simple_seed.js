@@ -72,11 +72,11 @@ async function main() {
 
     // Create classes
     const classesData = [
-      { name: 'Grade 1A', grade: '1' },
-      { name: 'Grade 2A', grade: '2' },
-      { name: 'Grade 3A', grade: '3' },
-      { name: 'Grade 4A', grade: '4' },
-      { name: 'Grade 5A', grade: '5' }
+      { name: 'Grade 1', grade: '1' },
+      { name: 'Grade 2', grade: '2' },
+      { name: 'Grade 3', grade: '3' },
+      { name: 'Grade 4', grade: '4' },
+      { name: 'Grade 5', grade: '5' }
     ];
 
     for (const classData of classesData) {
@@ -187,7 +187,7 @@ async function main() {
 
     // Create test students
     const grade1Class = await prisma.class.findFirst({
-      where: { name: 'Grade 1A', schoolId: school.id }
+      where: { name: 'Grade 1', schoolId: school.id }
     });
 
     if (grade1Class) {

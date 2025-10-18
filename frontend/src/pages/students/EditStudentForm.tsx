@@ -117,16 +117,17 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
       } else {
         console.error('Update failed:', response);
         toast({
-          title: "Error",
-          description: response.message || response.error || "Failed to update student",
+          title: response.error || "Update Failed",
+          description: response.message || "Failed to update student",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating student:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'An unexpected error occurred while updating the student.';
       toast({
         title: "Error",
-        description: "An error occurred while updating the student",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

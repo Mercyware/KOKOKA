@@ -960,26 +960,31 @@ const StudentAttendanceView: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {data.student.guardians.map((guardian) => (
-                        <div key={guardian.id} className="p-3 border rounded-lg">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium">{guardian.firstName} {guardian.lastName}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {guardian.relationship}
-                            </Badge>
-                          </div>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <div className="flex items-center space-x-2">
-                              <Phone className="h-3 w-3" />
-                              <span>{guardian.phone}</span>
+                      {((data.student as any).guardianStudents || []).map((guardianStudent: any) => {
+                        const guardian = guardianStudent.guardian || guardianStudent;
+                        const relationship = guardianStudent.relationship || guardian.relationship || 'Guardian';
+                        
+                        return (
+                          <div key={guardian.id || `guardian-${guardian.firstName}-${guardian.lastName}`} className="p-3 border rounded-lg">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium">{guardian.firstName} {guardian.lastName}</h4>
+                              <Badge variant="outline" className="text-xs">
+                                {relationship.charAt(0).toUpperCase() + relationship.slice(1).toLowerCase()}
+                              </Badge>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Mail className="h-3 w-3" />
-                              <span>{guardian.email}</span>
+                            <div className="space-y-1 text-sm text-gray-600">
+                              <div className="flex items-center space-x-2">
+                                <Phone className="h-3 w-3" />
+                                <span>{guardian.phone}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Mail className="h-3 w-3" />
+                                <span>{guardian.email}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

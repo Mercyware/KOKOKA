@@ -253,6 +253,10 @@ export {
   TableRow,
 } from './table';
 
+// File Upload Components
+export { ProfilePictureUpload } from './ProfilePictureUpload';
+export { StaffProfilePictureUpload } from './StaffProfilePictureUpload';
+
 // Feedback & Alerts
 export {
   Alert,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Layers, Edit, Trash2, Loader2, Search } from 'lucide-react';
+import { Plus, Layers, Edit, Trash2, Loader2, Search, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,15 +25,19 @@ import {
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getSections, createSection, updateSection, deleteSection, Section } from '../../../services/sectionService';
@@ -44,7 +48,7 @@ const SectionsList: React.FC = () => {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
   
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -95,10 +99,11 @@ const SectionsList: React.FC = () => {
     }
   };
 
-  const handleDeleteSection = async (id: string) => {
-    setDeleteLoading(id);
+  const handleDeleteSection = async () => {
+    if (!sectionToDelete) return;
+
     try {
-      const response = await deleteSection(id);
+      const response = await deleteSection(sectionToDelete);
       if (response.success) {
         toast({
           title: "Success",
@@ -120,7 +125,7 @@ const SectionsList: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setDeleteLoading(null);
+      setSectionToDelete(null);
     }
   };
 
@@ -223,8 +228,8 @@ const SectionsList: React.FC = () => {
             </p>
           </div>
           <Button
+            intent="primary"
             onClick={() => handleOpenModal('create')}
-            className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add New Section
@@ -266,8 +271,8 @@ const SectionsList: React.FC = () => {
                 </p>
                 {!searchTerm && (
                   <Button
+                    intent="primary"
                     onClick={() => handleOpenModal('create')}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Section
@@ -294,48 +299,27 @@ const SectionsList: React.FC = () => {
                         <TableCell>{section.capacity || 'No limit'}</TableCell>
                         <TableCell>{section.description || 'No description'}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenModal('edit', section)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                  disabled={deleteLoading === section.id}
-                                >
-                                  {deleteLoading === section.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Section</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete the section "{section.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => section.id && handleDeleteSection(section.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleOpenModal('edit', section)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => section.id && setSectionToDelete(section.id)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -398,19 +382,19 @@ const SectionsList: React.FC = () => {
                 </div>
               </div>
               
-              <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  intent="cancel"
                   onClick={handleCloseModal}
                   disabled={modalLoading}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
+                  intent="primary"
                   disabled={modalLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {modalLoading ? (
                     <>
@@ -425,6 +409,32 @@ const SectionsList: React.FC = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!sectionToDelete} onOpenChange={(open) => !open && setSectionToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Section</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this section? This action cannot be undone and will remove all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => setSectionToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                intent="danger"
+                onClick={handleDeleteSection}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

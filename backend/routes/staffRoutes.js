@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const {
   getAllStaff,
   getStaffById,
@@ -13,7 +14,9 @@ const {
   addStaffLeave,
   updateLeaveStatus,
   addPerformanceReview,
-  updateAccessPermissions
+  updateAccessPermissions,
+  uploadProfilePicture,
+  deleteProfilePicture
 } = require('../controllers/staffController');
 
 const { protect } = require('../middlewares/authMiddleware');
@@ -23,6 +26,22 @@ const {
   restrictToOwnerOrRoles,
   isStaff
 } = require('../middlewares/roleMiddleware');
+
+// Configure multer for memory storage (we'll process in memory before S3 upload)
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 /**
  * @swagger
@@ -957,5 +976,158 @@ router.post('/:id/review', protect, hasStaffManagementAccess, addPerformanceRevi
  *         $ref: '#/components/responses/ServerError'
  */
 router.put('/:id/permissions', protect, isAdmin, updateAccessPermissions);
+
+/**
+ * @swagger
+ * /api/staff/{id}/profile-picture:
+ *   post:
+ *     summary: Upload staff profile picture
+ *     description: Upload a profile picture for a staff member. Accessible by admin or the staff member themselves.
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Staff ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file (JPEG, PNG, WebP, max 5MB)
+ *     responses:
+ *       200:
+ *         description: Profile picture uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile picture uploaded successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     staff:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         profilePictureUrl:
+ *                           type: string
+ *                         photo:
+ *                           type: string
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *                     file:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         url:
+ *                           type: string
+ *                         fileName:
+ *                           type: string
+ *                         fileSize:
+ *                           type: integer
+ *       400:
+ *         description: Bad request - invalid file or validation error
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ *   delete:
+ *     summary: Delete staff profile picture
+ *     description: Delete the profile picture for a staff member. Accessible by admin or the staff member themselves.
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Staff ID
+ *     responses:
+ *       200:
+ *         description: Profile picture deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile picture deleted successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     staff:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         profilePictureId:
+ *                           type: string
+ *                           nullable: true
+ *                         photo:
+ *                           type: string
+ *                           nullable: true
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.post(
+  '/:id/profile-picture',
+  protect,
+  restrictToOwnerOrRoles('staff', ['admin']),
+  upload.single('profilePicture'),
+  uploadProfilePicture
+);
+
+router.delete(
+  '/:id/profile-picture',
+  protect,
+  restrictToOwnerOrRoles('staff', ['admin']),
+  deleteProfilePicture
+);
 
 module.exports = router;

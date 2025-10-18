@@ -33,14 +33,14 @@ async function recreateAssessments() {
 
     // Create assessments for each class that has students
     const assessmentsToCreate = [
-      { className: 'Grade 1A', subjectCode: 'MATH', title: 'Grade 1 Math Assessment', totalMarks: 50 },
-      { className: 'Grade 2A', subjectCode: 'ELA', title: 'Grade 2 Reading Test', totalMarks: 60 },
-      { className: 'Grade 3A', subjectCode: 'SCI', title: 'Grade 3 Science Quiz', totalMarks: 70 },
-      { className: 'Grade 4A', subjectCode: 'MATH', title: 'Grade 4 Math Test', totalMarks: 80 },
-      { className: 'Grade 5A', subjectCode: 'ELA', title: 'Grade 5 Writing Assessment', totalMarks: 90 },
-      { className: 'Grade 6A', subjectCode: 'SCI', title: 'Grade 6 Science Exam', totalMarks: 100 },
-      { className: 'Grade 7A', subjectCode: 'MATH', title: 'Grade 7 Algebra Test', totalMarks: 110 },
-      { className: 'Grade 8A', subjectCode: 'ELA', title: 'Grade 8 Literature Exam', totalMarks: 120 }
+      { className: 'Grade 1', subjectCode: 'MATH', title: 'Grade 1 Math Assessment', totalMarks: 50 },
+      { className: 'Grade 2', subjectCode: 'ELA', title: 'Grade 2 Reading Test', totalMarks: 60 },
+      { className: 'Grade 3', subjectCode: 'SCI', title: 'Grade 3 Science Quiz', totalMarks: 70 },
+      { className: 'Grade 4', subjectCode: 'MATH', title: 'Grade 4 Math Test', totalMarks: 80 },
+      { className: 'Grade 5', subjectCode: 'ELA', title: 'Grade 5 Writing Assessment', totalMarks: 90 },
+      { className: 'Grade 6', subjectCode: 'SCI', title: 'Grade 6 Science Exam', totalMarks: 100 },
+      { className: 'Grade 7', subjectCode: 'MATH', title: 'Grade 7 Algebra Test', totalMarks: 110 },
+      { className: 'Grade 8', subjectCode: 'ELA', title: 'Grade 8 Literature Exam', totalMarks: 120 }
     ];
 
     const createdAssessments = [];

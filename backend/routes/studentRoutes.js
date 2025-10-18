@@ -1172,4 +1172,191 @@ router.delete(
   studentController.deleteProfilePicture
 );
 
+/**
+ * @swagger
+ * /students/{id}/academic-performance:
+ *   get:
+ *     summary: Get student academic performance
+ *     description: Retrieve comprehensive academic performance data including subjects, grades, and GPA
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: query
+ *         name: academicYear
+ *         schema:
+ *           type: string
+ *         description: Academic year ID (optional, defaults to current year)
+ *     responses:
+ *       200:
+ *         description: Academic performance data retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get(
+  '/:id/academic-performance',
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher', 'parent']),
+  studentController.getStudentAcademicPerformance
+);
+
+/**
+ * @swagger
+ * /students/{id}/attendance-statistics:
+ *   get:
+ *     summary: Get student attendance statistics
+ *     description: Retrieve detailed attendance statistics and records
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: query
+ *         name: academicYear
+ *         schema:
+ *           type: string
+ *         description: Academic year ID (optional)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for attendance records
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for attendance records
+ *     responses:
+ *       200:
+ *         description: Attendance statistics retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get(
+  '/:id/attendance-statistics',
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher', 'parent']),
+  studentController.getStudentAttendanceStatistics
+);
+
+/**
+ * @swagger
+ * /students/{id}/achievements:
+ *   get:
+ *     summary: Get student achievements and awards
+ *     description: Retrieve student achievements, awards, and recognitions
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: query
+ *         name: academicYear
+ *         schema:
+ *           type: string
+ *         description: Academic year ID (optional)
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [ACADEMIC, ATTENDANCE, EXTRACURRICULAR, BEHAVIOR]
+ *         description: Type of achievement to filter by
+ *     responses:
+ *       200:
+ *         description: Achievements retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get(
+  '/:id/achievements',
+  roleMiddleware.restrictToOwnerOrRoles('student', ['admin', 'teacher', 'parent']),
+  studentController.getStudentAchievements
+);
+
+/**
+ * @swagger
+ * /students/{id}/activity-logs:
+ *   get:
+ *     summary: Get student activity logs
+ *     description: Retrieve student activity logs and audit trail (admin/teacher only)
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of activities to return
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [GRADE_UPDATE, ATTENDANCE, PROFILE_UPDATE]
+ *         description: Type of activity to filter by
+ *     responses:
+ *       200:
+ *         description: Activity logs retrieved successfully
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.get(
+  '/:id/activity-logs',
+  roleMiddleware.authorize(['admin', 'teacher']),
+  studentController.getStudentActivityLogs
+);
+
 module.exports = router;

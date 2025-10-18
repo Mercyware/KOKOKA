@@ -5,9 +5,21 @@ const AppError = require('../utils/appError');
 exports.getAllAcademicCalendars = async (req, res) => {
   try {
     const schoolId = req.school.id;
-    
+    const { academicYearId, term } = req.query;
+
+    // Build where clause with filters
+    const where = { schoolId };
+
+    if (academicYearId) {
+      where.academicYearId = academicYearId;
+    }
+
+    if (term) {
+      where.term = term.toUpperCase();
+    }
+
     const academicCalendars = await prisma.academicCalendar.findMany({
-      where: { schoolId },
+      where,
       include: {
         academicYear: {
           select: { id: true, name: true, startDate: true, endDate: true }

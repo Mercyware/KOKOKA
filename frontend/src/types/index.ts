@@ -225,6 +225,7 @@ export interface Student {
     };
   };
   guardians?: string[];
+  guardianStudents?: any[]; // Guardian relationships with additional details
   primaryGuardian?: string;
   attendance?: Attendance[];
   grades?: Grade[];

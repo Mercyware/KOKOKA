@@ -387,7 +387,7 @@ export const SubjectAssignmentForm: React.FC<SubjectAssignmentFormProps> = ({
       <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
         <Button
           type="button"
-          variant="outline"
+          intent="cancel"
           onClick={onCancel}
           className="w-full sm:w-auto"
         >
@@ -395,6 +395,7 @@ export const SubjectAssignmentForm: React.FC<SubjectAssignmentFormProps> = ({
         </Button>
         <Button
           type="submit"
+          intent="primary"
           disabled={!validateForm() || loading}
           className="w-full sm:w-auto"
         >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building, Edit, Trash2, Loader2, Search } from 'lucide-react';
+import { Plus, Building, Edit, Trash2, Loader2, Search, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,15 +25,19 @@ import {
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { getDepartments, createDepartment, updateDepartment, deleteDepartment, Department } from '../../../services/departmentService';
@@ -44,7 +48,7 @@ const DepartmentsList: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
   
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,10 +96,12 @@ const DepartmentsList: React.FC = () => {
       console.log('Fetching departments...');
       const response = await getDepartments();
       console.log('Departments response:', response);
-      
+
       if (response.success && response.data) {
-        console.log('Setting departments:', response.data || []);
-        setDepartments(response.data || []);
+        // Backend returns data array directly in response.data
+        const depts = Array.isArray(response.data) ? response.data : [];
+        console.log('Setting departments:', depts);
+        setDepartments(depts);
       } else {
         console.log('Departments request failed:', response);
         setDepartments([]);
@@ -118,10 +124,11 @@ const DepartmentsList: React.FC = () => {
     }
   };
 
-  const handleDeleteDepartment = async (id: string) => {
-    setDeleteLoading(id);
+  const handleDeleteDepartment = async () => {
+    if (!departmentToDelete) return;
+
     try {
-      const response = await deleteDepartment(id);
+      const response = await deleteDepartment(departmentToDelete.id);
       if (response.success) {
         toast({
           title: "Success",
@@ -143,7 +150,7 @@ const DepartmentsList: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setDeleteLoading(null);
+      setDepartmentToDelete(null);
     }
   };
 
@@ -288,8 +295,8 @@ const DepartmentsList: React.FC = () => {
             </p>
           </div>
           <Button
+            intent="primary"
             onClick={() => handleOpenModal('create')}
-            className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add New Department
@@ -331,8 +338,8 @@ const DepartmentsList: React.FC = () => {
                 </p>
                 {!searchTerm && (
                   <Button
+                    intent="primary"
                     onClick={() => handleOpenModal('create')}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Department
@@ -363,48 +370,27 @@ const DepartmentsList: React.FC = () => {
                         <TableCell>{department.headOfDept || 'Not assigned'}</TableCell>
                         <TableCell>{department.description || 'No description'}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenModal('edit', department)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                  disabled={deleteLoading === department.id}
-                                >
-                                  {deleteLoading === department.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Department</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete the department "{department.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => department.id && handleDeleteDepartment(department.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleOpenModal('edit', department)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDepartmentToDelete(department)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -492,19 +478,19 @@ const DepartmentsList: React.FC = () => {
                 </div>
               </div>
               
-              <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  intent="cancel"
                   onClick={handleCloseModal}
                   disabled={modalLoading}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
+                  intent="primary"
                   disabled={modalLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {modalLoading ? (
                     <>
@@ -519,6 +505,32 @@ const DepartmentsList: React.FC = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!departmentToDelete} onOpenChange={(open) => !open && setDepartmentToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Department</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{departmentToDelete?.name}"? This action cannot be undone and will remove all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => setDepartmentToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                intent="danger"
+                onClick={handleDeleteDepartment}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

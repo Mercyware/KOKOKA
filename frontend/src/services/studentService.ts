@@ -55,11 +55,11 @@ export const getStudents = async (filters: StudentFilters = {}): Promise<Paginat
 export const getStudentById = async (id: string): Promise<{ success: boolean; student: Student }> => {
   try {
     const response = await get<{ student: Student }>(`/students/${id}`);
-    if (response && 'student' in response) {
-      return { success: true, student: response.student };
+    if (response && 'student' in response && response.student) {
+      return { success: true, student: response.student as Student };
     }
-    if (response && 'data' in response) {
-      return { success: true, student: response.data };
+    if (response && 'data' in response && response.data) {
+      return { success: true, student: (response.data as any).student || response.data as Student };
     }
     throw new Error('Invalid response shape');
   } catch (error) {
@@ -87,12 +87,7 @@ export const getStudentsByClass = async (classId: string): Promise<ApiResponse<a
 
 // Create new student
 export const createStudent = async (studentData: Partial<Student>): Promise<ApiResponse<Student>> => {
-  try {
-    return await post<Student>('/students', studentData);
-  } catch (error) {
-    console.error('Error creating student:', error);
-    throw error;
-  }
+  return await post<Student>('/students', studentData);
 };
 
 // Update student
@@ -111,12 +106,12 @@ export const updateStudent = async (id: string, studentData: Partial<Student>): 
 
     // If backend returns { student, success }
     if (response && 'student' in response) {
-      return { success: true, student: response.student };
+      return { success: true, student: response.student as Student };
     }
 
     // Fallback: if backend returns { data, success }
     if (response && 'data' in response) {
-      return { success: true, student: response.data };
+      return { success: true, student: (response.data as any)?.student || response.data as Student };
     }
 
     // If response exists but doesn't have expected structure, log it for debugging
@@ -250,5 +245,69 @@ export const deleteStudentProfilePicture = async (
       message: error.message || 'Failed to delete profile picture',
       error: error.message
     };
+  }
+};
+
+// Get student academic performance
+export const getStudentAcademicPerformance = async (
+  id: string, 
+  academicYear?: string
+): Promise<ApiResponse<any>> => {
+  try {
+    const params = academicYear ? { academicYear } : {};
+    return await get<any>(`/students/${id}/academic-performance`, params);
+  } catch (error) {
+    console.error(`Error fetching academic performance for student with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Get student attendance statistics
+export const getStudentAttendanceStatistics = async (
+  id: string, 
+  params?: {
+    academicYear?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/attendance-statistics`, params);
+  } catch (error) {
+    console.error(`Error fetching attendance statistics for student with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Get student achievements
+export const getStudentAchievements = async (
+  id: string,
+  params?: {
+    academicYear?: string;
+    type?: 'ACADEMIC' | 'ATTENDANCE' | 'EXTRACURRICULAR' | 'BEHAVIOR';
+  }
+): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/achievements`, params);
+  } catch (error) {
+    console.error(`Error fetching achievements for student with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Get student activity logs (admin/teacher only)
+export const getStudentActivityLogs = async (
+  id: string,
+  params?: {
+    limit?: number;
+    page?: number;
+    type?: 'GRADE_UPDATE' | 'ATTENDANCE' | 'PROFILE_UPDATE';
+  }
+): Promise<ApiResponse<any>> => {
+  try {
+    return await get<any>(`/students/${id}/activity-logs`, params);
+  } catch (error) {
+    console.error(`Error fetching activity logs for student with ID ${id}:`, error);
+    throw error;
   }
 };

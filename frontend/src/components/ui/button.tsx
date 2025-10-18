@@ -42,8 +42,10 @@ const buttonVariants = cva(
         primary: "siohioma-button-primary shadow-siohioma-sm hover:shadow-siohioma-md",
         secondary: "siohioma-button-secondary shadow-siohioma-sm hover:shadow-siohioma-md",
         cancel: [
-          "bg-gray-100 hover:bg-gray-200 text-gray-700",
-          "border-gray-200 hover:border-gray-300",
+          "bg-white hover:bg-red-50 !text-red-600 hover:!text-red-700",
+          "dark:bg-gray-950 dark:hover:bg-red-950/20 dark:!text-red-400 dark:hover:!text-red-300",
+          "!border-red-600 hover:!border-red-700",
+          "dark:!border-red-800 dark:hover:!border-red-700",
           "shadow-siohioma-sm hover:shadow-siohioma-md",
         ],
         action: [

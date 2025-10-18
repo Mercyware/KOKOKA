@@ -1510,3 +1510,693 @@ exports.deleteProfilePicture = async (req, res) => {
     });
   }
 };
+
+/**
+ * Get student academic performance
+ * @route GET /api/students/:id/academic-performance
+ * @access Private (Admin, Teacher, Parent, Student)
+ */
+exports.getStudentAcademicPerformance = async (req, res) => {
+  try {
+    const { id: studentId } = req.params;
+    const { academicYear } = req.query;
+
+    // Verify student belongs to the school
+    const student = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Get current academic year if not specified
+    let academicYearId = academicYear;
+    if (!academicYearId) {
+      const activeYear = await prisma.academicYear.findFirst({
+        where: {
+          schoolId: req.school.id,
+          isCurrent: true
+        }
+      });
+      academicYearId = activeYear?.id;
+    }
+
+    // Get student's class for the academic year
+    const studentClass = await prisma.studentClassHistory.findFirst({
+      where: {
+        studentId,
+        academicYearId,
+        status: 'ACTIVE'
+      },
+      include: {
+        class: {
+          include: {
+            subjects: {
+              include: {
+                subject: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Get all results for the student in this academic year
+    const results = await prisma.result.findMany({
+      where: {
+        studentId,
+        schoolId: req.school.id,
+        academicYearId
+      },
+      include: {
+        subject: true,
+        assessment: {
+          include: {
+            academicYear: true,
+            term: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Calculate subject performance
+    const subjectPerformance = {};
+    let totalScore = 0;
+    let totalMaxScore = 0;
+
+    results.forEach(result => {
+      const subjectId = result.subjectId;
+      const subjectName = result.subject.name;
+
+      if (!subjectPerformance[subjectId]) {
+        subjectPerformance[subjectId] = {
+          subject: {
+            id: subjectId,
+            name: subjectName,
+            code: result.subject.code
+          },
+          scores: [],
+          totalScore: 0,
+          totalMaxScore: 0,
+          averageGrade: 0,
+          letterGrade: 'N/A',
+          teacher: null
+        };
+      }
+
+      subjectPerformance[subjectId].scores.push({
+        id: result.id,
+        score: result.score,
+        maxScore: result.maxScore,
+        percentage: result.percentage,
+        grade: result.grade,
+        assessment: {
+          name: result.assessment.name,
+          type: result.assessment.type,
+          date: result.assessment.date
+        }
+      });
+
+      subjectPerformance[subjectId].totalScore += result.score || 0;
+      subjectPerformance[subjectId].totalMaxScore += result.maxScore || 0;
+      
+      totalScore += result.score || 0;
+      totalMaxScore += result.maxScore || 0;
+    });
+
+    // Calculate averages and letter grades
+    Object.keys(subjectPerformance).forEach(subjectId => {
+      const subject = subjectPerformance[subjectId];
+      if (subject.totalMaxScore > 0) {
+        subject.averageGrade = (subject.totalScore / subject.totalMaxScore) * 100;
+        subject.letterGrade = calculateLetterGrade(subject.averageGrade, req.school.settings?.gradingScale);
+      }
+    });
+
+    // Calculate overall GPA
+    const overallGPA = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+    const overallLetterGrade = calculateLetterGrade(overallGPA, req.school.settings?.gradingScale);
+
+    // Get subject assignments to find teachers
+    if (studentClass) {
+      const subjectAssignments = await prisma.subjectAssignment.findMany({
+        where: {
+          classId: studentClass.classId,
+          academicYearId
+        },
+        include: {
+          teacher: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          subject: true
+        }
+      });
+
+      // Map teachers to subjects
+      subjectAssignments.forEach(assignment => {
+        if (subjectPerformance[assignment.subjectId]) {
+          subjectPerformance[assignment.subjectId].teacher = assignment.teacher;
+        }
+      });
+    }
+
+    const academicPerformance = {
+      studentId,
+      academicYearId,
+      overallGPA: overallGPA.toFixed(2),
+      overallLetterGrade,
+      totalSubjects: Object.keys(subjectPerformance).length,
+      subjects: Object.values(subjectPerformance),
+      summary: {
+        totalAssessments: results.length,
+        averageScore: overallGPA.toFixed(1),
+        highestScore: results.length > 0 ? Math.max(...results.map(r => r.percentage || 0)) : 0,
+        lowestScore: results.length > 0 ? Math.min(...results.map(r => r.percentage || 0)) : 0
+      }
+    };
+
+    res.json({
+      success: true,
+      data: academicPerformance
+    });
+
+  } catch (error) {
+    console.error('Error fetching academic performance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch academic performance',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get student attendance statistics
+ * @route GET /api/students/:id/attendance-statistics
+ * @access Private (Admin, Teacher, Parent, Student)
+ */
+exports.getStudentAttendanceStatistics = async (req, res) => {
+  try {
+    const { id: studentId } = req.params;
+    const { academicYear, startDate, endDate } = req.query;
+
+    // Verify student belongs to the school
+    const student = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Get current academic year if not specified
+    let academicYearId = academicYear;
+    if (!academicYearId) {
+      const activeYear = await prisma.academicYear.findFirst({
+        where: {
+          schoolId: req.school.id,
+          isCurrent: true
+        }
+      });
+      academicYearId = activeYear?.id;
+    }
+
+    // Build date filter
+    const dateFilter = {};
+    if (startDate) dateFilter.gte = new Date(startDate);
+    if (endDate) dateFilter.lte = new Date(endDate);
+
+    // Get attendance records
+    const attendanceRecords = await prisma.attendance.findMany({
+      where: {
+        studentId,
+        schoolId: req.school.id,
+        academicYearId,
+        ...(Object.keys(dateFilter).length > 0 && { date: dateFilter })
+      },
+      include: {
+        class: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        date: 'desc'
+      }
+    });
+
+    // Calculate statistics
+    const totalDays = attendanceRecords.length;
+    const presentDays = attendanceRecords.filter(record => record.status === 'PRESENT').length;
+    const absentDays = attendanceRecords.filter(record => record.status === 'ABSENT').length;
+    const lateDays = attendanceRecords.filter(record => record.status === 'LATE').length;
+    const excusedDays = attendanceRecords.filter(record => record.status === 'EXCUSED').length;
+
+    const attendancePercentage = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
+
+    // Monthly breakdown
+    const monthlyBreakdown = {};
+    attendanceRecords.forEach(record => {
+      const month = new Date(record.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+      if (!monthlyBreakdown[month]) {
+        monthlyBreakdown[month] = {
+          present: 0,
+          absent: 0,
+          late: 0,
+          excused: 0,
+          total: 0
+        };
+      }
+      monthlyBreakdown[month][record.status.toLowerCase()]++;
+      monthlyBreakdown[month].total++;
+    });
+
+    // Calculate monthly percentages
+    Object.keys(monthlyBreakdown).forEach(month => {
+      const data = monthlyBreakdown[month];
+      data.percentage = data.total > 0 ? (data.present / data.total) * 100 : 0;
+    });
+
+    // Recent attendance (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentAttendance = attendanceRecords.filter(record => 
+      new Date(record.date) >= thirtyDaysAgo
+    );
+
+    const attendanceStatistics = {
+      studentId,
+      academicYearId,
+      overall: {
+        totalDays,
+        presentDays,
+        absentDays,
+        lateDays,
+        excusedDays,
+        attendancePercentage: attendancePercentage.toFixed(2)
+      },
+      monthlyBreakdown: Object.entries(monthlyBreakdown).map(([month, data]) => ({
+        month,
+        ...data,
+        percentage: data.percentage.toFixed(1)
+      })),
+      recentTrend: {
+        totalDays: recentAttendance.length,
+        presentDays: recentAttendance.filter(r => r.status === 'PRESENT').length,
+        percentage: recentAttendance.length > 0 ? 
+          ((recentAttendance.filter(r => r.status === 'PRESENT').length / recentAttendance.length) * 100).toFixed(1) : 0
+      },
+      records: attendanceRecords.slice(0, 50) // Latest 50 records
+    };
+
+    res.json({
+      success: true,
+      data: attendanceStatistics
+    });
+
+  } catch (error) {
+    console.error('Error fetching attendance statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch attendance statistics',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get student achievements and awards
+ * @route GET /api/students/:id/achievements
+ * @access Private (Admin, Teacher, Parent, Student)
+ */
+exports.getStudentAchievements = async (req, res) => {
+  try {
+    const { id: studentId } = req.params;
+    const { academicYear, type } = req.query;
+
+    // Verify student belongs to the school
+    const student = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Build where clause for achievements
+    const whereClause = {
+      studentId,
+      schoolId: req.school.id
+    };
+
+    if (academicYear) {
+      whereClause.academicYearId = academicYear;
+    }
+
+    if (type) {
+      whereClause.type = type;
+    }
+
+    // Get achievements (assuming we have an achievements table)
+    const achievements = await prisma.achievement.findMany({
+      where: whereClause,
+      include: {
+        academicYear: {
+          select: {
+            name: true,
+            startDate: true,
+            endDate: true
+          }
+        },
+        awardedBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true
+          }
+        }
+      },
+      orderBy: {
+        dateAwarded: 'desc'
+      }
+    }).catch(() => []); // Handle case where achievements table doesn't exist
+
+    // If achievements table doesn't exist, create sample data based on academic performance
+    let achievementData = achievements;
+    if (achievements.length === 0) {
+      // Generate achievements based on academic performance
+      const results = await prisma.result.findMany({
+        where: {
+          studentId,
+          schoolId: req.school.id,
+          ...(academicYear && { academicYearId: academicYear })
+        },
+        include: {
+          subject: true
+        }
+      });
+
+      // Create sample achievements based on performance
+      achievementData = [];
+      const excellentResults = results.filter(r => r.percentage >= 90);
+      const goodResults = results.filter(r => r.percentage >= 80 && r.percentage < 90);
+
+      if (excellentResults.length >= 3) {
+        achievementData.push({
+          id: 'academic-excellence',
+          title: 'Academic Excellence',
+          description: 'Achieved excellent grades in multiple subjects',
+          type: 'ACADEMIC',
+          dateAwarded: new Date(),
+          criteria: 'Maintained 90%+ average in 3+ subjects'
+        });
+      }
+
+      if (goodResults.length >= 5) {
+        achievementData.push({
+          id: 'consistent-performer',
+          title: 'Consistent Performer',
+          description: 'Demonstrated consistent academic performance',
+          type: 'ACADEMIC',
+          dateAwarded: new Date(),
+          criteria: 'Maintained 80%+ average in 5+ subjects'
+        });
+      }
+
+      // Check attendance for perfect attendance award
+      const attendanceCount = await prisma.attendance.count({
+        where: {
+          studentId,
+          schoolId: req.school.id,
+          status: 'PRESENT',
+          ...(academicYear && { academicYearId: academicYear })
+        }
+      });
+
+      const totalAttendanceCount = await prisma.attendance.count({
+        where: {
+          studentId,
+          schoolId: req.school.id,
+          ...(academicYear && { academicYearId: academicYear })
+        }
+      });
+
+      if (totalAttendanceCount > 0 && (attendanceCount / totalAttendanceCount) >= 0.98) {
+        achievementData.push({
+          id: 'perfect-attendance',
+          title: 'Perfect Attendance',
+          description: 'Maintained excellent attendance record',
+          type: 'ATTENDANCE',
+          dateAwarded: new Date(),
+          criteria: 'Above 98% attendance rate'
+        });
+      }
+    }
+
+    // Group achievements by type
+    const groupedAchievements = achievementData.reduce((acc, achievement) => {
+      const type = achievement.type || 'OTHER';
+      if (!acc[type]) {
+        acc[type] = [];
+      }
+      acc[type].push(achievement);
+      return acc;
+    }, {});
+
+    const achievementsData = {
+      studentId,
+      academicYearId: academicYear,
+      totalAchievements: achievementData.length,
+      achievements: achievementData,
+      groupedByType: groupedAchievements,
+      summary: {
+        academic: groupedAchievements.ACADEMIC?.length || 0,
+        attendance: groupedAchievements.ATTENDANCE?.length || 0,
+        extracurricular: groupedAchievements.EXTRACURRICULAR?.length || 0,
+        behavior: groupedAchievements.BEHAVIOR?.length || 0,
+        other: groupedAchievements.OTHER?.length || 0
+      }
+    };
+
+    res.json({
+      success: true,
+      data: achievementsData
+    });
+
+  } catch (error) {
+    console.error('Error fetching achievements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch achievements',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get student activity logs
+ * @route GET /api/students/:id/activity-logs
+ * @access Private (Admin, Teacher)
+ */
+exports.getStudentActivityLogs = async (req, res) => {
+  try {
+    const { id: studentId } = req.params;
+    const { limit = 50, page = 1, type } = req.query;
+
+    // Verify student belongs to the school
+    const student = await prisma.student.findFirst({
+      where: {
+        id: studentId,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Build activity logs from various sources
+    const activities = [];
+
+    // Get recent results/grade updates
+    const recentResults = await prisma.result.findMany({
+      where: {
+        studentId,
+        schoolId: req.school.id
+      },
+      include: {
+        subject: true,
+        assessment: true,
+        updatedBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true
+          }
+        }
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 20
+    });
+
+    recentResults.forEach(result => {
+      activities.push({
+        id: `result-${result.id}`,
+        type: 'GRADE_UPDATE',
+        action: `Grade updated for ${result.subject.name}`,
+        description: `${result.assessment.name}: ${result.score}/${result.maxScore} (${result.percentage}%)`,
+        timestamp: result.updatedAt,
+        performedBy: result.updatedBy,
+        metadata: {
+          subjectId: result.subjectId,
+          assessmentId: result.assessmentId,
+          score: result.score,
+          maxScore: result.maxScore
+        }
+      });
+    });
+
+    // Get recent attendance records
+    const recentAttendance = await prisma.attendance.findMany({
+      where: {
+        studentId,
+        schoolId: req.school.id
+      },
+      include: {
+        markedBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true
+          }
+        }
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 15
+    });
+
+    recentAttendance.forEach(attendance => {
+      activities.push({
+        id: `attendance-${attendance.id}`,
+        type: 'ATTENDANCE',
+        action: `Attendance marked: ${attendance.status}`,
+        description: `Status: ${attendance.status}${attendance.remarks ? ` - ${attendance.remarks}` : ''}`,
+        timestamp: attendance.updatedAt,
+        performedBy: attendance.markedBy,
+        metadata: {
+          date: attendance.date,
+          status: attendance.status,
+          remarks: attendance.remarks
+        }
+      });
+    });
+
+    // Get student profile updates
+    activities.push({
+      id: `profile-update-${student.id}`,
+      type: 'PROFILE_UPDATE',
+      action: 'Student profile updated',
+      description: 'Basic information and contact details modified',
+      timestamp: student.updatedAt,
+      performedBy: null,
+      metadata: {}
+    });
+
+    // Sort all activities by timestamp
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const paginatedActivities = activities.slice(startIndex, startIndex + parseInt(limit));
+
+    const activityLogs = {
+      studentId,
+      totalActivities: activities.length,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(activities.length / limit),
+      activities: paginatedActivities,
+      summary: {
+        gradeUpdates: activities.filter(a => a.type === 'GRADE_UPDATE').length,
+        attendanceRecords: activities.filter(a => a.type === 'ATTENDANCE').length,
+        profileUpdates: activities.filter(a => a.type === 'PROFILE_UPDATE').length,
+        other: activities.filter(a => !['GRADE_UPDATE', 'ATTENDANCE', 'PROFILE_UPDATE'].includes(a.type)).length
+      }
+    };
+
+    res.json({
+      success: true,
+      data: activityLogs
+    });
+
+  } catch (error) {
+    console.error('Error fetching activity logs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch activity logs',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to calculate letter grade
+function calculateLetterGrade(percentage, gradingScale) {
+  if (!gradingScale || !percentage) return 'N/A';
+  
+  // Default grading scale if not provided
+  const defaultScale = {
+    'A+': { min: 97, max: 100 },
+    'A': { min: 93, max: 96 },
+    'A-': { min: 90, max: 92 },
+    'B+': { min: 87, max: 89 },
+    'B': { min: 83, max: 86 },
+    'B-': { min: 80, max: 82 },
+    'C+': { min: 77, max: 79 },
+    'C': { min: 73, max: 76 },
+    'C-': { min: 70, max: 72 },
+    'D': { min: 60, max: 69 },
+    'F': { min: 0, max: 59 }
+  };
+
+  const scale = gradingScale || defaultScale;
+  
+  for (const [grade, range] of Object.entries(scale)) {
+    if (percentage >= range.min && percentage <= range.max) {
+      return grade;
+    }
+  }
+  
+  return 'N/A';
+}

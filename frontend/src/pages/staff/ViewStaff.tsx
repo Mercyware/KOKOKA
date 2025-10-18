@@ -7,17 +7,7 @@ import {
   CardTitle,
   Button,
   Badge,
-  Separator,
-  PageContainer,
-  PageHeader,
-  PageTitle,
-  PageDescription,
-  PageActions,
-  PageContent,
-  TabContainer,
-  TabList,
-  Tab,
-  TabContent
+  Separator
 } from '@/components/ui';
 import {
   ArrowLeft,
@@ -46,11 +36,31 @@ import {
   Printer,
   Share2,
   UserCheck,
-  Loader2
+  Loader2,
+  Copy,
+  FileJson
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { StaffProfilePictureUpload } from '@/components/ui/StaffProfilePictureUpload';
 import Layout from '@/components/layout/Layout';
 import { getStaffMember } from '@/services/staffService';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ViewStaffProps {
   staffId?: string;
@@ -61,12 +71,17 @@ interface ViewStaffProps {
 const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onEdit }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const staffId = propStaffId || id;
 
   const [activeTab, setActiveTab] = useState('overview');
   const [staff, setStaff] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareEmail, setShareEmail] = useState('');
 
   useEffect(() => {
     if (!staffId) return;
@@ -173,6 +188,106 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
     }
   };
 
+  // Export functionality
+  const handleExportPDF = async () => {
+    try {
+      toast({
+        title: 'Generating PDF...',
+        description: 'Please wait while we generate the staff profile PDF.',
+      });
+      window.print();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to generate PDF. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const exportData = {
+        staff,
+        exportedAt: new Date().toISOString(),
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `staff-${formatStaffName(staff).replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Export Successful',
+        description: 'Staff data has been exported as JSON.',
+      });
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export data. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Print functionality
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Share functionality
+  const handleCopyLink = () => {
+    const currentUrl = window.location.href;
+    navigator.clipboard.writeText(currentUrl).then(() => {
+      toast({
+        title: 'Link Copied',
+        description: 'Staff profile link has been copied to clipboard.',
+      });
+    }).catch(() => {
+      toast({
+        title: 'Copy Failed',
+        description: 'Failed to copy link. Please try again.',
+        variant: 'destructive',
+      });
+    });
+  };
+
+  const handleShareEmail = () => {
+    if (!shareEmail) {
+      toast({
+        title: 'Email Required',
+        description: 'Please enter an email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const staffName = formatStaffName(staff);
+    const subject = encodeURIComponent(`Staff Profile - ${staffName}`);
+    const body = encodeURIComponent(
+      `Hi,\n\nI'm sharing the staff profile for ${staffName}.\n\nYou can view the profile here: ${window.location.href}\n\nBest regards`
+    );
+    const mailtoLink = `mailto:${shareEmail}?subject=${subject}&body=${body}`;
+
+    window.location.href = mailtoLink;
+
+    setShareDialogOpen(false);
+    setShareEmail('');
+
+    toast({
+      title: 'Email Client Opened',
+      description: 'Your default email client has been opened with the share details.',
+    });
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -218,46 +333,102 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
 
   return (
     <Layout>
-      <PageContainer>
-        <PageHeader>
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={staff.user?.profileImage || staff.photo || ''} alt={formatStaffName(staff)} />
-                <AvatarFallback className="text-lg font-bold">
-                  {formatStaffName(staff).split(' ').map((n: string) => n?.[0] || '').join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <PageTitle>{formatStaffName(staff)}</PageTitle>
-                <PageDescription>
-                  Employee ID: {staff.employeeId || 'N/A'} • {staff.position || 'Staff Member'} • {staff.department?.name || 'No Department'}
-                </PageDescription>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Badge variant="secondary" className={getStatusColor(staff.status)}>
-                    {staff.status?.replace('_', ' ') || 'Active'}
-                  </Badge>
-                  <Badge variant="secondary" className={getStaffTypeColor(staff.staffType)}>
-                    {staff.staffType || 'Staff'}
-                  </Badge>
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-siohioma-primary to-blue-600 rounded-xl p-6 text-white">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Avatar className="h-20 w-20 border-4 border-white/30">
+                    <AvatarImage src={staff.user?.profileImage || staff.photo || ''} alt={formatStaffName(staff)} />
+                    <AvatarFallback className="bg-white/20 text-white text-lg font-bold">
+                      {formatStaffName(staff).split(' ').map((n: string) => n?.[0] || '').join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold">{formatStaffName(staff)}</h1>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                      ID: {staff.employeeId || 'N/A'}
+                    </Badge>
+                    <Badge variant="secondary" className={getStatusColor(staff.status)}>
+                      {staff.status?.replace('_', ' ') || 'Active'}
+                    </Badge>
+                  </div>
+                  <p className="text-white/80 mt-1">
+                    {staff.position || 'Staff Member'} •
+                    {staff.department?.name ? ` ${staff.department.name} • ` : ' '}
+                    {staff.staffType || 'General Staff'}
+                  </p>
                 </div>
               </div>
             </div>
-            <PageActions>
-              <Button intent="secondary" onClick={handleBack} leftIcon={<ArrowLeft />}>
-                Back to Staff
+            <div className="flex space-x-2">
+              {/* Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportJSON}>
+                    <FileJson className="h-4 w-4 mr-2" />
+                    Export as JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Print Button */}
+              <Button
+                variant="outline"
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                onClick={handlePrint}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print
               </Button>
-              <Button intent="action" leftIcon={<Download />}>
-                Export
-              </Button>
-              <Button intent="primary" onClick={handleEdit} leftIcon={<Edit />}>
+
+              {/* Share Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Share via Email
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                onClick={handleEdit}
+                className="bg-white text-siohioma-primary hover:bg-gray-100"
+              >
+                <Edit className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
-            </PageActions>
+            </div>
           </div>
-        </PageHeader>
-
-        <PageContent>
+        </div>
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="text-center p-4">
@@ -290,25 +461,91 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             </Card>
           </div>
 
-          {/* Tabs */}
-          <TabContainer>
-            <TabList>
-              {tabs.map((tab) => (
-                <Tab
-                  key={tab.id}
-                  active={activeTab === tab.id}
-                  icon={<tab.icon className="h-4 w-4" />}
-                  onClick={() => setActiveTab(tab.id)}
-                >
-                  {tab.label}
-                </Tab>
-              ))}
-            </TabList>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-siohioma-primary text-siohioma-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <tab.icon className="h-4 w-4 mr-2" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-            {/* Tab Content */}
-            <TabContent>
+        {/* Tab Content */}
               {activeTab === 'overview' && (
                 <div className="space-y-6">
+                  {/* Profile Picture Management */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Camera className="h-6 w-6 text-blue-600" />
+                        <span className="text-xl">Profile Picture</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
+                        <div className="flex-shrink-0">
+                          <StaffProfilePictureUpload
+                            staffId={staffId}
+                            currentImageUrl={staff.user?.profileImage || staff.photo}
+                            staffName={formatStaffName(staff)}
+                            size="lg"
+                            onUploadSuccess={(imageUrl) => {
+                              setStaff((prev: any) => ({ 
+                                ...prev, 
+                                user: {
+                                  ...prev.user,
+                                  profileImage: imageUrl
+                                },
+                                photo: imageUrl // Also update legacy field
+                              }));
+                            }}
+                            onDeleteSuccess={() => {
+                              setStaff((prev: any) => ({ 
+                                ...prev, 
+                                user: {
+                                  ...prev.user,
+                                  profileImage: null
+                                },
+                                photo: null 
+                              }));
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                            Manage Profile Picture
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Upload a clear, high-quality photo of the staff member. The image will be automatically 
+                            resized and optimized for the best display across the system.
+                          </p>
+                          <div className="space-y-2">
+                            <p className="text-xs text-gray-500">
+                              <strong>Requirements:</strong>
+                            </p>
+                            <ul className="text-xs text-gray-500 space-y-1">
+                              <li>• File formats: JPEG, PNG, or WebP</li>
+                              <li>• Maximum file size: 5MB</li>
+                              <li>• Recommended dimensions: 400x400 pixels or larger</li>
+                              <li>• Square images work best</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   {/* Personal Information */}
                   <Card>
                     <CardHeader>
@@ -676,35 +913,17 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: 'Resume/CV', type: 'PDF', size: '2.4 MB', date: '2024-01-15' },
-                  { name: 'Employment Contract', type: 'PDF', size: '1.8 MB', date: '2024-01-10' },
-                  { name: 'Qualifications Certificate', type: 'PDF', size: '3.2 MB', date: '2023-12-20' },
-                  { name: 'Background Check', type: 'PDF', size: '1.1 MB', date: '2023-12-15' }
-                ].map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">{doc.name}</p>
-                        <p className="text-sm text-gray-500">{doc.type} • {doc.size} • {doc.date}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button intent="action" size="sm" leftIcon={<Download />}>
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No documents uploaded</p>
+                <p className="text-gray-400 text-sm">Staff documents will appear here when uploaded.</p>
               </div>
             </CardContent>
           </Card>
         )}
 
-              {activeTab === 'activity' && (
-                <Card>
+        {activeTab === 'activity' && (
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Activity className="h-5 w-5 text-blue-600" />
@@ -712,36 +931,108 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { action: 'Profile updated by admin', time: '2 hours ago', type: 'profile' },
-                  { action: 'Subject assignment updated', time: '1 day ago', type: 'assignment' },
-                  { action: 'Schedule published', time: '3 days ago', type: 'schedule' },
-                  { action: 'Department meeting attended', time: '1 week ago', type: 'meeting' },
-                  { action: 'Annual review completed', time: '2 weeks ago', type: 'review' }
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 border-l-4 border-blue-600 bg-gray-50 dark:bg-gray-800">
-                    <div className="flex-shrink-0 mt-1">
-                      {activity.type === 'profile' && <User className="h-4 w-4 text-gray-500" />}
-                      {activity.type === 'assignment' && <GraduationCap className="h-4 w-4 text-blue-500" />}
-                      {activity.type === 'schedule' && <Calendar className="h-4 w-4 text-green-500" />}
-                      {activity.type === 'meeting' && <Users className="h-4 w-4 text-purple-500" />}
-                      {activity.type === 'review' && <CheckCircle className="h-4 w-4 text-yellow-500" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 dark:text-white">{activity.action}</p>
-                      <p className="text-sm text-gray-500">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No recent activity</p>
+                <p className="text-gray-400 text-sm">Staff activity logs will appear here when available.</p>
               </div>
             </CardContent>
           </Card>
-              )}
-            </TabContent>
-          </TabContainer>
-        </PageContent>
-      </PageContainer>
+        )}
+
+        {/* Share Dialog */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share Staff Profile</DialogTitle>
+              <DialogDescription>
+                Share {formatStaffName(staff)}'s profile via email. An email will be opened with the profile link.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="share-email">Recipient Email</Label>
+                <Input
+                  id="share-email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleShareEmail();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => {
+                  setShareDialogOpen(false);
+                  setShareEmail('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button intent="primary" onClick={handleShareEmail}>
+                <Mail className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Print Styles */}
+        <style>{`
+          @media print {
+            nav,
+            .no-print,
+            button:not(.print-button),
+            [role="dialog"],
+            header > div:first-child,
+            .bg-gradient-to-r > div > div:last-child {
+              display: none !important;
+            }
+
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+
+            .container {
+              max-width: 100% !important;
+              padding: 0 !important;
+            }
+
+            .space-y-6 > * {
+              page-break-inside: avoid;
+            }
+
+            .bg-gradient-to-r {
+              background: #2563eb !important;
+              color: white !important;
+              padding: 1rem !important;
+            }
+
+            .shadow-lg,
+            .shadow-sm,
+            .shadow {
+              box-shadow: none !important;
+            }
+
+            .space-y-6 {
+              gap: 0.5rem !important;
+            }
+
+            nav[role="tablist"],
+            .border-b.border-gray-200 {
+              display: none !important;
+            }
+          }
+        `}</style>
+      </div>
     </Layout>
   );
 };

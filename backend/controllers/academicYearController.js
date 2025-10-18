@@ -72,28 +72,60 @@ exports.getAllAcademicYears = async (req, res) => {
   try {
     // Use school context from middleware
     const schoolId = req.school?.id;
-    
+
     if (!schoolId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'School context required' 
+        message: 'School context required'
       });
     }
 
+    // Extract pagination and sorting parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sort = req.query.sort || 'startDate';
+    const order = req.query.order || 'desc';
+
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
+
+    // Build orderBy object
+    const orderBy = {};
+    orderBy[sort] = order;
+
+    // Get total count for pagination
+    const total = await prisma.academicYear.count({
+      where: { schoolId }
+    });
+
+    // Get paginated academic years
     const academicYears = await prisma.academicYear.findMany({
       where: { schoolId },
-      orderBy: { startDate: 'desc' }
+      orderBy,
+      skip,
+      take: limit
     });
-      
+
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
+
     res.json({
       success: true,
-      data: academicYears
+      data: {
+        academicYears,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: totalPages
+        }
+      }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: 'Server error', 
-      error: error.message 
+      message: 'Server error',
+      error: error.message
     });
   }
 };
@@ -393,7 +425,10 @@ exports.setCurrentAcademicYear = async (req, res) => {
     const result = await prisma.$transaction(async (tx) => {
       // First, set all academic years for this school to not current
       await tx.academicYear.updateMany({
-        where: { schoolId },
+        where: {
+          schoolId,
+          isCurrent: true
+        },
         data: { isCurrent: false }
       });
 

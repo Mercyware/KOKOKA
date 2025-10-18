@@ -609,3 +609,233 @@ exports.updateAccessPermissions = asyncHandler(async (req, res) => {
     }
   });
 });
+
+// @desc    Upload staff profile picture
+// @route   POST /api/staff/:id/profile-picture
+// @access  Private/Admin or Self
+exports.uploadProfilePicture = async (req, res) => {
+  const fileUploadService = require('../utils/fileUploadService');
+  
+  try {
+    const staffId = req.params.id;
+    
+    // Check if staff exists
+    const staff = await prisma.staff.findFirst({
+      where: { 
+        id: staffId,
+        schoolId: req.school.id 
+      }
+      // Note: profilePicture relation removed for database compatibility
+    });
+    
+    if (!staff) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Staff member not found' 
+      });
+    }
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No image file provided' 
+      });
+    }
+
+    // Validate image
+    const validation = await fileUploadService.validateImage(req.file.buffer, {
+      maxSize: 5 * 1024 * 1024, // 5MB
+      allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      minWidth: 100,
+      minHeight: 100,
+      maxWidth: 2000,
+      maxHeight: 2000
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        success: false, 
+        message: validation.error 
+      });
+    }
+
+    // Delete old profile picture if exists
+    // Note: For database compatibility, we'll handle file cleanup separately
+    // if (staff.profilePicture) {
+    //   try {
+    //     await fileUploadService.deleteFile(staff.profilePicture.id);
+    //   } catch (error) {
+    //     console.warn('Warning: Failed to delete old profile picture:', error.message);
+    //     // Continue with upload even if old image deletion fails
+    //   }
+    // }
+
+    // Upload new profile picture
+    const uploadResult = await fileUploadService.uploadProfilePicture(
+      req.file.buffer,
+      {
+        entityId: staffId,
+        entityType: 'Staff',
+        schoolId: staff.schoolId,
+        uploadedById: req.user?.id,
+        fileName: `${staff.firstName}_${staff.lastName}_profile.jpg`
+      }
+    );
+
+    // Update staff record with new profile picture reference
+    // Handle both with and without profilePictureId field for database compatibility
+    const updateData = {
+      // Always update the legacy photo field for backward compatibility
+      photo: uploadResult.file.fileUrl
+    };
+
+    // Only add profilePictureId if the field exists in the database
+    try {
+      updateData.profilePictureId = uploadResult.file.id;
+    } catch (error) {
+      console.warn('profilePictureId field may not exist in database, using photo field only');
+    }
+
+    const updatedStaff = await prisma.staff.update({
+      where: { id: staffId },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            role: true,
+            profileImage: true
+          }
+        }
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      data: {
+        data: {
+          id: updatedStaff.id,
+          firstName: updatedStaff.firstName,
+          lastName: updatedStaff.lastName,
+          profilePictureUrl: updatedStaff.profilePicture?.fileUrl || updatedStaff.photo,
+          photo: updatedStaff.photo,
+          updatedAt: updatedStaff.updatedAt
+        },
+        file: {
+          id: uploadResult.file.id,
+          url: uploadResult.file.fileUrl,
+          fileName: uploadResult.file.fileName,
+          fileSize: uploadResult.file.fileSize
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error uploading staff profile picture:', error);
+    
+    // Provide specific error messages for common issues
+    if (error.message.includes('AWS') || error.message.includes('S3')) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to upload image to storage service',
+        error: 'STORAGE_ERROR'
+      });
+    }
+    
+    if (error.message.includes('Invalid image')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid image file provided',
+        error: 'INVALID_IMAGE'
+      });
+    }
+
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error occurred while uploading profile picture',
+      error: error.message 
+    });
+  }
+};
+
+// @desc    Delete staff profile picture
+// @route   DELETE /api/staff/:id/profile-picture
+// @access  Private/Admin or Self
+exports.deleteProfilePicture = async (req, res) => {
+  const fileUploadService = require('../utils/fileUploadService');
+  
+  try {
+    const staffId = req.params.id;
+    
+    // Check if staff exists
+    const staff = await prisma.staff.findFirst({
+      where: { 
+        id: staffId,
+        schoolId: req.school.id 
+      }
+      // Note: profilePicture relation removed for database compatibility
+    });
+    
+    if (!staff) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Staff member not found' 
+      });
+    }
+
+    // Delete profile picture file if exists
+    // Note: For database compatibility, we'll handle file cleanup separately
+    // if (staff.profilePicture) {
+    //   try {
+    //     await fileUploadService.deleteFile(staff.profilePicture.id);
+    //   } catch (error) {
+    //     console.warn('Warning: Failed to delete profile picture file:', error.message);
+    //     // Continue with database update even if file deletion fails
+    //   }
+    // }
+
+    // Update staff record to remove profile picture reference
+    // Handle both with and without profilePictureId field for database compatibility
+    const updateData = {
+      photo: null // Always clear legacy field
+    };
+
+    // Only add profilePictureId if the field exists in the database
+    try {
+      updateData.profilePictureId = null;
+    } catch (error) {
+      console.warn('profilePictureId field may not exist in database, using photo field only');
+    }
+
+    const updatedStaff = await prisma.staff.update({
+      where: { id: staffId },
+      data: updateData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        photo: true,
+        updatedAt: true
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture deleted successfully',
+      data: {
+        staff: updatedStaff
+      }
+    });
+
+  } catch (error) {
+    console.error('Error deleting staff profile picture:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error occurred while deleting profile picture',
+      error: error.message 
+    });
+  }
+};

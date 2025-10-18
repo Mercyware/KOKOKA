@@ -630,56 +630,56 @@ async function createSections(schoolId) {
 async function createClasses(schoolId) {
   const classesData = [
     {
-      name: 'Grade 1A',
+      name: 'Grade 1',
       grade: '1',
       capacity: 25,
       description: 'First grade primary class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 2A',
+      name: 'Grade 2',
       grade: '2',
       capacity: 25,
       description: 'Second grade primary class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 3A',
+      name: 'Grade 3',
       grade: '3',
       capacity: 28,
       description: 'Third grade primary class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 4A',
+      name: 'Grade 4',
       grade: '4',
       capacity: 28,
       description: 'Fourth grade primary class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 5A',
+      name: 'Grade 5',
       grade: '5',
       capacity: 30,
       description: 'Fifth grade intermediate class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 6A',
+      name: 'Grade 6',
       grade: '6',
       capacity: 30,
       description: 'Sixth grade intermediate class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 7A',
+      name: 'Grade 7',
       grade: '7',
       capacity: 32,
       description: 'Seventh grade middle school class',
       schoolId: schoolId
     },
     {
-      name: 'Grade 8A',
+      name: 'Grade 8',
       grade: '8',
       capacity: 32,
       description: 'Eighth grade middle school class',

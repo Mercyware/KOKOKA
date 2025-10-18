@@ -142,7 +142,7 @@ const AssignmentDetails: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <Button
-                intent="secondary"
+                intent="primary"
                 leftIcon={<Edit />}
                 onClick={() => navigate(`/teachers/class-assignments/${assignment.id}/edit`)}
               >

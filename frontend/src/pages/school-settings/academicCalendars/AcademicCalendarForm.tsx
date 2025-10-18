@@ -82,11 +82,15 @@ const AcademicCalendarForm: React.FC = () => {
   const fetchAcademicYears = async () => {
     try {
       console.log('Fetching academic years...');
-      const response = await get<AcademicYear[]>('/academic-years');
+      const response = await get<any>('/academic-years');
       console.log('Academic years response:', response);
       if (response.success && response.data) {
-        console.log('Academic years loaded:', response.data);
-        setAcademicYears(response.data);
+        // Handle both array and paginated response formats
+        const years = Array.isArray(response.data)
+          ? response.data
+          : response.data.academicYears || [];
+        console.log('Academic years loaded:', years);
+        setAcademicYears(years);
       } else {
         console.log('Failed to fetch academic years:', response.message);
         toast({
@@ -590,16 +594,16 @@ const AcademicCalendarForm: React.FC = () => {
                               placeholder="Enter description"
                             />
                           </div>
-                          <div className="flex justify-end space-x-2">
+                          <div className="flex justify-end gap-2">
                             <Button
                               type="button"
-                              variant="outline"
+                              intent="cancel"
                               onClick={() => setHolidayDialogOpen(false)}
                             >
                               Cancel
                             </Button>
-                            <Button 
-                              type="button" 
+                            <Button
+                              type="button"
                               intent="primary"
                               onClick={handleAddHoliday}
                             >
@@ -643,16 +647,22 @@ const AcademicCalendarForm: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-4">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
                   <Button
                     type="button"
-                    variant="outline"
+                    intent="cancel"
                     onClick={() => navigate('/school-settings/academic-calendars')}
                     disabled={loading}
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    type="submit"
+                    intent="primary"
+                    disabled={loading}
+                    className="w-full sm:w-auto"
+                  >
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />

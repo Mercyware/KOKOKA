@@ -33,8 +33,11 @@ export interface HolidayCheckResponse {
 }
 
 // Get all academic calendars
-export const getAllAcademicCalendars = async (): Promise<ApiResponse<AcademicCalendar[]>> => {
-  return await get<AcademicCalendar[]>('/academic-calendars');
+export const getAllAcademicCalendars = async (params?: {
+  academicYearId?: string;
+  term?: string;
+}): Promise<ApiResponse<AcademicCalendar[]>> => {
+  return await get<AcademicCalendar[]>('/academic-calendars', params);
 };
 
 // Get academic calendar by ID

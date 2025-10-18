@@ -1,6 +1,3 @@
-// KOKOKA School Management System - PostgreSQL Schema
-// This schema defines the complete database structure for the school management system
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,2939 +7,2059 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ================================
-// CORE SYSTEM MODELS
-// ================================
-
 model School {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
-  subdomain   String    @unique
-  logo        String?
-  description String?
-  established DateTime?
-  type        SchoolType @default(SECONDARY)
-  status      SchoolStatus @default(PENDING)
-
-  // Address
-  streetAddress String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String?
-
-  // Contact Information
-  email   String?
-  phone   String?
-  website String?
-
-  // Settings as JSON
-  settings    Json?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  users                User[]
-  students             Student[]
-  staff                Staff[]
-  classes              Class[]
-  subjects             Subject[]
-  academicYears        AcademicYear[]
-  terms                Term[]
-  assessments          Assessment[]
-  grades               Grade[]
-  attendance           Attendance[]
-  attendanceSessions   AttendanceSession[]
-  attendancePolicies   AttendancePolicy[]
-  attendanceReports    AttendanceReport[]
-  documents            Document[]
-  guardians            Guardian[]
-  houses               House[]
-  sections             Section[]
-  departments          Department[]
-  teacherSubjects      TeacherSubject[]
-  classTeachers        ClassTeacher[]
-  sittingPositions     SittingPosition[]
-  curricula            Curriculum[]
-  studentClassHistory  StudentClassHistory[]
-  academicCalendars    AcademicCalendar[]
-  classSubjectHistory  ClassSubjectHistory[]
-  subjectAssignments   SubjectAssignment[]
-
-  // Notification relationships
-  notifications        Notification[]
-  notificationTemplates NotificationTemplate[]
-  webhookSubscriptions WebhookSubscription[]
-  
-  // Grade Management relationships
-  gradeBooks           GradeBook[]
-  
-  // Report Card relationships
-  reportCardTemplates  ReportCardTemplate[]
-  reportBatches        ReportBatch[]
-
-  // File Management relationships
-  files                FileManager[]
-
-  // Library relationships
-  books                Book[]
-  bookIssues           BookIssue[]
-
-  // Hostel relationships
-  hostels              Hostel[]
-  hostelAllocations    HostelAllocation[]
-  hostelFees           HostelFee[]
-
-  // Messaging relationships
-  messageThreads       MessageThread[]
-  messages             Message[]
-
-  // Transportation relationships
-  transportRoutes      TransportRoute[]
-  vehicles             Vehicle[]
+  id                          String                       @id @default(uuid())
+  name                        String                       @unique
+  slug                        String                       @unique
+  subdomain                   String                       @unique
+  logo                        String?
+  description                 String?
+  established                 DateTime?
+  type                        SchoolType                   @default(SECONDARY)
+  status                      SchoolStatus                 @default(PENDING)
+  streetAddress               String?
+  city                        String?
+  state                       String?
+  zipCode                     String?
+  country                     String?
+  email                       String?
+  phone                       String?
+  website                     String?
+  settings                    Json?
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  academicCalendars           AcademicCalendar[]
+  academicYears               AcademicYear[]
+  assessments                 Assessment[]
+  attendance                  Attendance[]
+  attendancePolicies          AttendancePolicy[]
+  attendanceReports           AttendanceReport[]
+  attendanceSessions          AttendanceSession[]
+  bookIssues                  BookIssue[]
+  books                       Book[]
+  classSubjectHistory         ClassSubjectHistory[]
+  classTeachers               ClassTeacher[]
+  classes                     Class[]
+  curricula                   Curriculum[]
+  departments                 Department[]
+  documents                   Document[]
+  files                       FileManager[]
+  gradeBooks                  GradeBook[]
+  gradeScales                 GradeScale[]
+  grades                      Grade[]
+  guardians                   Guardian[]
+  hostelAllocations           HostelAllocation[]
+  hostelFees                  HostelFee[]
+  hostels                     Hostel[]
+  houses                      House[]
+  inventoryAllocations        InventoryAllocation[]
+  inventoryCategories         InventoryCategory[]
+  inventoryItems              InventoryItem[]
+  inventoryTransactions       InventoryTransaction[]
+  messageThreads              MessageThread[]
+  messages                    Message[]
+  notificationTemplates       NotificationTemplate[]
+  notifications               Notification[]
+  reportBatches               ReportBatch[]
+  reportCardTemplates         ReportCardTemplate[]
+  results                     Result[]
+  sections                    Section[]
+  sittingPositions            SittingPosition[]
+  staff                       Staff[]
+  studentClassHistory         StudentClassHistory[]
   studentTransportAssignments StudentTransportAssignment[]
-
-  // Inventory relationships
-  inventoryCategories  InventoryCategory[]
-  inventoryItems       InventoryItem[]
-  inventoryTransactions InventoryTransaction[]
-  inventoryAllocations InventoryAllocation[]
-
-  // Result and grading relationships
-  gradeScales          GradeScale[]
-  results              Result[]
+  students                    Student[]
+  subjectAssignments          SubjectAssignment[]
+  subjects                    Subject[]
+  teacherSubjects             TeacherSubject[]
+  terms                       Term[]
+  transportRoutes             TransportRoute[]
+  users                       User[]
+  vehicles                    Vehicle[]
+  webhookSubscriptions        WebhookSubscription[]
 
   @@map("schools")
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
-  name          String
-  role          UserRole
-  isActive      Boolean   @default(true)
-  emailVerified Boolean   @default(false)
-  lastLogin     DateTime?
-  profileData   Json?
-  profileImage  String?
-  
-  // OAuth fields
-  googleId      String?   @unique
-  linkedinId    String?   @unique
-  
-  // School relationship
-  schoolId      String
-  school        School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relationships based on role
-  student             Student?
-  staff               Staff?
-  guardian            Guardian?
-  
-  // Activity relationships
-  createdDocuments    Document[] @relation("DocumentCreatedBy")
-  verifiedDocuments   Document[] @relation("DocumentVerifiedBy")
-  markedAttendance    Attendance[] @relation("AttendanceMarkedBy")
-  modifiedAttendance  Attendance[] @relation("AttendanceModifiedBy")
-  generatedAttendanceReports AttendanceReport[]
-  createdAssessments  Assessment[]
-  gradedAssessments   Grade[] @relation("GradedBy")
-  verifiedGuardians   Guardian[] @relation("GuardianVerifiedBy")
-  createdAcademicCalendars AcademicCalendar[] @relation("AcademicCalendarCreatedBy")
-  createdCurricula    Curriculum[]
-  
-  // Notification relationships
-  createdNotifications     Notification[] @relation("NotificationCreatedBy")
-  createdNotificationTemplates NotificationTemplate[] @relation("NotificationTemplateCreatedBy")
-  userNotifications        UserNotification[]
-  notificationPreferences  UserNotificationPreferences?
-  deviceTokens             DeviceToken[]
-  webhookSubscriptions     WebhookSubscription[]
-  
-  // Report Card relationships
-  createdReportCardTemplates ReportCardTemplate[] @relation("ReportCardTemplateCreatedBy")
-  generatedReportCards     ReportCard[] @relation("ReportCardGeneratedBy")
-  approvedReportCards      ReportCard[] @relation("ReportCardApprovedBy")
-  createdReportBatches     ReportBatch[] @relation("ReportBatchCreatedBy")
-
-  // File Management relationships
-  uploadedFiles            FileManager[]
-
-  // Library relationships
-  issuedBooks              BookIssue[] @relation("IssuedBy")
-  returnedBooks            BookIssue[] @relation("ReturnedBy")
-
-  // Messaging relationships
-  sentMessages             Message[] @relation("MessageSender")
-  receivedMessages         MessageRecipient[] @relation("MessageRecipient")
-  createdThreads           MessageThread[] @relation("ThreadCreator")
-  threadParticipants       MessageThreadParticipant[]
-
-  // Inventory relationships
-  inventoryTransactions    InventoryTransaction[]
-  inventoryAllocations     InventoryAllocation[]
+  id                           String                       @id @default(uuid())
+  email                        String                       @unique
+  passwordHash                 String
+  name                         String
+  role                         UserRole
+  isActive                     Boolean                      @default(true)
+  emailVerified                Boolean                      @default(false)
+  lastLogin                    DateTime?
+  profileData                  Json?
+  profileImage                 String?
+  googleId                     String?                      @unique
+  linkedinId                   String?                      @unique
+  schoolId                     String
+  createdAt                    DateTime                     @default(now())
+  updatedAt                    DateTime                     @updatedAt
+  createdAcademicCalendars     AcademicCalendar[]           @relation("AcademicCalendarCreatedBy")
+  createdAssessments           Assessment[]
+  markedAttendance             Attendance[]                 @relation("AttendanceMarkedBy")
+  modifiedAttendance           Attendance[]                 @relation("AttendanceModifiedBy")
+  generatedAttendanceReports   AttendanceReport[]
+  issuedBooks                  BookIssue[]                  @relation("IssuedBy")
+  returnedBooks                BookIssue[]                  @relation("ReturnedBy")
+  createdCurricula             Curriculum[]
+  deviceTokens                 DeviceToken[]
+  createdDocuments             Document[]                   @relation("DocumentCreatedBy")
+  verifiedDocuments            Document[]                   @relation("DocumentVerifiedBy")
+  uploadedFiles                FileManager[]
+  gradedAssessments            Grade[]                      @relation("GradedBy")
+  guardian                     Guardian?
+  verifiedGuardians            Guardian[]                   @relation("GuardianVerifiedBy")
+  inventoryAllocations         InventoryAllocation[]
+  inventoryTransactions        InventoryTransaction[]
+  receivedMessages             MessageRecipient[]           @relation("MessageRecipient")
+  threadParticipants           MessageThreadParticipant[]
+  createdThreads               MessageThread[]              @relation("ThreadCreator")
+  sentMessages                 Message[]                    @relation("MessageSender")
+  createdNotificationTemplates NotificationTemplate[]       @relation("NotificationTemplateCreatedBy")
+  createdNotifications         Notification[]               @relation("NotificationCreatedBy")
+  createdReportBatches         ReportBatch[]                @relation("ReportBatchCreatedBy")
+  createdReportCardTemplates   ReportCardTemplate[]         @relation("ReportCardTemplateCreatedBy")
+  approvedReportCards          ReportCard[]                 @relation("ReportCardApprovedBy")
+  generatedReportCards         ReportCard[]                 @relation("ReportCardGeneratedBy")
+  staff                        Staff?
+  student                      Student?
+  notificationPreferences      UserNotificationPreferences?
+  userNotifications            UserNotification[]
+  school                       School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  webhookSubscriptions         WebhookSubscription[]
 
   @@map("users")
 }
 
-// ================================
-// FILE MANAGEMENT SYSTEM
-// ================================
-
 model FileManager {
-  id          String    @id @default(uuid())
-  fileName    String    // Original file name
-  fileKey     String    @unique // S3 key/path
-  fileUrl     String    // S3 URL
-  fileSize    Int       // File size in bytes
-  mimeType    String    // MIME type (image/jpeg, application/pdf, etc.)
-  category    FileCategory @default(OTHER) // Category for organization
-  
-  // File metadata
-  originalName String?  // Original filename from upload
-  dimensions  Json?     // For images: { width: number, height: number }
-  compressed  Boolean   @default(false) // Whether the file was compressed/optimized
-  
-  // Relationships
-  entityType  String?   // Type of entity this file belongs to (Student, Teacher, etc.)
-  entityId    String?   // ID of the entity this file belongs to
-  
-  // Upload info
-  uploadedById String?  // User who uploaded the file
-  uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  
-  schoolId    String
-  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  // Status and metadata
-  status      FileStatus @default(ACTIVE)
-  isPublic    Boolean   @default(false) // Whether file is publicly accessible
-  description String?   // Optional description
-  tags        String[]  // Tags for searching/filtering
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Relations to specific entities
-  studentProfiles Student[] @relation("StudentProfilePicture")
-  
+  id              String       @id @default(uuid())
+  fileName        String
+  fileKey         String       @unique
+  fileUrl         String
+  fileSize        Int
+  mimeType        String
+  category        FileCategory @default(OTHER)
+  originalName    String?
+  dimensions      Json?
+  compressed      Boolean      @default(false)
+  entityType      String?
+  entityId        String?
+  uploadedById    String?
+  schoolId        String
+  status          FileStatus   @default(ACTIVE)
+  isPublic        Boolean      @default(false)
+  description     String?
+  tags            String[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  school          School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  uploadedBy      User?        @relation(fields: [uploadedById], references: [id])
+  studentProfiles Student?     @relation("StudentProfilePicture")
+  // staffProfiles   Staff?       @relation("StaffProfilePicture")
+
   @@map("file_manager")
 }
 
-// ================================
-// ACADEMIC STRUCTURE
-// ================================
-
 model AcademicYear {
-  id        String    @id @default(uuid())
-  name      String
-  startDate DateTime
-  endDate   DateTime
-  isCurrent Boolean   @default(false)
-  
-  schoolId  String
-  school    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  // Relationships
-  terms               Term[]
-  students            Student[]
-  assessments         Assessment[]
-  attendance          Attendance[]
-  studentClassHistory StudentClassHistory[]
-  academicCalendars   AcademicCalendar[]
-  classCurricula      ClassCurriculum[]
-  curriculumProgressTrackers CurriculumProgressTracker[]
-  gradeBooks          GradeBook[]
-  gradeReports        GradeReport[]
-  classSubjectHistory ClassSubjectHistory[]
-  classTeachers       ClassTeacher[]
-  subjectAssignments  SubjectAssignment[]
-  reportCards         ReportCard[]
-  reportBatches       ReportBatch[]
-  hostelAllocations   HostelAllocation[]
-  hostelFees          HostelFee[]
+  id                          String                       @id @default(uuid())
+  name                        String
+  startDate                   DateTime
+  endDate                     DateTime
+  isCurrent                   Boolean                      @default(false)
+  schoolId                    String
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  academicCalendars           AcademicCalendar[]
+  school                      School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assessments                 Assessment[]
+  attendance                  Attendance[]
+  classCurricula              ClassCurriculum[]
+  classSubjectHistory         ClassSubjectHistory[]
+  classTeachers               ClassTeacher[]
+  curriculumProgressTrackers  CurriculumProgressTracker[]
+  gradeBooks                  GradeBook[]
+  gradeReports                GradeReport[]
+  hostelAllocations           HostelAllocation[]
+  hostelFees                  HostelFee[]
+  reportBatches               ReportBatch[]
+  reportCards                 ReportCard[]
+  studentClassHistory         StudentClassHistory[]
   studentTransportAssignments StudentTransportAssignment[]
+  students                    Student[]
+  subjectAssignments          SubjectAssignment[]
+  terms                       Term[]
 
   @@unique([schoolId, name])
-  @@unique([schoolId, isCurrent]) // Only one current academic year per school
   @@map("academic_years")
 }
 
 model Term {
-  id        String    @id @default(uuid())
-  name      String
-  startDate DateTime
-  endDate   DateTime
-  
+  id             String        @id @default(uuid())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
   schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  assessments Assessment[]
-  attendance  Attendance[]
-  gradeBooks  GradeBook[]
-  gradeReports GradeReport[]
-  reportCards ReportCard[]
-  reportBatches ReportBatch[]
-  results     Result[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  assessments    Assessment[]
+  attendance     Attendance[]
+  gradeBooks     GradeBook[]
+  gradeReports   GradeReport[]
+  reportBatches  ReportBatch[]
+  reportCards    ReportCard[]
+  results        Result[]
+  academicYear   AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  school         School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
 }
 
 model AcademicCalendar {
-  id        String @id @default(uuid())
-  term      AcademicTerm
-  startDate DateTime
-  endDate   DateTime
-  holidays  Json? // Array of holiday objects: { name, date, description }
-  
+  id             String       @id @default(uuid())
+  term           AcademicTerm
+  startDate      DateTime
+  endDate        DateTime
+  holidays       Json?
   schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   createdBy      User?        @relation("AcademicCalendarCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, academicYearId, term])
   @@map("academic_calendars")
 }
 
 model Department {
-  id          String  @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   code        String
   description String?
   headOfDept  String?
-  
   schoolId    String
-  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  subjects Subject[]
-  staff    Staff[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  staff       Staff[]
+  subjects    Subject[]
 
   @@unique([schoolId, code])
   @@map("departments")
 }
 
 model Subject {
-  id          String  @id @default(uuid())
-  name        String
-  code        String
-  description String?
-  credits     Int?
-  
-  schoolId     String
-  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  teacherSubjects      TeacherSubject[]
-  assessments          Assessment[]
-  attendance           Attendance[]
-  curriculumSubjects   CurriculumSubject[]
-  gradeBooks           GradeBook[]
-  classSubjectHistory  ClassSubjectHistory[]
-  subjectAssignments   SubjectAssignment[]
-  subjectResults       SubjectResult[]
+  id                  String                @id @default(uuid())
+  name                String
+  code                String
+  description         String?
+  credits             Int?
+  schoolId            String
+  departmentId        String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  assessments         Assessment[]
+  attendance          Attendance[]
+  classSubjectHistory ClassSubjectHistory[]
+  curriculumSubjects  CurriculumSubject[]
+  gradeBooks          GradeBook[]
+  subjectAssignments  SubjectAssignment[]
+  subjectResults      SubjectResult[]
+  department          Department?           @relation(fields: [departmentId], references: [id])
+  school              School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherSubjects     TeacherSubject[]
 
   @@unique([schoolId, code])
   @@map("subjects")
 }
 
-// Central Curriculum Registry - Global curriculum templates
 model GlobalCurriculum {
-  id              String     @id @default(uuid())
-  name            String     @unique
-  description     String?
-  version         String?
-  type            CurriculumType @default(STANDARD)
-  provider        String     // e.g., "Cambridge", "IB", "National Board"
-  country         String?
-  language        String     @default("en")
-  
-  // Grade Range
-  minGrade        Int        @default(1)
-  maxGrade        Int        @default(12)
-  
-  // Curriculum Details
-  framework       Json?      // Detailed framework structure
-  standards       Json?      // Learning standards and benchmarks
-  assessmentTypes Json?      // Supported assessment methods
-  
-  // Status and Licensing
-  status          CurriculumStatus @default(ACTIVE)
-  isOfficial      Boolean    @default(false) // Official curriculum vs custom
-  licenseType     String     @default("FREE") // FREE, PREMIUM, SUBSCRIPTION
-  adoptionCount   Int        @default(0) // Number of schools using this
-  
-  // Metadata
-  tags            String[]   // Search tags
-  difficulty      String     @default("STANDARD") // BEGINNER, STANDARD, ADVANCED
-  
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  
-  // Relationships
-  globalSubjects      GlobalCurriculumSubject[]
-  schoolCurricula     Curriculum[] // Schools that adopted this template
+  id                        String                      @id @default(uuid())
+  name                      String                      @unique
+  description               String?
+  version                   String?
+  type                      CurriculumType              @default(STANDARD)
+  provider                  String
+  country                   String?
+  language                  String                      @default("en")
+  minGrade                  Int                         @default(1)
+  maxGrade                  Int                         @default(12)
+  framework                 Json?
+  standards                 Json?
+  assessmentTypes           Json?
+  status                    CurriculumStatus            @default(ACTIVE)
+  isOfficial                Boolean                     @default(false)
+  licenseType               String                      @default("FREE")
+  adoptionCount             Int                         @default(0)
+  tags                      String[]
+  difficulty                String                      @default("STANDARD")
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  schoolCurricula           Curriculum[]
   curriculumProgressTracker CurriculumProgressTracker[]
+  globalSubjects            GlobalCurriculumSubject[]
 
   @@map("global_curricula")
 }
 
 model GlobalCurriculumSubject {
-  id                    String           @id @default(uuid())
-  
-  globalCurriculumId    String
-  globalCurriculum      GlobalCurriculum @relation(fields: [globalCurriculumId], references: [id], onDelete: Cascade)
-  
-  // Subject Details
-  name                  String
-  code                  String
-  description           String?
-  
-  // Grade and Term Configuration
-  gradeLevel            Int
-  term                  Int?
-  recommendedHours      Int?
-  
-  // Classification
-  isCore                Boolean          @default(true)
-  isOptional            Boolean          @default(false)
-  category              String?          // e.g., "Mathematics", "Sciences", "Languages"
-  
-  // Learning Framework
-  learningOutcomes      Json?            // Expected learning outcomes
-  keyTopics             Json?            // Core topics to cover
-  skillsFramework       Json?            // Skills development framework
-  
-  // Prerequisites and Progressions
-  prerequisites         String[]         // Array of subject codes
-  followUpSubjects      String[]         // Subjects that follow this one
-  
-  // Assessment Guidelines
-  assessmentWeights     Json?            // How different assessment types are weighted
-  gradingScale          Json?            // Grading scale specifications
-  
-  displayOrder          Int              @default(0)
-  
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  id                 String           @id @default(uuid())
+  globalCurriculumId String
+  name               String
+  code               String
+  description        String?
+  gradeLevel         Int
+  term               Int?
+  recommendedHours   Int?
+  isCore             Boolean          @default(true)
+  isOptional         Boolean          @default(false)
+  category           String?
+  learningOutcomes   Json?
+  keyTopics          Json?
+  skillsFramework    Json?
+  prerequisites      String[]
+  followUpSubjects   String[]
+  assessmentWeights  Json?
+  gradingScale       Json?
+  displayOrder       Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  globalCurriculum   GlobalCurriculum @relation(fields: [globalCurriculumId], references: [id], onDelete: Cascade)
 
   @@unique([globalCurriculumId, code, gradeLevel])
   @@map("global_curriculum_subjects")
 }
 
 model Curriculum {
-  id          String     @id @default(uuid())
-  name        String
-  description String?
-  version     String?
-  type        CurriculumType @default(STANDARD)
-  status      CurriculumStatus @default(DRAFT)
-  
-  schoolId    String
-  school      School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  // Global Curriculum Template Reference
-  globalCurriculumId String?
-  globalCurriculum   GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
-  
-  // Customization Level
-  customizationLevel CustomizationLevel @default(FULL) // MINIMAL, MODERATE, FULL
-  originalTemplate   Json?              // Store original template for comparison
-  
-  // Academic Year Integration
-  startYear   Int?
-  endYear     Int?
-  
-  // Implementation Status
-  implementationStatus ImplementationStatus @default(PLANNED)
-  adoptionDate        DateTime?
-  
-  // Analytics and Tracking
-  analytics           Json?              // Performance analytics
-  lastReviewDate      DateTime?
-  nextReviewDate      DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdBy   String?
-  user        User?    @relation(fields: [createdBy], references: [id])
-
-  // Relationships
-  curriculumSubjects CurriculumSubject[]
-  classCurricula     ClassCurriculum[]
-  progressTrackers   CurriculumProgressTracker[]
+  id                   String                      @id @default(uuid())
+  name                 String
+  description          String?
+  version              String?
+  type                 CurriculumType              @default(STANDARD)
+  status               CurriculumStatus            @default(DRAFT)
+  schoolId             String
+  startYear            Int?
+  endYear              Int?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  createdBy            String?
+  adoptionDate         DateTime?
+  analytics            Json?
+  customizationLevel   CustomizationLevel          @default(FULL)
+  globalCurriculumId   String?
+  implementationStatus ImplementationStatus        @default(PLANNED)
+  lastReviewDate       DateTime?
+  nextReviewDate       DateTime?
+  originalTemplate     Json?
+  classCurricula       ClassCurriculum[]
+  user                 User?                       @relation(fields: [createdBy], references: [id])
+  globalCurriculum     GlobalCurriculum?           @relation(fields: [globalCurriculumId], references: [id])
+  school               School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  progressTrackers     CurriculumProgressTracker[]
+  curriculumSubjects   CurriculumSubject[]
 
   @@unique([schoolId, name, version])
   @@map("curricula")
 }
 
 model CurriculumSubject {
-  id                String     @id @default(uuid())
-  
-  curriculumId      String
-  curriculum        Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-  
-  subjectId         String
-  subject           Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  
-  // Subject Configuration within Curriculum
-  gradeLevel        Int
-  term              Int?       // Optional term specification
-  hoursPerWeek      Int?
-  isCore            Boolean    @default(true)
-  isOptional        Boolean    @default(false)
-  prerequisites     String[]   // Array of subject IDs
-  
-  // Ordering and Display
-  displayOrder      Int        @default(0)
-  
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-
-  // Relationships
-  learningObjectives LearningObjective[]
+  id                 String              @id @default(uuid())
+  curriculumId       String
+  subjectId          String
+  gradeLevel         Int
+  term               Int?
+  hoursPerWeek       Int?
+  isCore             Boolean             @default(true)
+  isOptional         Boolean             @default(false)
+  prerequisites      String[]
+  displayOrder       Int                 @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   contentModules     ContentModule[]
+  curriculum         Curriculum          @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  subject            Subject             @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  learningObjectives LearningObjective[]
 
   @@unique([curriculumId, subjectId, gradeLevel])
   @@map("curriculum_subjects")
 }
 
 model LearningObjective {
-  id                    String            @id @default(uuid())
-  title                 String
-  description           String?
-  type                  ObjectiveType     @default(KNOWLEDGE)
-  bloomLevel            BloomLevel        @default(REMEMBER)
-  
-  curriculumSubjectId   String
-  curriculumSubject     CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
-  
-  // Objective Details
-  expectedOutcome       String?
-  assessmentCriteria    String?
-  displayOrder          Int               @default(0)
-  
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                  String            @id @default(uuid())
+  title               String
+  description         String?
+  type                ObjectiveType     @default(KNOWLEDGE)
+  bloomLevel          BloomLevel        @default(REMEMBER)
+  curriculumSubjectId String
+  expectedOutcome     String?
+  assessmentCriteria  String?
+  displayOrder        Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  curriculumSubject   CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
 
   @@map("learning_objectives")
 }
 
 model ContentModule {
-  id                    String            @id @default(uuid())
-  title                 String
-  description           String?
-  content               String?           // Rich text content
-  duration              Int?              // Duration in hours
-  
-  curriculumSubjectId   String
-  curriculumSubject     CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
-  
-  // Module Organization
-  unit                  String?
-  chapter               String?
-  displayOrder          Int               @default(0)
-  
-  // Resources and Materials
-  resources             Json?             // URLs, documents, etc.
-  activities            Json?             // Learning activities
-  
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                  String            @id @default(uuid())
+  title               String
+  description         String?
+  content             String?
+  duration            Int?
+  curriculumSubjectId String
+  unit                String?
+  chapter             String?
+  displayOrder        Int               @default(0)
+  resources           Json?
+  activities          Json?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  curriculumSubject   CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
 
   @@map("content_modules")
 }
 
 model ClassCurriculum {
-  id           String     @id @default(uuid())
-  
-  classId      String
-  class        Class      @relation(fields: [classId], references: [id], onDelete: Cascade)
-  
-  curriculumId String
-  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-  
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  
-  // Implementation Status
-  status       ImplementationStatus @default(PLANNED)
-  startDate    DateTime?
-  endDate      DateTime?
-  
-  // Progress Tracking
-  completionPercentage Float @default(0.0) // Overall completion percentage
-  milestones          Json?               // Key milestones and their completion status
-  
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                   String               @id @default(uuid())
+  classId              String
+  curriculumId         String
+  academicYearId       String
+  status               ImplementationStatus @default(PLANNED)
+  startDate            DateTime?
+  endDate              DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  completionPercentage Float                @default(0.0)
+  milestones           Json?
+  academicYear         AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  class                Class                @relation(fields: [classId], references: [id], onDelete: Cascade)
+  curriculum           Curriculum           @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
 
   @@unique([classId, curriculumId, academicYearId])
   @@map("class_curricula")
 }
 
-// Comprehensive Progress Tracking System
 model CurriculumProgressTracker {
-  id                    String    @id @default(uuid())
-  
-  // Curriculum Reference
-  curriculumId          String?
-  curriculum            Curriculum? @relation(fields: [curriculumId], references: [id])
-  globalCurriculumId    String?
-  globalCurriculum      GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
-  
-  // Student Reference
-  studentId             String
-  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  // Academic Context
-  academicYearId        String
-  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
-  classId               String
-  class                 Class     @relation(fields: [classId], references: [id])
-  
-  // Progress Metrics
-  overallProgress       Float     @default(0.0)     // 0-100 percentage
-  subjectProgress       Json?                       // Progress per subject
-  skillsDevelopment     Json?                       // Skills development tracking
-  learningOutcomes      Json?                       // Achievement of learning outcomes
-  
-  // Grade Progression
-  currentGrade          String?                     // Current academic grade/level
-  expectedProgression   String?                     // Expected next grade
-  progressionStatus     ProgressionStatus @default(ON_TRACK)
-  
-  // Performance Analytics
-  strengths             String[]                    // Areas of strength
-  weaknesses            String[]                    // Areas needing improvement
-  recommendations       Json?                       // Personalized recommendations
-  
-  // Timestamps and Tracking
-  lastAssessmentDate    DateTime?
-  nextMilestoneDate     DateTime?
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                  String            @id @default(uuid())
+  curriculumId        String?
+  globalCurriculumId  String?
+  studentId           String
+  academicYearId      String
+  classId             String
+  overallProgress     Float             @default(0.0)
+  subjectProgress     Json?
+  skillsDevelopment   Json?
+  learningOutcomes    Json?
+  currentGrade        String?
+  expectedProgression String?
+  progressionStatus   ProgressionStatus @default(ON_TRACK)
+  strengths           String[]
+  weaknesses          String[]
+  recommendations     Json?
+  lastAssessmentDate  DateTime?
+  nextMilestoneDate   DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  academicYear        AcademicYear      @relation(fields: [academicYearId], references: [id])
+  class               Class             @relation(fields: [classId], references: [id])
+  curriculum          Curriculum?       @relation(fields: [curriculumId], references: [id])
+  globalCurriculum    GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
+  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, curriculumId, academicYearId])
   @@map("curriculum_progress_trackers")
 }
 
-// Grade Book Management - Enhanced
 model GradeBook {
-  id                    String    @id @default(uuid())
-  
-  // Context
-  schoolId              String
-  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  staffId               String
-  staff                 Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  classId               String
-  class                 Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
-  subjectId             String
-  subject               Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  academicYearId        String
-  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
-  termId                String?
-  term                  Term?     @relation(fields: [termId], references: [id])
-  
-  // Grade Book Configuration
-  name                  String                      // e.g., "Math Grade 9A Term 1"
-  gradingScale          Json                        // Grading scale configuration
-  weightingScheme       Json?                       // How different assessments are weighted
-  
-  // Progress Tracking
-  totalStudents         Int       @default(0)
-  averageGrade          Float?
-  progressSummary       Json?                       // Class progress summary
-  
-  // Status
-  status                GradeBookStatus @default(ACTIVE)
-  isLocked              Boolean   @default(false)   // Prevent further modifications
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  // Relationships
-  gradeEntries          GradeEntry[]
-  gradeReports          GradeReport[]
+  id              String          @id @default(uuid())
+  schoolId        String
+  staffId         String
+  classId         String
+  subjectId       String
+  academicYearId  String
+  termId          String?
+  name            String
+  gradingScale    Json
+  weightingScheme Json?
+  totalStudents   Int             @default(0)
+  averageGrade    Float?
+  progressSummary Json?
+  status          GradeBookStatus @default(ACTIVE)
+  isLocked        Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  academicYear    AcademicYear    @relation(fields: [academicYearId], references: [id])
+  class           Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  staff           Staff           @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subject         Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  term            Term?           @relation(fields: [termId], references: [id])
+  gradeEntries    GradeEntry[]
+  gradeReports    GradeReport[]
 
   @@unique([staffId, classId, subjectId, academicYearId, termId])
   @@map("grade_books")
 }
 
-// Individual Grade Entries
 model GradeEntry {
-  id                    String    @id @default(uuid())
-  
-  gradeBookId           String
-  gradeBook             GradeBook @relation(fields: [gradeBookId], references: [id], onDelete: Cascade)
-  studentId             String
-  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  assessmentId          String?
-  assessment            Assessment? @relation(fields: [assessmentId], references: [id])
-  
-  // Grade Information
-  rawScore              Float?                      // Raw score obtained
-  maxScore              Float?                      // Maximum possible score
-  percentage            Float?                      // Percentage score
-  letterGrade           String?                     // A, B, C, D, F
-  gradePoint            Float?                      // GPA point value
-  weightedScore         Float?                      // Score after applying weights
-  
-  // Additional Context
-  category              String?                     // "Quiz", "Test", "Assignment", etc.
-  weight                Float     @default(1.0)     // Weight of this grade
-  isExcused             Boolean   @default(false)   // Excused from this assessment
-  
-  // Feedback and Notes
-  feedback              String?
-  teacherNotes          String?                     // Private teacher notes
-  
-  // Tracking
-  submittedAt           DateTime?
-  gradedAt              DateTime?
-  lastModified          DateTime  @default(now())
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id            String      @id @default(uuid())
+  gradeBookId   String
+  studentId     String
+  assessmentId  String?
+  rawScore      Float?
+  maxScore      Float?
+  percentage    Float?
+  letterGrade   String?
+  gradePoint    Float?
+  weightedScore Float?
+  category      String?
+  weight        Float       @default(1.0)
+  isExcused     Boolean     @default(false)
+  feedback      String?
+  teacherNotes  String?
+  submittedAt   DateTime?
+  gradedAt      DateTime?
+  lastModified  DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  assessment    Assessment? @relation(fields: [assessmentId], references: [id])
+  gradeBook     GradeBook   @relation(fields: [gradeBookId], references: [id], onDelete: Cascade)
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([gradeBookId, studentId, assessmentId])
   @@map("grade_entries")
 }
 
-// Multi-Level Grade Reporting System
 model GradeReport {
-  id                    String    @id @default(uuid())
-  
-  // Context
-  gradeBookId           String?
-  gradeBook             GradeBook? @relation(fields: [gradeBookId], references: [id])
-  studentId             String
-  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  academicYearId        String
-  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
-  termId                String?
-  term                  Term?     @relation(fields: [termId], references: [id])
-  
-  // Report Configuration
-  reportType            GradeReportType
-  reportPeriod          String                      // "Term 1", "Semester 1", "Mid-Year", etc.
-  
-  // Grade Summary
-  overallGrade          String?                     // Overall letter grade
-  overallPercentage     Float?                      // Overall percentage
-  overallGPA            Float?                      // Overall GPA
-  classRank             Int?                        // Student's rank in class
-  classSize             Int?                        // Total students in class
-  
-  // Subject-wise Performance
-  subjectGrades         Json                        // Detailed subject grades
-  progressIndicators    Json?                       // Progress in different areas
-  
-  // Comments and Feedback
-  teacherComments       Json?                       // Comments from multiple teachers
-  conductGrade          String?                     // Conduct/Behavior grade
-  attendancePercentage  Float?                      // Attendance percentage
-  
-  // Analytics and Insights
-  strengths             String[]                    // Identified strengths
-  areasForImprovement   String[]                    // Areas needing work
-  recommendations       String[]                    // Specific recommendations
-  parentGuidance        String?                     // Guidance for parents
-  
-  // Status and Publishing
-  status                ReportStatus @default(DRAFT)
-  publishedAt           DateTime?
-  parentViewedAt        DateTime?
-  studentViewedAt       DateTime?
-  
-  // Report Generation
-  generatedBy           String?                     // User who generated the report
-  approvedBy            String?                     // User who approved the report
-  approvedAt            DateTime?
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                   String          @id @default(uuid())
+  gradeBookId          String?
+  studentId            String
+  academicYearId       String
+  termId               String?
+  reportType           GradeReportType
+  reportPeriod         String
+  overallGrade         String?
+  overallPercentage    Float?
+  overallGPA           Float?
+  classRank            Int?
+  classSize            Int?
+  subjectGrades        Json
+  progressIndicators   Json?
+  teacherComments      Json?
+  conductGrade         String?
+  attendancePercentage Float?
+  strengths            String[]
+  areasForImprovement  String[]
+  recommendations      String[]
+  parentGuidance       String?
+  status               ReportStatus    @default(DRAFT)
+  publishedAt          DateTime?
+  parentViewedAt       DateTime?
+  studentViewedAt      DateTime?
+  generatedBy          String?
+  approvedBy           String?
+  approvedAt           DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  academicYear         AcademicYear    @relation(fields: [academicYearId], references: [id])
+  gradeBook            GradeBook?      @relation(fields: [gradeBookId], references: [id])
+  student              Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  term                 Term?           @relation(fields: [termId], references: [id])
 
   @@unique([studentId, reportType, reportPeriod, academicYearId])
   @@map("grade_reports")
 }
 
-// Report Card Templates
 model ReportCardTemplate {
-  id                    String    @id @default(uuid())
-  
-  // Basic Info
-  name                  String
-  description           String?
-  type                  GradeReportType
-  
-  // Template Configuration
-  layout                Json      // Layout structure (sections, columns, etc.)
-  subjectOrder          String[]  // Order of subjects in report
-  includeAttendance     Boolean   @default(true)
-  includeConduct        Boolean   @default(true)
-  includeCreditHours    Boolean   @default(false)
-  includeClassRank      Boolean   @default(false)
-  includeGPA            Boolean   @default(true)
-  includePercentile     Boolean   @default(false)
-  includeComments       Boolean   @default(true)
-  includeSignatures     Boolean   @default(true)
-  
-  // Grading Configuration
-  gradingScale          Json      // Custom grading scale for this template
-  passingGrade          String    @default("D")
-  showLetterGrades      Boolean   @default(true)
-  showPercentages       Boolean   @default(true)
-  showGPA               Boolean   @default(true)
-  
-  // Design & Styling
-  headerText            String?   // Custom header text
-  footerText            String?   // Custom footer text
-  logoUrl               String?   // School logo URL
-  colors                Json?     // Color scheme
-  fonts                 Json?     // Font settings
-  pageSize              String    @default("A4")  // A4, Letter, etc.
-  orientation           String    @default("portrait") // portrait, landscape
-  
-  // Visibility & Access
-  isActive              Boolean   @default(true)
-  isDefault             Boolean   @default(false)
-  isSystem              Boolean   @default(false) // System templates can't be deleted
-  
-  // Relationships
-  schoolId              String
-  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdById           String
-  createdBy             User      @relation("ReportCardTemplateCreatedBy", fields: [createdById], references: [id])
-  
-  // Usage
-  reportCards           ReportCard[]
-  reportBatches         ReportBatch[]
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                 String          @id @default(uuid())
+  name               String
+  description        String?
+  type               GradeReportType
+  layout             Json
+  subjectOrder       String[]
+  includeAttendance  Boolean         @default(true)
+  includeConduct     Boolean         @default(true)
+  includeCreditHours Boolean         @default(false)
+  includeClassRank   Boolean         @default(false)
+  includeGPA         Boolean         @default(true)
+  includePercentile  Boolean         @default(false)
+  includeComments    Boolean         @default(true)
+  includeSignatures  Boolean         @default(true)
+  gradingScale       Json
+  passingGrade       String          @default("D")
+  showLetterGrades   Boolean         @default(true)
+  showPercentages    Boolean         @default(true)
+  showGPA            Boolean         @default(true)
+  headerText         String?
+  footerText         String?
+  logoUrl            String?
+  colors             Json?
+  fonts              Json?
+  pageSize           String          @default("A4")
+  orientation        String          @default("portrait")
+  isActive           Boolean         @default(true)
+  isDefault          Boolean         @default(false)
+  isSystem           Boolean         @default(false)
+  schoolId           String
+  createdById        String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  reportBatches      ReportBatch[]
+  createdBy          User            @relation("ReportCardTemplateCreatedBy", fields: [createdById], references: [id])
+  school             School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  reportCards        ReportCard[]
 
   @@unique([schoolId, name])
   @@map("report_card_templates")
 }
 
-// Generated Report Cards
 model ReportCard {
-  id                    String    @id @default(uuid())
-  
-  // Context
-  studentId             String
-  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  academicYearId        String
-  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
-  termId                String?
-  term                  Term?     @relation(fields: [termId], references: [id])
-  classId               String?
-  class                 Class?    @relation(fields: [classId], references: [id])
-  
-  // Template & Configuration
-  templateId            String
-  template              ReportCardTemplate @relation(fields: [templateId], references: [id])
-  reportType            GradeReportType
-  reportPeriod          String    // "Term 1", "Semester 1", etc.
-  
-  // Generated Content
-  generatedData         Json      // Complete report card data
-  subjectGrades         Json      // Subject-wise detailed grades
-  overallSummary        Json      // Overall performance summary
-  
-  // Analytics
-  overallGrade          String?   // Overall letter grade
-  overallPercentage     Float?    // Overall percentage
-  overallGPA            Float?    // Overall GPA
-  classRank             Int?      // Student's rank in class
-  classSize             Int?      // Total students in class
-  
-  // Additional Information
-  attendanceData        Json?     // Attendance information
-  conductGrade          String?   // Conduct/Behavior grade
-  teacherComments       Json?     // Comments from multiple teachers
-  
-  // Status & Publishing
-  status                ReportStatus @default(DRAFT)
-  publishedAt           DateTime?
-  parentViewedAt        DateTime?
-  studentViewedAt       DateTime?
-  
-  // Generation Metadata
-  generatedBy           String
-  generatedByUser       User      @relation("ReportCardGeneratedBy", fields: [generatedBy], references: [id])
-  approvedBy            String?
-  approvedByUser        User?     @relation("ReportCardApprovedBy", fields: [approvedBy], references: [id])
-  approvedAt            DateTime?
-  
-  // File Storage
-  pdfUrl                String?   // URL to generated PDF
-  pdfStoragePath        String?   // Storage path for PDF
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                String             @id @default(uuid())
+  studentId         String
+  academicYearId    String
+  termId            String?
+  classId           String?
+  templateId        String
+  reportType        GradeReportType
+  reportPeriod      String
+  generatedData     Json
+  subjectGrades     Json
+  overallSummary    Json
+  overallGrade      String?
+  overallPercentage Float?
+  overallGPA        Float?
+  classRank         Int?
+  classSize         Int?
+  attendanceData    Json?
+  conductGrade      String?
+  teacherComments   Json?
+  status            ReportStatus       @default(DRAFT)
+  publishedAt       DateTime?
+  parentViewedAt    DateTime?
+  studentViewedAt   DateTime?
+  generatedBy       String
+  approvedBy        String?
+  approvedAt        DateTime?
+  pdfUrl            String?
+  pdfStoragePath    String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  academicYear      AcademicYear       @relation(fields: [academicYearId], references: [id])
+  approvedByUser    User?              @relation("ReportCardApprovedBy", fields: [approvedBy], references: [id])
+  class             Class?             @relation(fields: [classId], references: [id])
+  generatedByUser   User               @relation("ReportCardGeneratedBy", fields: [generatedBy], references: [id])
+  student           Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  template          ReportCardTemplate @relation(fields: [templateId], references: [id])
+  term              Term?              @relation(fields: [termId], references: [id])
 
   @@unique([studentId, reportType, reportPeriod, academicYearId, termId])
   @@map("report_cards")
 }
 
-// Bulk Report Generation Jobs
 model ReportBatch {
-  id                    String    @id @default(uuid())
-  
-  // Batch Information
-  name                  String
-  description           String?
-  
-  // Target Selection
-  academicYearId        String
-  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
-  termId                String?
-  term                  Term?     @relation(fields: [termId], references: [id])
-  classIds              String[]  // Classes to generate reports for
-  studentIds            String[] // Specific students (optional)
-  
-  // Template Configuration
-  templateId            String
-  template              ReportCardTemplate @relation(fields: [templateId], references: [id])
-  reportType            GradeReportType
-  reportPeriod          String
-  
-  // Processing Status
-  status                BatchProcessingStatus @default(PENDING)
-  totalStudents         Int
-  processedStudents     Int       @default(0)
-  successfulReports     Int       @default(0)
-  failedReports         Int       @default(0)
-  
-  // Progress Tracking
-  startedAt             DateTime?
-  completedAt           DateTime?
-  errorLog              Json?     // Detailed error information
-  
-  // Generated Files
-  bulkPdfUrl            String?   // URL to combined PDF
-  individualPdfsUrl     String?   // URL to zip file of individual PDFs
-  
-  // Creation Info
-  createdById           String
-  createdBy             User      @relation("ReportBatchCreatedBy", fields: [createdById], references: [id])
-  schoolId              String
-  school                School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                String                @id @default(uuid())
+  name              String
+  description       String?
+  academicYearId    String
+  termId            String?
+  classIds          String[]
+  studentIds        String[]
+  templateId        String
+  reportType        GradeReportType
+  reportPeriod      String
+  status            BatchProcessingStatus @default(PENDING)
+  totalStudents     Int
+  processedStudents Int                   @default(0)
+  successfulReports Int                   @default(0)
+  failedReports     Int                   @default(0)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  errorLog          Json?
+  bulkPdfUrl        String?
+  individualPdfsUrl String?
+  createdById       String
+  schoolId          String
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  academicYear      AcademicYear          @relation(fields: [academicYearId], references: [id])
+  createdBy         User                  @relation("ReportBatchCreatedBy", fields: [createdById], references: [id])
+  school            School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  template          ReportCardTemplate    @relation(fields: [templateId], references: [id])
+  term              Term?                 @relation(fields: [termId], references: [id])
 
   @@map("report_batches")
 }
 
-// Parent Engagement and Tracking
 model ParentGradeAccess {
-  id                    String    @id @default(uuid())
-  
-  guardianId            String
-  guardian              Guardian  @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  studentId             String
-  student               Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  // Access Configuration
-  hasGradeAccess        Boolean   @default(true)
-  hasReportAccess       Boolean   @default(true)
-  hasProgressAccess     Boolean   @default(true)
-  
-  // Notification Preferences
-  notifyOnNewGrades     Boolean   @default(true)
-  notifyOnReportCards   Boolean   @default(true)
-  notifyOnProgress      Boolean   @default(true)
-  
-  // Access Tracking
-  lastAccessDate        DateTime?
-  totalAccesses         Int       @default(0)
-  mostViewedSubject     String?
-  
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  guardianId          String
+  studentId           String
+  hasGradeAccess      Boolean   @default(true)
+  hasReportAccess     Boolean   @default(true)
+  hasProgressAccess   Boolean   @default(true)
+  notifyOnNewGrades   Boolean   @default(true)
+  notifyOnReportCards Boolean   @default(true)
+  notifyOnProgress    Boolean   @default(true)
+  lastAccessDate      DateTime?
+  totalAccesses       Int       @default(0)
+  mostViewedSubject   String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  guardian            Guardian  @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student             Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([guardianId, studentId])
   @@map("parent_grade_access")
 }
 
 model House {
-  id          String  @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   code        String
   color       String?
   description String?
-  
   schoolId    String
-  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  students Student[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  students    Student[]
 
   @@unique([schoolId, code])
   @@map("houses")
 }
 
 model Section {
-  id          String  @id @default(uuid())
-  name        String
-  capacity    Int?
-  description String?
-  
-  schoolId  String
-  school    School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  // Relationships
-  students            Student[]
+  id                  String                @id @default(uuid())
+  name                String
+  capacity            Int?
+  schoolId            String
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  description         String?
+  school              School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   studentClassHistory StudentClassHistory[]
+  students            Student[]
   subjectAssignments  SubjectAssignment[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@unique([schoolId, name])
   @@map("sections")
 }
 
 model Class {
-  id          String   @id @default(uuid())
-  name        String
-  grade       String
-  capacity    Int?
-  description String?
-  
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  students            Student[]
-  assessments         Assessment[]
-  attendance          Attendance[]
-  attendanceSessions  AttendanceSession[]
-  classTeachers       ClassTeacher[]
-  studentClassHistory StudentClassHistory[]
-  documents           Document[]
-  classCurricula      ClassCurriculum[]
+  id                         String                      @id @default(uuid())
+  name                       String
+  grade                      String
+  capacity                   Int?
+  description                String?
+  schoolId                   String
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  assessments                Assessment[]
+  attendance                 Attendance[]
+  attendanceSessions         AttendanceSession[]
+  classCurricula             ClassCurriculum[]
+  classSubjectHistory        ClassSubjectHistory[]
+  classTeachers              ClassTeacher[]
+  school                     School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   curriculumProgressTrackers CurriculumProgressTracker[]
-  gradeBooks          GradeBook[]
-  classSubjectHistory ClassSubjectHistory[]
-  subjectAssignments  SubjectAssignment[]
-  reportCards         ReportCard[]
-  results             Result[]
+  documents                  Document[]
+  gradeBooks                 GradeBook[]
+  reportCards                ReportCard[]
+  results                    Result[]
+  studentClassHistory        StudentClassHistory[]
+  students                   Student[]
+  subjectAssignments         SubjectAssignment[]
 
   @@unique([schoolId, name])
   @@map("classes")
 }
 
-// ================================
-// PEOPLE MODELS
-// ================================
-
 model Student {
-  id              String    @id @default(uuid())
-  admissionNumber String
-  firstName       String
-  lastName        String
-  middleName      String?
-  dateOfBirth     DateTime?
-  gender          Gender?
-  photo           String?    // Legacy field - kept for backward compatibility
-  email           String?
-  phone           String?
-  
-  // Additional Personal Information
-  placeOfBirth    String?
-  nationality     String?
-  religion        String?
-  bloodGroup      String?    // A+, B+, O+, AB+, A-, B-, O-, AB-
-  motherTongue    String?
-  previousSchool  String?
-  previousClass   String?
-  tcNumber        String?    // Transfer Certificate Number
-  tcDate          DateTime?  // Transfer Certificate Date
-  
-  // Address
-  streetAddress String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String?
-  
-  // Permanent Address (if different)
-  permanentStreetAddress String?
-  permanentCity          String?
-  permanentState         String?
-  permanentZipCode       String?
-  permanentCountry       String?
-  
-  // Academic Information
-  admissionDate DateTime  @default(now())
-  status        StudentStatus @default(ACTIVE)
-  
-  // Medical Information
-  medicalInfo    Json?      // Comprehensive medical information
-  allergies      String[]   // List of allergies
-  medications    Json?      // Current medications and dosage
-  medicalConditions String[] // Chronic conditions, disabilities, etc.
-  immunizations  Json?      // Vaccination records
-  emergencyMedicalInfo String? // Critical medical information for emergencies
-  doctorName     String?    // Primary care physician
-  doctorPhone    String?    // Doctor's contact number
-  hospitalPreference String? // Preferred hospital for emergencies
-  
-  // Emergency Contacts (in addition to guardians)
-  emergencyContacts Json?   // Array of emergency contact objects
-  
-  // Academic Background
-  previousAcademicRecord Json? // Previous school performance
-  specialNeeds           String? // Special educational needs
-  talents               String[] // Special talents or skills
-  extracurriculars      String[] // Previous extracurricular activities
-  
-  // Administrative Information
-  applicationDate    DateTime? // Date of application submission
-  interviewDate      DateTime? // Interview date
-  admissionTestScore Float?    // Admission test score
-  feesPaid          Float?     // Fees paid
-  scholarshipInfo   Json?      // Scholarship information
-  transportInfo     Json?      // Transportation details
-  
-  // Behavioral and Social Information
-  behavioralNotes   String?   // Behavioral observations
-  socialBackground  String?   // Social/economic background
-  languagesSpoken   String[]  // Languages the student speaks
-  
-  // Documents and Identification
-  identificationDocs Json?    // Birth certificate, passport, etc.
-  photographs       Json?     // Student photos
-  documentsSubmitted String[] // List of documents submitted
-  
-  // Profile Picture Management
-  profilePictureId String?      @unique
-  profilePicture   FileManager? @relation("StudentProfilePicture", fields: [profilePictureId], references: [id])
-  
-  // Relationships
-  schoolId         String
-  school           School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  userId           String?      @unique
-  user             User?        @relation(fields: [userId], references: [id])
-  currentClassId   String?
-  currentClass     Class?       @relation(fields: [currentClassId], references: [id])
-  currentSectionId String?
-  currentSection   Section?     @relation(fields: [currentSectionId], references: [id])
-  academicYearId   String?
-  academicYear     AcademicYear? @relation(fields: [academicYearId], references: [id])
-  houseId          String?
-  house            House?       @relation(fields: [houseId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Activity relationships
-  grades               Grade[]
-  attendance           Attendance[]
-  documents            Document[]
-  guardianStudents     GuardianStudent[]
-  studentClassHistory  StudentClassHistory[]
-  
-  // Grade Management relationships
+  id                         String                       @id @default(uuid())
+  admissionNumber            String
+  firstName                  String
+  lastName                   String
+  middleName                 String?
+  dateOfBirth                DateTime?
+  gender                     Gender?
+  photo                      String?
+  email                      String?
+  phone                      String?
+  streetAddress              String?
+  city                       String?
+  state                      String?
+  zipCode                    String?
+  country                    String?
+  admissionDate              DateTime                     @default(now())
+  status                     StudentStatus                @default(ACTIVE)
+  schoolId                   String
+  userId                     String?                      @unique
+  currentClassId             String?
+  academicYearId             String?
+  houseId                    String?
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+  admissionTestScore         Float?
+  allergies                  String[]
+  applicationDate            DateTime?
+  behavioralNotes            String?
+  bloodGroup                 String?
+  currentSectionId           String?
+  doctorName                 String?
+  doctorPhone                String?
+  documentsSubmitted         String[]
+  emergencyContacts          Json?
+  emergencyMedicalInfo       String?
+  extracurriculars           String[]
+  feesPaid                   Float?
+  hospitalPreference         String?
+  identificationDocs         Json?
+  immunizations              Json?
+  interviewDate              DateTime?
+  languagesSpoken            String[]
+  medicalConditions          String[]
+  medicalInfo                Json?
+  medications                Json?
+  motherTongue               String?
+  nationality                String?
+  permanentCity              String?
+  permanentCountry           String?
+  permanentState             String?
+  permanentStreetAddress     String?
+  permanentZipCode           String?
+  photographs                Json?
+  placeOfBirth               String?
+  previousAcademicRecord     Json?
+  previousClass              String?
+  previousSchool             String?
+  profilePictureId           String?                      @unique
+  religion                   String?
+  scholarshipInfo            Json?
+  socialBackground           String?
+  specialNeeds               String?
+  talents                    String[]
+  tcDate                     DateTime?
+  tcNumber                   String?
+  transportInfo              Json?
+  attendance                 Attendance[]
+  bookIssues                 BookIssue[]
   curriculumProgressTrackers CurriculumProgressTracker[]
-  gradeEntries         GradeEntry[]
-  gradeReports         GradeReport[]
-  reportCards          ReportCard[]
-  parentGradeAccess    ParentGradeAccess[]
-
-  // Library relationships
-  bookIssues           BookIssue[]
-
-  // Hostel relationships
-  hostelAllocations    HostelAllocation[]
-
-  // Transportation relationships
-  transportAssignments StudentTransportAssignment[]
-
-  // Result relationships
-  results              Result[]
+  documents                  Document[]
+  gradeEntries               GradeEntry[]
+  gradeReports               GradeReport[]
+  grades                     Grade[]
+  guardianStudents           GuardianStudent[]
+  hostelAllocations          HostelAllocation[]
+  parentGradeAccess          ParentGradeAccess[]
+  reportCards                ReportCard[]
+  results                    Result[]
+  studentClassHistory        StudentClassHistory[]
+  transportAssignments       StudentTransportAssignment[]
+  academicYear               AcademicYear?                @relation(fields: [academicYearId], references: [id])
+  currentClass               Class?                       @relation(fields: [currentClassId], references: [id])
+  currentSection             Section?                     @relation(fields: [currentSectionId], references: [id])
+  house                      House?                       @relation(fields: [houseId], references: [id])
+  profilePicture             FileManager?                 @relation("StudentProfilePicture", fields: [profilePictureId], references: [id])
+  school                     School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user                       User?                        @relation(fields: [userId], references: [id])
 
   @@unique([schoolId, admissionNumber])
   @@map("students")
 }
 
 model Staff {
-  id            String    @id @default(uuid())
-  employeeId    String
-  firstName     String
-  lastName      String
-  middleName    String?
-  dateOfBirth   DateTime?
-  gender        Gender?
-  photo         String?
-  phone         String?
-  
-  // Address
-  streetAddress String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String?
-  
-  // Professional Information
-  position      String
-  staffType     StaffType @default(GENERAL)
-  qualification String?
-  experience    Int?
-  joiningDate   DateTime  @default(now())
-  salary        Decimal?
-  status        StaffStatus @default(ACTIVE)
-  
-  // Relationships
-  schoolId     String
-  school       School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  userId       String      @unique
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Activity relationships (for staff who are teachers)
-  teacherSubjects  TeacherSubject[]
-  classTeachers    ClassTeacher[]
-  createdAssessments Assessment[]
-  
-  // Grade Management relationships (for staff who are teachers)
-  gradeBooks       GradeBook[]
+  id                  String                @id @default(uuid())
+  employeeId          String
+  firstName           String
+  lastName            String
+  middleName          String?
+  dateOfBirth         DateTime?
+  gender              Gender?
+  photo               String?
+  profilePictureId    String?      @unique
+  phone               String?
+  streetAddress       String?
+  city                String?
+  state               String?
+  zipCode             String?
+  country             String?
+  position            String
+  joiningDate         DateTime              @default(now())
+  salary              Decimal?
+  status              StaffStatus           @default(ACTIVE)
+  schoolId            String
+  userId              String                @unique
+  departmentId        String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  staffType           StaffType             @default(GENERAL)
+  experience          Int?
+  qualification       String?
+  createdAssessments  Assessment[]
   classSubjectHistory ClassSubjectHistory[]
-  subjectAssignments SubjectAssignment[]
-
-  // Hostel Management (for staff who are wardens)
-  hostels          Hostel[]
+  classTeachers       ClassTeacher[]
+  gradeBooks          GradeBook[]
+  hostels             Hostel[]
+  department          Department?           @relation(fields: [departmentId], references: [id])
+  school              School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectAssignments  SubjectAssignment[]
+  teacherSubjects     TeacherSubject[]
+  // profilePicture      FileManager?  @relation("StaffProfilePicture", fields: [profilePictureId], references: [id])
 
   @@unique([schoolId, employeeId])
   @@map("staff")
 }
 
 model Guardian {
-  id          String  @id @default(uuid())
-  firstName   String
-  lastName    String
-  middleName  String?
-  title       String?
-  dateOfBirth DateTime?
-  gender      Gender?
-  photo       String?
-  
-  // Contact Information
-  email           String?
-  secondaryEmail  String?
-  phone           String
-  alternativePhone String?
-  workPhone       String?
-  
-  // Address
-  streetAddress String?
-  city          String?
-  state         String?
-  zipCode       String?
-  country       String?
-  
-  // Work Address
-  workStreetAddress String?
-  workCity          String?
-  workState         String?
-  workZipCode       String?
-  workCountry       String?
-  
-  // Professional Information
-  occupation String?
-  employer   String?
-  
-  // Portal and Communication Settings
-  portalAccess Json? // { isActive, lastLogin, loginCount, preferredLanguage }
-  communicationPreferences Json? // { preferredMethod, notificationSettings }
-  
-  // Identification Documents
-  identificationDocuments Json? // Array of identification documents
-  nationalId              String?
-  passportNumber          String?
-  
-  // Status and Verification
-  status             GuardianStatus @default(ACTIVE)
-  verificationStatus Json? // { identity, contact, relationship }
-  
-  // Relationships
-  schoolId   String
-  school     School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  userId     String? @unique
-  user       User?   @relation(fields: [userId], references: [id])
-  verifiedBy String?
-  verifiedByUser User? @relation("GuardianVerifiedBy", fields: [verifiedBy], references: [id])
-  verificationDate DateTime?
-  
-  // Legacy fields for backward compatibility
-  isEmergencyContact  Boolean @default(false)
-  isAuthorizedPickup  Boolean @default(false)
-  
-  notes String?
-  tags  Json? // Array of tags
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  guardianStudents GuardianStudent[]
-  parentGradeAccess ParentGradeAccess[]
+  id                       String              @id @default(uuid())
+  firstName                String
+  lastName                 String
+  middleName               String?
+  title                    String?
+  dateOfBirth              DateTime?
+  gender                   Gender?
+  photo                    String?
+  email                    String?
+  secondaryEmail           String?
+  phone                    String
+  alternativePhone         String?
+  workPhone                String?
+  streetAddress            String?
+  city                     String?
+  state                    String?
+  zipCode                  String?
+  country                  String?
+  workStreetAddress        String?
+  workCity                 String?
+  workState                String?
+  workZipCode              String?
+  workCountry              String?
+  occupation               String?
+  employer                 String?
+  portalAccess             Json?
+  communicationPreferences Json?
+  identificationDocuments  Json?
+  nationalId               String?
+  passportNumber           String?
+  status                   GuardianStatus      @default(ACTIVE)
+  verificationStatus       Json?
+  schoolId                 String
+  userId                   String?             @unique
+  verifiedBy               String?
+  verificationDate         DateTime?
+  isEmergencyContact       Boolean             @default(false)
+  isAuthorizedPickup       Boolean             @default(false)
+  notes                    String?
+  tags                     Json?
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  guardianStudents         GuardianStudent[]
+  school                   School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user                     User?               @relation(fields: [userId], references: [id])
+  verifiedByUser           User?               @relation("GuardianVerifiedBy", fields: [verifiedBy], references: [id])
+  parentGradeAccess        ParentGradeAccess[]
 
   @@map("guardians")
 }
 
-// ================================
-// RELATIONSHIP MODELS
-// ================================
-
 model GuardianStudent {
-  id String @id @default(uuid())
-  
-  guardianId String
-  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
-  studentId  String
-  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
-  relationship            GuardianRelationship
-  isPrimary              Boolean @default(false)
-  emergencyContact       Boolean @default(false)
-  authorizedPickup       Boolean @default(false)
-  financialResponsibility Boolean @default(false)
-  academicReportsAccess  Boolean @default(true)
-  disciplinaryReportsAccess Boolean @default(true)
-  medicalInfoAccess      Boolean @default(false)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                        String               @id @default(uuid())
+  guardianId                String
+  studentId                 String
+  relationship              GuardianRelationship
+  isPrimary                 Boolean              @default(false)
+  emergencyContact          Boolean              @default(false)
+  authorizedPickup          Boolean              @default(false)
+  financialResponsibility   Boolean              @default(false)
+  academicReportsAccess     Boolean              @default(true)
+  disciplinaryReportsAccess Boolean              @default(true)
+  medicalInfoAccess         Boolean              @default(false)
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+  guardian                  Guardian             @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student                   Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([guardianId, studentId])
   @@map("guardian_students")
 }
 
 model TeacherSubject {
-  id String @id @default(uuid())
-  
-  staffId String
-  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
   subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
+  schoolId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  staffId   String
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([staffId, subjectId])
   @@map("teacher_subjects")
 }
 
 model ClassTeacher {
-  id String @id @default(uuid())
-  
-  staffId String
-  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  classId   String
-  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
-  
-  schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  
-  isClassTeacher Boolean @default(true)
-  isSubjectTeacher Boolean @default(false) // For subject-specific teaching assignments
-  subjects       String[] // Array of subject IDs if isSubjectTeacher is true
-  
-  // Assignment details
-  assignedDate DateTime @default(now())
-  startDate    DateTime?
-  endDate      DateTime?
-  status       ClassTeacherStatus @default(ACTIVE)
-  
-  // Role and permissions
-  canMarkAttendance Boolean @default(true)
-  canGradeAssignments Boolean @default(true)
-  canManageClassroom Boolean @default(false) // Only class teacher should have this
-  
-  notes String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String             @id @default(uuid())
+  classId             String
+  schoolId            String
+  isClassTeacher      Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  academicYearId      String
+  assignedDate        DateTime           @default(now())
+  canGradeAssignments Boolean            @default(true)
+  canManageClassroom  Boolean            @default(false)
+  canMarkAttendance   Boolean            @default(true)
+  endDate             DateTime?
+  isSubjectTeacher    Boolean            @default(false)
+  notes               String?
+  staffId             String
+  startDate           DateTime?
+  status              ClassTeacherStatus @default(ACTIVE)
+  subjects            String[]
+  academicYear        AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  class               Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school              School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  staff               Staff              @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@unique([staffId, classId, academicYearId])
   @@map("class_teachers")
 }
 
 model StudentClassHistory {
-  id String @id @default(uuid())
-  
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classId   String
-  class     Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
-  sectionId String?
-  section   Section? @relation(fields: [sectionId], references: [id])
-  
+  id             String       @id @default(uuid())
+  studentId      String
+  classId        String
   schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   academicYearId String
+  startDate      DateTime     @default(now())
+  endDate        DateTime?
+  status         String       @default("active")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  sectionId      String?
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  
-  startDate DateTime @default(now())
-  endDate   DateTime?
-  status    String   @default("active")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  section        Section?     @relation(fields: [sectionId], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("student_class_history")
 }
 
 model ClassSubjectHistory {
-  id String @id @default(uuid())
-  
-  // Core relationships
+  id             String             @id @default(uuid())
   classId        String
-  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   subjectId      String
-  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  
   schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  // Subject configuration for this class and academic year
-  isCore         Boolean      @default(true)    // Whether this subject is core/mandatory
-  isOptional     Boolean      @default(false)   // Whether this subject is optional/elective
-  credits        Int?                           // Credit hours for this subject
-  hoursPerWeek   Int?                          // Weekly hours allocated
-  term           Int?                          // Specific term (1, 2, 3) if applicable
-  semester       Int?                          // Specific semester if applicable
-  
-  // Teaching assignment
+  isCore         Boolean            @default(true)
+  isOptional     Boolean            @default(false)
+  credits        Int?
+  hoursPerWeek   Int?
+  term           Int?
+  semester       Int?
   staffId        String?
-  assignedStaff  Staff?       @relation(fields: [staffId], references: [id])
-  
-  // Status and dates
   status         ClassSubjectStatus @default(ACTIVE)
-  startDate      DateTime     @default(now())
+  startDate      DateTime           @default(now())
   endDate        DateTime?
-  
-  // Additional configuration
-  maxStudents    Int?                          // Maximum students allowed for this subject
-  prerequisites  String[]                      // Array of prerequisite subject codes
-  description    String?                       // Special notes or description
-  
-  // Grading configuration
-  gradingScale   Json?                         // Custom grading scale if different from school default
-  passingGrade   Float?                        // Minimum passing grade
-  
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  maxStudents    Int?
+  prerequisites  String[]
+  description    String?
+  gradingScale   Json?
+  passingGrade   Float?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  academicYear   AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  class          Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school         School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignedStaff  Staff?             @relation(fields: [staffId], references: [id])
+  subject        Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([classId, subjectId, academicYearId, term])
   @@map("class_subject_history")
 }
 
 model SubjectAssignment {
-  id String @id @default(uuid())
-
-  // Core relationships
-  staffId        String
-  staff          Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  subjectId      String
-  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  classId        String
-  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-
-  schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  // Optional section assignment (if null, teacher teaches entire class)
-  sectionId      String?
-  section        Section?     @relation(fields: [sectionId], references: [id])
-
-  // Assignment details
-  assignedDate   DateTime     @default(now())
-  startDate      DateTime?
-  endDate        DateTime?
-  status         SubjectAssignmentStatus @default(ACTIVE)
-
-  // Teaching configuration
-  hoursPerWeek   Int?                     // Weekly hours allocated for this assignment
-  term           Int?                     // Specific term (1, 2, 3) if applicable
-  semester       Int?                     // Specific semester if applicable
-
-  // Additional configuration
-  isMainTeacher  Boolean      @default(true)  // Whether this is the main teacher for the subject
-  canGrade       Boolean      @default(true)  // Whether teacher can grade this subject
-  canMarkAttendance Boolean   @default(true)  // Whether teacher can mark attendance
-
-  // Notes and description
-  notes          String?
-  description    String?
-
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id                String                  @id @default(uuid())
+  staffId           String
+  subjectId         String
+  classId           String
+  academicYearId    String
+  schoolId          String
+  sectionId         String?
+  assignedDate      DateTime                @default(now())
+  startDate         DateTime?
+  endDate           DateTime?
+  status            SubjectAssignmentStatus @default(ACTIVE)
+  hoursPerWeek      Int?
+  term              Int?
+  semester          Int?
+  isMainTeacher     Boolean                 @default(true)
+  canGrade          Boolean                 @default(true)
+  canMarkAttendance Boolean                 @default(true)
+  notes             String?
+  description       String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  academicYear      AcademicYear            @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  class             Class                   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  school            School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  section           Section?                @relation(fields: [sectionId], references: [id])
+  staff             Staff                   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subject           Subject                 @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([staffId, subjectId, classId, sectionId, academicYearId])
   @@map("subject_assignments")
 }
 
 model SittingPosition {
-  id String @id @default(uuid())
-  
+  id        String   @id @default(uuid())
   studentId String
   classId   String
-  position  Json // { row, column, seatNumber }
-  
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
+  position  Json
+  schoolId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, classId])
   @@map("sitting_positions")
 }
 
-// ================================
-// ASSESSMENT AND GRADING
-// ================================
-
 model Assessment {
-  id          String @id @default(uuid())
-  title       String
-  description String?
-  type        AssessmentType
-  
-  totalMarks   Int
-  passingMarks Int
-  weight       Float @default(1.0)
-  duration     Int? // Duration in minutes
-  
-  scheduledDate DateTime?
-  dueDate       DateTime?
-  instructions  String?
-  
+  id             String           @id @default(uuid())
+  title          String
+  description    String?
+  type           AssessmentType
+  totalMarks     Int
+  passingMarks   Int
+  weight         Float            @default(1.0)
+  duration       Int?
+  scheduledDate  DateTime?
+  dueDate        DateTime?
+  instructions   String?
   status         AssessmentStatus @default(DRAFT)
-  gradingMethod  GradingMethod @default(PERCENTAGE)
-  
-  // Assessment Content
-  questions Json? // Array of questions
-  rubric    Json? // Rubric criteria
-  attachments Json? // File attachments
-  settings  Json? // Assessment settings
-  
-  // Relationships
+  gradingMethod  GradingMethod    @default(PERCENTAGE)
+  questions      Json?
+  rubric         Json?
+  attachments    Json?
+  settings       Json?
   schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   subjectId      String
-  subject        Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   classId        String
-  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
   termId         String?
-  term           Term?        @relation(fields: [termId], references: [id])
-  staffId        String
-  staff          Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
   createdById    String
-  createdBy      User         @relation(fields: [createdById], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  grades Grade[]
-  gradeEntries GradeEntry[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  staffId        String
+  academicYear   AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  class          Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy      User             @relation(fields: [createdById], references: [id])
+  school         School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  staff          Staff            @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  subject        Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  term           Term?            @relation(fields: [termId], references: [id])
+  gradeEntries   GradeEntry[]
+  grades         Grade[]
 
   @@map("assessments")
 }
 
 model Grade {
-  id            String  @id @default(uuid())
-  marksObtained Float
-  totalMarks    Float
-  percentage    Float
-  letterGrade   String?
-  gpa           Float?
-  points        Float?
-  
-  status GradeStatus @default(PENDING)
-  
-  // Detailed Scoring
-  rubricScores   Json? // Array of rubric scores
-  questionScores Json? // Array of question scores
-  
-  // Feedback and Notes
-  feedback     String?
-  privateNotes String?
-  
-  // Submission Details
-  attempt      Int @default(1)
-  submittedAt  DateTime?
-  isLate       Boolean @default(false)
-  daysLate     Int @default(0)
-  
-  // AI Grading
-  aiGraded       Boolean @default(false)
-  aiConfidence   Float?
-  flaggedForReview Boolean @default(false)
-  reviewReason   String?
-  
-  // Parent Viewing
-  parentViewed   Boolean @default(false)
-  parentViewedAt DateTime?
-  
-  // File Attachments
-  attachments Json? // Array of file attachments
-  
-  // Relationships
-  schoolId     String
-  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  assessmentId String
-  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  studentId    String
-  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  gradedById   String?
-  gradedBy     User?      @relation("GradedBy", fields: [gradedById], references: [id])
-  gradedAt     DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String      @id @default(uuid())
+  marksObtained    Float
+  totalMarks       Float
+  percentage       Float
+  letterGrade      String?
+  gpa              Float?
+  points           Float?
+  status           GradeStatus @default(PENDING)
+  rubricScores     Json?
+  questionScores   Json?
+  feedback         String?
+  privateNotes     String?
+  attempt          Int         @default(1)
+  submittedAt      DateTime?
+  isLate           Boolean     @default(false)
+  daysLate         Int         @default(0)
+  aiGraded         Boolean     @default(false)
+  aiConfidence     Float?
+  flaggedForReview Boolean     @default(false)
+  reviewReason     String?
+  parentViewed     Boolean     @default(false)
+  parentViewedAt   DateTime?
+  attachments      Json?
+  schoolId         String
+  assessmentId     String
+  studentId        String
+  gradedById       String?
+  gradedAt         DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  assessment       Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  gradedBy         User?       @relation("GradedBy", fields: [gradedById], references: [id])
+  school           School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student          Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([assessmentId, studentId, attempt])
   @@map("grades")
 }
 
-// ================================
-// ATTENDANCE
-// ================================
-
 model Attendance {
-  id     String @id @default(uuid())
-  date   DateTime @default(now())
-  status AttendanceStatus
-  period AttendancePeriod @default(FULL_DAY)
-  
-  // Time tracking
-  checkInTime  DateTime?
-  checkOutTime DateTime?
-  totalMinutesPresent Int? // for partial attendance
-  
-  // Method and Location
-  method   AttendanceMethod @default(MANUAL)
-  location Json? // { latitude, longitude, address }
-  
-  // Notes and Modifications
-  notes            String?
-  adminNotes       String? // Private admin notes
-  parentNotified   Boolean @default(false)
-  notificationSentAt DateTime?
-  
-  // Modification tracking
-  isModified         Boolean @default(false)
-  modificationReason String?
-  modifiedById       String?
-  modifiedBy         User?    @relation("AttendanceModifiedBy", fields: [modifiedById], references: [id])
-  modifiedAt         DateTime?
-  
-  // Academic Context
-  termId         String?
-  term           Term?        @relation(fields: [termId], references: [id])
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  
-  // Additional tracking
-  temperature    Float? // for health monitoring
-  deviceInfo     Json? // device used for marking attendance
-  ipAddress      String? // IP address for security
-  
-  // Relationships
-  schoolId       String
-  school         School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  studentId      String
-  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classId        String
-  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
-  subjectId      String?
-  subject        Subject?     @relation(fields: [subjectId], references: [id])
-  markedById     String
-  markedBy       User         @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
-  markedAt       DateTime     @default(now())
-  
-  // Related records
-  sessions       AttendanceSession[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String              @id @default(uuid())
+  date                DateTime            @default(now())
+  status              AttendanceStatus
+  period              AttendancePeriod    @default(FULL_DAY)
+  checkInTime         DateTime?
+  checkOutTime        DateTime?
+  method              AttendanceMethod    @default(MANUAL)
+  location            Json?
+  notes               String?
+  parentNotified      Boolean             @default(false)
+  notificationSentAt  DateTime?
+  isModified          Boolean             @default(false)
+  modificationReason  String?
+  schoolId            String
+  studentId           String
+  classId             String
+  subjectId           String?
+  markedById          String
+  markedAt            DateTime            @default(now())
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  academicYearId      String
+  adminNotes          String?
+  deviceInfo          Json?
+  ipAddress           String?
+  modifiedAt          DateTime?
+  modifiedById        String?
+  temperature         Float?
+  termId              String?
+  totalMinutesPresent Int?
+  academicYear        AcademicYear        @relation(fields: [academicYearId], references: [id])
+  class               Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  markedBy            User                @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+  modifiedBy          User?               @relation("AttendanceModifiedBy", fields: [modifiedById], references: [id])
+  school              School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject             Subject?            @relation(fields: [subjectId], references: [id])
+  term                Term?               @relation(fields: [termId], references: [id])
+  sessions            AttendanceSession[] @relation("AttendanceToAttendanceSession")
 
   @@unique([studentId, classId, date, period])
   @@map("attendance")
 }
 
 model AttendanceSession {
-  id           String   @id @default(uuid())
-  sessionName  String   // e.g., "Morning Session", "Math Period", "Assembly"
-  startTime    DateTime
-  endTime      DateTime
-  isCompleted  Boolean  @default(false)
-  
-  // Relationships
-  schoolId     String
-  school       School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  classId      String
-  class        Class      @relation(fields: [classId], references: [id])
-  attendances  Attendance[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(uuid())
+  sessionName String
+  startTime   DateTime
+  endTime     DateTime
+  isCompleted Boolean      @default(false)
+  schoolId    String
+  classId     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  class       Class        @relation(fields: [classId], references: [id])
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  attendances Attendance[] @relation("AttendanceToAttendanceSession")
 
   @@map("attendance_sessions")
 }
 
 model AttendancePolicy {
-  id              String @id @default(uuid())
-  name            String
-  description     String?
-  
-  // Policy settings
-  graceMinutes    Int    @default(15) // grace period for late arrival
-  halfDayMinutes  Int    @default(240) // minimum minutes for half day
-  fullDayMinutes  Int    @default(360) // minimum minutes for full day
-  
-  // Thresholds
-  lowAttendanceThreshold  Float @default(75.0) // percentage threshold for low attendance alerts
-  criticalThreshold       Float @default(65.0) // percentage threshold for critical attendance
-  
-  // Notification settings
-  enableParentNotifications Boolean @default(true)
-  enableSMSAlerts          Boolean @default(false)
-  enableEmailAlerts        Boolean @default(true)
-  notifyOnLateArrival     Boolean @default(true)
-  notifyOnAbsence         Boolean @default(true)
-  
-  // Geofencing settings
-  enableGeofencing Boolean @default(false)
-  geofenceRadius   Float?  // in meters
-  geofenceCenter   Json?   // { latitude, longitude }
-  
-  // Academic context
-  isActive       Boolean @default(true)
-  applicableFrom DateTime @default(now())
-  applicableTo   DateTime?
-  
-  // Relationships
-  schoolId String
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                        String    @id @default(uuid())
+  name                      String
+  description               String?
+  graceMinutes              Int       @default(15)
+  halfDayMinutes            Int       @default(240)
+  fullDayMinutes            Int       @default(360)
+  lowAttendanceThreshold    Float     @default(75.0)
+  criticalThreshold         Float     @default(65.0)
+  enableParentNotifications Boolean   @default(true)
+  enableSMSAlerts           Boolean   @default(false)
+  enableEmailAlerts         Boolean   @default(true)
+  notifyOnLateArrival       Boolean   @default(true)
+  notifyOnAbsence           Boolean   @default(true)
+  enableGeofencing          Boolean   @default(false)
+  geofenceRadius            Float?
+  geofenceCenter            Json?
+  isActive                  Boolean   @default(true)
+  applicableFrom            DateTime  @default(now())
+  applicableTo              DateTime?
+  schoolId                  String
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  school                    School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("attendance_policies")
 }
 
 model AttendanceReport {
-  id           String @id @default(uuid())
-  title        String
-  description  String?
-  reportType   AttendanceReportType @default(MONTHLY)
-  
-  // Date range
-  fromDate     DateTime
-  toDate       DateTime
-  
-  // Filters applied
-  filters      Json? // stored filter criteria
-  
-  // Report data
-  reportData   Json  // generated report data
-  summary      Json? // summary statistics
-  
-  // Status
-  status       AttendanceReportStatus @default(PENDING)
-  generatedAt  DateTime?
-  fileUrl      String? // URL to generated PDF/Excel file
-  
-  // Relationships
-  schoolId     String
-  school       School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id            String                 @id @default(uuid())
+  title         String
+  description   String?
+  reportType    AttendanceReportType   @default(MONTHLY)
+  fromDate      DateTime
+  toDate        DateTime
+  filters       Json?
+  reportData    Json
+  summary       Json?
+  status        AttendanceReportStatus @default(PENDING)
+  generatedAt   DateTime?
+  fileUrl       String?
+  schoolId      String
   generatedById String?
-  generatedBy  User?  @relation(fields: [generatedById], references: [id])
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  generatedBy   User?                  @relation(fields: [generatedById], references: [id])
+  school        School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("attendance_reports")
 }
 
-// ================================
-// DOCUMENT MANAGEMENT
-// ================================
-
 model Document {
-  id           String @id @default(uuid())
-  fileName     String
-  originalName String
-  filePath     String
-  fileUrl      String
-  fileSize     BigInt
-  mimeType     String
-  fileExtension String?
-  
-  // Document Information
-  title       String
-  description String?
-  category    DocumentCategory @default(OTHER)
-  subcategory String?
-  type        DocumentType @default(OTHER)
-  tags        Json? // Array of tags
-  
-  // Access Control
-  isPublic    Boolean @default(false)
-  accessPermissions Json? // { roles: [], users: [], classes: [], subjects: [] }
-  
-  // Metadata
-  metadata Json? // { dimensions, duration, pages, thumbnail }
-  
-  // Status and Verification
-  status             DocumentStatus @default(ACTIVE)
-  isVerified         Boolean @default(false)
-  verificationDate   DateTime?
-  
-  // Document Details
-  documentNumber String?
-  issuedBy       String?
-  issueDate      DateTime?
-  expiryDate     DateTime?
-  
-  // Tracking
-  downloadCount   Int @default(0)
-  lastAccessedAt  DateTime @default(now())
-  
-  // Version Control
-  version        Int @default(1)
-  parentDocumentId String?
-  parentDocument Document? @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
-  childDocuments Document[] @relation("DocumentVersions")
-  
-  // Security
-  checksum   String?
-  virusScan  Json? // { status, scannedAt, scanResult }
-  
-  // Expiration
-  expiresAt DateTime?
-  
-  // Relationships
-  schoolId      String
-  school        School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  uploadedById  String
-  uploadedBy    User    @relation("DocumentCreatedBy", fields: [uploadedById], references: [id])
-  verifiedById  String?
-  verifiedBy    User?   @relation("DocumentVerifiedBy", fields: [verifiedById], references: [id])
-  
-  // Entity relationships
-  studentId String?
-  student   Student? @relation(fields: [studentId], references: [id])
-  classId   String?
-  class     Class?   @relation(fields: [classId], references: [id])
-  
-  // Additional metadata
-  notes String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String           @id @default(uuid())
+  fileName          String
+  originalName      String
+  filePath          String
+  fileUrl           String
+  fileSize          BigInt
+  mimeType          String
+  fileExtension     String?
+  title             String
+  description       String?
+  category          DocumentCategory @default(OTHER)
+  subcategory       String?
+  type              DocumentType     @default(OTHER)
+  tags              Json?
+  isPublic          Boolean          @default(false)
+  accessPermissions Json?
+  metadata          Json?
+  status            DocumentStatus   @default(ACTIVE)
+  isVerified        Boolean          @default(false)
+  verificationDate  DateTime?
+  documentNumber    String?
+  issuedBy          String?
+  issueDate         DateTime?
+  expiryDate        DateTime?
+  downloadCount     Int              @default(0)
+  lastAccessedAt    DateTime         @default(now())
+  version           Int              @default(1)
+  parentDocumentId  String?
+  checksum          String?
+  virusScan         Json?
+  expiresAt         DateTime?
+  schoolId          String
+  uploadedById      String
+  verifiedById      String?
+  studentId         String?
+  classId           String?
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  class             Class?           @relation(fields: [classId], references: [id])
+  parentDocument    Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
+  childDocuments    Document[]       @relation("DocumentVersions")
+  school            School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student           Student?         @relation(fields: [studentId], references: [id])
+  uploadedBy        User             @relation("DocumentCreatedBy", fields: [uploadedById], references: [id])
+  verifiedBy        User?            @relation("DocumentVerifiedBy", fields: [verifiedById], references: [id])
 
   @@map("documents")
 }
 
-// ================================
-// NOTIFICATIONS
-// ================================
-
 model Notification {
-  id        String    @id @default(uuid())
-  title     String
-  message   String
-  type      NotificationType
-  priority  NotificationPriority @default(NORMAL)
-  category  NotificationCategory @default(GENERAL)
-  
-  // Delivery Options
-  channels  NotificationChannel[] // Multiple channels can be selected
-  
-  // Content and Templates
-  templateId   String?
-  template     NotificationTemplate? @relation(fields: [templateId], references: [id])
-  templateData Json? // Dynamic data for template variables
-  
-  // Targeting
-  targetType   NotificationTargetType
-  targetUsers  String[] // Array of user IDs when targeting specific users
-  targetRoles  String[] // Array of roles when targeting roles (stored as strings)
-  targetClasses String[] // Array of class IDs when targeting classes
-  
-  // Scheduling
-  scheduledAt  DateTime?
-  expiresAt    DateTime?
-  
-  // Status and Tracking
-  status       NotificationStatus @default(PENDING)
-  sentAt       DateTime?
-  deliveredAt  DateTime?
-  readCount    Int @default(0)
-  totalTargets Int @default(0)
-  
-  // Metadata
-  metadata     Json? // Additional data like attachments, images, etc.
-  
-  // Relationships
-  schoolId     String
-  school       School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdById  String
-  createdBy    User   @relation("NotificationCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relationships
-  deliveryLogs NotificationDeliveryLog[]
+  id                String                    @id @default(uuid())
+  title             String
+  message           String
+  type              NotificationType
+  priority          NotificationPriority      @default(NORMAL)
+  category          NotificationCategory      @default(GENERAL)
+  channels          NotificationChannel[]
+  templateId        String?
+  templateData      Json?
+  targetType        NotificationTargetType
+  targetUsers       String[]
+  targetRoles       String[]
+  targetClasses     String[]
+  scheduledAt       DateTime?
+  expiresAt         DateTime?
+  status            NotificationStatus        @default(PENDING)
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readCount         Int                       @default(0)
+  totalTargets      Int                       @default(0)
+  metadata          Json?
+  schoolId          String
+  createdById       String
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  deliveryLogs      NotificationDeliveryLog[]
+  createdBy         User                      @relation("NotificationCreatedBy", fields: [createdById], references: [id])
+  school            School                    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  template          NotificationTemplate?     @relation(fields: [templateId], references: [id])
   userNotifications UserNotification[]
 
   @@map("notifications")
 }
 
 model NotificationTemplate {
-  id          String @id @default(uuid())
-  name        String
-  description String?
-  type        NotificationType
-  category    NotificationCategory
-  
-  // Template Content for different channels
-  emailSubject    String?
-  emailContent    String?
-  emailHtml       String?
-  smsContent      String?
-  pushTitle       String?
-  pushContent     String?
-  inAppContent    String?
-  
-  // Template Variables
-  variables       Json? // Array of available variables like {name}, {date}, etc.
-  
-  // Configuration
-  isActive        Boolean @default(true)
-  isSystem        Boolean @default(false) // System templates can't be deleted
-  
-  // Relationships
-  schoolId        String?
-  school          School? @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdById     String
-  createdBy       User    @relation("NotificationTemplateCreatedBy", fields: [createdById], references: [id])
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relationships
-  notifications   Notification[]
+  id            String               @id @default(uuid())
+  name          String
+  description   String?
+  type          NotificationType
+  category      NotificationCategory
+  emailSubject  String?
+  emailContent  String?
+  emailHtml     String?
+  smsContent    String?
+  pushTitle     String?
+  pushContent   String?
+  inAppContent  String?
+  variables     Json?
+  isActive      Boolean              @default(true)
+  isSystem      Boolean              @default(false)
+  schoolId      String?
+  createdById   String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  createdBy     User                 @relation("NotificationTemplateCreatedBy", fields: [createdById], references: [id])
+  school        School?              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@unique([schoolId, name])
   @@map("notification_templates")
 }
 
 model UserNotification {
-  id             String @id @default(uuid())
-  
-  // Relationships
+  id             String       @id @default(uuid())
   userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   notificationId String
-  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-  
-  // Delivery Status
-  isRead         Boolean @default(false)
+  isRead         Boolean      @default(false)
   readAt         DateTime?
-  isDelivered    Boolean @default(false)
+  isDelivered    Boolean      @default(false)
   deliveredAt    DateTime?
-  
-  // Channel specific data
-  channelData    Json? // Store channel-specific delivery info
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  channelData    Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, notificationId])
   @@map("user_notifications")
 }
 
 model NotificationDeliveryLog {
-  id             String @id @default(uuid())
-  
-  notificationId String
-  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-  
-  // Delivery Details
-  channel        NotificationChannel
-  recipient      String // Email, phone, or user ID
-  status         DeliveryStatus
-  
-  // Provider Response
-  providerId     String? // Message ID from email/SMS provider
-  providerResponse Json? // Full response from provider
-  
-  // Error Details
-  errorCode      String?
-  errorMessage   String?
-  retryCount     Int @default(0)
-  
-  // Timing
-  sentAt         DateTime?
-  deliveredAt    DateTime?
-  failedAt       DateTime?
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String              @id @default(uuid())
+  notificationId   String
+  channel          NotificationChannel
+  recipient        String
+  status           DeliveryStatus
+  providerId       String?
+  providerResponse Json?
+  errorCode        String?
+  errorMessage     String?
+  retryCount       Int                 @default(0)
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  failedAt         DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  notification     Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@map("notification_delivery_logs")
 }
 
 model UserNotificationPreferences {
-  id       String @id @default(uuid())
-  
-  userId   String @unique
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Global Preferences
-  isEnabled Boolean @default(true)
-  
-  // Channel Preferences
-  emailEnabled     Boolean @default(true)
-  smsEnabled       Boolean @default(true)
-  pushEnabled      Boolean @default(true)
-  inAppEnabled     Boolean @default(true)
-  
-  // Category Preferences
-  preferences      Json? // Detailed preferences per category and type
-  
-  // Quiet Hours
-  quietHoursEnabled Boolean @default(false)
-  quietHoursStart   String? // Time in HH:MM format
-  quietHoursEnd     String? // Time in HH:MM format
-  quietHoursDays    String[] // Array of days: ['MON', 'TUE', etc.]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  isEnabled         Boolean  @default(true)
+  emailEnabled      Boolean  @default(true)
+  smsEnabled        Boolean  @default(true)
+  pushEnabled       Boolean  @default(true)
+  inAppEnabled      Boolean  @default(true)
+  preferences       Json?
+  quietHoursEnabled Boolean  @default(false)
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  quietHoursDays    String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_notification_preferences")
 }
 
 model DeviceToken {
-  id         String  @id @default(uuid())
-  
+  id         String   @id @default(uuid())
   userId     String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  token      String  @unique
+  token      String   @unique
   platform   Platform
   deviceInfo Json?
-  isActive   Boolean @default(true)
-  
+  isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("device_tokens")
 }
 
 model WebhookSubscription {
-  id          String  @id @default(uuid())
-  
-  userId      String?
-  user        User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  schoolId    String
-  school      School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  
-  url         String
-  method      String  @default("POST")
-  headers     String? // JSON string
-  events      String[] // Array of event names
-  description String?
-  isActive    Boolean @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
+  id           String               @id @default(uuid())
+  userId       String?
+  schoolId     String
+  url          String
+  method       String               @default("POST")
+  headers      String?
+  events       String[]
+  description  String?
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   deliveryLogs WebhookDeliveryLog[]
+  school       School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user         User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("webhook_subscriptions")
 }
 
 model WebhookDeliveryLog {
-  id           String @id @default(uuid())
-  
+  id                    String                @id @default(uuid())
   webhookSubscriptionId String
-  webhookSubscription   WebhookSubscription @relation(fields: [webhookSubscriptionId], references: [id], onDelete: Cascade)
-  
-  payload      String // JSON payload sent
-  status       WebhookDeliveryStatus
-  statusCode   Int?
-  responseData String? // Response from webhook endpoint
-  errorMessage String?
-  attempts     Int     @default(1)
-  responseTime Int?    // Response time in milliseconds
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  payload               String
+  status                WebhookDeliveryStatus
+  statusCode            Int?
+  responseData          String?
+  errorMessage          String?
+  attempts              Int                   @default(1)
+  responseTime          Int?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  webhookSubscription   WebhookSubscription   @relation(fields: [webhookSubscriptionId], references: [id], onDelete: Cascade)
 
   @@map("webhook_delivery_logs")
 }
 
-// ================================
-// LIBRARY MANAGEMENT
-// ================================
-
 model Book {
-  id              String    @id @default(uuid())
+  id              String       @id @default(uuid())
   title           String
   author          String
-  isbn            String?   @unique
+  isbn            String?      @unique
   publisher       String?
   publishedDate   DateTime?
   edition         String?
-  language        String    @default("English")
-
-  // Book Type - Physical or Digital
-  bookType        BookType  @default(PHYSICAL)
-
-  // E-book specific fields
-  fileUrl         String?   // URL to the e-book file (PDF, EPUB, etc.)
-  fileFormat      String?   // PDF, EPUB, MOBI, etc.
-  fileSize        Int?      // File size in bytes
-  downloadLimit   Int?      // Max downloads per issue (null = unlimited)
-
-  // Book Details
+  language        String       @default("English")
+  bookType        BookType     @default(PHYSICAL)
+  fileUrl         String?
+  fileFormat      String?
+  fileSize        Int?
+  downloadLimit   Int?
   category        BookCategory @default(GENERAL)
   subcategory     String?
   description     String?
   pages           Int?
   coverImageUrl   String?
-
-  // Inventory Management (for physical books)
-  totalCopies     Int       @default(1)
-  availableCopies Int       @default(1)
-  issuedCopies    Int       @default(0)
-  location        String?   // Shelf location
+  totalCopies     Int          @default(1)
+  availableCopies Int          @default(1)
+  issuedCopies    Int          @default(0)
+  location        String?
   rackNumber      String?
-
-  // Pricing and Procurement
   price           Float?
   procuredDate    DateTime?
   vendor          String?
-
-  // Status
-  status          BookStatus @default(AVAILABLE)
-
-  // Metadata
+  status          BookStatus   @default(AVAILABLE)
   tags            String[]
-  subjects        String[]  // Related subjects
-
-  // Relationships
+  subjects        String[]
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  // Issue History
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   bookIssues      BookIssue[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  school          School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("books")
 }
 
 model BookIssue {
-  id              String    @id @default(uuid())
-
-  // Book and Student
-  bookId          String
-  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  studentId       String
-  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  // Issue Details
-  issueDate       DateTime  @default(now())
-  dueDate         DateTime
-  returnDate      DateTime?
-
-  // Status
-  status          IssueStatus @default(ISSUED)
-
-  // Fine Management
-  fine            Float     @default(0.0)
-  fineReason      String?
-  finePaid        Boolean   @default(false)
-
-  // E-book specific tracking
-  downloadCount   Int       @default(0)
-  lastDownloadAt  DateTime?
-  accessExpiry    DateTime? // For time-limited e-book access
-
-  // Notes
-  issueNotes      String?
-  returnNotes     String?
-  condition       BookCondition? // Condition at return (for physical books)
-
-  // Issued/Returned By
-  issuedById      String
-  issuedBy        User      @relation("IssuedBy", fields: [issuedById], references: [id])
-  returnedById    String?
-  returnedBy      User?     @relation("ReturnedBy", fields: [returnedById], references: [id])
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String         @id @default(uuid())
+  bookId         String
+  studentId      String
+  issueDate      DateTime       @default(now())
+  dueDate        DateTime
+  returnDate     DateTime?
+  status         IssueStatus    @default(ISSUED)
+  fine           Float          @default(0.0)
+  fineReason     String?
+  finePaid       Boolean        @default(false)
+  downloadCount  Int            @default(0)
+  lastDownloadAt DateTime?
+  accessExpiry   DateTime?
+  issueNotes     String?
+  returnNotes    String?
+  condition      BookCondition?
+  issuedById     String
+  returnedById   String?
+  schoolId       String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  book           Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  issuedBy       User           @relation("IssuedBy", fields: [issuedById], references: [id])
+  returnedBy     User?          @relation("ReturnedBy", fields: [returnedById], references: [id])
+  school         School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student        Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("book_issues")
 }
 
-// ================================
-// HOSTEL MANAGEMENT
-// ================================
-
 model Hostel {
-  id              String    @id @default(uuid())
-  name            String
-  hostelType      HostelType
-  gender          Gender?   // null for mixed hostels
-  address         String?
-  capacity        Int       @default(0)
-  occupiedBeds    Int       @default(0)
-  availableBeds   Int       @default(0)
-
-  // Warden (Staff Member)
-  wardenId        String?
-  warden          Staff?    @relation(fields: [wardenId], references: [id], onDelete: SetNull)
-
-  // Facilities
-  facilities      String[]  // WiFi, Laundry, Gym, etc.
-  description     String?
-
-  // Status
-  status          HostelStatus @default(ACTIVE)
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  rooms           HostelRoom[]
-  allocations     HostelAllocation[]
-  fees            HostelFee[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String             @id @default(uuid())
+  name          String
+  hostelType    HostelType
+  gender        Gender?
+  address       String?
+  capacity      Int                @default(0)
+  occupiedBeds  Int                @default(0)
+  availableBeds Int                @default(0)
+  wardenId      String?
+  facilities    String[]
+  description   String?
+  status        HostelStatus       @default(ACTIVE)
+  schoolId      String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  allocations   HostelAllocation[]
+  fees          HostelFee[]
+  rooms         HostelRoom[]
+  school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  warden        Staff?             @relation(fields: [wardenId], references: [id])
 
   @@map("hostels")
 }
 
 model HostelRoom {
-  id              String    @id @default(uuid())
-  roomNumber      String
-  floor           Int?
-  roomType        RoomType  @default(STANDARD)
-  capacity        Int       @default(1)
-  occupiedBeds    Int       @default(0)
-  availableBeds   Int       @default(0)
-
-  // Room Details
-  facilities      String[]  // AC, Attached Bathroom, Balcony, etc.
-
-  // Status
-  status          RoomStatus @default(AVAILABLE)
-
-  // Relationships
-  hostelId        String
-  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
-
-  allocations     HostelAllocation[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String             @id @default(uuid())
+  roomNumber    String
+  floor         Int?
+  roomType      RoomType           @default(STANDARD)
+  capacity      Int                @default(1)
+  occupiedBeds  Int                @default(0)
+  availableBeds Int                @default(0)
+  facilities    String[]
+  status        RoomStatus         @default(AVAILABLE)
+  hostelId      String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  allocations   HostelAllocation[]
+  hostel        Hostel             @relation(fields: [hostelId], references: [id], onDelete: Cascade)
 
   @@unique([hostelId, roomNumber])
   @@map("hostel_rooms")
 }
 
 model HostelAllocation {
-  id              String    @id @default(uuid())
-
-  // Student
-  studentId       String
-  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  // Hostel and Room
-  hostelId        String
-  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
-
-  roomId          String
-  room            HostelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  bedNumber       String?
-
-  // Allocation Period
-  startDate       DateTime
-  endDate         DateTime?
-
-  // Status
-  status          AllocationStatus @default(ACTIVE)
-
-  // Academic Context
-  academicYearId  String?
-  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
-
-  // Additional Info
-  remarks         String?
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String           @id @default(uuid())
+  studentId      String
+  hostelId       String
+  roomId         String
+  bedNumber      String?
+  startDate      DateTime
+  endDate        DateTime?
+  status         AllocationStatus @default(ACTIVE)
+  academicYearId String?
+  remarks        String?
+  schoolId       String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  academicYear   AcademicYear?    @relation(fields: [academicYearId], references: [id])
+  hostel         Hostel           @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  room           HostelRoom       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  school         School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student        Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("hostel_allocations")
 }
 
 model HostelFee {
-  id              String    @id @default(uuid())
-
-  // Hostel
+  id              String        @id @default(uuid())
   hostelId        String
-  hostel          Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
-
-  // Fee Structure
   roomType        RoomType
   amount          Float
-  currency        String    @default("KES")
-  frequency       FeeFrequency @default(MONTHLY)
+  currency        String        @default("KES")
+  frequency       FeeFrequency  @default(MONTHLY)
   description     String?
-
-  // Academic Context
   academicYearId  String?
-  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
-
-  // Additional Charges
   securityDeposit Float?
   admissionFee    Float?
-
-  // Status
-  status          HostelStatus @default(ACTIVE)
-
-  // Relationships
+  status          HostelStatus  @default(ACTIVE)
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
+  hostel          Hostel        @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  school          School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("hostel_fees")
 }
 
-// ================================
-// MESSAGING SYSTEM
-// ================================
-
 model MessageThread {
-  id              String    @id @default(uuid())
-  subject         String?
-  type            MessageThreadType @default(DIRECT)
-
-  // Thread metadata
-  isGroup         Boolean   @default(false)
-  groupName       String?   // For named group conversations
-  groupAvatar     String?
-
-  // Status and Settings
-  status          MessageThreadStatus @default(ACTIVE)
-  isArchived      Boolean   @default(false)
-  isPinned        Boolean   @default(false)
-
-  // Context references (optional - for linking to specific entities)
-  classId         String?
-  subjectId       String?
-  entityType      String?   // "Class", "Subject", "Assignment", etc.
-  entityId        String?   // ID of the related entity
-
-  // Last message tracking
-  lastMessageAt   DateTime?
+  id                 String                     @id @default(uuid())
+  subject            String?
+  type               MessageThreadType          @default(DIRECT)
+  isGroup            Boolean                    @default(false)
+  groupName          String?
+  groupAvatar        String?
+  status             MessageThreadStatus        @default(ACTIVE)
+  isArchived         Boolean                    @default(false)
+  isPinned           Boolean                    @default(false)
+  classId            String?
+  subjectId          String?
+  entityType         String?
+  entityId           String?
+  lastMessageAt      DateTime?
   lastMessagePreview String?
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  createdById     String
-  createdBy       User      @relation("ThreadCreator", fields: [createdById], references: [id])
-
-  messages        Message[]
-  participants    MessageThreadParticipant[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  schoolId           String
+  createdById        String
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  participants       MessageThreadParticipant[]
+  createdBy          User                       @relation("ThreadCreator", fields: [createdById], references: [id])
+  school             School                     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  messages           Message[]
 
   @@map("message_threads")
 }
 
 model MessageThreadParticipant {
-  id              String    @id @default(uuid())
-
-  threadId        String
-  thread          MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Participant settings
-  isAdmin         Boolean   @default(false)
-  isMuted         Boolean   @default(false)
-  isArchived      Boolean   @default(false)
-  isPinned        Boolean   @default(false)
-
-  // Tracking
-  joinedAt        DateTime  @default(now())
-  lastReadAt      DateTime?
-  unreadCount     Int       @default(0)
-
-  // Status
-  status          ParticipantStatus @default(ACTIVE)
-  leftAt          DateTime?
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          String            @id @default(uuid())
+  threadId    String
+  userId      String
+  isAdmin     Boolean           @default(false)
+  isMuted     Boolean           @default(false)
+  isArchived  Boolean           @default(false)
+  isPinned    Boolean           @default(false)
+  joinedAt    DateTime          @default(now())
+  lastReadAt  DateTime?
+  unreadCount Int               @default(0)
+  status      ParticipantStatus @default(ACTIVE)
+  leftAt      DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  thread      MessageThread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([threadId, userId])
   @@map("message_thread_participants")
 }
 
 model Message {
-  id              String    @id @default(uuid())
-
+  id              String             @id @default(uuid())
   threadId        String
-  thread          MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-
-  // Message content
   content         String
-  messageType     MessageType @default(TEXT)
-
-  // Parent message (for replies/threading)
+  messageType     MessageType        @default(TEXT)
   parentMessageId String?
-  parentMessage   Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
-  replies         Message[] @relation("MessageReplies")
-
-  // Attachments
-  attachments     Json?     // Array of attachment objects { url, name, type, size }
-
-  // Message metadata
-  isEdited        Boolean   @default(false)
+  attachments     Json?
+  isEdited        Boolean            @default(false)
   editedAt        DateTime?
-  isDeleted       Boolean   @default(false)
+  isDeleted       Boolean            @default(false)
   deletedAt       DateTime?
-
-  // Priority and flags
-  priority        MessagePriority @default(NORMAL)
-  isImportant     Boolean   @default(false)
-  isPinned        Boolean   @default(false)
-
-  // Sender info
+  priority        MessagePriority    @default(NORMAL)
+  isImportant     Boolean            @default(false)
+  isPinned        Boolean            @default(false)
   senderId        String
-  sender          User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-
-  // School context
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  // Delivery tracking
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   recipients      MessageRecipient[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  parentMessage   Message?           @relation("MessageReplies", fields: [parentMessageId], references: [id])
+  replies         Message[]          @relation("MessageReplies")
+  school          School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  sender          User               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  thread          MessageThread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
 
 model MessageRecipient {
-  id              String    @id @default(uuid())
-
-  messageId       String
-  message         Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  recipientId     String
-  recipient       User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-
-  // Read status
-  isRead          Boolean   @default(false)
-  readAt          DateTime?
-
-  // Delivery status
-  deliveryStatus  MessageDeliveryStatus @default(PENDING)
-  deliveredAt     DateTime?
-
-  // Actions
-  isStarred       Boolean   @default(false)
-  isArchived      Boolean   @default(false)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String                @id @default(uuid())
+  messageId      String
+  recipientId    String
+  isRead         Boolean               @default(false)
+  readAt         DateTime?
+  deliveryStatus MessageDeliveryStatus @default(PENDING)
+  deliveredAt    DateTime?
+  isStarred      Boolean               @default(false)
+  isArchived     Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  message        Message               @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  recipient      User                  @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, recipientId])
   @@map("message_recipients")
 }
 
-// ================================
-// TRANSPORTATION SYSTEM
-// ================================
-
 model TransportRoute {
-  id              String    @id @default(uuid())
-  routeName       String
-  routeNumber     String?
-  description     String?
-
-  // Route path
-  startPoint      String
-  endPoint        String
-  stops           Json      // Array of stops with coordinates and timings
-  distance        Float?    // Distance in kilometers
-  estimatedTime   Int?      // Time in minutes
-
-  // Fare
-  fare            Float     @default(0)
-  currency        String    @default("KES")
-
-  // Status
-  status          TransportStatus @default(ACTIVE)
-  isActive        Boolean   @default(true)
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  vehicles        RouteVehicleAssignment[]
+  id                 String                       @id @default(uuid())
+  routeName          String
+  routeNumber        String?
+  description        String?
+  startPoint         String
+  endPoint           String
+  stops              Json
+  distance           Float?
+  estimatedTime      Int?
+  fare               Float                        @default(0)
+  currency           String                       @default("KES")
+  status             TransportStatus              @default(ACTIVE)
+  isActive           Boolean                      @default(true)
+  schoolId           String
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  vehicles           RouteVehicleAssignment[]
   studentAssignments StudentTransportAssignment[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  school             School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("transport_routes")
 }
 
 model Vehicle {
-  id              String    @id @default(uuid())
-  vehicleNumber   String    @unique
-  vehicleName     String?
-  vehicleType     VehicleType
-
-  // Vehicle Details
-  make            String?
-  model           String?
-  year            Int?
-  color           String?
+  id                 String                       @id @default(uuid())
+  vehicleNumber      String                       @unique
+  vehicleName        String?
+  vehicleType        VehicleType
+  make               String?
+  model              String?
+  year               Int?
+  color              String?
   registrationNumber String?
-
-  // Capacity
-  seatingCapacity Int       @default(0)
-  currentOccupancy Int      @default(0)
-
-  // Driver Information
-  driverName      String?
-  driverPhone     String?
-  driverLicense   String?
-
-  // Maintenance
-  lastServiceDate DateTime?
-  nextServiceDate DateTime?
-  insuranceExpiry DateTime?
-  roadworthyExpiry DateTime?
-
-  // GPS Tracking
-  gpsEnabled      Boolean   @default(false)
-  gpsDeviceId     String?
-
-  // Status
-  status          VehicleStatus @default(ACTIVE)
-  condition       VehicleCondition @default(GOOD)
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  routeAssignments RouteVehicleAssignment[]
+  seatingCapacity    Int                          @default(0)
+  currentOccupancy   Int                          @default(0)
+  driverName         String?
+  driverPhone        String?
+  driverLicense      String?
+  lastServiceDate    DateTime?
+  nextServiceDate    DateTime?
+  insuranceExpiry    DateTime?
+  roadworthyExpiry   DateTime?
+  gpsEnabled         Boolean                      @default(false)
+  gpsDeviceId        String?
+  status             VehicleStatus                @default(ACTIVE)
+  condition          VehicleCondition             @default(GOOD)
+  schoolId           String
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  routeAssignments   RouteVehicleAssignment[]
   studentAssignments StudentTransportAssignment[]
   maintenanceRecords VehicleMaintenance[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  school             School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("vehicles")
 }
 
 model RouteVehicleAssignment {
-  id              String    @id @default(uuid())
-
-  // Route
-  routeId         String
-  route           TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
-
-  // Vehicle
-  vehicleId       String
-  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  // Schedule
-  dayOfWeek       String[]  // ["MONDAY", "TUESDAY", etc.]
-  departureTime   String?   // Time in HH:MM format
-  arrivalTime     String?
-  direction       RouteDirection @default(BOTH) // TO_SCHOOL, FROM_SCHOOL, BOTH
-
-  // Period
-  startDate       DateTime
-  endDate         DateTime?
-
-  // Status
-  status          TransportStatus @default(ACTIVE)
-  isActive        Boolean   @default(true)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String          @id @default(uuid())
+  routeId       String
+  vehicleId     String
+  dayOfWeek     String[]
+  departureTime String?
+  arrivalTime   String?
+  direction     RouteDirection  @default(BOTH)
+  startDate     DateTime
+  endDate       DateTime?
+  status        TransportStatus @default(ACTIVE)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  route         TransportRoute  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  vehicle       Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@unique([routeId, vehicleId, direction])
   @@map("route_vehicle_assignments")
 }
 
 model StudentTransportAssignment {
-  id              String    @id @default(uuid())
-
-  // Student
-  studentId       String
-  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  // Route
-  routeId         String
-  route           TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
-
-  // Vehicle (optional - can be assigned dynamically)
-  vehicleId       String?
-  vehicle         Vehicle?  @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-
-  // Pickup/Drop Details
-  pickupPoint     String
-  pickupTime      String?   // Expected time
-  dropoffPoint    String
-  dropoffTime     String?
-
-  // Guardian Contact for emergencies
-  guardianName    String?
-  guardianPhone   String?
-
-  // Period
-  startDate       DateTime
-  endDate         DateTime?
-
-  // Academic Context
-  academicYearId  String?
-  academicYear    AcademicYear? @relation(fields: [academicYearId], references: [id])
-
-  // Status
-  status          TransportStatus @default(ACTIVE)
-  isActive        Boolean   @default(true)
-
-  // Relationships
-  schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String          @id @default(uuid())
+  studentId      String
+  routeId        String
+  vehicleId      String?
+  pickupPoint    String
+  pickupTime     String?
+  dropoffPoint   String
+  dropoffTime    String?
+  guardianName   String?
+  guardianPhone  String?
+  startDate      DateTime
+  endDate        DateTime?
+  academicYearId String?
+  status         TransportStatus @default(ACTIVE)
+  isActive       Boolean         @default(true)
+  schoolId       String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  academicYear   AcademicYear?   @relation(fields: [academicYearId], references: [id])
+  route          TransportRoute  @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  school         School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student        Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  vehicle        Vehicle?        @relation(fields: [vehicleId], references: [id])
 
   @@map("student_transport_assignments")
 }
 
 model VehicleMaintenance {
-  id              String    @id @default(uuid())
-
-  // Vehicle
+  id              String            @id @default(uuid())
   vehicleId       String
-  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  // Maintenance Details
   maintenanceType MaintenanceType
   description     String?
   cost            Float?
-  currency        String    @default("KES")
-
-  // Service Provider
+  currency        String            @default("KES")
   serviceProvider String?
   mechanicName    String?
   mechanicPhone   String?
-
-  // Dates
   scheduledDate   DateTime?
   completedDate   DateTime?
   nextServiceDate DateTime?
-
-  // Status
   status          MaintenanceStatus @default(SCHEDULED)
-
-  // Odometer
   odometerReading Int?
-
-  // Notes
   notes           String?
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  vehicle         Vehicle           @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@map("vehicle_maintenance")
 }
 
-// ================================
-// INVENTORY MANAGEMENT
-// ================================
-
 model InventoryCategory {
-  id          String    @id @default(uuid())
+  id          String              @id @default(uuid())
   name        String
   description String?
-
-  // Parent Category for hierarchical structure
   parentId    String?
+  schoolId    String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   parent      InventoryCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children    InventoryCategory[] @relation("CategoryHierarchy")
-
-  // Relationships
-  schoolId    String
-  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   items       InventoryItem[]
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 
   @@map("inventory_categories")
 }
 
 model InventoryItem {
-  id              String    @id @default(uuid())
-
-  // Basic Info
+  id              String                 @id @default(uuid())
   name            String
   description     String?
-  itemCode        String    @unique
+  itemCode        String                 @unique
   barcode         String?
-
-  // Category
   categoryId      String
-  category        InventoryCategory @relation(fields: [categoryId], references: [id])
-
-  // Stock Management
-  quantity        Int       @default(0)
-  minimumStock    Int       @default(0)
+  quantity        Int                    @default(0)
+  minimumStock    Int                    @default(0)
   maximumStock    Int?
   reorderLevel    Int?
-  unit            String    // e.g., "pieces", "boxes", "kg", "liters"
-
-  // Location
-  location        String?   // Storage location
+  unit            String
+  location        String?
   shelf           String?
   bin             String?
-
-  // Financial
-  unitPrice       Float     @default(0)
-  totalValue      Float     @default(0)
-  currency        String    @default("KES")
-
-  // Supplier Info
+  unitPrice       Float                  @default(0)
+  totalValue      Float                  @default(0)
+  currency        String                 @default("KES")
   supplierName    String?
   supplierContact String?
-
-  // Status and Type
   itemType        InventoryItemType
-  status          InventoryItemStatus @default(ACTIVE)
-  condition       ItemCondition       @default(GOOD)
-
-  // Additional Fields
+  status          InventoryItemStatus    @default(ACTIVE)
+  condition       ItemCondition          @default(GOOD)
   expiryDate      DateTime?
   warrantyExpiry  DateTime?
   notes           String?
-  tags            String[]          // Array of tags for easy filtering
-
-  // Images
+  tags            String[]
   imageUrl        String?
-
-  // Relationships
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  transactions    InventoryTransaction[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
   allocations     InventoryAllocation[]
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  category        InventoryCategory      @relation(fields: [categoryId], references: [id])
+  school          School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  transactions    InventoryTransaction[]
 
   @@map("inventory_items")
 }
 
 model InventoryTransaction {
-  id              String    @id @default(uuid())
-
-  // Transaction Details
+  id              String          @id @default(uuid())
   transactionType TransactionType
   quantity        Int
   unitPrice       Float?
   totalAmount     Float?
-
-  // Item Reference
   itemId          String
-  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  // Previous and New Quantities
   previousQty     Int
   newQty          Int
-
-  // Reference Information
-  referenceType   String?   // e.g., "PURCHASE_ORDER", "ISSUE_NOTE", "RETURN"
-  referenceId     String?   // ID of related document
-  referenceNumber String?   // Human-readable reference number
-
-  // User who performed the transaction
+  referenceType   String?
+  referenceId     String?
+  referenceNumber String?
   userId          String
-  user            User      @relation(fields: [userId], references: [id])
-
-  // Supplier/Recipient Info
   supplierName    String?
   recipientName   String?
-  recipientType   String?   // e.g., "STUDENT", "TEACHER", "DEPARTMENT"
+  recipientType   String?
   recipientId     String?
-
-  // Additional Info
   reason          String?
   notes           String?
-  transactionDate DateTime  @default(now())
-
-  // Relationships
+  transactionDate DateTime        @default(now())
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  item            InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id])
 
   @@map("inventory_transactions")
 }
 
 model InventoryAllocation {
-  id              String    @id @default(uuid())
-
-  // Item
+  id              String                    @id @default(uuid())
   itemId          String
-  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  // Allocation Details
   quantity        Int
-  allocatedTo     String    // Name of person/department
+  allocatedTo     String
   allocatedToType AllocationTargetType
-  allocatedToId   String?   // ID reference (student, teacher, department)
-
-  // Dates
-  allocationDate  DateTime  @default(now())
+  allocatedToId   String?
+  allocationDate  DateTime                  @default(now())
   expectedReturn  DateTime?
   actualReturn    DateTime?
-
-  // Status
   status          InventoryAllocationStatus @default(ALLOCATED)
-
-  // Condition Tracking
-  issuedCondition ItemCondition @default(GOOD)
+  issuedCondition ItemCondition             @default(GOOD)
   returnCondition ItemCondition?
-
-  // User who allocated
   allocatedBy     String
-  allocatedByUser User      @relation(fields: [allocatedBy], references: [id])
-
-  // Notes
   purpose         String?
   notes           String?
   returnNotes     String?
-
-  // Relationships
   schoolId        String
-  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  allocatedByUser User                      @relation(fields: [allocatedBy], references: [id])
+  item            InventoryItem             @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  school          School                    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@map("inventory_allocations")
 }
 
-// ================================
-// RESULT AND GRADING SYSTEM
-// ================================
-
 model GradeScale {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   schoolId    String
-  name        String   // e.g., "Primary Grading", "Secondary Grading"
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  name        String
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   gradeRanges GradeRange[]
+  school      School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   results     Result[]
 
   @@map("grade_scales")
@@ -2951,93 +2068,73 @@ model GradeScale {
 model GradeRange {
   id           String     @id @default(uuid())
   gradeScaleId String
-  grade        String     // A, B, C, D, F
-  minScore     Float      // Minimum score for this grade
-  maxScore     Float      // Maximum score for this grade
-  gradePoint   Float      // GPA points (e.g., 4.0, 3.0, etc.)
-  remark       String     // Excellent, Good, Fair, Poor
-  color        String?    // For UI display
+  grade        String
+  minScore     Float
+  maxScore     Float
+  gradePoint   Float
+  remark       String
+  color        String?
   createdAt    DateTime   @default(now())
-
   gradeScale   GradeScale @relation(fields: [gradeScaleId], references: [id], onDelete: Cascade)
 
   @@map("grade_ranges")
 }
 
 model Result {
-  id           String   @id @default(uuid())
-  studentId    String
-  termId       String
-  classId      String
-  schoolId     String
-  gradeScaleId String
-  
-  // Academic performance
-  totalScore     Float
-  totalSubjects  Int
-  averageScore   Float
-  position       Int?
-  
-  // Attendance
-  daysPresent    Int      @default(0)
-  daysAbsent     Int      @default(0)
-  timesLate      Int      @default(0)
-  
-  // Behavior/Conduct
-  conductGrade   String?  // A, B, C, D, F
-  teacherComment String?
+  id               String          @id @default(uuid())
+  studentId        String
+  termId           String
+  classId          String
+  schoolId         String
+  gradeScaleId     String
+  totalScore       Float
+  totalSubjects    Int
+  averageScore     Float
+  position         Int?
+  daysPresent      Int             @default(0)
+  daysAbsent       Int             @default(0)
+  timesLate        Int             @default(0)
+  conductGrade     String?
+  teacherComment   String?
   principalComment String?
-  
-  // Status
-  promoted       Boolean  @default(false)
-  isPublished    Boolean  @default(false)
-  publishedAt    DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  student        Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  term           Term        @relation(fields: [termId], references: [id], onDelete: Cascade)
-  class          Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  school         School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  gradeScale     GradeScale  @relation(fields: [gradeScaleId], references: [id])
-  subjectResults SubjectResult[]
+  promoted         Boolean         @default(false)
+  isPublished      Boolean         @default(false)
+  publishedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  class            Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  gradeScale       GradeScale      @relation(fields: [gradeScaleId], references: [id])
+  school           School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student          Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  term             Term            @relation(fields: [termId], references: [id], onDelete: Cascade)
+  subjectResults   SubjectResult[]
 
   @@unique([studentId, termId])
   @@map("results")
 }
 
 model SubjectResult {
-  id           String   @id @default(uuid())
-  resultId     String
-  subjectId    String
-  
-  // Assessment scores
-  firstCA      Float?   // First Continuous Assessment
-  secondCA     Float?   // Second Continuous Assessment
-  thirdCA      Float?   // Third Continuous Assessment
-  exam         Float?   // Examination score
-  
-  // Calculated fields
-  totalCA      Float?   // Sum of all CA scores
-  totalScore   Float?   // CA + Exam total
-  grade        String?  // A, B, C, D, F
-  gradePoint   Float?   // GPA points
-  remark       String?  // Excellent, Good, etc.
-  
-  position     Int?     // Position in subject
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  result       Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
-  subject      Subject  @relation(fields: [subjectId], references: [id])
+  id         String   @id @default(uuid())
+  resultId   String
+  subjectId  String
+  firstCA    Float?
+  secondCA   Float?
+  thirdCA    Float?
+  exam       Float?
+  totalCA    Float?
+  totalScore Float?
+  grade      String?
+  gradePoint Float?
+  remark     String?
+  position   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  result     Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  subject    Subject  @relation(fields: [subjectId], references: [id])
 
   @@unique([resultId, subjectId])
   @@map("subject_results")
 }
-
-// ================================
-// ENUMS
-// ================================
 
 enum UserRole {
   SUPER_ADMIN
@@ -3382,7 +2479,6 @@ enum WebhookDeliveryStatus {
   RETRYING
 }
 
-// Curriculum-related Enums
 enum CurriculumType {
   STANDARD
   CAMBRIDGE
@@ -3430,106 +2526,102 @@ enum ImplementationStatus {
   CANCELLED
 }
 
-// New Enums for Enhanced Grade Management System
-
 enum CustomizationLevel {
-  MINIMAL     // Minor changes to original template
-  MODERATE    // Significant customizations while keeping core structure
-  FULL        // Complete custom curriculum
+  MINIMAL
+  MODERATE
+  FULL
 }
 
 enum ProgressionStatus {
-  AHEAD       // Student is ahead of expected progression
-  ON_TRACK    // Student is progressing as expected
-  BEHIND      // Student is behind expected progression
-  AT_RISK     // Student is significantly behind and at risk
+  AHEAD
+  ON_TRACK
+  BEHIND
+  AT_RISK
 }
 
 enum GradeBookStatus {
-  ACTIVE      // Currently active grade book
-  ARCHIVED    // Archived for historical reference
-  LOCKED      // Locked to prevent changes
-  DRAFT       // Draft state, not yet published
+  ACTIVE
+  ARCHIVED
+  LOCKED
+  DRAFT
 }
 
 enum GradeReportType {
-  TERM_REPORT       // End of term report
-  SEMESTER_REPORT   // Semester report
-  ANNUAL_REPORT     // Annual report
-  PROGRESS_REPORT   // Mid-term progress report
-  PARENT_CONFERENCE // Parent-teacher conference report
-  TRANSCRIPT        // Official academic transcript
-  CUSTOM           // Custom report type
+  TERM_REPORT
+  SEMESTER_REPORT
+  ANNUAL_REPORT
+  PROGRESS_REPORT
+  PARENT_CONFERENCE
+  TRANSCRIPT
+  CUSTOM
 }
 
 enum ReportStatus {
-  DRAFT           // Report is being prepared
-  PENDING_REVIEW  // Report is ready for review
-  APPROVED        // Report has been approved
-  PUBLISHED       // Report has been published
-  SENT            // Report has been sent to parents/students
-  ARCHIVED        // Report has been archived
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  SENT
+  ARCHIVED
 }
 
 enum BatchProcessingStatus {
-  PENDING         // Batch is queued for processing
-  PROCESSING      // Batch is currently being processed
-  COMPLETED       // Batch processing completed successfully
-  FAILED          // Batch processing failed
-  CANCELLED       // Batch processing was cancelled
-  PARTIAL         // Batch completed with some failures
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  PARTIAL
 }
 
 enum ClassSubjectStatus {
-  ACTIVE          // Subject is currently active for this class
-  INACTIVE        // Subject is temporarily inactive
-  COMPLETED       // Subject has been completed for the academic year
-  CANCELLED       // Subject has been cancelled
-  SUSPENDED       // Subject is suspended temporarily
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  CANCELLED
+  SUSPENDED
 }
 
 enum ClassTeacherStatus {
-  ACTIVE          // Teacher is currently assigned to the class
-  INACTIVE        // Assignment is temporarily inactive
-  COMPLETED       // Assignment has been completed for the academic year
-  TRANSFERRED     // Teacher has been transferred to another class
-  CANCELLED       // Assignment has been cancelled
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  TRANSFERRED
+  CANCELLED
 }
 
 enum FileCategory {
-  PROFILE_PICTURE    // Student/Teacher profile pictures
-  SCHOOL_LOGO       // School logo
-  DOCUMENT          // Documents (PDFs, Word docs, etc.)
-  IMAGE             // General images
-  AUDIO             // Audio files
-  VIDEO             // Video files
-  REPORT            // Reports and certificates
-  ASSIGNMENT        // Assignment submissions
-  OTHER             // Other file types
+  PROFILE_PICTURE
+  DOCUMENT
+  IMAGE
+  AUDIO
+  VIDEO
+  REPORT
+  ASSIGNMENT
+  OTHER
 }
 
 enum FileStatus {
-  ACTIVE            // File is active and accessible
-  ARCHIVED          // File is archived but accessible
-  DELETED           // File is marked for deletion
-  QUARANTINED       // File is quarantined (security/policy issues)
-  PROCESSING        // File is being processed (e.g., being compressed)
+  ACTIVE
+  ARCHIVED
+  DELETED
+  QUARANTINED
+  PROCESSING
 }
 
 enum SubjectAssignmentStatus {
-  ACTIVE            // Assignment is currently active
-  INACTIVE          // Assignment is temporarily inactive
-  COMPLETED         // Assignment has been completed for the academic year
-  TRANSFERRED       // Teacher has been transferred to another assignment
-  CANCELLED         // Assignment has been cancelled
-  SUSPENDED         // Assignment is suspended temporarily
+  ACTIVE
+  INACTIVE
+  COMPLETED
+  TRANSFERRED
+  CANCELLED
+  SUSPENDED
 }
 
-// Library Management Enums
 enum BookType {
-  PHYSICAL    // Physical book that needs to be returned
-  EBOOK       // Digital book that can be downloaded
-  BOTH        // Hybrid - available in both formats
+  PHYSICAL
+  EBOOK
+  BOTH
 }
 
 enum BookCategory {
@@ -3573,7 +2665,6 @@ enum BookCondition {
   DAMAGED
 }
 
-// Hostel Management Enums
 enum HostelType {
   BOYS
   GIRLS
@@ -3622,13 +2713,12 @@ enum FeeFrequency {
   ONE_TIME
 }
 
-// Messaging Enums
 enum MessageThreadType {
-  DIRECT          // One-on-one conversation
-  GROUP           // Group conversation
-  CLASS           // Class-wide messaging
-  ANNOUNCEMENT    // Announcement thread
-  BROADCAST       // Broadcast message
+  DIRECT
+  GROUP
+  CLASS
+  ANNOUNCEMENT
+  BROADCAST
 }
 
 enum MessageThreadStatus {
@@ -3728,31 +2818,30 @@ enum MaintenanceStatus {
   OVERDUE
 }
 
-// Inventory Management Enums
 enum InventoryItemType {
-  ASSET           // Fixed assets (furniture, equipment)
-  CONSUMABLE      // Items that get used up (stationery, cleaning supplies)
-  EQUIPMENT       // Reusable equipment
-  FURNITURE       // Furniture items
-  ELECTRONICS     // Electronic devices
-  SPORTS          // Sports equipment
-  BOOKS           // Books and reading materials
-  UNIFORMS        // Uniform items
-  LABORATORY      // Lab equipment and supplies
-  OFFICE          // Office supplies
-  MEDICAL         // Medical supplies
+  ASSET
+  CONSUMABLE
+  EQUIPMENT
+  FURNITURE
+  ELECTRONICS
+  SPORTS
+  BOOKS
+  UNIFORMS
+  LABORATORY
+  OFFICE
+  MEDICAL
   OTHER
 }
 
 enum InventoryItemStatus {
-  ACTIVE          // Item is available for use
-  LOW_STOCK       // Below minimum stock level
-  OUT_OF_STOCK    // No stock available
-  DISCONTINUED    // Item is discontinued
-  ON_ORDER        // Item is on order
-  INACTIVE        // Item is not currently in use
-  EXPIRED         // Item has expired
-  RESERVED        // Item is reserved
+  ACTIVE
+  LOW_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+  ON_ORDER
+  INACTIVE
+  EXPIRED
+  RESERVED
 }
 
 enum ItemCondition {
@@ -3766,14 +2855,14 @@ enum ItemCondition {
 }
 
 enum TransactionType {
-  PURCHASE        // Adding stock through purchase
-  ISSUE           // Issuing items to users
-  RETURN          // Items returned
-  ADJUSTMENT      // Manual adjustment (corrections)
-  WRITE_OFF       // Damaged/lost items written off
-  TRANSFER        // Transfer between locations
-  DONATION        // Donated items
-  DISPOSAL        // Items disposed
+  PURCHASE
+  ISSUE
+  RETURN
+  ADJUSTMENT
+  WRITE_OFF
+  TRANSFER
+  DONATION
+  DISPOSAL
 }
 
 enum AllocationTargetType {
@@ -3789,10 +2878,10 @@ enum AllocationTargetType {
 }
 
 enum InventoryAllocationStatus {
-  ALLOCATED       // Item is currently allocated
-  RETURNED        // Item has been returned
-  OVERDUE         // Return date passed
-  LOST            // Item reported as lost
-  DAMAGED         // Item returned damaged
-  CANCELLED       // Allocation cancelled
+  ALLOCATED
+  RETURNED
+  OVERDUE
+  LOST
+  DAMAGED
+  CANCELLED
 }

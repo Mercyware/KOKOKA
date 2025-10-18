@@ -124,12 +124,28 @@ const SubjectAssignments: React.FC = () => {
         getAllAcademicYears()
       ]);
 
-      const subjectsData = subjectsResponse.data;
-      const classesData = classesResponse.data;
-      const sectionsData = sectionsResponse.data?.data || sectionsResponse.data || [];
-      const academicYearsData = academicYearsResponse.data;
+      // Handle different response formats
+      const subjectsData = Array.isArray(subjectsResponse.data)
+        ? subjectsResponse.data
+        : subjectsResponse.data?.subjects || subjectsResponse.data || [];
 
-      setStaff(staffData.data || []);
+      const classesData = Array.isArray(classesResponse.data)
+        ? classesResponse.data
+        : classesResponse.data?.classes || classesResponse.data || [];
+
+      const sectionsData = Array.isArray(sectionsResponse.data)
+        ? sectionsResponse.data
+        : sectionsResponse.data?.sections || sectionsResponse.data || [];
+
+      const academicYearsData = Array.isArray(academicYearsResponse.data)
+        ? academicYearsResponse.data
+        : academicYearsResponse.data?.academicYears || academicYearsResponse.data || [];
+
+      const staffDataArray = Array.isArray(staffData.data)
+        ? staffData.data
+        : staffData.data?.staff || staffData.data || [];
+
+      setStaff(staffDataArray);
       setSubjects(subjectsData);
       setClasses(classesData);
       setSections(sectionsData);
@@ -143,6 +159,7 @@ const SubjectAssignments: React.FC = () => {
         setSelectedAcademicYear(academicYearsData[0].id);
       }
     } catch (err) {
+      console.error('Failed to load form data:', err);
       setError('Failed to load form data');
     }
   };
@@ -492,11 +509,11 @@ const SubjectAssignments: React.FC = () => {
                             <TableCell className="px-6 py-4 text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button intent="action" size="sm" className="h-8 w-8 p-0">
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuContent align="end" className="w-48">
                                   <DropdownMenuItem onClick={() => handleEditAssignment(assignment)}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Details
@@ -507,7 +524,7 @@ const SubjectAssignments: React.FC = () => {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleDeleteAssignment(assignment.id)}
-                                    className="text-red-600"
+                                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                                   >
                                     <Trash className="mr-2 h-4 w-4" />
                                     Delete Assignment

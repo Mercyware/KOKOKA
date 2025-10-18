@@ -493,11 +493,11 @@ const ClassAssignments: React.FC = () => {
                           <TableCell className="px-6 py-4 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button intent="action" size="sm" className="h-8 w-8 p-0">
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => navigate(`/teachers/class-assignments/${assignment.id}`)}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   View Details
@@ -510,7 +510,7 @@ const ClassAssignments: React.FC = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => handleDeleteAssignment(assignment.id)}
-                                      className="text-red-600"
+                                      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                                     >
                                       <Trash className="mr-2 h-4 w-4" />
                                       Delete Assignment

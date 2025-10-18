@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, School, Edit, Trash2, Loader2, Search, Save, List, Workflow } from 'lucide-react';
+import { Plus, School, Edit, Trash2, Loader2, Search, Save, List, Workflow, MoreVertical } from 'lucide-react';
 import Layout from '../../../components/layout/Layout';
 import ClassesVisualization from '../../../components/classes/ClassesVisualization';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,8 +33,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { getAllClasses, deleteClass, createClass, updateClass } from '../../../services/classService';
@@ -47,7 +53,7 @@ const ClassesList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'visualization'>('table');
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -214,10 +220,11 @@ const ClassesList: React.FC = () => {
     }
   };
 
-  const handleDeleteClass = async (id: string) => {
-    setDeleteLoading(id);
+  const handleDeleteClass = async () => {
+    if (!classToDelete) return;
+
     try {
-      const response = await deleteClass(id);
+      const response = await deleteClass(classToDelete);
       if (response.success) {
         toast({
           title: "Success",
@@ -239,7 +246,7 @@ const ClassesList: React.FC = () => {
         variant: "destructive",
       });
     } finally {
-      setDeleteLoading(null);
+      setClassToDelete(null);
     }
   };
 
@@ -262,8 +269,8 @@ const ClassesList: React.FC = () => {
             </p>
           </div>
           <Button
+            intent="primary"
             onClick={handleAddClass}
-            className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add New Class
@@ -318,8 +325,8 @@ const ClassesList: React.FC = () => {
                 </p>
                 {!searchTerm && (
                   <Button
+                    intent="primary"
                     onClick={handleAddClass}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Class
@@ -346,48 +353,27 @@ const ClassesList: React.FC = () => {
                         <TableCell>{cls.capacity || 'No limit'}</TableCell>
                         <TableCell>{cls.description || 'No description'}</TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditClass(cls)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700"
-                                  disabled={deleteLoading === cls.id}
-                                >
-                                  {deleteLoading === cls.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Class</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete the class "{cls.name}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => cls.id && handleDeleteClass(cls.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleEditClass(cls)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => cls.id && setClassToDelete(cls.id)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -452,19 +438,19 @@ const ClassesList: React.FC = () => {
                 </div>
               </div>
 
-              <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  intent="cancel"
                   onClick={handleCloseModal}
                   disabled={formLoading}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
+                  intent="primary"
                   disabled={formLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {formLoading ? (
                     <>
@@ -544,19 +530,19 @@ const ClassesList: React.FC = () => {
                 </div>
               </div>
 
-              <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  intent="cancel"
                   onClick={handleCloseModal}
                   disabled={formLoading}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
+                  intent="primary"
                   disabled={formLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   {formLoading ? (
                     <>
@@ -574,6 +560,32 @@ const ClassesList: React.FC = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Class</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this class? This action cannot be undone and will remove all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => setClassToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                intent="danger"
+                onClick={handleDeleteClass}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

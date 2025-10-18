@@ -278,18 +278,20 @@ const AddStudentForm: React.FC = () => {
             handleSave(response.data);
           }
         } else {
-          console.error('Failed to save student:', response.error);
+          // Handle error from API response
           toast({
-            title: 'Failed to save student',
-            description: response.message || response.error,
+            title: response.error || 'Failed to save student',
+            description: response.message || 'An error occurred while creating the student profile.',
             variant: 'destructive',
           });
         }
-      } catch (error) {
-        console.error('Error saving student:', error);
+      } catch (error: any) {
+        // Handle unexpected errors (this should not happen with the current setup)
+        console.error('Unexpected error saving student:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || 'An unexpected error occurred while saving the student.';
         toast({
           title: 'Error',
-          description: 'An error occurred while saving the student. Please try again.',
+          description: errorMessage,
           variant: 'destructive',
         });
       } finally {
