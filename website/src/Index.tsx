@@ -164,13 +164,18 @@ const MarketingPage = () => {
   const renderHomePage = () => (
     <div className="space-y-16">
       {/* Hero Section */}
-      <div className="text-center space-y-6 py-12 md:py-20">
-        <Badge className="mb-4 bg-primary text-white border-primary-600">
+      <div className="relative text-center space-y-6 py-12 md:py-20 gradient-mesh overflow-hidden">
+        <div className="absolute inset-0 -z-10 opacity-30">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl float"></div>
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent-orange/10 rounded-full blur-3xl float" style={{animationDelay: '2s'}}></div>
+        </div>
+
+        <Badge className="mb-4 bg-primary text-white border-primary-600 shimmer">
           Trusted by Schools Worldwide
         </Badge>
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white">
           Modern School Management
-          <span className="text-primary block mt-2">
+          <span className="gradient-text block mt-2">
             Made Simple
           </span>
         </h1>
@@ -183,7 +188,7 @@ const MarketingPage = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <Button
             size="lg"
-            className="bg-primary hover:bg-primary-700 text-white text-lg px-8 py-6 h-auto rounded-xl shadow-lg hover:shadow-xl transition-all"
+            className="bg-primary hover:bg-primary-700 text-white text-lg px-8 py-6 h-auto rounded-xl shadow-lg pulse-glow scale-hover"
             onClick={handleGetStarted}
           >
             Get Started Free
@@ -192,7 +197,7 @@ const MarketingPage = () => {
           <Button
             variant="outline"
             size="lg"
-            className="text-lg px-8 py-6 h-auto rounded-xl border-2 border-primary text-primary hover:bg-primary-50"
+            className="text-lg px-8 py-6 h-auto rounded-xl border-2 border-primary text-primary hover:bg-primary-50 scale-hover"
           >
             Schedule Demo
           </Button>
@@ -203,8 +208,8 @@ const MarketingPage = () => {
       {/* Stats Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-12 border-y border-gray-200 dark:border-gray-700">
         {stats.map((stat, index) => (
-          <div key={index} className="text-center">
-            <div className="text-3xl md:text-4xl font-bold text-primary">
+          <div key={index} className="text-center fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
+            <div className="text-3xl md:text-4xl font-bold gradient-text">
               {stat.number}
             </div>
             <div className="text-gray-600 dark:text-gray-400 mt-2">
@@ -229,10 +234,10 @@ const MarketingPage = () => {
           {features.slice(0, 3).map((feature, index) => {
             const IconComponent = feature.icon;
             return (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 border-2 hover:border-primary-200">
+              <Card key={index} className="glass hover:shadow-xl transition-all duration-300 border-2 hover:border-primary-200 scale-hover gradient-border">
                 <CardHeader>
                   <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-primary-50 rounded-lg">
+                    <div className="p-3 bg-primary-50 rounded-lg float" style={{animationDelay: `${index * 0.3}s`}}>
                       <IconComponent className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -272,11 +277,11 @@ const MarketingPage = () => {
         {features.map((feature, index) => {
           const IconComponent = feature.icon;
           return (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+            <Card key={index} className="glass hover:shadow-lg transition-shadow duration-300 scale-hover">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                    <IconComponent className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="p-3 bg-primary-50 rounded-lg float" style={{animationDelay: `${index * 0.2}s`}}>
+                    <IconComponent className="h-6 w-6 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </div>
@@ -288,7 +293,7 @@ const MarketingPage = () => {
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, idx) => (
                     <li key={idx} className="flex items-center text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                       {benefit}
                     </li>
                   ))}
@@ -314,15 +319,15 @@ const MarketingPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {pricingPlans.map((plan, index) => (
-          <Card key={index} className={`relative ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : ''}`}>
+          <Card key={index} className={`relative scale-hover ${plan.popular ? 'border-primary shadow-lg scale-105 gradient-border pulse-glow' : 'glass'}`}>
             {plan.popular && (
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary shimmer">
                 Most Popular
               </Badge>
             )}
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{plan.name}</CardTitle>
-              <div className="text-4xl font-bold text-primary mt-4">
+              <div className="text-4xl font-bold gradient-text mt-4">
                 {plan.price}
                 <span className="text-lg text-gray-600 dark:text-gray-400">{plan.period}</span>
               </div>
@@ -338,7 +343,7 @@ const MarketingPage = () => {
                 ))}
               </ul>
               <Button
-                className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary-700 text-white' : ''}`}
+                className={`w-full shimmer ${plan.popular ? 'bg-primary hover:bg-primary-700 text-white' : ''}`}
                 variant={plan.popular ? 'default' : 'outline'}
                 onClick={handleGetStarted}
               >
@@ -375,11 +380,11 @@ const MarketingPage = () => {
         {solutions.map((solution, index) => {
           const IconComponent = solution.icon;
           return (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+            <Card key={index} className="glass hover:shadow-lg transition-shadow duration-300 scale-hover">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                    <IconComponent className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="p-3 bg-primary-50 rounded-lg float" style={{animationDelay: `${index * 0.25}s`}}>
+                    <IconComponent className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <CardTitle className="text-xl">{solution.title}</CardTitle>
@@ -393,7 +398,7 @@ const MarketingPage = () => {
                 <ul className="space-y-2">
                   {solution.features.map((feature, idx) => (
                     <li key={idx} className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-500 mr-2 flex-shrink-0" />
+                      <Star className="h-4 w-4 text-accent-orange mr-2 flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
@@ -444,7 +449,7 @@ const MarketingPage = () => {
           </div>
         </div>
 
-        <Card>
+        <Card className="glass gradient-border">
           <CardHeader>
             <CardTitle>Send us a message</CardTitle>
           </CardHeader>
@@ -461,7 +466,7 @@ const MarketingPage = () => {
               <label className="text-sm font-medium">Message</label>
               <textarea className="w-full p-2 border rounded-md h-24" placeholder="Your message"></textarea>
             </div>
-            <Button className="w-full bg-primary hover:bg-primary-700 text-white">Send Message</Button>
+            <Button className="w-full bg-primary hover:bg-primary-700 text-white shimmer pulse-glow">Send Message</Button>
           </CardContent>
         </Card>
       </div>
@@ -480,17 +485,17 @@ const MarketingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900 gradient-mesh">
       {/* Navigation Header */}
-      <nav className="bg-white/95 dark:bg-gray-900/95 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 backdrop-blur-sm">
+      <nav className="glass border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="p-2 bg-primary rounded-lg shadow-md">
+              <div className="p-2 bg-primary rounded-lg shadow-md pulse-glow">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">KOKOKA</span>
+              <span className="text-xl font-bold gradient-text">KOKOKA</span>
             </div>
 
             {/* Desktop Navigation */}
@@ -511,10 +516,10 @@ const MarketingPage = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" onClick={() => window.location.href = getAppURL('/login')}>
+              <Button variant="outline" className="scale-hover" onClick={() => window.location.href = getAppURL('/login')}>
                 Sign In
               </Button>
-              <Button className="bg-primary hover:bg-primary-700 text-white" onClick={handleGetStarted}>
+              <Button className="bg-primary hover:bg-primary-700 text-white shimmer scale-hover" onClick={handleGetStarted}>
                 Get Started
               </Button>
             </div>
@@ -570,15 +575,15 @@ const MarketingPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+      <footer className="glass border-t border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <div className="p-2 bg-primary rounded-lg shadow-md">
+                <div className="p-2 bg-primary rounded-lg shadow-md float">
                   <GraduationCap className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">KOKOKA</span>
+                <span className="text-lg font-bold gradient-text">KOKOKA</span>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
                 Modern school management made simple. Trusted by institutions worldwide.
