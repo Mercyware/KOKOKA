@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import api from '@/services/api';
+import { verifyEmail as verifyEmailService } from '@/services/emailVerificationService';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -22,13 +22,17 @@ export default function VerifyEmail() {
       }
 
       try {
-        const response = await api.post('/auth/verify-email', { token });
-        setStatus('success');
-        setMessage(response.data.message || 'Your email has been verified successfully!');
+        const result = await verifyEmailService(token);
+        if (result.success) {
+          setStatus('success');
+          setMessage(result.message || 'Your email has been verified successfully!');
+        } else {
+          throw new Error(result.message);
+        }
       } catch (error: any) {
         setStatus('error');
         setMessage(
-          error.response?.data?.message ||
+          error.message ||
           'Email verification failed. The link may have expired or is invalid.'
         );
       }

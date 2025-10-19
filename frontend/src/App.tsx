@@ -16,8 +16,9 @@ import EditStudentForm from "./pages/students/EditStudentForm";
 import Register from "./pages/auth/Register";
 import RegisterSchool from "./pages/auth/RegisterSchool";
 import RegistrationSuccess from "./pages/auth/RegistrationSuccess";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import OAuthCallback from "./pages/auth/OAuthCallback";
+import VerifyEmail from './pages/auth/VerifyEmail';
+import OAuthCallback from './pages/auth/OAuthCallback';
+import UserProfile from './pages/profile/UserProfile';
 // Academic Year Components
 import AcademicYearsList from "./pages/school-settings/academicYears/AcademicYearsList";
 // Academic Calendar Components
@@ -153,6 +154,7 @@ const App = () => (
             
             {/* Main application routes (pages handle their own layout) */}
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<UserProfile />} />
             <Route path="/students" element={<StudentsManager />} />
             <Route path="/students/add" element={<AddStudentForm />} />
             <Route path="/students/:studentId" element={<ViewStudentWrapper />} />

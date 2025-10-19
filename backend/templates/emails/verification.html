@@ -1,0 +1,19 @@
+<h2>Hello {{name}}!</h2>
+<p>Thank you for signing up{{#if schoolName}} with {{schoolName}}{{/if}} with KOKOKA. We're excited to have you on board!</p>
+
+<p>To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+
+<center>
+  <a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+</center>
+
+<p>Or copy and paste this link into your browser:</p>
+<p style="word-break: break-all; color: #1a5f3f;">{{verificationUrl}}</p>
+
+<div class="warning-box">
+  <p><strong>⏰ This verification link will expire in {{tokenExpiry}} hours.</strong></p>
+</div>
+
+<p>If you didn't create this account, please ignore this email or contact our support team.</p>
+
+<p>Best regards,<br>The KOKOKA Team</p>

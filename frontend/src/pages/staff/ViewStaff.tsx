@@ -608,11 +608,22 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                       <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
                         <Mail className="h-5 w-5 text-yellow-600" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Email Address</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {staff.user?.email || staff.email || 'Not provided'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {staff.user?.email || staff.email || 'Not provided'}
+                          </p>
+                          {staff.user?.emailVerified !== undefined && (
+                            <Badge variant="secondary" className={
+                              staff.user.emailVerified 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                            }>
+                              {staff.user.emailVerified ? 'Verified' : 'Unverified'}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

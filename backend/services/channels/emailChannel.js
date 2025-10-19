@@ -216,7 +216,7 @@ class EmailChannel {
             padding: 20px; 
         }
         .header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            background: linear-gradient(135deg, #1a5f3f 0%, #15803d 100%); 
             color: white; 
             padding: 20px; 
             border-radius: 8px 8px 0 0; 

@@ -4,7 +4,9 @@ import Header from '../Header';
 import Sidebar from '../Sidebar';
 import TopNavigation from '../TopNavigation';
 import ContentHeader from '../ContentHeader';
+import EmailVerificationBanner from '../EmailVerificationBanner';
 import { useTheme } from '../ThemeProvider';
+import { useAuth } from '../../contexts/AuthContext';
 import { Toaster } from '../ui/toaster';
 
 interface LayoutProps {
@@ -13,6 +15,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { authState } = useAuth();
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -163,6 +166,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             showActions={true}
             onMenuToggle={isMobile ? handleToggleSidebar : undefined}
           />
+          
+          {/* Email Verification Banner - Show if user is authenticated and email not verified */}
+          {authState.user && !authState.user.emailVerified && (
+            <div className="px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <EmailVerificationBanner
+                user={{
+                  id: authState.user.id,
+                  name: authState.user.name,
+                  email: authState.user.email,
+                  emailVerified: authState.user.emailVerified,
+                }}
+                isDismissible={true}
+              />
+            </div>
+          )}
           
           {/* Page Content */}
           <div className="flex-1">

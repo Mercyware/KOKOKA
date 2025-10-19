@@ -111,6 +111,10 @@ exports.login = async (req, res) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          emailVerified: user.emailVerified,
+          isActive: user.isActive,
+          lastLogin: user.lastLogin,
+          profileImage: user.profileImage,
           school: user.school
         }
       }

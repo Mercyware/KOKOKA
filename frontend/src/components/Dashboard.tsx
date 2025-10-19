@@ -12,9 +12,16 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import EmailVerificationCard from './EmailVerificationCard';
 
 interface DashboardProps {
-  user?: { name: string; email: string; role: string } | null;
+  user?: { 
+    id: string;
+    name: string; 
+    email: string; 
+    role: string;
+    emailVerified?: boolean;
+  } | null;
   onMenuToggle?: () => void;
 }
 
@@ -81,6 +88,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="px-siohioma-2xl py-siohioma-xl space-y-siohioma-xl">
+        {/* Email Verification Card - Show if user email not verified */}
+        {user && !user.emailVerified && (
+          <EmailVerificationCard
+            user={{
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              emailVerified: user.emailVerified,
+            }}
+          />
+        )}
+
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-siohioma-lg">
           {stats.map((stat, index) => (

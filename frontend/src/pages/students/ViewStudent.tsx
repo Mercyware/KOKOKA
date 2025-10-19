@@ -799,9 +799,20 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Mail className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {student.email || 'Not provided'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {student.email || 'Not provided'}
+                              </span>
+                              {student.user?.emailVerified !== undefined && student.email && (
+                                <Badge variant="secondary" className={
+                                  student.user.emailVerified 
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 text-xs' 
+                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 text-xs'
+                                }>
+                                  {student.user.emailVerified ? 'Verified' : 'Unverified'}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
