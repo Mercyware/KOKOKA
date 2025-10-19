@@ -4,6 +4,9 @@ const logger = require('../utils/logger');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const emailService = require('../services/emailService');
+const emailConfig = require('../config/email');
 
 /**
  * Register a new school
@@ -88,7 +91,7 @@ exports.registerSchool = async (req, res) => {
     // Create admin user for the school
     if (adminInfo) {
       const { name: adminName, email, password } = adminInfo;
-      
+
       // Check if user already exists
       const existingUser = await userHelpers.findByEmailWithPassword(email);
       if (existingUser) {
@@ -97,26 +100,58 @@ exports.registerSchool = async (req, res) => {
           message: 'Admin email already in use'
         });
       }
-      
-      // Create admin user
+
+      // Generate email verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + emailConfig.verification.tokenExpiry);
+
+      // Create admin user with verification token
       const admin = await userHelpers.create({
         schoolId: school.id,
         name: adminName,
         email,
         password,
-        role: 'ADMIN'
+        role: 'ADMIN',
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiry: tokenExpiry
       });
-      
+
+      // Send registration welcome email
+      if (emailConfig.enabled) {
+        try {
+          await emailService.sendRegistrationEmail({
+            email: admin.email,
+            name: admin.name,
+            schoolName: school.name,
+            subdomain: school.subdomain
+          });
+
+          // Send email verification email
+          await emailService.sendVerificationEmail({
+            email: admin.email,
+            name: admin.name,
+            verificationToken,
+            schoolName: school.name
+          });
+
+          logger.info(`Registration and verification emails sent to ${admin.email}`);
+        } catch (emailError) {
+          logger.error(`Failed to send registration emails: ${emailError.message}`);
+          // Continue with registration even if email fails
+        }
+      }
+
       // Generate JWT token
       const token = jwt.sign(
         { id: admin.id, role: admin.role, schoolId: school.id },
         JWT_SECRET,
         { expiresIn: '30d' }
       );
-      
+
       res.status(201).json({
         success: true,
-        message: 'School registered successfully and pending approval',
+        message: 'School registered successfully. Please check your email to verify your account.',
         school: {
           id: school.id,
           name: school.name,
@@ -126,7 +161,8 @@ exports.registerSchool = async (req, res) => {
         admin: {
           id: admin.id,
           name: admin.name,
-          email: admin.email
+          email: admin.email,
+          emailVerified: admin.emailVerified
         },
         token
       });

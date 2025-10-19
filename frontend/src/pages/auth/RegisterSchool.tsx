@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, GraduationCap, School, User, Mail, Lock, Phone, Globe, Building } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Eye, EyeOff, GraduationCap, School, User, Mail, Lock, Phone, Globe, Building, AlertCircle } from 'lucide-react';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Form,
+  FormSection,
+  FormField,
+  FormLabel,
+  FormMessage,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Alert,
+  AlertDescription
+} from '@/components/ui';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import * as authService from '../../services/authService';
@@ -312,6 +328,8 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
 
       const response = await authService.registerSchool(schoolData);
 
+      console.log('Registration response:', response);
+
       if (response.success) {
         // Store subdomain in localStorage for development environment
         localStorage.setItem('dev_subdomain', formData.subdomain);
@@ -340,18 +358,26 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
           }
         });
       } else {
+        // Extract and display error message from response
+        const errorMsg = response.message || response.error || 'Registration failed';
+        console.log('Registration error message:', errorMsg);
+
         // More descriptive error message
-        const errorMsg = response.message;
-        if (errorMsg?.includes('already in use') || errorMsg?.includes('already exists')) {
-          if (errorMsg?.includes('email')) {
+        if (errorMsg?.includes('already in use') || errorMsg?.includes('already exists') || errorMsg?.includes('already taken')) {
+          if (errorMsg?.includes('email') || errorMsg?.includes('Email')) {
             setRegistrationError('This email address is already registered. Please use a different email or try logging in instead.');
-          } else if (errorMsg?.includes('subdomain')) {
+            // Go back to step 2 to fix the email
+            setCurrentStep(2);
+          } else if (errorMsg?.includes('subdomain') || errorMsg?.includes('Subdomain')) {
             setRegistrationError('This subdomain is already taken. Please choose a different subdomain for your school.');
+            // Go back to step 1 to fix the subdomain
+            setCurrentStep(1);
           } else {
-            setRegistrationError('Some of the information you provided is already in use. Please check and try again.');
+            setRegistrationError(errorMsg || 'Some of the information you provided is already in use. Please check and try again.');
           }
         } else {
-          setRegistrationError(errorMsg || 'We encountered an issue while registering your school. Please try again or contact support if the problem persists.');
+          // Display the exact error message from the backend
+          setRegistrationError(errorMsg);
         }
       }
     } catch (error: any) {
@@ -368,87 +394,82 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
 
   // Render school information form
   const renderSchoolInfoForm = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="schoolName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          School Name
-        </Label>
-        <div className="relative">
-          <School className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+    <FormSection className="space-y-5">
+      <FormField>
+        <FormLabel htmlFor="schoolName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          School Name <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <School className={`h-5 w-5 ${formData.schoolName ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="schoolName"
             name="schoolName"
             type="text"
             value={formData.schoolName}
             onChange={(e) => handleInputChange('schoolName', e.target.value)}
-            className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-            placeholder="Enter your school name"
+            className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
+            placeholder="e.g., Greenwood High School"
             required
           />
         </div>
-        {errors.schoolName && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.schoolName}</p>
-          </div>
-        )}
-      </div>
+        {errors.schoolName && <FormMessage variant="error">{errors.schoolName}</FormMessage>}
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="subdomain" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Subdomain
-        </Label>
-        <div className="relative">
-          <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="subdomain" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Subdomain <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <Building className={`h-5 w-5 ${formData.subdomain ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="subdomain"
             name="subdomain"
             type="text"
             value={formData.subdomain}
             onChange={(e) => handleInputChange('subdomain', e.target.value)}
-            className="pl-10 pr-20 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+            className="pl-11 pr-28 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
             placeholder="your-school"
             required
           />
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs">
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
             {subdomainChecking ? (
-              <span className="text-gray-400">Checking...</span>
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                Checking...
+              </span>
             ) : subdomainAvailable === true ? (
-              <span className="text-green-600">Available</span>
+              <span className="text-xs font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                Available
+              </span>
             ) : subdomainAvailable === false ? (
-              <span className="text-red-600">Unavailable</span>
+              <span className="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1">
+                <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                Taken
+              </span>
             ) : null}
           </div>
         </div>
-        <p className="text-xs text-gray-500">
-          Your school will be accessible at: {formData.subdomain}.schoolmanagement.com
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 ml-1 flex items-center gap-1">
+          <Globe className="h-3 w-3" />
+          <span className="font-mono">{formData.subdomain || 'yourschool'}.schoolmanagement.com</span>
         </p>
-        {errors.subdomain && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.subdomain}</p>
-          </div>
+        {errors.subdomain && <FormMessage variant="error">{errors.subdomain}</FormMessage>}
+        {subdomainAvailable === false && !errors.subdomain && (
+          <FormMessage variant="error">This subdomain is already taken</FormMessage>
         )}
-        {subdomainAvailable === false && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">This subdomain is already taken</p>
-          </div>
-        )}
-      </div>
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="schoolType" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          School Type
-        </Label>
+      <FormField>
+        <FormLabel htmlFor="schoolType" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          School Type <span className="text-red-500">*</span>
+        </FormLabel>
         <Select value={formData.schoolType} onValueChange={(value) => handleInputChange('schoolType', value)}>
-          <SelectTrigger className="border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400">
+          <SelectTrigger className="h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg">
             <SelectValue placeholder="Select school type" />
           </SelectTrigger>
           <SelectContent>
@@ -459,277 +480,307 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
             ))}
           </SelectContent>
         </Select>
-        {errors.schoolType && (
-          <p className="text-sm text-red-600">{errors.schoolType}</p>
-        )}
-      </div>
+        {errors.schoolType && <FormMessage variant="error">{errors.schoolType}</FormMessage>}
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          School Email
-        </Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          School Email <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <Mail className={`h-5 w-5 ${formData.email ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="email"
             name="email"
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-            placeholder="school@example.com"
+            className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
+            placeholder="contact@school.com"
             required
           />
         </div>
-        {errors.email && (
-          <p className="text-sm text-red-600">{errors.email}</p>
-        )}
-      </div>
+        {errors.email && <FormMessage variant="error">{errors.email}</FormMessage>}
+      </FormField>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Phone Number
-          </Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <FormField>
+          <FormLabel htmlFor="phone" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Phone Number <span className="text-gray-400 text-xs">(Optional)</span>
+          </FormLabel>
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+              <Phone className={`h-5 w-5 ${formData.phone ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+            </div>
             <Input
               id="phone"
               name="phone"
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+              className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
               placeholder="+1 (555) 123-4567"
             />
           </div>
-          {errors.phone && (
-            <p className="text-sm text-red-600">{errors.phone}</p>
-          )}
-        </div>
+          {errors.phone && <FormMessage variant="error">{errors.phone}</FormMessage>}
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Website
-          </Label>
-          <div className="relative">
-            <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <FormField>
+          <FormLabel htmlFor="website" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Website <span className="text-gray-400 text-xs">(Optional)</span>
+          </FormLabel>
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+              <Globe className={`h-5 w-5 ${formData.website ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+            </div>
             <Input
               id="website"
               name="website"
               type="url"
               value={formData.website}
               onChange={(e) => handleInputChange('website', e.target.value)}
-              className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+              className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
               placeholder="https://school.com"
             />
           </div>
-          {errors.website && (
-            <p className="text-sm text-red-600">{errors.website}</p>
-          )}
-        </div>
+          {errors.website && <FormMessage variant="error">{errors.website}</FormMessage>}
+        </FormField>
       </div>
-    </div>
+    </FormSection>
   );
 
   // Render admin account form
   const renderAdminForm = () => (
-    <div className="space-y-4">
-      <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Admin Account Information
+    <FormSection className="space-y-5">
+      <div className="text-center space-y-2 mb-2 pb-5 border-b border-gray-200 dark:border-gray-700">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-2">
+          <User className="h-6 w-6 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          Admin Account Setup
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          This account will be used to manage your school
+          Create credentials to manage your school system
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="adminName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Admin Name
-        </Label>
-        <div className="relative">
-          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="adminName" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Full Name <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <User className={`h-5 w-5 ${formData.adminName ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="adminName"
             name="adminName"
             type="text"
             value={formData.adminName}
             onChange={(e) => handleInputChange('adminName', e.target.value)}
-            className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-            placeholder="Enter admin full name"
+            className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
+            placeholder="John Doe"
             required
           />
         </div>
-        {errors.adminName && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminName}</p>
-          </div>
-        )}
-      </div>
+        {errors.adminName && <FormMessage variant="error">{errors.adminName}</FormMessage>}
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="adminEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Admin Email
-        </Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="adminEmail" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Email Address <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <Mail className={`h-5 w-5 ${formData.adminEmail ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="adminEmail"
             name="adminEmail"
             type="email"
             value={formData.adminEmail}
             onChange={(e) => handleInputChange('adminEmail', e.target.value)}
-            className="pl-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
+            className="pl-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
             placeholder="admin@school.com"
             required
           />
         </div>
-        {errors.adminEmail && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminEmail}</p>
-          </div>
-        )}
-      </div>
+        {errors.adminEmail && <FormMessage variant="error">{errors.adminEmail}</FormMessage>}
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="adminPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Password
-        </Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="adminPassword" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Password <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <Lock className={`h-5 w-5 ${formData.adminPassword ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="adminPassword"
             name="adminPassword"
             type={showPassword ? 'text' : 'password'}
             value={formData.adminPassword}
             onChange={(e) => handleInputChange('adminPassword', e.target.value)}
-            className="pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-            placeholder="Enter password"
+            className="pl-11 pr-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
+            placeholder="••••••••"
             required
           />
           <button
             type="button"
             onClick={handleClickShowPassword}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         </div>
-        {errors.adminPassword && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.adminPassword}</p>
-          </div>
-        )}
-      </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 ml-1">
+          Must be at least 8 characters with uppercase, lowercase, and number
+        </p>
+        {errors.adminPassword && <FormMessage variant="error">{errors.adminPassword}</FormMessage>}
+      </FormField>
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Confirm Password
-        </Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <FormField>
+        <FormLabel htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Confirm Password <span className="text-red-500">*</span>
+        </FormLabel>
+        <div className="relative group">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors">
+            <Lock className={`h-5 w-5 ${formData.confirmPassword ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'}`} />
+          </div>
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type={showConfirmPassword ? 'text' : 'password'}
             value={formData.confirmPassword}
             onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-            className="pl-10 pr-10 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400"
-            placeholder="Confirm password"
+            className="pl-11 pr-11 h-12 border-2 focus:border-primary transition-all duration-200 rounded-lg"
+            placeholder="••••••••"
             required
           />
           <button
             type="button"
             onClick={handleClickShowConfirmPassword}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         </div>
-        {errors.confirmPassword && (
-          <div className="flex items-center space-x-2 mt-1">
-            <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-              <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-300 font-medium">{errors.confirmPassword}</p>
-          </div>
-        )}
-      </div>
-    </div>
+        {errors.confirmPassword && <FormMessage variant="error">{errors.confirmPassword}</FormMessage>}
+      </FormField>
+    </FormSection>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 dark:from-blue-950 dark:via-purple-950 dark:to-blue-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-2xl border-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-3">
-              <GraduationCap className="h-10 w-10 text-white" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900">
+        {/* Animated circles */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-accent-orange/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent-green/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }}></div>
+
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bS00IDB2Mmgydi0yaC0yem0tNCAwdjJoMnYtMmgtMnptLTQgMHYyaDJ2LTJoLTJ6bS00IDB2Mmgydi0yaC0yem0tNCAwdjJoMnYtMmgtMnptLTQgMHYyaDJ2LTJoLTJ6bS00IDB2Mmgydi0yaC0yem0tNCAwdjJoMnYtMmgtMnptLTQgMHYyaDJ2LTJoLTJ6TTQgNHYyaDJ2LTJINHR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+      </div>
+
+      {/* Main Card */}
+      <Card className="relative w-full max-w-2xl shadow-2xl border border-white/20 dark:border-gray-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl overflow-hidden">
+        {/* Decorative top border */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent-orange to-accent-green"></div>
+
+        <CardHeader className="text-center space-y-6 pt-8 pb-6 relative">
+          {/* Floating icon with glow effect */}
+          <div className="flex justify-center relative">
+            <div className="absolute inset-0 flex justify-center">
+              <div className="w-20 h-20 bg-primary/20 rounded-full blur-xl"></div>
+            </div>
+            <div className="relative bg-gradient-to-br from-primary to-primary-700 rounded-2xl p-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
+              <GraduationCap className="h-12 w-12 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            Register Your School
-          </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-400">
-            {currentStep === 1 
-              ? "Enter your school information "
-              : "Create your admin account"
-            }
-          </CardDescription>
-          
-          {/* Step indicator */}
-          <div className="flex justify-center space-x-2 mt-4">
-            <div className={`w-3 h-3 rounded-full ${currentStep === 1 ? 'bg-blue-600' : 'bg-gray-300'}`} />
-            <div className={`w-3 h-3 rounded-full ${currentStep === 2 ? 'bg-blue-600' : 'bg-gray-300'}`} />
+
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-700 bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-600">
+              Register Your School
+            </CardTitle>
+            <CardDescription className="text-base text-gray-600 dark:text-gray-400">
+              {currentStep === 1
+                ? "Let's start with your school information"
+                : "Set up your administrator account"
+              }
+            </CardDescription>
+          </div>
+
+          {/* Enhanced Step indicator */}
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="flex items-center gap-2">
+              <div className={`relative ${currentStep === 1 ? 'w-8 h-8' : 'w-6 h-6'} transition-all duration-300`}>
+                <div className={`absolute inset-0 rounded-full ${currentStep === 1 ? 'bg-primary/20 animate-ping' : ''}`}></div>
+                <div className={`relative w-full h-full rounded-full flex items-center justify-center font-semibold text-xs transition-all duration-300 ${
+                  currentStep === 1
+                    ? 'bg-primary text-white shadow-lg'
+                    : currentStep > 1
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {currentStep > 1 ? '✓' : '1'}
+                </div>
+              </div>
+              <span className={`text-sm font-medium transition-colors ${currentStep === 1 ? 'text-primary dark:text-primary-400' : 'text-gray-500 dark:text-gray-500'}`}>
+                School Info
+              </span>
+            </div>
+
+            <div className={`h-0.5 w-12 transition-colors duration-500 ${currentStep === 2 ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+
+            <div className="flex items-center gap-2">
+              <div className={`relative ${currentStep === 2 ? 'w-8 h-8' : 'w-6 h-6'} transition-all duration-300`}>
+                <div className={`absolute inset-0 rounded-full ${currentStep === 2 ? 'bg-primary/20 animate-ping' : ''}`}></div>
+                <div className={`relative w-full h-full rounded-full flex items-center justify-center font-semibold text-xs transition-all duration-300 ${
+                  currentStep === 2
+                    ? 'bg-primary text-white shadow-lg'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                }`}>
+                  2
+                </div>
+              </div>
+              <span className={`text-sm font-medium transition-colors ${currentStep === 2 ? 'text-primary dark:text-primary-400' : 'text-gray-500 dark:text-gray-500'}`}>
+                Admin Account
+              </span>
+            </div>
           </div>
         </CardHeader>
         
         <CardContent>
           {registrationError && (
-            <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-red-600 dark:bg-red-400 rounded-full" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <AlertDescription className="text-red-800 dark:text-red-200 font-medium">
-                    {registrationError}
-                  </AlertDescription>
-                </div>
-              </div>
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{registrationError}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {currentStep === 1 ? renderSchoolInfoForm() : renderAdminForm()}
-            
-            <div className="flex justify-between mt-6">
-              {currentStep === 2 ? (
+
+            <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              {currentStep === 2 && (
                 <Button
                   type="button"
-                  variant="outline"
+                  intent="cancel"
                   onClick={handleBack}
-                  className="border-gray-300 dark:border-gray-600"
+                  className="w-full sm:w-auto order-2 sm:order-1"
                 >
                   Back
                 </Button>
-              ) : <div />}
-              
-              <div className="flex flex-col items-end space-y-2">
+              )}
+
+              <div className={`flex flex-col ${currentStep === 1 ? 'w-full sm:ml-auto' : ''} order-1 sm:order-2`}>
                 <Button
                   type="button"
+                  intent="primary"
                   onClick={handleNext}
                   disabled={
                     registrationLoading ||
@@ -748,10 +799,10 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
                       formData.adminPassword !== formData.confirmPassword
                     ))
                   }
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto"
                 >
                   {registrationLoading ? (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Registering...</span>
                     </div>
@@ -761,43 +812,67 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
                     'Register School'
                   )}
                 </Button>
-                
+
                 {/* Show disabled reason if button is disabled */}
                 {getSubmitDisabledReason() && (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0">
-                      <div className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full" />
-                    </div>
-                    <p className="text-xs text-red-700 dark:text-red-300 font-medium">{getSubmitDisabledReason()}</p>
-                  </div>
+                  <FormMessage variant="error" className="mt-2 text-xs">
+                    {getSubmitDisabledReason()}
+                  </FormMessage>
                 )}
               </div>
             </div>
           </div>
           
-          <div className="mt-6 text-center">
+          {/* Sign in link with decorative element */}
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have a school account?{' '}
               {onSwitchToLogin ? (
                 <button
                   type="button"
                   onClick={onSwitchToLogin}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                  className="text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold transition-colors inline-flex items-center gap-1 group"
                 >
                   Sign in
+                  <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                 </button>
               ) : (
                 <RouterLink
                   to="/login"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                  className="text-primary dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-semibold transition-colors inline-flex items-center gap-1 group"
                 >
                   Sign in
+                  <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                 </RouterLink>
               )}
             </p>
           </div>
+
+          {/* Trust indicators */}
+          <div className="mt-6 flex items-center justify-center gap-8 text-xs text-gray-500 dark:text-gray-500">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span>Secure Registration</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-accent-green rounded-full"></div>
+              <span>Quick Setup</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-accent-orange rounded-full"></div>
+              <span>Free Trial</span>
+            </div>
+          </div>
         </CardContent>
+
+        {/* Decorative bottom accent */}
+        <div className="h-2 bg-gradient-to-r from-primary/20 via-accent-orange/20 to-accent-green/20"></div>
       </Card>
+
+      {/* Floating decorative elements */}
+      <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white/10 rounded-lg rotate-12 hidden lg:block"></div>
+      <div className="absolute bottom-10 right-10 w-16 h-16 border-2 border-white/10 rounded-full hidden lg:block"></div>
+      <div className="absolute top-1/2 right-20 w-12 h-12 border-2 border-white/10 rounded-lg -rotate-12 hidden lg:block"></div>
     </div>
   );
 };

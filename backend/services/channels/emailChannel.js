@@ -1,6 +1,8 @@
 const sgMail = require('@sendgrid/mail');
-const nodemailer = require('nodemailer');
 const logger = require('../../utils/logger');
+
+// Import nodemailer after logger to avoid any circular dependency issues
+const nodemailer = require('nodemailer');
 
 class EmailChannel {
   constructor() {
@@ -21,19 +23,19 @@ class EmailChannel {
       logger.warn('SendGrid API key not provided');
     }
 
-    // Initialize Nodemailer as fallback
-    if (process.env.NODEMAILER_ENABLED === 'true' && process.env.NODEMAILER_USER && process.env.NODEMAILER_PASS) {
-      this.nodemailerTransporter = nodemailer.createTransporter({
-        host: process.env.NODEMAILER_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.NODEMAILER_PORT) || 587,
-        secure: process.env.NODEMAILER_SECURE === 'true',
+    // Initialize Nodemailer with Amazon SES
+    if (process.env.SES_SMTP_USER && process.env.SES_SMTP_PASSWORD) {
+      this.nodemailerTransporter = nodemailer.createTransport({
+        host: process.env.SES_SMTP_HOST || 'email-smtp.us-east-1.amazonaws.com',
+        port: parseInt(process.env.SES_SMTP_PORT) || 587,
+        secure: process.env.SES_SMTP_SECURE === 'true',
         auth: {
-          user: process.env.NODEMAILER_USER,
-          pass: process.env.NODEMAILER_PASS
+          user: process.env.SES_SMTP_USER,
+          pass: process.env.SES_SMTP_PASSWORD
         }
       });
       this.nodemailerEnabled = true;
-      logger.info('Nodemailer email provider initialized');
+      logger.info('Amazon SES email provider initialized');
     } else {
       this.nodemailerEnabled = false;
     }
@@ -60,10 +62,10 @@ class EmailChannel {
       text: content.emailContent || content.message || notification.message,
       html: content.emailHtml,
       from: {
-        email: process.env.SENDGRID_FROM_EMAIL || 'noreply@kokoka.com',
-        name: process.env.SENDGRID_FROM_NAME || 'KOKOKA School Management'
+        email: process.env.EMAIL_FROM || 'noreply@kokoka.com',
+        name: process.env.EMAIL_FROM_NAME || 'KOKOKA School Management'
       },
-      replyTo: process.env.SENDGRID_REPLY_TO || 'support@kokoka.com'
+      replyTo: process.env.EMAIL_REPLY_TO || 'support@kokoka.com'
     };
 
     // Try SendGrid first, then fallback to Nodemailer
@@ -375,7 +377,7 @@ class EmailChannel {
       },
       nodemailer: {
         enabled: this.nodemailerEnabled,
-        configured: !!(process.env.NODEMAILER_USER && process.env.NODEMAILER_PASS)
+        configured: !!(process.env.SES_SMTP_USER && process.env.SES_SMTP_PASSWORD)
       }
     };
   }

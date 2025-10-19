@@ -16,6 +16,7 @@ import EditStudentForm from "./pages/students/EditStudentForm";
 import Register from "./pages/auth/Register";
 import RegisterSchool from "./pages/auth/RegisterSchool";
 import RegistrationSuccess from "./pages/auth/RegistrationSuccess";
+import VerifyEmail from "./pages/auth/VerifyEmail";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 // Academic Year Components
 import AcademicYearsList from "./pages/school-settings/academicYears/AcademicYearsList";
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/register-school" element={<RegisterSchool />} />
             <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route path="/auth/verify-email" element={<VerifyEmail />} />
             <Route path="/auth/callback" element={<OAuthCallback />} />
             
             {/* Main application routes (pages handle their own layout) */}

@@ -89,6 +89,8 @@ model User {
   role                         UserRole
   isActive                     Boolean                      @default(true)
   emailVerified                Boolean                      @default(false)
+  emailVerificationToken       String?                      @unique
+  emailVerificationTokenExpiry DateTime?
   lastLogin                    DateTime?
   profileData                  Json?
   profileImage                 String?

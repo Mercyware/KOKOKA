@@ -184,9 +184,68 @@ router.get('/google/callback',
 
 // LinkedIn OAuth routes
 router.get('/linkedin', authController.linkedinAuth);
-router.get('/linkedin/callback', 
-  require('passport').authenticate('linkedin', { session: false }), 
+router.get('/linkedin/callback',
+  require('passport').authenticate('linkedin', { session: false }),
   authController.linkedinCallback
 );
+
+/**
+ * @swagger
+ * /auth/verify-email:
+ *   post:
+ *     summary: Verify user email with token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Email verification token
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ *       500:
+ *         description: Server error
+ */
+router.post('/verify-email', authController.verifyEmail);
+
+/**
+ * @swagger
+ * /auth/resend-verification:
+ *   post:
+ *     summary: Resend verification email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *     responses:
+ *       200:
+ *         description: Verification email sent successfully
+ *       404:
+ *         description: User not found
+ *       400:
+ *         description: Email already verified
+ *       500:
+ *         description: Server error
+ */
+router.post('/resend-verification', authController.resendVerificationEmail);
 
 module.exports = router;

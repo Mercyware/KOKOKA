@@ -2,6 +2,11 @@ const { userHelpers } = require('../utils/prismaHelpers');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/jwt');
 const passport = require('../config/passport');
+const crypto = require('crypto');
+const emailService = require('../services/emailService');
+const emailConfig = require('../config/email');
+const { prisma } = require('../config/database');
+const logger = require('../utils/logger');
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -184,19 +189,19 @@ exports.linkedinAuth = passport.authenticate('linkedin');
 exports.linkedinCallback = async (req, res) => {
   try {
     const user = req.user;
-    
+
     if (!user) {
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
     }
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        id: user.id, 
+      {
+        id: user.id,
         role: user.role,
-        school: user.schoolId 
-      }, 
-      JWT_SECRET, 
+        school: user.schoolId
+      },
+      JWT_SECRET,
       { expiresIn: '30d' }
     );
 
@@ -210,5 +215,173 @@ exports.linkedinCallback = async (req, res) => {
     }))}`);
   } catch (error) {
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
+  }
+};
+
+/**
+ * Verify email with token
+ * @route POST /api/auth/verify-email
+ * @access Public
+ */
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+    }
+
+    // Find user with this verification token
+    const user = await prisma.user.findFirst({
+      where: {
+        emailVerificationToken: token,
+        emailVerificationTokenExpiry: {
+          gt: new Date()
+        }
+      },
+      include: {
+        school: true
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Update user to verified
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiry: null
+      }
+    });
+
+    logger.info(`Email verified for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        emailVerified: true
+      }
+    });
+  } catch (error) {
+    logger.error(`Email verification error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during email verification',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Resend verification email
+ * @route POST /api/auth/resend-verification
+ * @access Public
+ */
+exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        school: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date();
+    tokenExpiry.setHours(tokenExpiry.getHours() + emailConfig.verification.tokenExpiry);
+
+    // Update user with new token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpiry: tokenExpiry
+      }
+    });
+
+    // Send verification email
+    if (emailConfig.enabled) {
+      try {
+        await emailService.sendVerificationEmail({
+          email: user.email,
+          name: user.name,
+          verificationToken,
+          schoolName: user.school?.name
+        });
+
+        logger.info(`Verification email resent to ${user.email}`);
+      } catch (emailError) {
+        logger.error(`Failed to send verification email: ${emailError.message}`);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send verification email'
+        });
+      }
+    } else {
+      return res.status(503).json({
+        success: false,
+        message: 'Email service is not enabled'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Verification email sent successfully'
+    });
+  } catch (error) {
+    logger.error(`Resend verification email error: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during resend verification',
+      error: error.message
+    });
   }
 };

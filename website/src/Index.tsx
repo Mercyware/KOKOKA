@@ -27,8 +27,8 @@ const MarketingPage = () => {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    // Redirect to the main application login page
-    window.location.href = getAppURL('/login');
+    // Redirect to the school registration page
+    window.location.href = getAppURL('/register-school');
   };
 
   const navigation = [
