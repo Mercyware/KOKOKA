@@ -73,20 +73,59 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError) => {
-    // Handle token expiration
+  (error: AxiosError<any>) => {
+    // Handle token expiration (401 Unauthorized)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Only redirect to login if not on a public route
-      const publicRoutes = ['/', '/login', '/register', '/register-school'];
-      const currentPath = window.location.pathname;
-      
-      if (!publicRoutes.includes(currentPath)) {
-        window.location.href = '/login';
+      const errorMessage = error.response?.data?.message || '';
+
+      // Only clear auth and redirect if it's a real auth issue
+      // Don't clear for wrong password or invalid credentials during login
+      if (errorMessage.includes('token') || errorMessage.includes('authorized') || errorMessage.includes('expired')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('schoolSubdomain');
+        localStorage.removeItem('schoolName');
+
+        // Only redirect to login if not on a public route
+        const publicRoutes = ['/', '/login', '/register', '/register-school', '/forgot-password', '/reset-password'];
+        const currentPath = window.location.pathname;
+
+        if (!publicRoutes.includes(currentPath) && !currentPath.startsWith('/reset-password')) {
+          // Store the intended destination
+          localStorage.setItem('redirectAfterLogin', currentPath);
+          window.location.href = '/login';
+        }
       }
     }
+
+    // Handle forbidden (403) - User doesn't have permission or school not active
+    if (error.response?.status === 403) {
+      const errorData = error.response?.data;
+      console.warn('Access forbidden:', errorData?.message);
+
+      // Check if it's a school activation issue
+      if (errorData?.schoolStatus && errorData.schoolStatus !== 'ACTIVE') {
+        console.warn('School not active:', errorData.schoolName, 'Status:', errorData.schoolStatus);
+        // Update user in localStorage to reflect the current school status
+        // This will be picked up by the auth context on next render
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            if (user.school) {
+              user.school.status = errorData.schoolStatus;
+              user.school.name = errorData.schoolName;
+              localStorage.setItem('user', JSON.stringify(user));
+            }
+          } catch (e) {
+            console.error('Failed to update user school status in localStorage:', e);
+          }
+        }
+        // The ProtectedRoute component will handle showing the activation screen
+        // No need to reload - the error will be caught and handled by the calling component
+      }
+    }
+
     return Promise.reject(error);
   }
 );

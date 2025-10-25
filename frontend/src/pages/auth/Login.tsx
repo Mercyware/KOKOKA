@@ -33,6 +33,13 @@ const Login: React.FC = () => {
   const [schoolBranding, setSchoolBranding] = useState<SchoolBranding | null>(null);
   const [loadingBranding, setLoadingBranding] = useState(true);
 
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!authState.loading && authState.isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authState.isAuthenticated, authState.loading, navigate]);
+
   // Extract subdomain from various sources
   useEffect(() => {
     const extractSubdomain = () => {

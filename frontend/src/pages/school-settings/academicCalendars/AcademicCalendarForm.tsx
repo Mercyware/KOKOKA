@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { DatePicker } from '@/components/ui';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,9 +62,13 @@ const AcademicCalendarForm: React.FC = () => {
     holidays: [],
   });
   const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
-  const [newHoliday, setNewHoliday] = useState<Partial<Holiday>>({
+  const [newHoliday, setNewHoliday] = useState<{
+    name: string;
+    date: Date | undefined;
+    description: string;
+  }>({
     name: '',
-    date: '',
+    date: undefined,
     description: '',
   });
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null);
@@ -192,7 +197,7 @@ const AcademicCalendarForm: React.FC = () => {
     }
   };
 
-  const handleHolidayInputChange = (field: keyof Holiday, value: string) => {
+  const handleHolidayInputChange = (field: string, value: string | Date | undefined) => {
     setNewHoliday(prev => ({ ...prev, [field]: value }));
   };
 
@@ -206,9 +211,11 @@ const AcademicCalendarForm: React.FC = () => {
       return;
     }
 
+    const holidayDateStr = newHoliday.date.toISOString().split('T')[0];
+
     // Check if holiday date is within calendar period
     if (formData.startDate && formData.endDate) {
-      const holidayDate = new Date(newHoliday.date);
+      const holidayDate = newHoliday.date;
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.endDate);
 
@@ -223,22 +230,26 @@ const AcademicCalendarForm: React.FC = () => {
     }
 
     // Check for duplicate holiday dates
-    const existingHoliday = formData.holidays?.find(holiday => holiday.date === newHoliday.date);
+    const existingHoliday = formData.holidays?.find(holiday => holiday.date === holidayDateStr);
     if (existingHoliday) {
       toast({
         title: "Error",
-        description: `A holiday already exists on ${formatDate(newHoliday.date)}. Please choose a different date.`,
+        description: `A holiday already exists on ${formatDate(holidayDateStr)}. Please choose a different date.`,
         variant: "destructive",
       });
       return;
     }
 
-    const updatedHolidays = [...(formData.holidays || []), newHoliday as Holiday];
+    const updatedHolidays = [...(formData.holidays || []), {
+      name: newHoliday.name,
+      date: holidayDateStr,
+      description: newHoliday.description || ''
+    } as Holiday];
     setFormData(prev => ({ ...prev, holidays: updatedHolidays }));
 
     setNewHoliday({
       name: '',
-      date: '',
+      date: undefined,
       description: '',
     });
 
@@ -444,7 +455,7 @@ const AcademicCalendarForm: React.FC = () => {
             </p>
           </div>
           <Button
-            variant="outline"
+            intent="secondary"
             onClick={() => navigate('/school-settings/academic-calendars')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -508,14 +519,11 @@ const AcademicCalendarForm: React.FC = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="startDate">Start Date *</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={formatDateForInput(formData.startDate || '')}
-                      onChange={(e) => handleInputChange('startDate', e.target.value)}
-                      min={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.startDate) : undefined}
-                      max={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.endDate) : undefined}
-                      required
+                    <DatePicker
+                      value={formData.startDate ? new Date(formData.startDate) : undefined}
+                      onChange={(date) => handleInputChange('startDate', date ? date.toISOString().split('T')[0] : '')}
+                      minDate={selectedAcademicYear ? new Date(selectedAcademicYear.startDate) : undefined}
+                      maxDate={selectedAcademicYear ? new Date(selectedAcademicYear.endDate) : undefined}
                     />
                     {selectedAcademicYear && (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -526,14 +534,11 @@ const AcademicCalendarForm: React.FC = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="endDate">End Date *</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={formatDateForInput(formData.endDate || '')}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      min={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.startDate) : undefined}
-                      max={selectedAcademicYear ? formatDateForInput(selectedAcademicYear.endDate) : undefined}
-                      required
+                    <DatePicker
+                      value={formData.endDate ? new Date(formData.endDate) : undefined}
+                      onChange={(date) => handleInputChange('endDate', date ? date.toISOString().split('T')[0] : '')}
+                      minDate={selectedAcademicYear ? new Date(selectedAcademicYear.startDate) : undefined}
+                      maxDate={selectedAcademicYear ? new Date(selectedAcademicYear.endDate) : undefined}
                     />
                     {selectedAcademicYear && (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -550,7 +555,7 @@ const AcademicCalendarForm: React.FC = () => {
                     <h3 className="text-lg font-semibold">Holidays</h3>
                     <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button type="button" variant="outline">
+                        <Button type="button" intent="action">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Holiday
                         </Button>
@@ -571,13 +576,11 @@ const AcademicCalendarForm: React.FC = () => {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="holidayDate">Holiday Date *</Label>
-                            <Input
-                              id="holidayDate"
-                              type="date"
-                              value={formatDateForInput(newHoliday.date || '')}
-                              onChange={(e) => handleHolidayInputChange('date', e.target.value)}
-                              min={formData.startDate ? formatDateForInput(formData.startDate) : undefined}
-                              max={formData.endDate ? formatDateForInput(formData.endDate) : undefined}
+                            <DatePicker
+                              value={newHoliday.date}
+                              onChange={(date) => handleHolidayInputChange('date', date)}
+                              minDate={formData.startDate ? new Date(formData.startDate) : undefined}
+                              maxDate={formData.endDate ? new Date(formData.endDate) : undefined}
                             />
                             {formData.startDate && formData.endDate && (
                               <p className="text-xs text-gray-500 dark:text-gray-400">

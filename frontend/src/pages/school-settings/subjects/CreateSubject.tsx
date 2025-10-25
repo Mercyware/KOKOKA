@@ -128,7 +128,7 @@ const CreateSubject: React.FC = () => {
               Create New Subject
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Add a new subject to your school's curriculum
+              Add a new subject to your school
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate('/school-settings/subjects')}>

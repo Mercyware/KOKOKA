@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const academicYearController = require('../controllers/academicYearController');
-// const authMiddleware = require('../middlewares/authMiddleware');
-// const roleMiddleware = require('../middlewares/roleMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
+const roleMiddleware = require('../middlewares/roleMiddleware');
 
-// Protect all routes - TEMPORARILY DISABLED FOR TESTING
-// router.use(authMiddleware.protect);
+// Protect all routes
+router.use(authMiddleware.protect);
 
-// Check if academic year name exists
-
+// Check if academic year name exists (accessible to all authenticated users)
 router.get('/check-name', academicYearController.checkAcademicYearName);
 
 /**
@@ -202,8 +201,8 @@ router.get('/current/active', academicYearController.getCurrentAcademicYear);
  */
 router.get('/active/year', academicYearController.getActiveAcademicYear);
 
-// Admin only routes - TEMPORARILY DISABLED FOR TESTING
-// router.use(roleMiddleware.restrictTo('admin'));
+// Admin only routes (write operations)
+router.use(roleMiddleware.restrictTo('admin'));
 
 /**
  * @swagger

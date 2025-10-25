@@ -25,71 +25,90 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
-				
-				// Brand colors - Siohioma inspired
+
+				// Modern brand colors
 				brand: {
-					50: '#f0fdf4',
-					100: '#dcfce7',
-					200: '#bbf7d0',
-					300: '#86efac',
-					400: '#4ade80',
-					500: '#22c55e',
-					600: '#16a34a',
-					700: '#15803d',
-					800: '#166534',
-					900: '#14532d',
-					950: '#052e16',
+					// Teal (Primary)
+					primary: 'hsl(var(--brand-primary))',
+					'primary-dark': 'hsl(var(--brand-primary-dark))',
+					'primary-light': 'hsl(var(--brand-primary-light))',
+					// Indigo (Secondary)
+					secondary: 'hsl(var(--brand-secondary))',
+					// Amber (Accent)
+					accent: 'hsl(var(--brand-accent))',
+					// Success
+					success: 'hsl(var(--brand-success))',
+					// Warning
+					warning: 'hsl(var(--brand-warning))',
+					// Info
+					info: 'hsl(var(--brand-info))',
 				},
-				// Custom Siohioma colors using CSS variables
-				'siohioma-primary': 'hsl(var(--siohioma-primary))',
-				'siohioma-primary-dark': 'hsl(var(--siohioma-primary-dark))',
-				'siohioma-orange': 'hsl(var(--siohioma-orange))',
-				'siohioma-light-green': 'hsl(var(--siohioma-light-green))',
-				'siohioma-yellow': 'hsl(var(--siohioma-yellow))',
-				
-				siohioma: {
-					// Main green theme
-					primary: '#1a5f3f',
-					'primary-dark': '#0d4b3b',
-					'primary-light': '#2d7a5f',
-					// Accent colors
-					orange: '#f97316',
-					'orange-light': '#fb923c',
-					'light-green': '#84cc16',
-					yellow: '#eab308',
-					// Gray variants
-					gray: {
-						50: '#f9fafb',
-						100: '#f3f4f6',
-						200: '#e5e7eb',
-						300: '#d1d5db',
-						400: '#9ca3af',
-						500: '#6b7280',
-						600: '#4b5563',
-						700: '#374151',
-						800: '#1f2937',
-						900: '#111827',
-					}
-				},
-				
+
+				// Primary - Teal/Cyan
 				primary: {
-					DEFAULT: '#1a5f3f',
+					DEFAULT: '#0891B2',  // cyan-600
 					foreground: '#ffffff',
-					50: '#f0fdf4',
-					100: '#dcfce7',
-					200: '#bbf7d0',
-					300: '#86efac',
-					400: '#4ade80',
-					500: '#1a5f3f',
-					600: '#16a34a',
-					700: '#15803d',
-					800: '#166534',
-					900: '#14532d',
+					50: '#ecfeff',
+					100: '#cffafe',
+					200: '#a5f3fc',
+					300: '#67e8f9',
+					400: '#22d3ee',
+					500: '#06b6d4',
+					600: '#0891b2',
+					700: '#0e7490',
+					800: '#155e75',
+					900: '#164e63',
+					950: '#083344',
 				},
+
+				// Secondary - Indigo
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					foreground: 'hsl(var(--secondary-foreground))',
+					50: '#eef2ff',
+					100: '#e0e7ff',
+					200: '#c7d2fe',
+					300: '#a5b4fc',
+					400: '#818cf8',
+					500: '#6366f1',
+					600: '#4f46e5',
+					700: '#4338ca',
+					800: '#3730a3',
+					900: '#312e81',
 				},
+
+				// Accent - Amber
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))',
+					50: '#fffbeb',
+					100: '#fef3c7',
+					200: '#fde68a',
+					300: '#fcd34d',
+					400: '#fbbf24',
+					500: '#f59e0b',
+					600: '#d97706',
+					700: '#b45309',
+					800: '#92400e',
+					900: '#78350f',
+				},
+
+				// Success - Emerald
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))',
+					50: '#ecfdf5',
+					100: '#d1fae5',
+					200: '#a7f3d0',
+					300: '#6ee7b7',
+					400: '#34d399',
+					500: '#10b981',
+					600: '#059669',
+					700: '#047857',
+					800: '#065f46',
+					900: '#064e3b',
+				},
+
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
@@ -98,22 +117,13 @@ export default {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
-				accent: {
-					DEFAULT: '#f97316',
-					foreground: '#ffffff',
-					orange: '#f97316',
-					'orange-light': '#fb923c',
-					green: '#84cc16',
-					yellow: '#eab308',
-				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
 				},
 				card: {
-					DEFAULT: '#ffffff',
-					foreground: '#1f2937',
-					dark: '#f9fafb',
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--card-foreground))',
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -124,7 +134,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+
+				// Legacy siohioma colors for backward compatibility
+				'siohioma-primary': 'hsl(var(--brand-primary))',
+				'siohioma-primary-dark': 'hsl(var(--brand-primary-dark))',
+				'siohioma-orange': 'hsl(var(--brand-accent))',
+				'siohioma-light-green': 'hsl(var(--brand-primary-light))',
+				'siohioma-yellow': 'hsl(var(--brand-accent))',
+				'siohioma-accent': 'hsl(var(--brand-accent))',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

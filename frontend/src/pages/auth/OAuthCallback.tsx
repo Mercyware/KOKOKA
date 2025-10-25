@@ -12,13 +12,14 @@ const OAuthCallback: React.FC = () => {
   useEffect(() => {
     const handleOAuthCallback = () => {
       const token = searchParams.get('token');
+      const refreshToken = searchParams.get('refreshToken');
       const userParam = searchParams.get('user');
       const error = searchParams.get('error');
-      
+
       if (error) {
         // Handle OAuth error
         let errorMessage = 'Authentication failed';
-        
+
         switch (error) {
           case 'oauth_failed':
             errorMessage = 'OAuth authentication failed. Please try again.';
@@ -29,7 +30,7 @@ const OAuthCallback: React.FC = () => {
           default:
             errorMessage = 'Authentication failed. Please try again.';
         }
-        
+
         navigate('/login', {
           state: {
             error: errorMessage
@@ -37,15 +38,15 @@ const OAuthCallback: React.FC = () => {
         });
         return;
       }
-      
+
       if (token && userParam) {
         try {
           // Decode user data
           const user = JSON.parse(decodeURIComponent(userParam));
-          
+
           // Set token and user in auth context
-          handleOAuthSuccess(token, user);
-          
+          handleOAuthSuccess(token, user, refreshToken || undefined);
+
           // Redirect to dashboard
           navigate('/dashboard', {
             state: {
@@ -69,7 +70,7 @@ const OAuthCallback: React.FC = () => {
         });
       }
     };
-    
+
     handleOAuthCallback();
   }, [searchParams, navigate, handleOAuthSuccess]);
   

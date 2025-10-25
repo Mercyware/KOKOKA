@@ -242,6 +242,17 @@ export {
   CommandSeparator,
 } from './command';
 
+// Date & Time Pickers
+export { Calendar } from './calendar';
+export {
+  DatePicker,
+  DateTimePicker,
+  DatePickerWithRange,
+  type DatePickerProps,
+  type DateTimePickerProps,
+  type DatePickerWithRangeProps,
+} from './date-picker';
+
 // Data Display
 export {
   Table,

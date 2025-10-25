@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 const Register: React.FC = () => {
   const { register, authState } = useAuth();
   const navigate = useNavigate();
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -21,11 +21,18 @@ const Register: React.FC = () => {
     confirmPassword: '',
     role: 'student'
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect to dashboard if already authenticated
+  React.useEffect(() => {
+    if (!authState.loading && authState.isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authState.isAuthenticated, authState.loading, navigate]);
 
   // Handle input changes
   const handleInputChange = (name: string, value: string) => {

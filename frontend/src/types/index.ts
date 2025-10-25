@@ -66,6 +66,9 @@ export interface User {
   isActive: boolean;
   // Additional fields from auth response
   emailVerified?: boolean;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  onboardingData?: any;
   student?: any;
   teacher?: any;
   guardian?: any;

@@ -6,12 +6,31 @@ import {
   TrendingUp, 
   Calendar, 
   AlertCircle,
+  AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  BarChart3,
+  Activity,
+  Star,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription,
+  StatsCard,
+  Button,
+  PageContainer,
+  PageHeader,
+  PageTitle,
+  PageDescription,
+  PageContent,
+  StatusBadge
+} from '@/components/ui';
 import EmailVerificationCard from './EmailVerificationCard';
 
 interface DashboardProps {
@@ -30,38 +49,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
     { 
       title: 'Total Students', 
       value: '1,247', 
-      icon: Users, 
-      change: '+12%', 
-      changeType: 'positive',
+      icon: <Users className="w-6 h-6" />, 
+      trend: { value: '+12%', direction: 'up' as const, label: 'vs last month' },
       description: 'Active enrolled students',
-      color: 'bg-siohioma-primary' 
     },
     { 
       title: 'Teaching Staff', 
       value: '78', 
-      icon: GraduationCap, 
-      change: '+3%', 
-      changeType: 'positive',
+      icon: <GraduationCap className="w-6 h-6" />, 
+      trend: { value: '+3%', direction: 'up' as const, label: 'vs last month' },
       description: 'Active faculty members',
-      color: 'bg-siohioma-accent' 
     },
     { 
       title: 'Course Offerings', 
       value: '45', 
-      icon: BookOpen, 
-      change: '+8%', 
-      changeType: 'positive',
+      icon: <BookOpen className="w-6 h-6" />, 
+      trend: { value: '+8%', direction: 'up' as const, label: 'vs last month' },
       description: 'Available courses',
-      color: 'bg-siohioma-secondary' 
     },
     { 
       title: 'Attendance Rate', 
       value: '94.2%', 
-      icon: TrendingUp, 
-      change: '+2.1%', 
-      changeType: 'positive',
+      icon: <BarChart3 className="w-6 h-6" />, 
+      trend: { value: '+2.1%', direction: 'up' as const, label: 'vs last month' },
       description: 'Average daily attendance',
-      color: 'bg-siohioma-light-green' 
     },
   ];
 
@@ -86,8 +97,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="px-siohioma-2xl py-siohioma-xl space-y-siohioma-xl">
+    <PageContainer maxWidth="full" padding="none" className="bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="px-4 md:px-6 lg:px-8 py-6 space-y-8">
         {/* Email Verification Card - Show if user email not verified */}
         {user && !user.emailVerified && (
           <EmailVerificationCard
@@ -100,171 +111,196 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
           />
         )}
 
+        {/* Welcome Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Here's what's happening at your school today.
+          </p>
+        </div>
+
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-siohioma-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <div key={index} className="siohioma-metric-card group hover:shadow-siohioma-md transition-all duration-200">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="siohioma-body-sm text-gray-500 mb-2">{stat.title}</p>
-                  <p className="siohioma-heading-1 mb-1">{stat.value}</p>
-                  <div className="siohioma-trend-up">
-                    <TrendingUp size={14} />
-                    <span>{stat.change} vs last month</span>
-                  </div>
-                  <p className="siohioma-caption text-gray-400 mt-2">{stat.description}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-siohioma-xl text-white group-hover:scale-105 transition-transform duration-200`}>
-                  <stat.icon size={24} />
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              description={stat.description}
+              trend={stat.trend}
+              icon={stat.icon}
+              variant="elevated"
+              className="hover:shadow-lg transition-shadow duration-200"
+            />
           ))}
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-siohioma-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* AI Performance Insights */}
           <div className="lg:col-span-2">
-            <div className="siohioma-card">
-              <div className="flex items-center gap-3 p-siohioma-xl pb-siohioma-lg border-b border-gray-100">
-                <div className="bg-siohioma-primary/10 p-2 rounded-siohioma-lg">
-                  <TrendingUp className="h-5 w-5 text-siohioma-primary" />
+            <Card variant="elevated">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/20 p-2 rounded-lg">
+                    <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <CardTitle>Performance Analytics</CardTitle>
+                    <CardDescription>AI-powered insights and recommendations</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="siohioma-heading-3">Performance Analytics</h3>
-                  <p className="siohioma-body-sm text-gray-500">AI-powered insights and recommendations</p>
-                </div>
-              </div>
-              <div className="p-siohioma-xl space-y-siohioma-lg">
-                {insights.map((insight, index) => (
-                  <div key={index} className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="siohioma-body font-siohioma-medium text-gray-700">{insight.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="siohioma-body-sm text-gray-600">{insight.value}%</span>
-                        <div className={`flex items-center gap-1 ${
-                          insight.trend === 'up' ? 'text-siohioma-light-green' : 
-                          insight.trend === 'down' ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          <TrendingUp size={14} />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {insights.map((insight, index) => (
+                    <div key={index} className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">{insight.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{insight.value}%</span>
+                          <div className="flex items-center">
+                            {insight.trend === 'up' ? (
+                              <ArrowUpRight className="w-4 h-4 text-green-600" />
+                            ) : insight.trend === 'down' ? (
+                              <ArrowDownRight className="w-4 h-4 text-red-600" />
+                            ) : (
+                              <Minus className="w-4 h-4 text-gray-500" />
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-500 ${
+                            insight.trend === 'up' ? 'bg-green-600' :
+                            insight.trend === 'down' ? 'bg-red-600' : 'bg-blue-600'
+                          }`}
+                          style={{ width: `${insight.value}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{insight.description}</p>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-siohioma-primary h-2 rounded-full transition-all duration-500" 
-                        style={{ width: `${insight.value}%` }}
-                      ></div>
-                    </div>
-                    <p className="siohioma-body-sm text-gray-500">{insight.description}</p>
-                  </div>
-                ))}
-                
-                <div className="bg-siohioma-primary/5 border border-siohioma-primary/20 rounded-siohioma-xl p-siohioma-lg mt-siohioma-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-siohioma-primary/10 p-2 rounded-siohioma-lg">
-                      <TrendingUp className="h-4 w-4 text-siohioma-primary" />
-                    </div>
-                    <div>
-                      <h4 className="siohioma-body font-siohioma-semibold text-siohioma-primary mb-2">
-                        AI Recommendation
-                      </h4>
-                      <p className="siohioma-body-sm text-gray-700">
-                        Consider implementing additional support for Mathematics courses. 
-                        Analysis shows 15% lower engagement in afternoon sessions.
-                      </p>
+                  ))}
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/50 rounded-lg p-4 mt-6">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-blue-100 dark:bg-blue-900/20 p-2 rounded-lg">
+                        <Star className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                          AI Recommendation
+                        </h4>
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          Consider implementing additional support for Mathematics courses. 
+                          Analysis shows 15% lower engagement in afternoon sessions.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Upcoming Events */}
-          <div className="siohioma-card">
-            <div className="flex items-center gap-3 p-siohioma-xl pb-siohioma-lg border-b border-gray-100">
-              <div className="bg-siohioma-accent/10 p-2 rounded-siohioma-lg">
-                <Calendar className="h-5 w-5 text-siohioma-accent" />
-              </div>
-              <div>
-                <h3 className="siohioma-heading-3">Upcoming Events</h3>
-                <p className="siohioma-body-sm text-gray-500">Important dates and deadlines</p>
-              </div>
-            </div>
-            <div className="p-siohioma-xl space-y-4">
-              {upcomingEvents.map((event, index) => (
-                <div key={index} className="flex items-start gap-3 p-siohioma-md rounded-siohioma-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                  <div className={`p-2 rounded-siohioma-lg ${
-                    event.priority === 'high' ? 'bg-red-100' :
-                    event.priority === 'medium' ? 'bg-siohioma-accent/10' : 'bg-gray-100'
-                  }`}>
-                    <Calendar className={`h-4 w-4 ${
-                      event.priority === 'high' ? 'text-red-600' :
-                      event.priority === 'medium' ? 'text-siohioma-accent' : 'text-gray-500'
-                    }`} />
+          <div>
+            <Card variant="elevated">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-100 dark:bg-purple-900/20 p-2 rounded-lg">
+                    <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="flex-1">
-                    <p className="siohioma-body font-siohioma-medium text-gray-900">{event.title}</p>
-                    <p className="siohioma-body-sm text-gray-600">{event.date}</p>
-                    <p className="siohioma-caption text-gray-500">{event.time}</p>
+                  <div>
+                    <CardTitle>Upcoming Events</CardTitle>
+                    <CardDescription>Important dates and deadlines</CardDescription>
                   </div>
-                  {event.priority === 'high' && (
-                    <div className="siohioma-status-pending">
-                      High Priority
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {upcomingEvents.map((event, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+                      <div className={`p-2 rounded-lg ${
+                        event.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20' :
+                        event.priority === 'medium' ? 'bg-amber-100 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-gray-700'
+                      }`}>
+                        <Calendar className={`h-4 w-4 ${
+                          event.priority === 'high' ? 'text-red-600 dark:text-red-400' :
+                          event.priority === 'medium' ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{event.title}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{event.date}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">{event.time}</p>
+                      </div>
+                      {event.priority === 'high' && (
+                        <StatusBadge status="error" variant="solid" size="sm">High Priority</StatusBadge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Recent Activities */}
-        <div className="siohioma-card">
-          <div className="flex items-center gap-3 p-siohioma-xl pb-siohioma-lg border-b border-gray-100">
-            <div className="bg-siohioma-primary/10 p-2 rounded-siohioma-lg">
-              <Clock className="h-5 w-5 text-siohioma-primary" />
+        <Card variant="elevated">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-lg">
+                <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle>Recent Activities</CardTitle>
+                <CardDescription>Latest updates and notifications</CardDescription>
+              </div>
             </div>
-            <div>
-              <h3 className="siohioma-heading-3">Recent Activities</h3>
-              <p className="siohioma-body-sm text-gray-500">Latest updates and notifications</p>
-            </div>
-          </div>
-          <div className="p-siohioma-xl">
+          </CardHeader>
+          <CardContent>
             <div className="space-y-3">
               {recentActivities.map((activity, index) => (
-                <div key={index} className="flex items-center gap-3 p-siohioma-md rounded-siohioma-lg hover:bg-gray-50 transition-colors duration-200">
-                  <div className={`p-2 rounded-siohioma-lg ${
-                    activity.type === 'success' ? 'bg-siohioma-light-green/20' :
-                    activity.type === 'warning' ? 'bg-siohioma-accent/10' :
-                    activity.type === 'info' ? 'bg-siohioma-primary/10' : 'bg-gray-100'
+                <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-200">
+                  <div className={`p-2 rounded-lg ${
+                    activity.type === 'success' ? 'bg-green-100 dark:bg-green-900/20' :
+                    activity.type === 'warning' ? 'bg-amber-100 dark:bg-amber-900/20' :
+                    activity.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/20' : 'bg-gray-100 dark:bg-gray-700'
                   }`}>
-                    {activity.type === 'success' ? <CheckCircle className="h-4 w-4 text-siohioma-light-green" /> :
-                     activity.type === 'warning' ? <AlertCircle className="h-4 w-4 text-siohioma-accent" /> :
-                     activity.type === 'info' ? <Calendar className="h-4 w-4 text-siohioma-primary" /> :
-                     <Clock className="h-4 w-4 text-gray-600" />}
+                    {activity.type === 'success' ? (
+                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    ) : activity.type === 'warning' ? (
+                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    ) : activity.type === 'info' ? (
+                      <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <p className="siohioma-body font-siohioma-medium text-gray-900">{activity.action}</p>
-                    <p className="siohioma-body-sm text-gray-600">{activity.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{activity.action}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{activity.name}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="siohioma-caption text-gray-400">{activity.time}</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{activity.time}</p>
                     {activity.type === 'success' && (
-                      <div className="siohioma-status-completed mt-1">Completed</div>
+                      <StatusBadge status="success" size="sm" className="mt-1">Completed</StatusBadge>
                     )}
                     {activity.type === 'warning' && (
-                      <div className="siohioma-status-pending mt-1">Action Needed</div>
+                      <StatusBadge status="warning" size="sm" className="mt-1">Action Needed</StatusBadge>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

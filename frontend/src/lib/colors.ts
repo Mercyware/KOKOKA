@@ -83,13 +83,13 @@ export const colors = {
     }
   },
 
-  // Purple accent colors
-  purple: {
-    50: 'bg-purple-50 dark:bg-purple-950',
-    100: 'bg-purple-100 dark:bg-purple-900',
-    600: 'bg-purple-600 dark:bg-purple-700',
+  // Teal accent colors (for consistency with primary)
+  teal: {
+    50: 'bg-cyan-50 dark:bg-cyan-950',
+    100: 'bg-cyan-100 dark:bg-cyan-900',
+    600: 'bg-cyan-600 dark:bg-cyan-700',
     text: {
-      600: 'text-purple-600 dark:text-purple-400',
+      600: 'text-cyan-600 dark:text-cyan-400',
     }
   },
 
@@ -120,11 +120,11 @@ export const colors = {
 
   // Gradients
   gradients: {
-    primaryToPurple: 'bg-gradient-to-r from-blue-600 to-purple-600',
-    primaryToPurpleHover: 'hover:from-blue-700 hover:to-purple-700',
-    primaryLight: 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20',
-    primary100: 'bg-gradient-to-r from-purple-100 to-blue-100',
-    grayToBlue: 'bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20',
+    primaryToTeal: 'bg-gradient-to-r from-cyan-600 to-teal-600',
+    primaryToTealHover: 'hover:from-cyan-700 hover:to-teal-700',
+    primaryLight: 'bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-900/20 dark:to-teal-900/20',
+    primary100: 'bg-gradient-to-r from-cyan-100 to-teal-100',
+    grayToTeal: 'bg-gradient-to-r from-gray-50 to-cyan-50 dark:from-gray-800 dark:to-cyan-900/20',
   }
 } as const;
 
@@ -153,7 +153,7 @@ export const colorCombinations = {
   button: {
     primary: {
       background: colors.primary[600],
-      hover: 'hover:bg-blue-700 dark:hover:bg-blue-600',
+      hover: 'hover:bg-cyan-700 dark:hover:bg-cyan-600',
       text: 'text-white',
     },
     secondary: {

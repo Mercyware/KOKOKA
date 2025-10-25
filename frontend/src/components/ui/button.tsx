@@ -10,71 +10,58 @@ const buttonVariants = cva(
   [
     "group relative inline-flex items-center justify-center",
     "font-siohioma-medium transition-all duration-200 ease-out",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-siohioma-primary focus-visible:ring-offset-2",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
     "disabled:pointer-events-none disabled:opacity-60",
     "border border-transparent",
   ],
   {
     variants: {
       variant: {
-        default: "siohioma-button-primary shadow-siohioma-sm hover:shadow-siohioma-md",
-        outline: "siohioma-button-secondary shadow-siohioma-sm hover:shadow-siohioma-md",
+        outline: [
+          "bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700",
+          "text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-slate-100",
+          "border border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500",
+          "shadow-siohioma-sm hover:shadow-siohioma-md",
+        ],
         ghost: [
-          "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+          "bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100",
           "border-transparent shadow-none hover:shadow-siohioma-sm",
         ],
-        destructive: [
-          "bg-red-600 hover:bg-red-700 text-white",
-          "border-red-600 hover:border-red-700",
-          "shadow-siohioma-sm hover:shadow-siohioma-md",
-        ],
-        secondary: [
-          "bg-gray-100 hover:bg-gray-200 text-gray-900",
-          "border-gray-200 hover:border-gray-300",
-          "shadow-siohioma-sm hover:shadow-siohioma-md",
-        ],
         link: [
-          "text-siohioma-primary underline-offset-4 hover:underline bg-transparent",
+          "text-primary hover:text-primary/80 underline-offset-4 hover:underline bg-transparent",
           "border-transparent shadow-none",
         ],
       },
       intent: {
-        primary: "siohioma-button-primary shadow-siohioma-sm hover:shadow-siohioma-md",
-        secondary: "siohioma-button-secondary shadow-siohioma-sm hover:shadow-siohioma-md",
+        primary: [
+          "bg-primary hover:bg-cyan-700 dark:hover:bg-cyan-600 text-white",
+          "border-primary hover:border-cyan-700 dark:hover:border-cyan-600",
+          "shadow-siohioma-sm hover:shadow-siohioma-md",
+        ],
+        secondary: [
+          "bg-secondary hover:bg-cyan-700 dark:hover:bg-cyan-600 text-white",
+          "border-secondary hover:border-cyan-700 dark:hover:border-cyan-600",
+          "shadow-siohioma-sm hover:shadow-siohioma-md",
+        ],
         cancel: [
-          "bg-white hover:bg-red-50 !text-red-600 hover:!text-red-700",
-          "dark:bg-gray-950 dark:hover:bg-red-950/20 dark:!text-red-400 dark:hover:!text-red-300",
-          "!border-red-600 hover:!border-red-700",
-          "dark:!border-red-800 dark:hover:!border-red-700",
+          "bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/20 !text-red-600 dark:!text-red-400 hover:!text-red-700 dark:hover:!text-red-300",
+          "!border-red-600 dark:!border-red-800 hover:!border-red-700",
           "shadow-siohioma-sm hover:shadow-siohioma-md",
         ],
         action: [
-          "bg-siohioma-accent hover:bg-siohioma-accent/90 text-white",
-          "border-siohioma-accent hover:border-siohioma-accent",
+          "bg-accent hover:bg-amber-600 dark:hover:bg-amber-500 text-white",
+          "border-accent hover:border-amber-600 dark:hover:border-amber-500",
           "shadow-siohioma-sm hover:shadow-siohioma-md",
         ],
         success: [
-          "bg-green-600 hover:bg-green-700 text-white",
-          "border-green-600 hover:border-green-700",
+          "bg-success hover:bg-emerald-600 dark:hover:bg-emerald-500 text-white",
+          "border-success hover:border-emerald-600 dark:hover:border-emerald-500",
           "shadow-siohioma-sm hover:shadow-siohioma-md",
         ],
         danger: [
-          "bg-red-600 hover:bg-red-700 text-white",
-          "border-red-600 hover:border-red-700",
+          "bg-red-600 hover:bg-red-700 dark:hover:bg-red-600 text-white",
+          "border-red-600 hover:border-red-700 dark:hover:border-red-600",
           "shadow-siohioma-sm hover:shadow-siohioma-md",
-        ],
-        warning: [
-          "bg-siohioma-accent hover:bg-siohioma-accent/90 text-white",
-          "border-siohioma-accent hover:border-siohioma-accent",
-          "shadow-siohioma-sm hover:shadow-siohioma-md",
-        ],
-        ghost: [
-          "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-          "border-transparent shadow-none hover:shadow-siohioma-sm",
-        ],
-        link: [
-          "text-siohioma-primary underline-offset-4 hover:underline bg-transparent",
-          "border-transparent shadow-none",
         ],
       },
       size: {
@@ -116,8 +103,7 @@ const buttonVariants = cva(
       },
     ],
     defaultVariants: {
-      variant: "default",
-      intent: "secondary",
+      intent: "primary",
       size: "md",
       width: "auto",
       iconOnly: false,

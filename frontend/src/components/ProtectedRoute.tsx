@@ -1,30 +1,28 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import ActivationPendingScreen from './ActivationPendingScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
+  requireActiveSchool?: boolean; // New prop to control school activation check
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  // For demonstration purposes, we're bypassing authentication
-  // In a real app, you would use the commented out code below
-  
-  /*
-  const { authState } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  allowedRoles,
+  requireActiveSchool = true // Default to true - most routes require active school
+}) => {
+  const { authState, checkAuth } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
   if (authState.loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600"></div>
+      </div>
     );
   }
 
@@ -35,12 +33,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Check if user has required role
   if (allowedRoles && authState.user && !allowedRoles.includes(authState.user.role)) {
-    // Redirect to unauthorized page or dashboard based on user role
-    return <Navigate to="/unauthorized" replace />;
+    // Redirect to dashboard if user doesn't have required role
+    return <Navigate to="/dashboard" replace />;
   }
-  */
 
-  // Render children without authentication check
+  // Check if school is active (if required for this route)
+  if (requireActiveSchool && authState.user?.school?.status !== 'ACTIVE') {
+    return (
+      <ActivationPendingScreen
+        schoolName={authState.user?.school?.name || 'Your School'}
+        schoolStatus={authState.user?.school?.status || 'PENDING'}
+        userEmail={authState.user?.email}
+        onRefresh={checkAuth}
+      />
+    );
+  }
+
+  // Render children if authenticated and authorized
   return <>{children}</>;
 };
 

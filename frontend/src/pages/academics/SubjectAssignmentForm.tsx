@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui';
 import { SubjectAssignment, CreateSubjectAssignmentData, UpdateSubjectAssignmentData } from '@/services/subjectAssignmentService';
 
 interface Staff {
@@ -67,8 +68,8 @@ export const SubjectAssignmentForm: React.FC<SubjectAssignmentFormProps> = ({
     classId: assignment?.classId || '',
     academicYearId: assignment?.academicYearId || '',
     sectionId: assignment?.sectionId || '',
-    startDate: assignment?.startDate ? new Date(assignment.startDate).toISOString().split('T')[0] : '',
-    endDate: assignment?.endDate ? new Date(assignment.endDate).toISOString().split('T')[0] : '',
+    startDate: assignment?.startDate ? new Date(assignment.startDate) : undefined as Date | undefined,
+    endDate: assignment?.endDate ? new Date(assignment.endDate) : undefined as Date | undefined,
     hoursPerWeek: assignment?.hoursPerWeek?.toString() || '',
     term: assignment?.term?.toString() || '',
     isMainTeacher: assignment?.isMainTeacher ?? true,
@@ -105,8 +106,8 @@ export const SubjectAssignmentForm: React.FC<SubjectAssignmentFormProps> = ({
         hoursPerWeek: formData.hoursPerWeek ? parseInt(formData.hoursPerWeek.toString()) : undefined,
         term: formData.term && formData.term !== 'all' ? parseInt(formData.term.toString()) : undefined,
         sectionId: formData.sectionId && formData.sectionId !== 'all' ? formData.sectionId : null,
-        startDate: formData.startDate || undefined,
-        endDate: formData.endDate || undefined,
+        startDate: formData.startDate ? formData.startDate.toISOString().split('T')[0] : undefined,
+        endDate: formData.endDate ? formData.endDate.toISOString().split('T')[0] : undefined,
         notes: formData.notes || undefined,
         description: formData.description || undefined
       };
@@ -298,21 +299,17 @@ export const SubjectAssignmentForm: React.FC<SubjectAssignmentFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="startDate">Start Date</Label>
-          <Input
-            id="startDate"
-            type="date"
+          <DatePicker
             value={formData.startDate}
-            onChange={(e) => handleChange('startDate', e.target.value)}
+            onChange={(date) => handleChange('startDate', date)}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="endDate">End Date</Label>
-          <Input
-            id="endDate"
-            type="date"
+          <DatePicker
             value={formData.endDate}
-            onChange={(e) => handleChange('endDate', e.target.value)}
+            onChange={(date) => handleChange('endDate', date)}
           />
         </div>
       </div>

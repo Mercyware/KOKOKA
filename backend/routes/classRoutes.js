@@ -297,9 +297,6 @@ router.get('/:id/students', classController.getClassStudents);
  */
 router.get('/academic-year/:academicYearId', classController.getClassesByAcademicYear);
 
-// Admin and teacher routes
-//router.use(roleMiddleware.restrictTo('admin', 'teacher'));
-
 /**
  * @swagger
  * /api/classes/{id}/subjects:
@@ -361,7 +358,7 @@ router.get('/academic-year/:academicYearId', classController.getClassesByAcademi
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.post('/:id/subjects', classController.addSubjectToClass);
+router.post('/:id/subjects', roleMiddleware.restrictTo('admin', 'teacher'), classController.addSubjectToClass);
 
 /**
  * @swagger
@@ -424,12 +421,7 @@ router.post('/:id/subjects', classController.addSubjectToClass);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.delete('/:id/subjects', classController.removeSubjectFromClass);
-
-/*
-// Admin only routes
-router.use(roleMiddleware.restrictTo('admin'));
-*/
+router.delete('/:id/subjects', roleMiddleware.restrictTo('admin', 'teacher'), classController.removeSubjectFromClass);
 
 /**
  * @swagger
@@ -493,7 +485,7 @@ router.use(roleMiddleware.restrictTo('admin'));
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.put('/bulk-update-grades', classController.bulkUpdateGrades);
+router.put('/bulk-update-grades', roleMiddleware.restrictTo('admin'), classController.bulkUpdateGrades);
 
 /**
  * @swagger
@@ -565,7 +557,7 @@ router.put('/bulk-update-grades', classController.bulkUpdateGrades);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.post('/', classController.createClass);
+router.post('/', roleMiddleware.restrictTo('admin'), classController.createClass);
 
 /**
  * @swagger
@@ -640,7 +632,7 @@ router.post('/', classController.createClass);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.put('/:id', classController.updateClass);
+router.put('/:id', roleMiddleware.restrictTo('admin'), classController.updateClass);
 
 /**
  * @swagger
@@ -678,6 +670,6 @@ router.put('/:id', classController.updateClass);
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */
-router.delete('/:id', classController.deleteClass);
+router.delete('/:id', roleMiddleware.restrictTo('admin'), classController.deleteClass);
 
 module.exports = router;

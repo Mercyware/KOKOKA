@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  DatePicker,
 } from '@/components/ui';
 import { createAllocation, type InventoryItem } from '@/services/inventoryService';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +39,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     quantity: 0,
     allocatedTo: '',
     allocatedToType: 'STUDENT',
-    expectedReturn: '',
+    expectedReturn: undefined as Date | undefined,
     issuedCondition: 'GOOD',
     purpose: '',
     notes: '',
@@ -79,6 +80,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
       await createAllocation({
         ...formData,
+        expectedReturn: formData.expectedReturn ? formData.expectedReturn.toISOString().split('T')[0] : undefined,
         itemId: item.id,
         status: 'ALLOCATED',
       });
@@ -176,11 +178,9 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
             <div>
               <Label htmlFor="expectedReturn">Expected Return Date</Label>
-              <Input
-                id="expectedReturn"
-                type="date"
+              <DatePicker
                 value={formData.expectedReturn}
-                onChange={(e) => setFormData({ ...formData, expectedReturn: e.target.value })}
+                onChange={(date) => setFormData({ ...formData, expectedReturn: date })}
               />
             </div>
 

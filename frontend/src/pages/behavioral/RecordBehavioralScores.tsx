@@ -19,6 +19,7 @@ import {
   SelectValue,
   Textarea,
   FormField,
+  DatePicker,
   toast
 } from '@/components/ui';
 import { Save, ChevronLeft, ChevronRight, User, Target, Heart } from 'lucide-react';
@@ -71,7 +72,7 @@ const RecordBehavioralScores: React.FC = () => {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [assessmentType, setAssessmentType] = useState<'AFFECTIVE' | 'PSYCHOMOTOR'>('AFFECTIVE');
-  const [assessmentDate, setAssessmentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [assessmentDate, setAssessmentDate] = useState<Date>(new Date());
 
   // Student navigation and grading
   const [currentStudentIndex, setCurrentStudentIndex] = useState(0);
@@ -300,14 +301,15 @@ const RecordBehavioralScores: React.FC = () => {
         };
       });
 
+      const assessmentDateStr = assessmentDate.toISOString().split('T')[0];
       const assessmentData = {
-        title: `${assessmentType === 'AFFECTIVE' ? 'Affective' : 'Psychomotor'} Assessment - ${assessmentDate}`,
-        description: `Behavioral assessment recorded on ${assessmentDate}`,
+        title: `${assessmentType === 'AFFECTIVE' ? 'Affective' : 'Psychomotor'} Assessment - ${assessmentDateStr}`,
+        description: `Behavioral assessment recorded on ${assessmentDateStr}`,
         type: assessmentType,
         totalMarks: selectedCriteria.length * 5,
         passingMarks: Math.floor(selectedCriteria.length * 5 * 0.5),
         weight: 1.0,
-        scheduledDate: assessmentDate,
+        scheduledDate: assessmentDateStr,
         subjectId: selectedSubject,
         classId: selectedClass,
         academicYearId: selectedAcademicYear,
@@ -396,11 +398,9 @@ const RecordBehavioralScores: React.FC = () => {
                 </FormField>
 
                 <FormField label="Assessment Date" required>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={assessmentDate}
-                    onChange={(e) => setAssessmentDate(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    onChange={(date) => setAssessmentDate(date || new Date())}
                   />
                 </FormField>
 

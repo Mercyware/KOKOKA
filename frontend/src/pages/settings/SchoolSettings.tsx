@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { DatePicker } from '@/components/ui';
 import {
   getSchoolSettings,
   updateGeneralInfo,
@@ -61,7 +62,7 @@ const SchoolSettings: React.FC = () => {
     subdomain: '',
     logo: '',
     description: '',
-    established: '',
+    established: undefined as Date | undefined,
     type: 'SECONDARY',
     email: '',
     phone: '',
@@ -139,7 +140,7 @@ const SchoolSettings: React.FC = () => {
         subdomain: school.subdomain || '',
         logo: school.logo || '',
         description: school.description || '',
-        established: school.established ? school.established.split('T')[0] : '',
+        established: school.established ? new Date(school.established) : undefined,
         type: school.type || 'SECONDARY',
         email: school.email || '',
         phone: school.phone || '',
@@ -235,7 +236,11 @@ const SchoolSettings: React.FC = () => {
     setSaving(true);
     try {
       const { subdomain, ...dataToUpdate } = generalInfo;
-      await updateGeneralInfo(dataToUpdate);
+      const submitData = {
+        ...dataToUpdate,
+        established: dataToUpdate.established ? dataToUpdate.established.toISOString().split('T')[0] : undefined
+      };
+      await updateGeneralInfo(submitData);
       toast({
         title: 'Success',
         description: 'General information updated successfully',
@@ -539,11 +544,9 @@ const SchoolSettings: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="established">Established Date</Label>
-                      <Input
-                        id="established"
-                        type="date"
+                      <DatePicker
                         value={generalInfo.established}
-                        onChange={(e) => setGeneralInfo({ ...generalInfo, established: e.target.value })}
+                        onChange={(date) => setGeneralInfo({ ...generalInfo, established: date })}
                       />
                     </div>
                     <div className="space-y-2">

@@ -34,7 +34,6 @@ const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
 // const termRoutes = require('./routes/termRoutes');
 const classRoutes = require('./routes/classRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
-const curriculumRoutes = require('./routes/curriculumRoutes');
 const classSubjectHistoryRoutes = require('./routes/classSubjectHistoryRoutes');
 // const teacherSubjectAssignmentRoutes = require('./routes/teacherSubjectAssignmentRoutes');
 // const staffSubjectAssignmentRoutes = require('./routes/staffSubjectAssignmentRoutes');
@@ -54,8 +53,7 @@ const resultRoutes = require('./routes/resultRoutes');
 const subjectAssignmentRoutes = require('./routes/subjectAssignmentRoutes');
 const behavioralAssessmentRoutes = require('./routes/behavioralAssessmentRoutes');
 
-// New Grade Management and Curriculum Routes
-const globalCurriculumRoutes = require('./routes/globalCurriculumRoutes');
+// New Grade Management Routes
 const reportCardRoutes = require('./routes/reportCardRoutes');
 const parentDashboardRoutes = require('./routes/parentDashboardRoutes');
 const imageProxyRoutes = require('./routes/imageProxyRoutes');
@@ -202,8 +200,14 @@ app.get('/api/debug/routes', (req, res) => {
 
 // API routes (temporarily disabled for migration)
 app.use('/api/images', imageProxyRoutes); // Image proxy for serving S3 images
-app.use('/api/schools', schoolRoutes); // School routes enabled
-app.use('/api/auth', authRoutes);
+app.use('/api/schools', schoolRoutes); // School routes - needed for registration
+app.use('/api/auth', authRoutes); // Auth routes - exempt from school activation check
+
+// Note: School activation check has been disabled globally
+// Individual routes that need it should add authMiddleware.requireActiveSchool explicitly
+// This allows onboarding to work properly even before school is activated
+const authMiddleware = require('./middlewares/authMiddleware');
+
 app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/students', studentRoutes);
 // app.use('/api/student-class-history', studentClassHistoryRoutes);
@@ -216,7 +220,6 @@ app.use('/api/academic-calendars', academicCalendarRoutes);
 // app.use('/api/terms', termRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/subjects', subjectRoutes);
-app.use('/api/curricula', curriculumRoutes);
 app.use('/api/class-subject-history', classSubjectHistoryRoutes);
 // app.use('/api/teacher-subject-assignments', teacherSubjectAssignmentRoutes);
 // app.use('/api/staff-subject-assignments', staffSubjectAssignmentRoutes);
@@ -259,8 +262,7 @@ app.use('/api/transportation', transportationRoutes);
 // Inventory Routes
 app.use('/api/inventory', inventoryRoutes);
 
-// New Grade Management and Curriculum Routes
-app.use('/api/global-curricula', globalCurriculumRoutes);
+// New Grade Management Routes
 app.use('/api/report-cards', reportCardRoutes);
 app.use('/api/parent', parentDashboardRoutes);
 

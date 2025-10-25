@@ -185,10 +185,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'hostel-fees', label: 'Fees', icon: DollarSign },
       ]
     },
-
-    // Messaging
-    { id: 'messaging', label: 'Messages', icon: MessageSquare, hasSubmenu: false },
-
     // Transportation
     {
       id: 'transportation',
@@ -216,18 +212,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       ]
     },
 
-    {
-      id: 'curriculum',
-      label: 'Curriculum',
-      icon: Library,
-      hasSubmenu: true,
-      submenu: [
-        { id: 'curriculum-global', label: 'Global Registry', icon: Globe },
-        { id: 'curriculum-school', label: 'School Curriculum', icon: School },
-        { id: 'curriculum-progress', label: 'Progress', icon: TrendingUp },
-      ]
-    },
-
     // School Settings
     {
       id: 'school-settings',
@@ -242,7 +226,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'subjects', label: 'Subjects', icon: BookOpen },
         { id: 'departments', label: 'Departments', icon: Building },
         { id: 'houses', label: 'Houses', icon: HomeIcon },
-        { id: 'curricula', label: 'Curricula', icon: Library },
       ]
     },
 
@@ -398,10 +381,6 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'subjects') navigate('/school-settings/subjects');
                         if (subItem.id === 'departments') navigate('/school-settings/departments');
                         if (subItem.id === 'houses') navigate('/school-settings/houses');
-                        if (subItem.id === 'curricula') navigate('/school-settings/curricula');
-                        if (subItem.id === 'curriculum-school') navigate('/curriculum/school');
-                        if (subItem.id === 'curriculum-global') navigate('/curriculum/global');
-                        if (subItem.id === 'curriculum-progress') navigate('/curriculum/progress');
                         if (subItem.id === 'teachers-class-assignments') navigate('/teachers/class-assignments');
                         if (subItem.id === 'teachers-subject-assignments') navigate('/academics/subject-assignments');
                         if (subItem.id === 'teachers-assignment-history') navigate('/teachers/class-assignments/history');

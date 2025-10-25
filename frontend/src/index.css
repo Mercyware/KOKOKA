@@ -6,132 +6,143 @@
   :root {
     /* Background and text */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 25% 27%;
 
     /* Cards */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    /* Primary - Siohioma Green Theme */
-    --primary: 155 49% 24%;  /* #1a5f3f */
+    /* Primary - Modern Teal-Blue */
+    --primary: 188 95% 37%;  /* #0891B2 - Cyan-600 */
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary */
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Deep Teal */
+    --secondary: 188 95% 37%;  /* #0891B2 - Cyan-600 (matches primary) */
+    --secondary-foreground: 0 0% 100%;
 
     /* Muted */
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Accent - Orange theme */
-    --accent: 21 91% 55%;  /* #f97316 */
+    /* Accent - Vibrant Amber */
+    --accent: 38 92% 50%;  /* #F59E0B - Amber-500 */
     --accent-foreground: 0 0% 100%;
 
     /* Destructive */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 160 84% 39%;  /* #10B981 - Emerald-500 */
+    --success-foreground: 0 0% 100%;
 
     /* Cancel */
-    --cancel: 210 20% 90%;
-    --cancel-foreground: 222.2 47.4% 11.2%;
+    --cancel: 220 14% 96%;
+    --cancel-foreground: 0 72% 51%;
 
     /* Link */
-    --link: 155 49% 24%;
-    --link-foreground: 210 40% 98%;
+    --link: 188 95% 37%;
+    --link-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 155 49% 24%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 188 95% 37%;
 
     /* Border radius */
     --radius: 0.75rem;
 
-    /* Sidebar - Dark Green Theme */
-    --sidebar-background: 155 60% 15%;  /* Dark green like Siohioma */
+    /* Sidebar - Modern Dark Theme */
+    --sidebar-background: 215 28% 17%;  /* Slate-800 */
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 155 49% 24%;
+    --sidebar-primary: 188 95% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 155 40% 20%;
+    --sidebar-accent: 215 25% 27%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 155 30% 25%;
-    --sidebar-ring: 155 49% 24%;
+    --sidebar-border: 215 20% 25%;
+    --sidebar-ring: 188 95% 37%;
 
-    /* Custom Siohioma colors */
-    --siohioma-primary: 155 49% 24%;      /* #1a5f3f */
-    --siohioma-primary-dark: 155 60% 15%;  /* #0d4b3b */
-    --siohioma-orange: 21 91% 55%;         /* #f97316 */
-    --siohioma-light-green: 82 78% 42%;    /* #84cc16 */
-    --siohioma-yellow: 45 95% 35%;         /* #eab308 */
+    /* Custom brand colors */
+    --brand-primary: 188 95% 37%;        /* #0891B2 - Teal */
+    --brand-primary-dark: 188 91% 29%;   /* #0E7490 - Darker Teal */
+    --brand-primary-light: 187 85% 53%;  /* #22D3EE - Light Teal */
+    --brand-secondary: 188 95% 37%;      /* #0891B2 - Teal (matches primary) */
+    --brand-accent: 38 92% 50%;          /* #F59E0B - Amber */
+    --brand-success: 160 84% 39%;        /* #10B981 - Emerald */
+    --brand-warning: 25 95% 53%;         /* #F97316 - Orange */
+    --brand-info: 199 89% 48%;           /* #0EA5E9 - Sky Blue */
 
-    /* Chart colors */
-    --chart-1: 155 49% 24%;   /* Primary green */
-    --chart-2: 21 91% 55%;    /* Orange */
-    --chart-3: 82 78% 42%;    /* Light green */
-    --chart-4: 45 95% 35%;    /* Yellow */
-    --chart-5: 210 40% 96.1%; /* Light gray */
+    /* Chart colors - Harmonious palette */
+    --chart-1: 188 95% 37%;   /* Primary teal */
+    --chart-2: 160 84% 39%;   /* Emerald */
+    --chart-3: 160 84% 39%;   /* Emerald */
+    --chart-4: 38 92% 50%;    /* Amber */
+    --chart-5: 271 91% 65%;   /* Purple */
   }
 
   .dark {
     /* Background and text - darker for dark mode */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 215 28% 17%;
+    --foreground: 220 9% 98%;
 
     /* Cards */
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 25% 20%;
+    --card-foreground: 220 9% 98%;
 
     /* Popovers */
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 25% 20%;
+    --popover-foreground: 220 9% 98%;
 
-    /* Primary - Keep green but adjust for dark mode */
-    --primary: 155 49% 35%;  /* Slightly lighter green */
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Brighter teal for dark mode */
+    --primary: 187 85% 53%;  /* #22D3EE - Lighter teal */
+    --primary-foreground: 215 28% 17%;
 
-    /* Secondary */
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Brighter teal for dark mode */
+    --secondary: 187 85% 53%;  /* #22D3EE - Lighter teal (matches primary) */
+    --secondary-foreground: 215 28% 17%;
 
     /* Muted */
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 20% 25%;
+    --muted-foreground: 220 9% 70%;
 
-    /* Accent */
-    --accent: 21 91% 55%;  /* Keep orange */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Brighter amber */
+    --accent: 38 92% 60%;
+    --accent-foreground: 215 28% 17%;
 
     /* Destructive */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 220 9% 98%;
+
+    /* Success */
+    --success: 160 84% 50%;
+    --success-foreground: 215 28% 17%;
 
     /* Cancel */
-    --cancel: 217.2 32.6% 17.5%;
-    --cancel-foreground: 210 40% 98%;
+    --cancel: 215 20% 25%;
+    --cancel-foreground: 0 72% 60%;
 
     /* Link */
-    --link: 155 49% 50%;
-    --link-foreground: 222.2 47.4% 11.2%;
+    --link: 187 85% 53%;
+    --link-foreground: 215 28% 17%;
 
     /* Borders */
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 155 49% 35%;
+    --border: 215 20% 30%;
+    --input: 215 20% 30%;
+    --ring: 187 85% 53%;
 
     /* Sidebar - Dark mode adjustments */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 155 49% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 155 49% 35%;
+    --sidebar-background: 215 28% 12%;
+    --sidebar-foreground: 220 9% 98%;
+    --sidebar-primary: 187 85% 53%;
+    --sidebar-primary-foreground: 215 28% 17%;
+    --sidebar-accent: 215 25% 20%;
+    --sidebar-accent-foreground: 220 9% 98%;
+    --sidebar-border: 215 20% 25%;
+    --sidebar-ring: 187 85% 53%;
   }
 }
 
@@ -147,189 +158,237 @@
 
 @layer components {
   /* Typography system */
-  .siohioma-heading-1 {
-    @apply text-siohioma-3xl font-siohioma-bold text-gray-900 tracking-tight;
-  }
-  
-  .siohioma-heading-2 {
-    @apply text-siohioma-2xl font-siohioma-semibold text-gray-900 tracking-tight;
-  }
-  
-  .siohioma-heading-3 {
-    @apply text-siohioma-xl font-siohioma-semibold text-gray-800;
-  }
-  
-  .siohioma-body-lg {
-    @apply text-siohioma-lg font-siohioma-normal text-gray-700 leading-relaxed;
-  }
-  
-  .siohioma-body {
-    @apply text-siohioma-base font-siohioma-normal text-gray-600;
-  }
-  
-  .siohioma-body-sm {
-    @apply text-siohioma-sm font-siohioma-normal text-gray-500;
-  }
-  
-  .siohioma-caption {
-    @apply text-siohioma-xs font-siohioma-medium text-gray-400 uppercase tracking-wide;
+  .brand-heading-1 {
+    @apply text-siohioma-3xl font-siohioma-bold text-slate-900 dark:text-slate-100 tracking-tight;
   }
 
-  /* Siohioma-inspired component classes */
-  .siohioma-sidebar {
-    @apply bg-siohioma-primary-dark text-white;
+  .brand-heading-2 {
+    @apply text-siohioma-2xl font-siohioma-semibold text-slate-900 dark:text-slate-100 tracking-tight;
   }
-  
-  .siohioma-card {
-    @apply bg-white rounded-siohioma-xl shadow-siohioma-sm border border-gray-100;
+
+  .brand-heading-3 {
+    @apply text-siohioma-xl font-siohioma-semibold text-slate-800 dark:text-slate-200;
   }
-  
-  .siohioma-card-dark {
-    @apply bg-gray-50 rounded-siohioma-xl shadow-siohioma-sm border border-gray-100;
+
+  .brand-body-lg {
+    @apply text-siohioma-lg font-siohioma-normal text-slate-700 dark:text-slate-300 leading-relaxed;
   }
-  
-  .siohioma-button-primary {
-    @apply bg-siohioma-primary hover:bg-siohioma-primary-dark text-white font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-colors duration-200;
+
+  .brand-body {
+    @apply text-siohioma-base font-siohioma-normal text-slate-600 dark:text-slate-400;
   }
-  
-  .siohioma-button-secondary {
-    @apply bg-white hover:bg-gray-50 text-siohioma-primary border border-siohioma-primary font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-colors duration-200;
+
+  .brand-body-sm {
+    @apply text-siohioma-sm font-siohioma-normal text-slate-500 dark:text-slate-500;
   }
-  
+
+  .brand-caption {
+    @apply text-siohioma-xs font-siohioma-medium text-slate-400 dark:text-slate-600 uppercase tracking-wide;
+  }
+
+  /* Modern component classes */
+  .brand-sidebar {
+    background: linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(215 28% 14%) 100%);
+    @apply text-white;
+  }
+
+  .brand-card {
+    @apply bg-white dark:bg-slate-800 rounded-siohioma-xl shadow-siohioma-sm border border-slate-200 dark:border-slate-700;
+  }
+
+  .brand-card-dark {
+    @apply bg-slate-50 dark:bg-slate-900 rounded-siohioma-xl shadow-siohioma-sm border border-slate-200 dark:border-slate-800;
+  }
+
+  .brand-button-primary {
+    @apply bg-primary hover:bg-cyan-700 text-white font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-all duration-200;
+  }
+
+  .brand-button-secondary {
+    @apply bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-primary border border-primary font-siohioma-medium rounded-siohioma-lg px-siohioma-md py-siohioma-sm transition-all duration-200;
+  }
+
   /* Force sidebar text to be white */
-  .siohioma-sidebar * {
+  .brand-sidebar * {
     color: white;
   }
-  
+
   /* Keep email subdued */
-  .siohioma-sidebar .text-white\/60 {
+  .brand-sidebar .text-white\/60 {
     color: rgba(255, 255, 255, 0.6) !important;
   }
-  
-  .siohioma-sidebar .siohioma-nav-item:hover,
-  .siohioma-sidebar .siohioma-nav-item:hover *,
-  .siohioma-sidebar .siohioma-nav-item-active,
-  .siohioma-sidebar .siohioma-nav-item-active *,
-  .siohioma-sidebar .siohioma-nav-subitem:hover,
-  .siohioma-sidebar .siohioma-nav-subitem:hover *,
-  .siohioma-sidebar .siohioma-nav-subitem-active,
-  .siohioma-sidebar .siohioma-nav-subitem-active * {
-    color: hsl(var(--siohioma-light-green)) !important;
+
+  .brand-sidebar .brand-nav-item:hover,
+  .brand-sidebar .brand-nav-item:hover *,
+  .brand-sidebar .brand-nav-item-active,
+  .brand-sidebar .brand-nav-item-active *,
+  .brand-sidebar .brand-nav-subitem:hover,
+  .brand-sidebar .brand-nav-subitem:hover *,
+  .brand-sidebar .brand-nav-subitem-active,
+  .brand-sidebar .brand-nav-subitem-active * {
+    color: hsl(var(--brand-primary-light)) !important;
   }
 
-  .siohioma-nav-item {
+  .brand-nav-item {
     @apply flex items-center gap-3 px-siohioma-md py-3 rounded-siohioma-lg transition-all duration-200 relative;
     border-left: 4px solid transparent;
     color: white !important;
   }
-  
-  .siohioma-nav-item:hover {
-    border-left-color: hsl(var(--siohioma-light-green));
-    color: hsl(var(--siohioma-light-green)) !important;
-  }
-  
-  .siohioma-nav-item-active {
-    @apply flex items-center gap-3 px-siohioma-md py-3 rounded-siohioma-lg font-siohioma-medium relative;
-    border-left: 4px solid hsl(var(--siohioma-light-green));
-    color: hsl(var(--siohioma-light-green)) !important;
+
+  .brand-nav-item:hover {
+    border-left-color: hsl(var(--brand-primary-light));
+    color: hsl(var(--brand-primary-light)) !important;
+    background: rgba(255, 255, 255, 0.05);
   }
 
-  .siohioma-nav-subitem {
+  .brand-nav-item-active {
+    @apply flex items-center gap-3 px-siohioma-md py-3 rounded-siohioma-lg font-siohioma-medium relative;
+    border-left: 4px solid hsl(var(--brand-primary-light));
+    color: hsl(var(--brand-primary-light)) !important;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .brand-nav-subitem {
     @apply flex items-center gap-3 px-siohioma-md py-2 w-full rounded-siohioma-lg transition-all duration-200;
     border-left: 4px solid transparent;
     color: white !important;
   }
-  
-  .siohioma-nav-subitem:hover {
-    border-left-color: hsl(var(--siohioma-light-green));
-    color: hsl(var(--siohioma-light-green)) !important;
-  }
-  
-  .siohioma-nav-subitem-active {
-    @apply flex items-center gap-3 px-siohioma-md py-2 w-full rounded-siohioma-lg transition-all duration-200 font-siohioma-medium;
-    border-left: 4px solid hsl(var(--siohioma-light-green));
-    color: hsl(var(--siohioma-light-green)) !important;
+
+  .brand-nav-subitem:hover {
+    border-left-color: hsl(var(--brand-primary-light));
+    color: hsl(var(--brand-primary-light)) !important;
+    background: rgba(255, 255, 255, 0.05);
   }
 
-  .siohioma-metric-card {
-    @apply bg-white rounded-siohioma-xl p-siohioma-xl shadow-siohioma-sm border border-gray-100;
+  .brand-nav-subitem-active {
+    @apply flex items-center gap-3 px-siohioma-md py-2 w-full rounded-siohioma-lg transition-all duration-200 font-siohioma-medium;
+    border-left: 4px solid hsl(var(--brand-primary-light));
+    color: hsl(var(--brand-primary-light)) !important;
+    background: rgba(255, 255, 255, 0.08);
   }
-  
-  .siohioma-status-completed {
-    @apply bg-siohioma-light-green/20 text-siohioma-light-green text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
+
+  .brand-metric-card {
+    @apply bg-white dark:bg-slate-800 rounded-siohioma-xl p-siohioma-xl shadow-siohioma-sm border border-slate-200 dark:border-slate-700;
   }
-  
-  .siohioma-status-pending {
-    @apply bg-orange-100 text-orange-800 text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
+
+  .brand-status-completed {
+    @apply bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
   }
-  
-  .siohioma-trend-up {
-    @apply text-siohioma-light-green font-siohioma-medium text-siohioma-sm flex items-center gap-1;
+
+  .brand-status-pending {
+    @apply bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-siohioma-xs font-siohioma-medium px-2.5 py-1 rounded-full;
   }
-  
-  .siohioma-trend-down {
-    @apply text-red-600 font-siohioma-medium text-siohioma-sm flex items-center gap-1;
+
+  .brand-trend-up {
+    @apply text-emerald-600 dark:text-emerald-400 font-siohioma-medium text-siohioma-sm flex items-center gap-1;
   }
+
+  .brand-trend-down {
+    @apply text-red-600 dark:text-red-400 font-siohioma-medium text-siohioma-sm flex items-center gap-1;
+  }
+
+  /* Legacy siohioma classes for backward compatibility */
+  .siohioma-heading-1 { @apply brand-heading-1; }
+  .siohioma-heading-2 { @apply brand-heading-2; }
+  .siohioma-heading-3 { @apply brand-heading-3; }
+  .siohioma-body-lg { @apply brand-body-lg; }
+  .siohioma-body { @apply brand-body; }
+  .siohioma-body-sm { @apply brand-body-sm; }
+  .siohioma-caption { @apply brand-caption; }
+  .siohioma-sidebar { @apply brand-sidebar; }
+  .siohioma-card { @apply brand-card; }
+  .siohioma-card-dark { @apply brand-card-dark; }
+  .siohioma-button-primary { @apply brand-button-primary; }
+  .siohioma-button-secondary { @apply brand-button-secondary; }
+  .siohioma-nav-item { @apply brand-nav-item; }
+  .siohioma-nav-item-active { @apply brand-nav-item-active; }
+  .siohioma-nav-subitem { @apply brand-nav-subitem; }
+  .siohioma-nav-subitem-active { @apply brand-nav-subitem-active; }
+  .siohioma-metric-card { @apply brand-metric-card; }
+  .siohioma-status-completed { @apply brand-status-completed; }
+  .siohioma-status-pending { @apply brand-status-pending; }
+  .siohioma-trend-up { @apply brand-trend-up; }
+  .siohioma-trend-down { @apply brand-trend-down; }
 }
 
 @layer utilities {
   /* Custom utility classes */
-  .text-siohioma-primary {
-    color: hsl(var(--siohioma-primary));
+  .text-brand-primary {
+    color: hsl(var(--brand-primary));
   }
-  
-  .text-siohioma-orange {
-    color: hsl(var(--siohioma-orange));
+
+  .text-brand-secondary {
+    color: hsl(var(--brand-secondary));
   }
-  
-  .text-siohioma-light-green {
-    color: hsl(var(--siohioma-light-green));
+
+  .text-brand-accent {
+    color: hsl(var(--brand-accent));
   }
-  
-  .bg-siohioma-primary {
-    background-color: hsl(var(--siohioma-primary));
+
+  .bg-brand-primary {
+    background-color: hsl(var(--brand-primary));
   }
-  
-  .bg-siohioma-primary-dark {
-    background-color: hsl(var(--siohioma-primary-dark));
+
+  .bg-brand-primary-dark {
+    background-color: hsl(var(--brand-primary-dark));
   }
-  
-  .bg-siohioma-orange {
-    background-color: hsl(var(--siohioma-orange));
+
+  .bg-brand-primary-light {
+    background-color: hsl(var(--brand-primary-light));
   }
-  
-  .bg-siohioma-light-green {
-    background-color: hsl(var(--siohioma-light-green));
+
+  .bg-brand-secondary {
+    background-color: hsl(var(--brand-secondary));
   }
-  
-  .border-siohioma-primary {
-    border-color: hsl(var(--siohioma-primary));
+
+  .bg-brand-accent {
+    background-color: hsl(var(--brand-accent));
   }
-  
-  .border-siohioma-light-green {
-    border-color: hsl(var(--siohioma-light-green));
+
+  .border-brand-primary {
+    border-color: hsl(var(--brand-primary));
   }
-  
-  .hover\:bg-siohioma-light-green:hover {
-    background-color: hsl(var(--siohioma-light-green));
+
+  .border-brand-accent {
+    border-color: hsl(var(--brand-accent));
   }
-  
-  .hover\:text-siohioma-light-green:hover {
-    color: hsl(var(--siohioma-light-green));
+
+  .hover\:bg-brand-primary-light:hover {
+    background-color: hsl(var(--brand-primary-light));
+  }
+
+  .hover\:text-brand-primary-light:hover {
+    color: hsl(var(--brand-primary-light));
   }
 
   /* Shadow utilities */
-  .shadow-siohioma {
-    box-shadow: 0 1px 3px 0 rgba(26, 95, 63, 0.1), 0 1px 2px 0 rgba(26, 95, 63, 0.06);
+  .shadow-brand {
+    box-shadow: 0 1px 3px 0 rgba(8, 145, 178, 0.1), 0 1px 2px 0 rgba(8, 145, 178, 0.06);
   }
-  
-  .shadow-siohioma-lg {
-    box-shadow: 0 10px 15px -3px rgba(26, 95, 63, 0.1), 0 4px 6px -2px rgba(26, 95, 63, 0.05);
+
+  .shadow-brand-lg {
+    box-shadow: 0 10px 15px -3px rgba(8, 145, 178, 0.1), 0 4px 6px -2px rgba(8, 145, 178, 0.05);
   }
 
   /* Header specific styles */
-  .siohioma-header {
-    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  .brand-header {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     backdrop-filter: blur(10px);
   }
+
+  /* Legacy siohioma utilities for backward compatibility */
+  .text-siohioma-primary { @apply text-brand-primary; }
+  .text-siohioma-orange { @apply text-brand-accent; }
+  .text-siohioma-light-green { @apply text-brand-primary-light; }
+  .bg-siohioma-primary { @apply bg-brand-primary; }
+  .bg-siohioma-primary-dark { @apply bg-brand-primary-dark; }
+  .bg-siohioma-orange { @apply bg-brand-accent; }
+  .bg-siohioma-light-green { @apply bg-brand-primary-light; }
+  .border-siohioma-primary { @apply border-brand-primary; }
+  .border-siohioma-light-green { @apply border-brand-primary; }
+  .hover\:bg-siohioma-light-green:hover { @apply hover:bg-brand-primary-light; }
+  .hover\:text-siohioma-light-green:hover { @apply hover:text-brand-primary-light; }
+  .shadow-siohioma { @apply shadow-brand; }
+  .shadow-siohioma-lg { @apply shadow-brand-lg; }
+  .siohioma-header { @apply brand-header; }
 }

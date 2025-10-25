@@ -653,18 +653,26 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
               {/* Advanced Filter Button */}
               <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`h-10 gap-2 ${activeFilters.length > 0 ? 'border-siohioma-primary text-siohioma-primary' : ''}`}
-                  >
-                    <Filter className="h-4 w-4" />
-                    <span className="hidden sm:inline">Advanced</span>
-                    {activeFilters.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 bg-siohioma-primary text-white">
+                  {activeFilters.length > 0 ? (
+                    <Button
+                      intent="action"
+                      className="h-10 gap-2"
+                    >
+                      <Filter className="h-4 w-4" />
+                      <span className="hidden sm:inline">Advanced</span>
+                      <Badge className="ml-1 bg-white/20 text-white border-white/30">
                         {activeFilters.length}
                       </Badge>
-                    )}
-                  </Button>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="h-10 gap-2"
+                    >
+                      <Filter className="h-4 w-4" />
+                      <span className="hidden sm:inline">Advanced</span>
+                    </Button>
+                  )}
                 </PopoverTrigger>
                 <PopoverContent className="w-96 max-h-[80vh] overflow-y-auto">
                   <div className="space-y-4">
@@ -1132,26 +1140,26 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
               </Popover>
 
               {/* View Toggle */}
-              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden h-10">
+              <div className="flex items-center border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden h-10">
                 <button
                   onClick={() => setViewMode('cards')}
                   className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     viewMode === 'cards'
-                      ? 'bg-siohioma-primary text-white'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                   title="Card View"
                 >
                   <Grid className="h-4 w-4" />
                   <span className="hidden md:inline">Cards</span>
                 </button>
-                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
+                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600"></div>
                 <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     viewMode === 'table'
-                      ? 'bg-siohioma-primary text-white'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                   title="Table View"
                 >

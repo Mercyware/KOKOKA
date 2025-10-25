@@ -15,7 +15,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { authState } = useAuth();
+  const { authState, logout } = useAuth();
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -93,21 +93,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Simulate user authentication
+  // Get authenticated user from auth context
   useEffect(() => {
-    // In a real app, check for auth token and fetch user data
-    const mockUser = {
-      name: 'Admin User',
-      email: 'admin@example.com',
-      role: 'Administrator'
-    };
-    
-    setUser(mockUser);
-  }, []);
+    if (authState.user) {
+      setUser({
+        name: authState.user.name,
+        email: authState.user.email,
+        role: authState.user.role
+      });
+    } else {
+      setUser(null);
+    }
+  }, [authState.user]);
 
-  const handleLogout = () => {
-    // In a real app, clear auth token and redirect to login
-    setUser(null);
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleToggleSidebar = () => {

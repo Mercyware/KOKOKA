@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DatePicker } from '@/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -75,10 +76,17 @@ const AcademicYearsList: React.FC = () => {
   const [showActiveWarning, setShowActiveWarning] = useState(false);
   
   // Form data
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<{
+    name: string;
+    startDate: Date | undefined;
+    endDate: Date | undefined;
+    isCurrent: boolean;
+    description: string;
+    schoolId?: string;
+  }>({
     name: '',
-    startDate: '',
-    endDate: '',
+    startDate: undefined,
+    endDate: undefined,
     isCurrent: false,
     description: '',
     schoolId: authState.user?.school,
@@ -92,9 +100,9 @@ const AcademicYearsList: React.FC = () => {
   // Auto-generate academic year name when dates change (only in create mode)
   useEffect(() => {
     if (formData.startDate && formData.endDate && !editingYear) {
-      const startYear = new Date(formData.startDate).getFullYear();
-      const endYear = new Date(formData.endDate).getFullYear();
-      
+      const startYear = formData.startDate.getFullYear();
+      const endYear = formData.endDate.getFullYear();
+
       if (startYear === endYear) {
         setFormData(prev => ({
           ...prev,
@@ -112,8 +120,8 @@ const AcademicYearsList: React.FC = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      startDate: '',
-      endDate: '',
+      startDate: undefined,
+      endDate: undefined,
       isCurrent: false,
       description: '',
       schoolId: authState.user?.school,
@@ -132,12 +140,12 @@ const AcademicYearsList: React.FC = () => {
   const openEditModal = (year: AcademicYear) => {
     // Find the most current data for this year from state
     const currentYear = academicYears.find(y => y.id === year.id) || year;
-    
+
     setEditingYear(currentYear);
     setFormData({
       name: currentYear.name,
-      startDate: new Date(currentYear.startDate).toISOString().split('T')[0],
-      endDate: new Date(currentYear.endDate).toISOString().split('T')[0],
+      startDate: new Date(currentYear.startDate),
+      endDate: new Date(currentYear.endDate),
       isCurrent: currentYear.isCurrent,
       description: currentYear.description || '',
       schoolId: currentYear.schoolId,
@@ -261,28 +269,25 @@ const AcademicYearsList: React.FC = () => {
     }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
+  const handleDateChange = (field: 'startDate' | 'endDate', date: Date | undefined) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [field]: date,
     }));
 
-    if (name === 'startDate' && value && !formData.endDate && !editingYear) {
-      const startDate = new Date(value);
-      const endDate = new Date(startDate);
-      endDate.setFullYear(startDate.getFullYear() + 1);
-      
+    if (field === 'startDate' && date && !formData.endDate && !editingYear) {
+      const endDate = new Date(date);
+      endDate.setFullYear(date.getFullYear() + 1);
+
       setFormData(prev => ({
         ...prev,
-        endDate: endDate.toISOString().split('T')[0],
+        endDate: endDate,
       }));
     }
 
     setErrors(prev => ({
       ...prev,
-      [name]: '',
+      [field]: '',
       dateRange: '',
     }));
   };
@@ -335,7 +340,10 @@ const AcademicYearsList: React.FC = () => {
         newErrors.endDate = 'End date must be after start date';
       }
 
-      const durationInMonths = calculateDurationInMonths(formData.startDate, formData.endDate);
+      const durationInMonths = calculateDurationInMonths(
+        formData.startDate.toISOString().split('T')[0],
+        formData.endDate.toISOString().split('T')[0]
+      );
       if (durationInMonths < 6) {
         newErrors.dateRange = 'Academic year must be at least 6 months long';
       } else if (durationInMonths > 24) {
@@ -343,18 +351,16 @@ const AcademicYearsList: React.FC = () => {
       }
 
       const now = new Date();
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
       const twoYearsAgo = new Date();
       twoYearsAgo.setFullYear(now.getFullYear() - 2);
       const fiveYearsFromNow = new Date();
       fiveYearsFromNow.setFullYear(now.getFullYear() + 5);
 
-      if (startDate < twoYearsAgo) {
+      if (formData.startDate < twoYearsAgo) {
         newErrors.startDate = 'Start date cannot be more than 2 years in the past';
       }
-      
-      if (endDate > fiveYearsFromNow) {
+
+      if (formData.endDate > fiveYearsFromNow) {
         newErrors.endDate = 'End date cannot be more than 5 years in the future';
       }
     }
@@ -397,8 +403,8 @@ const AcademicYearsList: React.FC = () => {
     try {
       const dataToSubmit = {
         name: formData.name?.trim(),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
+        startDate: formData.startDate?.toISOString().split('T')[0],
+        endDate: formData.endDate?.toISOString().split('T')[0],
         isCurrent: formData.isCurrent,
         description: formData.description?.trim() || '',
         schoolId: authState.user?.school,
@@ -527,7 +533,10 @@ const AcademicYearsList: React.FC = () => {
 
   const getDurationInfo = () => {
     if (formData.startDate && formData.endDate) {
-      const months = calculateDurationInMonths(formData.startDate, formData.endDate);
+      const months = calculateDurationInMonths(
+        formData.startDate.toISOString().split('T')[0],
+        formData.endDate.toISOString().split('T')[0]
+      );
       return `Duration: ${months} months`;
     }
     return '';
@@ -796,13 +805,9 @@ const AcademicYearsList: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date *</Label>
-                  <Input
-                    id="startDate"
-                    name="startDate"
-                    type="date"
+                  <DatePicker
                     value={formData.startDate}
-                    onChange={handleDateChange}
-                    className={errors.startDate ? "border-red-500" : ""}
+                    onChange={(date) => handleDateChange('startDate', date)}
                   />
                   {errors.startDate && (
                     <p className="text-sm text-red-500">{errors.startDate}</p>
@@ -811,14 +816,10 @@ const AcademicYearsList: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="endDate">End Date *</Label>
-                  <Input
-                    id="endDate"
-                    name="endDate"
-                    type="date"
+                  <DatePicker
                     value={formData.endDate}
-                    onChange={handleDateChange}
-                    min={formData.startDate || undefined}
-                    className={errors.endDate ? "border-red-500" : ""}
+                    onChange={(date) => handleDateChange('endDate', date)}
+                    minDate={formData.startDate}
                   />
                   {errors.endDate && (
                     <p className="text-sm text-red-500">{errors.endDate}</p>
@@ -835,7 +836,7 @@ const AcademicYearsList: React.FC = () => {
                     </Badge>
                     <Badge variant="outline" className="text-purple-600 border-purple-300">
                       <CalendarDays className="h-3 w-3 mr-1" />
-                      {formatDateForDisplay(formData.startDate)} - {formatDateForDisplay(formData.endDate)}
+                      {formatDateForDisplay(formData.startDate.toISOString().split('T')[0])} - {formatDateForDisplay(formData.endDate.toISOString().split('T')[0])}
                     </Badge>
                   </div>
                   {errors.dateRange && (

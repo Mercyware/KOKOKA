@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
-import { Button, Input, Label } from '@/components/ui';
+import { Button, Input, Label, DatePicker } from '@/components/ui';
 import {
   createStudentAssignment,
   updateStudentAssignment,
@@ -44,8 +44,8 @@ export default function StudentAssignmentFormDialog({
     dropoffTime: '',
     guardianName: '',
     guardianPhone: '',
-    startDate: '',
-    endDate: '',
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
     academicYearId: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'CANCELLED',
   });
@@ -68,8 +68,8 @@ export default function StudentAssignmentFormDialog({
         dropoffTime: assignment.dropoffTime || '',
         guardianName: assignment.guardianName || '',
         guardianPhone: assignment.guardianPhone || '',
-        startDate: assignment.startDate ? assignment.startDate.split('T')[0] : '',
-        endDate: assignment.endDate ? assignment.endDate.split('T')[0] : '',
+        startDate: assignment.startDate ? new Date(assignment.startDate) : undefined,
+        endDate: assignment.endDate ? new Date(assignment.endDate) : undefined,
         academicYearId: assignment.academicYearId || '',
         status: assignment.status || 'ACTIVE',
       });
@@ -84,8 +84,8 @@ export default function StudentAssignmentFormDialog({
         dropoffTime: '',
         guardianName: '',
         guardianPhone: '',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: '',
+        startDate: new Date(),
+        endDate: undefined,
         academicYearId: '',
         status: 'ACTIVE',
       });
@@ -152,8 +152,8 @@ export default function StudentAssignmentFormDialog({
         dropoffTime: formData.dropoffTime || null,
         guardianName: formData.guardianName || null,
         guardianPhone: formData.guardianPhone || null,
-        startDate: formData.startDate,
-        endDate: formData.endDate || null,
+        startDate: formData.startDate ? formData.startDate.toISOString().split('T')[0] : '',
+        endDate: formData.endDate ? formData.endDate.toISOString().split('T')[0] : null,
         academicYearId: formData.academicYearId || null,
         status: formData.status,
       };
@@ -329,22 +329,17 @@ export default function StudentAssignmentFormDialog({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="startDate">Start Date *</Label>
-                <Input
-                  id="startDate"
-                  type="date"
+                <DatePicker
                   value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  required
+                  onChange={(date) => setFormData({ ...formData, startDate: date })}
                 />
               </div>
 
               <div>
                 <Label htmlFor="endDate">End Date</Label>
-                <Input
-                  id="endDate"
-                  type="date"
+                <DatePicker
                   value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  onChange={(date) => setFormData({ ...formData, endDate: date })}
                 />
               </div>
 

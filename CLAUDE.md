@@ -2,9 +2,62 @@
 
 This file provides guidance to Claude Code when working with code in this repository.
 
+## Core Development Principles
+
+**⚠️ IMPORTANT: NO BACKWARD COMPATIBILITY**
+- Do NOT maintain backward compatibility unless explicitly requested
+- Remove any legacy/deprecated code when making updates
+- Replace old patterns completely with new implementations
+- Break changes are acceptable and encouraged for cleaner codebase
+- Focus on the best current solution, not supporting old code
+
 ## Project Overview
 
 KOKOKA is a comprehensive school management system built with Node.js/Express backend and React/TypeScript frontend. The system supports multi-tenant architecture using subdomain-based school isolation.
+
+## Design System - Modern Color Palette
+
+### Color Philosophy
+The system uses a modern, professional color palette designed for educational platforms:
+
+**Primary Color**: Teal/Cyan (#0891B2) - Professional, trustworthy, calming
+**Secondary Color**: Indigo (#4F46E5) - Authority, wisdom, engagement
+**Accent Color**: Amber (#F59E0B) - Energy, warmth, highlights
+**Success**: Emerald (#10B981) - Growth, achievement
+**Neutrals**: Slate - Clean, modern gray scale
+
+### Using Brand Colors
+
+```tsx
+// Primary actions - Teal
+<Button intent="primary">Save</Button>
+<div className="bg-primary text-white">Primary content</div>
+
+// Secondary actions - Indigo
+<Button intent="secondary">View Details</Button>
+<div className="bg-secondary text-white">Secondary content</div>
+
+// Accent/Action buttons - Amber
+<Button intent="action">Export</Button>
+<div className="bg-accent text-white">Accent content</div>
+
+// Success states - Emerald
+<Button intent="success">Complete</Button>
+<StatusBadge status="success">Active</StatusBadge>
+
+// Neutrals - Slate
+<div className="text-slate-600">Body text</div>
+<div className="bg-slate-100 border-slate-200">Card</div>
+```
+
+### CSS Variables
+```css
+--primary: Teal (#0891B2)
+--secondary: Indigo (#4F46E5)
+--accent: Amber (#F59E0B)
+--success: Emerald (#10B981)
+--brand-primary-light: Light Teal (#22D3EE) - Used for hover states and highlights
+```
 
 ## Quick Commands
 
@@ -67,8 +120,18 @@ KOKOKA is a comprehensive school management system built with Node.js/Express ba
   <MoreVertical className="h-4 w-4" />
 </Button>
 
-// Outline variant (border with transparent background)
-<Button variant="outline">Secondary Action</Button>
+// Outline variant (neutral slate colors - NOT cyan)
+// Use for: Utility buttons (filters, view toggles), neutral secondary actions
+<Button variant="outline">Advanced</Button>
+<Button variant="outline">Filter</Button>
+
+// View Toggle Buttons (Cards/Table switchers)
+// Use slate-900 active state, NOT cyan/teal
+<button className={viewMode === 'cards'
+  ? 'bg-slate-900 text-white'
+  : 'bg-white text-slate-700'}>
+  Cards
+</button>
 ```
 
 #### Action Buttons in Tables/Lists

@@ -50,6 +50,13 @@ const RegisterSchool: React.FC<RegisterSchoolProps> = ({ onSwitchToLogin }) => {
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!authState.loading && authState.isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authState.isAuthenticated, authState.loading, navigate]);
+
   // Form data state
   const [formData, setFormData] = useState({
     schoolName: '',

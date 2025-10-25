@@ -40,7 +40,6 @@ model School {
   classSubjectHistory         ClassSubjectHistory[]
   classTeachers               ClassTeacher[]
   classes                     Class[]
-  curricula                   Curriculum[]
   departments                 Department[]
   documents                   Document[]
   files                       FileManager[]
@@ -91,6 +90,13 @@ model User {
   emailVerified                Boolean                      @default(false)
   emailVerificationToken       String?                      @unique
   emailVerificationTokenExpiry DateTime?
+  passwordResetToken           String?                      @unique
+  passwordResetTokenExpiry     DateTime?
+  refreshToken                 String?                      @unique
+  refreshTokenExpiry           DateTime?
+  onboardingCompleted          Boolean                      @default(false)
+  onboardingStep               Int                          @default(0)
+  onboardingData               Json?
   lastLogin                    DateTime?
   profileData                  Json?
   profileImage                 String?
@@ -106,7 +112,6 @@ model User {
   generatedAttendanceReports   AttendanceReport[]
   issuedBooks                  BookIssue[]                  @relation("IssuedBy")
   returnedBooks                BookIssue[]                  @relation("ReturnedBy")
-  createdCurricula             Curriculum[]
   deviceTokens                 DeviceToken[]
   createdDocuments             Document[]                   @relation("DocumentCreatedBy")
   verifiedDocuments            Document[]                   @relation("DocumentVerifiedBy")
@@ -178,10 +183,8 @@ model AcademicYear {
   school                      School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   assessments                 Assessment[]
   attendance                  Attendance[]
-  classCurricula              ClassCurriculum[]
   classSubjectHistory         ClassSubjectHistory[]
   classTeachers               ClassTeacher[]
-  curriculumProgressTrackers  CurriculumProgressTracker[]
   gradeBooks                  GradeBook[]
   gradeReports                GradeReport[]
   hostelAllocations           HostelAllocation[]
@@ -270,7 +273,6 @@ model Subject {
   assessments         Assessment[]
   attendance          Attendance[]
   classSubjectHistory ClassSubjectHistory[]
-  curriculumSubjects  CurriculumSubject[]
   gradeBooks          GradeBook[]
   subjectAssignments  SubjectAssignment[]
   subjectResults      SubjectResult[]
@@ -282,203 +284,6 @@ model Subject {
   @@map("subjects")
 }
 
-model GlobalCurriculum {
-  id                        String                      @id @default(uuid())
-  name                      String                      @unique
-  description               String?
-  version                   String?
-  type                      CurriculumType              @default(STANDARD)
-  provider                  String
-  country                   String?
-  language                  String                      @default("en")
-  minGrade                  Int                         @default(1)
-  maxGrade                  Int                         @default(12)
-  framework                 Json?
-  standards                 Json?
-  assessmentTypes           Json?
-  status                    CurriculumStatus            @default(ACTIVE)
-  isOfficial                Boolean                     @default(false)
-  licenseType               String                      @default("FREE")
-  adoptionCount             Int                         @default(0)
-  tags                      String[]
-  difficulty                String                      @default("STANDARD")
-  createdAt                 DateTime                    @default(now())
-  updatedAt                 DateTime                    @updatedAt
-  schoolCurricula           Curriculum[]
-  curriculumProgressTracker CurriculumProgressTracker[]
-  globalSubjects            GlobalCurriculumSubject[]
-
-  @@map("global_curricula")
-}
-
-model GlobalCurriculumSubject {
-  id                 String           @id @default(uuid())
-  globalCurriculumId String
-  name               String
-  code               String
-  description        String?
-  gradeLevel         Int
-  term               Int?
-  recommendedHours   Int?
-  isCore             Boolean          @default(true)
-  isOptional         Boolean          @default(false)
-  category           String?
-  learningOutcomes   Json?
-  keyTopics          Json?
-  skillsFramework    Json?
-  prerequisites      String[]
-  followUpSubjects   String[]
-  assessmentWeights  Json?
-  gradingScale       Json?
-  displayOrder       Int              @default(0)
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  globalCurriculum   GlobalCurriculum @relation(fields: [globalCurriculumId], references: [id], onDelete: Cascade)
-
-  @@unique([globalCurriculumId, code, gradeLevel])
-  @@map("global_curriculum_subjects")
-}
-
-model Curriculum {
-  id                   String                      @id @default(uuid())
-  name                 String
-  description          String?
-  version              String?
-  type                 CurriculumType              @default(STANDARD)
-  status               CurriculumStatus            @default(DRAFT)
-  schoolId             String
-  startYear            Int?
-  endYear              Int?
-  createdAt            DateTime                    @default(now())
-  updatedAt            DateTime                    @updatedAt
-  createdBy            String?
-  adoptionDate         DateTime?
-  analytics            Json?
-  customizationLevel   CustomizationLevel          @default(FULL)
-  globalCurriculumId   String?
-  implementationStatus ImplementationStatus        @default(PLANNED)
-  lastReviewDate       DateTime?
-  nextReviewDate       DateTime?
-  originalTemplate     Json?
-  classCurricula       ClassCurriculum[]
-  user                 User?                       @relation(fields: [createdBy], references: [id])
-  globalCurriculum     GlobalCurriculum?           @relation(fields: [globalCurriculumId], references: [id])
-  school               School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  progressTrackers     CurriculumProgressTracker[]
-  curriculumSubjects   CurriculumSubject[]
-
-  @@unique([schoolId, name, version])
-  @@map("curricula")
-}
-
-model CurriculumSubject {
-  id                 String              @id @default(uuid())
-  curriculumId       String
-  subjectId          String
-  gradeLevel         Int
-  term               Int?
-  hoursPerWeek       Int?
-  isCore             Boolean             @default(true)
-  isOptional         Boolean             @default(false)
-  prerequisites      String[]
-  displayOrder       Int                 @default(0)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  contentModules     ContentModule[]
-  curriculum         Curriculum          @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-  subject            Subject             @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  learningObjectives LearningObjective[]
-
-  @@unique([curriculumId, subjectId, gradeLevel])
-  @@map("curriculum_subjects")
-}
-
-model LearningObjective {
-  id                  String            @id @default(uuid())
-  title               String
-  description         String?
-  type                ObjectiveType     @default(KNOWLEDGE)
-  bloomLevel          BloomLevel        @default(REMEMBER)
-  curriculumSubjectId String
-  expectedOutcome     String?
-  assessmentCriteria  String?
-  displayOrder        Int               @default(0)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  curriculumSubject   CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
-
-  @@map("learning_objectives")
-}
-
-model ContentModule {
-  id                  String            @id @default(uuid())
-  title               String
-  description         String?
-  content             String?
-  duration            Int?
-  curriculumSubjectId String
-  unit                String?
-  chapter             String?
-  displayOrder        Int               @default(0)
-  resources           Json?
-  activities          Json?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  curriculumSubject   CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
-
-  @@map("content_modules")
-}
-
-model ClassCurriculum {
-  id                   String               @id @default(uuid())
-  classId              String
-  curriculumId         String
-  academicYearId       String
-  status               ImplementationStatus @default(PLANNED)
-  startDate            DateTime?
-  endDate              DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  completionPercentage Float                @default(0.0)
-  milestones           Json?
-  academicYear         AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  class                Class                @relation(fields: [classId], references: [id], onDelete: Cascade)
-  curriculum           Curriculum           @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-
-  @@unique([classId, curriculumId, academicYearId])
-  @@map("class_curricula")
-}
-
-model CurriculumProgressTracker {
-  id                  String            @id @default(uuid())
-  curriculumId        String?
-  globalCurriculumId  String?
-  studentId           String
-  academicYearId      String
-  classId             String
-  overallProgress     Float             @default(0.0)
-  subjectProgress     Json?
-  skillsDevelopment   Json?
-  learningOutcomes    Json?
-  currentGrade        String?
-  expectedProgression String?
-  progressionStatus   ProgressionStatus @default(ON_TRACK)
-  strengths           String[]
-  weaknesses          String[]
-  recommendations     Json?
-  lastAssessmentDate  DateTime?
-  nextMilestoneDate   DateTime?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  academicYear        AcademicYear      @relation(fields: [academicYearId], references: [id])
-  class               Class             @relation(fields: [classId], references: [id])
-  curriculum          Curriculum?       @relation(fields: [curriculumId], references: [id])
-  globalCurriculum    GlobalCurriculum? @relation(fields: [globalCurriculumId], references: [id])
-  student             Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([studentId, curriculumId, academicYearId])
-  @@map("curriculum_progress_trackers")
-}
 
 model GradeBook {
   id              String          @id @default(uuid())
@@ -767,11 +572,9 @@ model Class {
   assessments                Assessment[]
   attendance                 Attendance[]
   attendanceSessions         AttendanceSession[]
-  classCurricula             ClassCurriculum[]
   classSubjectHistory        ClassSubjectHistory[]
   classTeachers              ClassTeacher[]
   school                     School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  curriculumProgressTrackers CurriculumProgressTracker[]
   documents                  Document[]
   gradeBooks                 GradeBook[]
   reportCards                ReportCard[]
@@ -853,7 +656,6 @@ model Student {
   transportInfo              Json?
   attendance                 Attendance[]
   bookIssues                 BookIssue[]
-  curriculumProgressTrackers CurriculumProgressTracker[]
   documents                  Document[]
   gradeEntries               GradeEntry[]
   gradeReports               GradeReport[]
@@ -2365,7 +2167,6 @@ enum DocumentType {
   PHOTO
   ASSIGNMENT
   LESSON_PLAN
-  CURRICULUM
   POLICY
   FORM
   CERTIFICATE
@@ -2481,44 +2282,6 @@ enum WebhookDeliveryStatus {
   RETRYING
 }
 
-enum CurriculumType {
-  STANDARD
-  CAMBRIDGE
-  IB
-  NATIONAL
-  STEM
-  ARTS
-  VOCATIONAL
-  CUSTOM
-}
-
-enum CurriculumStatus {
-  DRAFT
-  ACTIVE
-  INACTIVE
-  ARCHIVED
-  UNDER_REVIEW
-}
-
-enum ObjectiveType {
-  KNOWLEDGE
-  COMPREHENSION
-  APPLICATION
-  ANALYSIS
-  SYNTHESIS
-  EVALUATION
-  SKILL
-  ATTITUDE
-}
-
-enum BloomLevel {
-  REMEMBER
-  UNDERSTAND
-  APPLY
-  ANALYZE
-  EVALUATE
-  CREATE
-}
 
 enum ImplementationStatus {
   PLANNED

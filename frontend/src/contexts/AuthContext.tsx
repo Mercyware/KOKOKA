@@ -38,8 +38,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const response = await authService.login({ email, password });
       if (response.success && response.data) {
-        const { token, user } = response.data;
+        const { token, refreshToken, user } = response.data;
         authService.setAuthToken(token);
+        if (refreshToken) {
+          authService.setRefreshToken(refreshToken);
+        }
         authService.setUser(user);
         setAuthState({
           isAuthenticated: true,
@@ -84,8 +87,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         school,
       });
       if (response.success && response.data) {
-        const { token, user } = response.data;
+        const { token, refreshToken, user } = response.data;
         authService.setAuthToken(token);
+        if (refreshToken) {
+          authService.setRefreshToken(refreshToken);
+        }
         authService.setUser(user);
         setAuthState({
           isAuthenticated: true,
@@ -221,8 +227,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Handle OAuth success
-  const handleOAuthSuccess = (token: string, user: User) => {
+  const handleOAuthSuccess = (token: string, user: User, refreshToken?: string) => {
     authService.setAuthToken(token);
+    if (refreshToken) {
+      authService.setRefreshToken(refreshToken);
+    }
     authService.setUser(user);
     setAuthState({
       isAuthenticated: true,

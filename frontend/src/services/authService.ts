@@ -1,5 +1,5 @@
 import { User, LoginCredentials, RegisterData, ApiResponse } from '../types';
-import { post, get } from './api';
+import { post, get, put } from './api';
 
 // Login user
 export const login = async (credentials: LoginCredentials): Promise<ApiResponse<{ token: string; user: User }>> => {
@@ -41,6 +41,30 @@ export const removeAuthToken = (): void => {
   localStorage.removeItem('token');
 };
 
+// Set refresh token
+export const setRefreshToken = (refreshToken: string): void => {
+  localStorage.setItem('refreshToken', refreshToken);
+};
+
+// Get refresh token
+export const getRefreshToken = (): string | null => {
+  return localStorage.getItem('refreshToken');
+};
+
+// Remove refresh token
+export const removeRefreshToken = (): void => {
+  localStorage.removeItem('refreshToken');
+};
+
+// Refresh access token
+export const refreshAccessToken = async (): Promise<ApiResponse<{ token: string; refreshToken: string; user: User }>> => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+  return await post<{ token: string; refreshToken: string; user: User }>('/auth/refresh-token', { refreshToken });
+};
+
 // Set user in local storage and sync school data
 export const setUser = (user: User): void => {
   localStorage.setItem('user', JSON.stringify(user));
@@ -68,6 +92,7 @@ export const removeUser = (): void => {
   localStorage.removeItem('user');
   localStorage.removeItem('schoolSubdomain');
   localStorage.removeItem('schoolName');
+  removeRefreshToken();
   console.log('Cleaned up user and school data from localStorage');
 };
 
@@ -80,7 +105,7 @@ export const isAuthenticated = (): boolean => {
 export const getSchoolSubdomain = (): string => {
   // First try to get from localStorage (should be synced by setUser)
   let subdomain = localStorage.getItem('schoolSubdomain');
-  
+
   // If not found, try to get from user data
   if (!subdomain) {
     const user = getUser();
@@ -91,7 +116,42 @@ export const getSchoolSubdomain = (): string => {
       console.log('Retrieved and synced subdomain from user data:', subdomain);
     }
   }
-  
+
   // Default fallback
   return subdomain || 'demo';
+};
+
+// Request password reset
+export const forgotPassword = async (email: string): Promise<ApiResponse<void>> => {
+  return await post<void>('/auth/forgot-password', { email });
+};
+
+// Reset password with token
+export const resetPassword = async (token: string, password: string): Promise<ApiResponse<void>> => {
+  return await post<void>('/auth/reset-password', { token, password });
+};
+
+// Change password (for authenticated users)
+export const changePassword = async (currentPassword: string, newPassword: string): Promise<ApiResponse<void>> => {
+  return await post<void>('/auth/change-password', { currentPassword, newPassword });
+};
+
+// Verify email with token
+export const verifyEmail = async (token: string): Promise<ApiResponse<{ user: User }>> => {
+  return await post<{ user: User }>('/auth/verify-email', { token });
+};
+
+// Resend verification email
+export const resendVerificationEmail = async (email: string): Promise<ApiResponse<void>> => {
+  return await post<void>('/auth/resend-verification', { email });
+};
+
+// Update onboarding progress
+export const updateOnboardingProgress = async (step?: number, completed?: boolean, data?: any): Promise<ApiResponse<{ onboardingCompleted: boolean; onboardingStep: number; onboardingData: any }>> => {
+  const payload: any = {};
+  if (typeof step === 'number') payload.step = step;
+  if (typeof completed === 'boolean') payload.completed = completed;
+  if (data) payload.data = data;
+
+  return await put<{ onboardingCompleted: boolean; onboardingStep: number; onboardingData: any }>('/auth/onboarding', payload);
 };

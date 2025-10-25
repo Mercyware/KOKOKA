@@ -8,13 +8,13 @@ const statusBadgeVariants = cva(
   {
     variants: {
       status: {
-        active: "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-        inactive: "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700",
-        pending: "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
-        success: "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-        error: "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800",
-        warning: "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
-        info: "bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+        active: "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        inactive: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+        pending: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        success: "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        error: "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+        warning: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        info: "bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800",
       },
       size: {
         sm: "text-xs px-2 py-0.5",
@@ -45,13 +45,13 @@ export interface StatusBadgeProps
 const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
   ({ className, status, size, variant, showDot = false, children, ...props }, ref) => {
     const dotColor = {
-      active: 'bg-green-500',
-      success: 'bg-green-500',
-      inactive: 'bg-gray-400',
-      pending: 'bg-yellow-500',
+      active: 'bg-emerald-500',
+      success: 'bg-emerald-500',
+      inactive: 'bg-slate-400',
+      pending: 'bg-amber-500',
       error: 'bg-red-500',
-      warning: 'bg-yellow-500',
-      info: 'bg-blue-500',
+      warning: 'bg-amber-500',
+      info: 'bg-cyan-500',
     }[status || 'active'];
 
     return (
