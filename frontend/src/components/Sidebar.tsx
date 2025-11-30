@@ -44,7 +44,6 @@ import {
   MessageSquare,
   Library,
   CheckSquare,
-  QrCode,
   Shield,
   Bell,
   DoorOpen,
@@ -132,10 +131,8 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { id: 'attendance-dashboard', label: 'Dashboard', icon: BarChart3 },
         { id: 'attendance-take', label: 'Take Attendance', icon: UserCheck },
         { id: 'attendance-reports', label: 'Reports & Analytics', icon: FileText },
-        { id: 'attendance-qr', label: 'QR Scanner', icon: QrCode },
       ]
     },
     {
@@ -148,6 +145,16 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'gradebook-reports', label: 'Reports', icon: FileText },
         { id: 'report-cards', label: 'Report Cards', icon: FileText },
         { id: 'behavioral-record-gradebook', label: 'Behavioral Scores', icon: Target },
+      ]
+    },
+    {
+      id: 'assignments',
+      label: 'Assignments',
+      icon: ClipboardList,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'assignments-list', label: 'My Assignments', icon: FileText },
+        { id: 'assignments-grading', label: 'Grading Queue', icon: CheckSquare },
       ]
     },
     {
@@ -251,6 +258,7 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'analytics-overview', label: 'Overview', icon: BarChart3 },
         { id: 'analytics-performance', label: 'Performance', icon: Trophy },
         { id: 'analytics-attendance', label: 'Attendance', icon: UserCheck },
+        { id: 'analytics-at-risk', label: 'At-Risk Students', icon: Brain },
         { id: 'gradebook-parent', label: 'Parent Portal', icon: Users },
       ]
     },
@@ -416,11 +424,13 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'transportation-maintenance') navigate('/transportation/maintenance');
                         if (subItem.id === 'inventory-items') navigate('/inventory/items');
                         if (subItem.id === 'inventory-transactions') navigate('/inventory/transactions');
+                        if (subItem.id === 'analytics-at-risk') navigate('/analytics/at-risk');
                         if (subItem.id === 'inventory-allocations') navigate('/inventory/allocations');
+                        if (subItem.id === 'assignments-list') navigate('/assignments');
+                        if (subItem.id === 'assignments-grading') navigate('/assignments/grading-queue');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');
                         if (subItem.id === 'attendance-take') navigate('/attendance/take');
                         if (subItem.id === 'attendance-reports') navigate('/attendance/reports');
-                        if (subItem.id === 'attendance-qr') navigate('/attendance/qr-scanner');
                         if (subItem.id === 'analytics-overview') navigate('/analytics/overview');
                         if (subItem.id === 'analytics-performance') navigate('/analytics/performance');
                         if (subItem.id === 'analytics-attendance') navigate('/analytics/attendance');

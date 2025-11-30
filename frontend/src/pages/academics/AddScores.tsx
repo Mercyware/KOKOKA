@@ -116,8 +116,14 @@ const AddScores = () => {
       if (selectedAcademicYear) params.academicYearId = selectedAcademicYear;
       if (selectedTerm) params.termId = selectedTerm;
 
+      console.log('Fetching assessments with params:', params);
       const data = await scoreService.getAssessments(params);
-      setAssessments(data);
+      console.log('Assessments received:', data);
+      setAssessments(Array.isArray(data) ? data : []);
+
+      if (!data || data.length === 0) {
+        console.log('No assessments found with current filters');
+      }
     } catch (error) {
       console.error('Error fetching assessments:', error);
       setAssessments([]);
@@ -514,27 +520,62 @@ const AddScores = () => {
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Assessment</Label>
-              <Select 
-                value={selectedAssessment} 
+              <div className="flex items-center justify-between">
+                <Label>Assessment</Label>
+                {assessments.length === 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Clear filters and fetch all assessments
+                      setSelectedClass('');
+                      setSelectedSubject('');
+                      setSelectedAcademicYear('');
+                      setSelectedTerm('');
+                      fetchAssessments();
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Load All Assessments
+                  </Button>
+                )}
+              </div>
+              <Select
+                value={selectedAssessment}
                 onValueChange={setSelectedAssessment}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select assessment to add scores" />
+                  <SelectValue placeholder={
+                    assessments.length === 0
+                      ? "No assessments found - try clearing filters or creating one"
+                      : "Select assessment to add scores"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {assessments.map((assessment) => (
-                    <SelectItem key={assessment.id} value={assessment.id}>
-                      <div className="flex flex-col">
-                        <span>{assessment.title}</span>
-<span className="text-xs text-muted-foreground">
-  {(assessment.subject?.name || '-')} • {(assessment.class?.name || '-')} • {(assessment.type || '-')}
-</span>
-                      </div>
+                  {assessments.length > 0 ? (
+                    assessments.map((assessment) => (
+                      <SelectItem key={assessment.id} value={assessment.id}>
+                        <div className="flex flex-col">
+                          <span>{assessment.title}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {(assessment.subject?.name || '-')} • {(assessment.class?.name || '-')} • {(assessment.type || '-')}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      No assessments available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
+
+              {assessments.length === 0 && (
+                <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
+                  No assessments found with current filters. Try selecting different filters above or create a new assessment.
+                </p>
+              )}
             </div>
             
             {selectedAssessmentData && (

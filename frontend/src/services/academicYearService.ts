@@ -2,8 +2,8 @@ import { get, post, put, del } from './api';
 import { ApiResponse, AcademicYear } from '../types';
 
 // Get all academic years
-export const getAllAcademicYears = async (): Promise<ApiResponse<AcademicYear[]>> => {
-  return await get<AcademicYear[]>('/academic-years');
+export const getAllAcademicYears = async (): Promise<ApiResponse<{ academicYears: AcademicYear[]; pagination?: any }>> => {
+  return await get<{ academicYears: AcademicYear[]; pagination?: any }>('/academic-years');
 };
 
 // Get academic year by ID

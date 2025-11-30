@@ -1,7 +1,9 @@
 const express = require('express');
 const {
   getAssessments,
-  createAssessment
+  getAssessmentById,
+  createAssessment,
+  updateAssessment
 } = require('../controllers/scoreController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
@@ -15,5 +17,9 @@ router.use(protect);
 router.route('/')
   .get(authorize('admin', 'teacher', 'principal'), getAssessments)
   .post(authorize('admin', 'teacher', 'principal'), createAssessment);
+
+router.route('/:id')
+  .get(authorize('admin', 'teacher', 'principal', 'student'), getAssessmentById)
+  .put(authorize('admin', 'teacher', 'principal'), updateAssessment);
 
 module.exports = router;

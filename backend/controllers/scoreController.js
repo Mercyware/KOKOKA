@@ -32,13 +32,22 @@ const upload = multer({
 // Get all assessments for dropdown
 exports.getAssessments = async (req, res) => {
   try {
-    const { classId, subjectId, academicYearId, termId } = req.query;
+    const { classId, subjectId, academicYearId, termId, status } = req.query;
     const schoolId = req.school?.id;
+    const userRole = req.user?.role;
 
     const whereClause = {
-      schoolId,
-      status: 'PUBLISHED'
+      schoolId
     };
+
+    // Only filter by PUBLISHED status for students
+    // Teachers and admins can see all assessments
+    if (userRole === 'student') {
+      whereClause.status = 'PUBLISHED';
+    } else if (status) {
+      // Allow filtering by status for teachers/admins
+      whereClause.status = status.toUpperCase();
+    }
 
     if (classId) whereClause.classId = classId;
     if (subjectId) whereClause.subjectId = subjectId;
@@ -70,9 +79,21 @@ exports.getAssessments = async (req, res) => {
       ]
     });
 
+    // Map assessments to include both nested and flat IDs for frontend compatibility
+    const mappedAssessments = assessments.map(assessment => ({
+      ...assessment,
+      // Add flat ID fields for easier access
+      classId: assessment.classId,
+      subjectId: assessment.subjectId,
+      academicYearId: assessment.academicYearId,
+      termId: assessment.termId,
+      // Add teacher alias for staff
+      teacher: assessment.staff
+    }));
+
     res.json({
       success: true,
-      data: assessments
+      data: mappedAssessments
     });
   } catch (error) {
     console.error('Error fetching assessments:', error);
@@ -108,7 +129,9 @@ exports.getStudentsInClass = async (req, res) => {
           }
         }
       },
-      include: {
+      select: {
+        id: true,
+        admissionNumber: true,
         user: {
           select: { name: true, email: true }
         },
@@ -934,6 +957,166 @@ exports.createAssessment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create assessment',
+      error: error.message
+    });
+  }
+};
+
+// Get assessment by ID
+exports.getAssessmentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schoolId = req.school?.id;
+
+    const assessment = await prisma.assessment.findFirst({
+      where: {
+        id,
+        schoolId
+      },
+      include: {
+        subject: {
+          select: { id: true, name: true, code: true }
+        },
+        class: {
+          select: { id: true, name: true, grade: true }
+        },
+        academicYear: {
+          select: { id: true, name: true }
+        },
+        term: {
+          select: { id: true, name: true }
+        },
+        staff: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      }
+    });
+
+    if (!assessment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    // Map to include flat IDs for frontend compatibility
+    const mappedAssessment = {
+      ...assessment,
+      classId: assessment.classId,
+      subjectId: assessment.subjectId,
+      academicYearId: assessment.academicYearId,
+      termId: assessment.termId,
+      teacher: assessment.staff
+    };
+
+    res.json({
+      success: true,
+      data: mappedAssessment
+    });
+  } catch (error) {
+    console.error('Error fetching assessment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assessment',
+      error: error.message
+    });
+  }
+};
+
+// Update assessment
+exports.updateAssessment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schoolId = req.school?.id;
+    const {
+      title,
+      description,
+      type,
+      totalMarks,
+      passingMarks,
+      weight,
+      duration,
+      scheduledDate,
+      dueDate,
+      instructions,
+      subjectId,
+      classId,
+      academicYearId,
+      termId,
+      status
+    } = req.body;
+
+    // Check if assessment exists and belongs to this school
+    const existingAssessment = await prisma.assessment.findFirst({
+      where: { id, schoolId }
+    });
+
+    if (!existingAssessment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assessment not found'
+      });
+    }
+
+    // Update assessment
+    const assessment = await prisma.assessment.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        type: type ? type.toUpperCase() : undefined,
+        totalMarks: totalMarks ? parseInt(totalMarks) : undefined,
+        passingMarks: passingMarks ? parseInt(passingMarks) : undefined,
+        weight: weight ? parseFloat(weight) : undefined,
+        duration: duration ? parseInt(duration) : null,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        instructions,
+        status: status ? status.toUpperCase() : undefined,
+        subjectId,
+        classId,
+        academicYearId,
+        termId: (termId && termId.trim() !== '' && termId !== '1') ? termId : null
+      },
+      include: {
+        subject: {
+          select: { id: true, name: true, code: true }
+        },
+        class: {
+          select: { id: true, name: true, grade: true }
+        },
+        academicYear: {
+          select: { id: true, name: true }
+        },
+        term: {
+          select: { id: true, name: true }
+        },
+        staff: {
+          select: { id: true, firstName: true, lastName: true }
+        }
+      }
+    });
+
+    // Map to include flat IDs for frontend compatibility
+    const mappedAssessment = {
+      ...assessment,
+      classId: assessment.classId,
+      subjectId: assessment.subjectId,
+      academicYearId: assessment.academicYearId,
+      termId: assessment.termId,
+      teacher: assessment.staff
+    };
+
+    res.json({
+      success: true,
+      message: 'Assessment updated successfully',
+      data: mappedAssessment
+    });
+  } catch (error) {
+    console.error('Error updating assessment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update assessment',
       error: error.message
     });
   }

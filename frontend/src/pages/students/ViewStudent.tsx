@@ -6,9 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import {
-  ArrowLeft,
   Edit,
-  Trash2,
   Phone,
   Mail,
   MapPin,
@@ -17,7 +15,6 @@ import {
   TrendingUp,
   Camera,
   Upload,
-  Eye,
   User,
   Users,
   Heart,
@@ -29,7 +26,6 @@ import {
   XCircle,
   AlertTriangle,
   Home,
-  Star,
   Activity,
   Target,
   Award,
@@ -39,7 +35,6 @@ import {
   Download,
   Printer,
   Share2,
-  Link,
   Copy,
   FileJson
 } from 'lucide-react';

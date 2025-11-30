@@ -5,16 +5,12 @@ const {
   getClassAttendance,
   getStudentAttendance,
   getAttendanceStats,
-  generateQRCode,
-  scanQRAttendance,
   getAttendanceDashboard,
   generateAttendanceReport,
   getAttendanceReports,
   // New enhanced functions
   getClassRoster,
   takeClassAttendance,
-  createQRSession,
-  getQRSessionStatus,
   geofenceCheckIn,
   correctAttendance
 } = require('../controllers/attendanceController');
@@ -23,7 +19,8 @@ const {
 const {
   getAttendanceDashboardNew,
   getAttendanceReportsDashboard,
-  getStudentDetailedAttendance
+  getStudentDetailedAttendance,
+  getAttendanceAnalytics
 } = require('../controllers/attendanceDashboardController');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
@@ -53,8 +50,9 @@ router.route('/dashboard')
 router.route('/dashboard-new')
   .get(authorize('admin', 'teacher', 'principal'), getAttendanceDashboardNew);
 
-router.route('/qr-code/:classId')
-  .get(authorize('admin', 'teacher'), generateQRCode);
+// TODO: Implement generateQRCode function
+// router.route('/qr-code/:classId')
+//   .get(authorize('admin', 'teacher'), generateQRCode);
 
 router.route('/reports')
   .get(authorize('admin', 'teacher', 'principal'), getAttendanceReports);
@@ -66,6 +64,10 @@ router.route('/reports/dashboard')
 router.route('/reports/generate')
   .post(authorize('admin', 'teacher', 'principal'), generateAttendanceReport);
 
+// Analytics endpoint
+router.route('/analytics')
+  .get(authorize('admin', 'teacher', 'principal'), getAttendanceAnalytics);
+
 // Enhanced class attendance routes
 router.route('/class/:classId/roster')
   .get(authorize('admin', 'teacher', 'principal'), getClassRoster);
@@ -74,11 +76,12 @@ router.route('/class/:classId/take')
   .post(authorize('admin', 'teacher'), takeClassAttendance);
 
 // Enhanced QR code attendance routes
-router.route('/qr-session')
-  .post(authorize('admin', 'teacher'), createQRSession);
+// TODO: Implement createQRSession and getQRSessionStatus functions
+// router.route('/qr-session')
+//   .post(authorize('admin', 'teacher'), createQRSession);
 
-router.route('/qr-session/:sessionId')
-  .get(authorize('admin', 'teacher'), getQRSessionStatus);
+// router.route('/qr-session/:sessionId')
+//   .get(authorize('admin', 'teacher'), getQRSessionStatus);
 
 // Automated attendance methods
 router.route('/geofence-checkin')
@@ -89,8 +92,9 @@ router.route('/:attendanceId/correct')
   .put(authorize('admin', 'principal'), correctAttendance);
 
 // Routes accessible by Students (for QR attendance)
-router.route('/qr-scan')
-  .post(authorize('student'), scanQRAttendance);
+// TODO: Implement scanQRAttendance function
+// router.route('/qr-scan')
+//   .post(authorize('student'), scanQRAttendance);
 
 // Routes accessible by Teachers, Admins, Students, and Parents
 router.route('/student/:studentId')

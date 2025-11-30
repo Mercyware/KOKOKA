@@ -55,7 +55,11 @@ export interface Assessment {
   duration?: number;
   scheduledDate?: string;
   dueDate?: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'SCHEDULED' | 'COMPLETED';
+  classId: string;
+  subjectId: string;
+  academicYearId: string;
+  termId?: string;
   subject: {
     id: string;
     name: string;
@@ -74,7 +78,12 @@ export interface Assessment {
     id: string;
     name: string;
   };
-  teacher: {
+  teacher?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  staff?: {
     id: string;
     firstName: string;
     lastName: string;
@@ -83,12 +92,18 @@ export interface Assessment {
 
 export interface Student {
   id: string;
+  admissionNumber: string;
   user: {
     name: string;
     email: string;
   };
   studentClassHistory: Array<{
-    section: {
+    class: {
+      id: string;
+      name: string;
+      grade: string;
+    };
+    academicYear: {
       id: string;
       name: string;
     };
@@ -130,7 +145,10 @@ class ScoreService {
   }): Promise<Assessment[]> {
     const queryString = params ? new URLSearchParams(params).toString() : '';
     const response = await api.get(`/scores/assessments${queryString ? `?${queryString}` : ''}`);
-    return response.data.data;
+    console.log('Assessment API response:', response.data);
+    // Handle both response.data.data and response.data formats
+    const data = response.data?.data || response.data;
+    return Array.isArray(data) ? data : [];
   }
 
   // Get students in a class for a specific academic year

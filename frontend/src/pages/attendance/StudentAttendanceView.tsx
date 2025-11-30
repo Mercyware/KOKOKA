@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import {
   PageContainer,
@@ -83,6 +83,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { get } from '@/services/api';
 
 interface Student {
   id: string;
@@ -199,6 +200,7 @@ const CHART_COLORS = {
 const StudentAttendanceView: React.FC = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<StudentAttendanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedView, setSelectedView] = useState('overview');
@@ -216,24 +218,25 @@ const StudentAttendanceView: React.FC = () => {
   const fetchStudentData = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        ...(selectedPeriod && { periodId: selectedPeriod })
-      });
+      // Check for date range in URL params first (from attendance reports page)
+      const urlStartDate = searchParams.get('startDate');
+      const urlEndDate = searchParams.get('endDate');
 
-      const response = await fetch(`/api/students/${studentId}/attendance?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const params = {
+        ...(selectedPeriod && { periodId: selectedPeriod }),
+        ...(urlStartDate && { startDate: urlStartDate }),
+        ...(urlEndDate && { endDate: urlEndDate })
+      };
 
-      if (response.ok) {
-        const result = await response.json();
+      const result = await get(`/students/${studentId}/attendance`, params);
+
+      if (result.success) {
         setData(result.data);
         if (!selectedPeriod && result.data.currentPeriod) {
           setSelectedPeriod(result.data.currentPeriod.id);
         }
       } else {
-        toast.error('Failed to fetch student attendance data');
+        toast.error(result.message || 'Failed to fetch student attendance data');
       }
     } catch (error) {
       console.error('Error fetching student data:', error);

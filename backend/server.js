@@ -266,10 +266,25 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/report-cards', reportCardRoutes);
 app.use('/api/parent', parentDashboardRoutes);
 
+// Curriculum & Topic Tracking Routes
+const curriculaRoutes = require('./routes/curriculumRoutes');
+const topicTrackingRoutes = require('./routes/topicTrackingRoutes');
+app.use('/api/curricula', curriculaRoutes);
+app.use('/api/topic-tracking', topicTrackingRoutes);
+
 // AI routes (conditionally enabled)
-// if (env.FEATURE_AI_ENABLED) {
-//   app.use('/api/ai', aiRoutes);
-// }
+const aiTestRoutes = require('./routes/aiTestRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const enhancedNotificationRoutes = require('./routes/enhancedNotificationRoutes');
+if (env.FEATURE_AI_ENABLED === 'true') {
+  app.use('/api/ai-test', aiTestRoutes);
+  app.use('/api/chatbot', chatbotRoutes);
+  app.use('/api/analytics', analyticsRoutes);
+  app.use('/api/assignments', assignmentRoutes);
+  app.use('/api/enhanced-notifications', enhancedNotificationRoutes);
+}
 
 // Serve static assets in production
 if (env.isProduction()) {

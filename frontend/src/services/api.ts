@@ -1,6 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { ApiResponse, PaginatedResponse, House } from '../types';
-import { Section } from '../types/Section';
+import { ApiResponse, PaginatedResponse, House, Section } from '../types';
 import { getEffectiveSubdomain, initDevSubdomain } from '../utils/devSubdomain';
 import { API_CONFIG } from '../config/api';
 

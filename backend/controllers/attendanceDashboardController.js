@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // @desc    Get comprehensive attendance dashboard data
 // @route   GET /api/attendance/dashboard-new
 // @access  Private (Admin/Teacher)
-exports.getAttendanceDashboardNew = asyncHandler(async (req, res) => {
+const getAttendanceDashboardNew = asyncHandler(async (req, res) => {
   const { period = 'term', classId } = req.query;
 
   try {
@@ -185,10 +185,10 @@ exports.getAttendanceDashboardNew = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get attendance reports dashboard
-// @route   GET /api/attendance/reports/dashboard
+// @desc    Get attendance reports dashboard data
+// @route   GET /api/attendance/reports/dashboard  
 // @access  Private (Admin/Teacher)
-exports.getAttendanceReportsDashboard = asyncHandler(async (req, res) => {
+const getAttendanceReportsDashboard = asyncHandler(async (req, res) => {
   const { periodId, classId, startDate, endDate } = req.query;
 
   try {
@@ -253,7 +253,7 @@ exports.getAttendanceReportsDashboard = asyncHandler(async (req, res) => {
       getClassSummaries(req.school.id, filterStartDate, filterEndDate),
 
       // Low attendance students
-      getStudentsWithDetailedAttendance(req.school.id, classId, 75),
+      getStudentsWithDetailedAttendance(req.school.id, classId, 75, filterStartDate, filterEndDate),
 
       // Recent reports (mock data for now)
       getRecentAttendanceReports(req.school.id, 5),
@@ -301,8 +301,9 @@ exports.getAttendanceReportsDashboard = asyncHandler(async (req, res) => {
 // @desc    Get student detailed attendance
 // @route   GET /api/students/:studentId/attendance
 // @access  Private (Admin/Teacher/Parent/Student)
-exports.getStudentDetailedAttendance = asyncHandler(async (req, res) => {
-  const { studentId } = req.params;
+const getStudentDetailedAttendance = asyncHandler(async (req, res) => {
+  // Route uses :id, not :studentId
+  const studentId = req.params.id || req.params.studentId;
   const { periodId, startDate, endDate } = req.query;
 
   try {
@@ -398,6 +399,24 @@ exports.getStudentDetailedAttendance = asyncHandler(async (req, res) => {
     // Calculate statistics
     const stats = calculateStudentAttendanceStats(attendanceRecords, filterStartDate, filterEndDate);
 
+    // DEBUG: Log the stats being returned
+    console.log(`\n======================================`);
+    console.log(`📊 Student Attendance API Response`);
+    console.log(`======================================`);
+    console.log(`Student: ${student.firstName} ${student.lastName} (${student.admissionNumber})`);
+    console.log(`Student ID: ${studentId}`);
+    console.log(`School ID: ${student.schoolId}`);
+    console.log(`Date range: ${filterStartDate.toISOString().split('T')[0]} to ${filterEndDate.toISOString().split('T')[0]}`);
+    console.log(`Records found: ${attendanceRecords.length}`);
+    console.log(`\nCalculated Stats:`);
+    console.log(`  totalDays: ${stats.totalDays}`);
+    console.log(`  presentDays: ${stats.presentDays}`);
+    console.log(`  absentDays: ${stats.absentDays}`);
+    console.log(`  lateDays: ${stats.lateDays}`);
+    console.log(`  excusedDays: ${stats.excusedDays}`);
+    console.log(`  attendanceRate: ${stats.attendanceRate}%`);
+    console.log(`======================================\n`);
+
     // Create calendar data
     const calendarData = {};
     attendanceRecords.forEach(record => {
@@ -418,8 +437,15 @@ exports.getStudentDetailedAttendance = asyncHandler(async (req, res) => {
       email: gs.guardian.user?.email || gs.guardian.email || ''
     }));
 
+    // Set cache control headers to prevent stale data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     res.status(200).json({
       success: true,
+      timestamp: new Date().toISOString(),
+      _cacheBuster: Date.now(),
       data: {
         student: {
           id: student.id,
@@ -506,12 +532,18 @@ async function getAttendanceStats(schoolId, whereClause) {
   return result;
 }
 
-async function getStudentsWithLowAttendance(schoolId, classId = null, threshold = 75) {
+async function getStudentsWithLowAttendance(schoolId, classId = null, threshold = 75, startDate = null, endDate = null) {
+  // Default to last 30 days if no date range provided
+  const dateFilter = {
+    gte: startDate || moment().subtract(30, 'days').toDate(),
+    lte: endDate || new Date()
+  };
+
   const students = await prisma.student.findMany({
     where: {
       schoolId,
       status: 'ACTIVE',
-      ...(classId && { currentClassId: classId })
+      ...(classId && classId !== 'all' && { currentClassId: classId })
     },
     include: {
       currentClass: {
@@ -519,9 +551,7 @@ async function getStudentsWithLowAttendance(schoolId, classId = null, threshold 
       },
       attendance: {
         where: {
-          date: {
-            gte: moment().subtract(30, 'days').toDate()
-          }
+          date: dateFilter
         }
       }
     }
@@ -556,35 +586,66 @@ async function getStudentsWithLowAttendance(schoolId, classId = null, threshold 
 }
 
 async function getDailyAttendanceTrends(schoolId, whereClause) {
-  // Temporary fix: return mock data until SQL query is debugged
-  console.log('getDailyAttendanceTrends called with:', { schoolId, whereClause });
-
-  // Generate last 30 days of mock data
-  const trends = [];
-  const today = new Date();
-
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-
-    trends.push({
-      date: date.toISOString().split('T')[0],
-      total: 100 + Math.floor(Math.random() * 50),
-      present: 80 + Math.floor(Math.random() * 20),
-      absent: 5 + Math.floor(Math.random() * 15),
-      late: Math.floor(Math.random() * 5),
-      percentage: 85 + Math.floor(Math.random() * 10)
+  try {
+    // Get actual attendance records
+    const attendanceRecords = await prisma.attendance.findMany({
+      where: {
+        ...whereClause,
+        schoolId: schoolId
+      },
+      select: {
+        date: true,
+        status: true
+      },
+      orderBy: {
+        date: 'asc'
+      }
     });
-  }
 
-  return trends.map(trend => ({
-    date: new Date(trend.date).toISOString().split('T')[0],
-    total: Number(trend.total),
-    present: Number(trend.present),
-    absent: Number(trend.absent),
-    late: Number(trend.late),
-    percentage: Number(trend.percentage)
-  }));
+    // Group by date
+    const dailyData = {};
+
+    attendanceRecords.forEach(record => {
+      const dateKey = record.date.toISOString().split('T')[0];
+
+      if (!dailyData[dateKey]) {
+        dailyData[dateKey] = {
+          date: dateKey,
+          total: 0,
+          present: 0,
+          absent: 0,
+          late: 0,
+          excused: 0
+        };
+      }
+
+      dailyData[dateKey].total++;
+
+      const status = record.status.toLowerCase();
+      if (status === 'present') dailyData[dateKey].present++;
+      else if (status === 'absent') dailyData[dateKey].absent++;
+      else if (status === 'late') dailyData[dateKey].late++;
+      else if (status === 'excused') dailyData[dateKey].excused++;
+    });
+
+    // Calculate percentages and return sorted by date
+    return Object.values(dailyData)
+      .map(day => ({
+        date: day.date,
+        total: day.total,
+        present: day.present,
+        absent: day.absent,
+        late: day.late,
+        percentage: day.total > 0
+          ? Math.round(((day.present + day.late) / day.total) * 100)
+          : 0
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  } catch (error) {
+    console.error('Error fetching daily attendance trends:', error);
+    return [];
+  }
 }
 
 async function getClassAttendanceStats(schoolId, startDate, endDate) {
@@ -684,8 +745,8 @@ async function getClassSummaries(schoolId, startDate, endDate) {
   return await getClassAttendanceStats(schoolId, startDate, endDate);
 }
 
-async function getStudentsWithDetailedAttendance(schoolId, classId, threshold) {
-  const students = await getStudentsWithLowAttendance(schoolId, classId, threshold);
+async function getStudentsWithDetailedAttendance(schoolId, classId, threshold, startDate = null, endDate = null) {
+  const students = await getStudentsWithLowAttendance(schoolId, classId, threshold, startDate, endDate);
 
   return students.map(student => ({
     ...student,
@@ -695,35 +756,44 @@ async function getStudentsWithDetailedAttendance(schoolId, classId, threshold) {
 }
 
 async function getRecentAttendanceReports(schoolId, limit) {
-  // Mock data for now - in production, you'd have an attendance_reports table
-  return [
-    {
-      id: '1',
-      title: 'Monthly Attendance Report',
-      description: 'Comprehensive attendance report for the current month',
-      reportType: 'MONTHLY',
-      status: 'COMPLETED',
-      generatedAt: new Date().toISOString(),
-      summary: {
-        totalDays: 20,
-        totalStudents: 150,
-        averageAttendance: 92.5,
-        present: 2775,
-        absent: 120,
-        late: 105,
-        excused: 0
-      }
-    },
-    {
-      id: '2',
-      title: 'Term 1 Summary Report',
-      description: 'End of term attendance summary',
-      reportType: 'TERM',
-      status: 'GENERATING',
-      generatedAt: null,
-      summary: null
-    }
-  ];
+  try {
+    const reports = await prisma.attendanceReport.findMany({
+      where: {
+        schoolId: schoolId
+      },
+      include: {
+        generatedBy: {
+          select: {
+            id: true,
+            name: true,
+            role: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: limit
+    });
+
+    return reports.map(report => ({
+      id: report.id,
+      title: report.title,
+      description: report.description,
+      reportType: report.reportType,
+      fromDate: report.fromDate,
+      toDate: report.toDate,
+      status: report.status,
+      generatedAt: report.generatedAt,
+      summary: report.summary,
+      fileUrl: report.fileUrl,
+      generatedBy: report.generatedBy
+    }));
+  } catch (error) {
+    console.error('Error fetching recent attendance reports:', error);
+    // Return empty array if there's an error
+    return [];
+  }
 }
 
 async function getAttendanceTrends(schoolId, startDate, endDate) {
@@ -731,22 +801,257 @@ async function getAttendanceTrends(schoolId, startDate, endDate) {
     date: { gte: startDate, lte: endDate }
   });
 
-  // Mock weekly and monthly data - in production, you'd calculate these
-  const weekly = [
-    { week: 'Week 1', attendance: 94.2 },
-    { week: 'Week 2', attendance: 91.8 },
-    { week: 'Week 3', attendance: 93.5 },
-    { week: 'Week 4', attendance: 89.7 }
-  ];
+  // Calculate weekly trends
+  const weekly = await getWeeklyAttendanceTrends(schoolId, startDate, endDate);
 
-  const monthly = [
-    { month: 'Jan', attendance: 92.5 },
-    { month: 'Feb', attendance: 94.1 },
-    { month: 'Mar', attendance: 90.8 },
-    { month: 'Apr', attendance: 93.2 }
-  ];
+  // Calculate monthly trends  
+  const monthly = await getMonthlyAttendanceTrends(schoolId, startDate, endDate);
 
   return { daily, weekly, monthly };
+}
+
+async function getWeeklyAttendanceTrends(schoolId, startDate, endDate) {
+  try {
+    const weeklyStats = await prisma.attendance.groupBy({
+      by: ['date'],
+      where: {
+        schoolId: schoolId,
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      _count: {
+        id: true
+      },
+      _sum: {
+        id: true
+      }
+    });
+
+    // Group by week
+    const weeklyData = {};
+    const moment = require('moment');
+    
+    // Get all attendance records grouped by week
+    const attendanceRecords = await prisma.attendance.findMany({
+      where: {
+        schoolId: schoolId,
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      select: {
+        date: true,
+        status: true
+      }
+    });
+
+    attendanceRecords.forEach(record => {
+      const weekStart = moment(record.date).startOf('isoWeek');
+      const weekKey = weekStart.format('YYYY-MM-DD');
+      const weekLabel = `Week ${weekStart.isoWeek()}`;
+
+      if (!weeklyData[weekKey]) {
+        weeklyData[weekKey] = {
+          week: weekLabel,
+          total: 0,
+          present: 0,
+          late: 0,
+          absent: 0
+        };
+      }
+
+      weeklyData[weekKey].total++;
+      if (record.status === 'PRESENT') weeklyData[weekKey].present++;
+      else if (record.status === 'LATE') weeklyData[weekKey].late++;
+      else if (record.status === 'ABSENT') weeklyData[weekKey].absent++;
+    });
+
+    // Calculate attendance percentage for each week
+    return Object.values(weeklyData).map(week => ({
+      week: week.week,
+      attendance: week.total > 0 ? Math.round(((week.present + week.late) / week.total) * 100) : 0
+    })).sort((a, b) => a.week.localeCompare(b.week));
+
+  } catch (error) {
+    console.error('Error calculating weekly trends:', error);
+    return [];
+  }
+}
+
+async function getMonthlyAttendanceTrends(schoolId, startDate, endDate) {
+  try {
+    const moment = require('moment');
+    
+    // Get all attendance records grouped by month
+    const attendanceRecords = await prisma.attendance.findMany({
+      where: {
+        schoolId: schoolId,
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      select: {
+        date: true,
+        status: true
+      }
+    });
+
+    const monthlyData = {};
+
+    attendanceRecords.forEach(record => {
+      const monthKey = moment(record.date).format('YYYY-MM');
+      const monthLabel = moment(record.date).format('MMM');
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: monthLabel,
+          total: 0,
+          present: 0,
+          late: 0,
+          absent: 0
+        };
+      }
+
+      monthlyData[monthKey].total++;
+      if (record.status === 'PRESENT') monthlyData[monthKey].present++;
+      else if (record.status === 'LATE') monthlyData[monthKey].late++;
+      else if (record.status === 'ABSENT') monthlyData[monthKey].absent++;
+    });
+
+    // Calculate attendance percentage for each month
+    return Object.values(monthlyData).map(month => ({
+      month: month.month,
+      attendance: month.total > 0 ? Math.round(((month.present + month.late) / month.total) * 100) : 0
+    })).sort((a, b) => {
+      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month);
+    });
+
+  } catch (error) {
+    console.error('Error calculating monthly trends:', error);
+    return [];
+  }
+}
+
+// @desc    Get attendance analytics data
+// @route   GET /api/attendance/analytics
+// @access  Private (Admin/Teacher)
+const getAttendanceAnalytics = asyncHandler(async (req, res) => {
+  const { startDate, endDate, classId } = req.query;
+
+  try {
+    let filterStartDate, filterEndDate;
+    
+    if (startDate && endDate) {
+      filterStartDate = new Date(startDate);
+      filterEndDate = new Date(endDate);
+    } else {
+      // Default to current month
+      const now = new Date();
+      filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      filterEndDate = new Date();
+    }
+
+    const baseWhere = {
+      schoolId: req.school.id,
+      date: {
+        gte: filterStartDate,
+        lte: filterEndDate
+      },
+      ...(classId && classId !== 'all' && { classId })
+    };
+
+    // Get attendance by day of week
+    const dayOfWeekData = await getAttendanceByDayOfWeek(req.school.id, baseWhere);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        dayOfWeek: dayOfWeekData
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching attendance analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching analytics',
+      error: error.message
+    });
+  }
+});
+
+async function getAttendanceByDayOfWeek(schoolId, whereClause) {
+  try {
+    const attendanceRecords = await prisma.attendance.findMany({
+      where: whereClause,
+      select: {
+        date: true,
+        status: true
+      }
+    });
+
+    const dayData = {
+      'Monday': { total: 0, present: 0, late: 0, absent: 0 },
+      'Tuesday': { total: 0, present: 0, late: 0, absent: 0 },
+      'Wednesday': { total: 0, present: 0, late: 0, absent: 0 },
+      'Thursday': { total: 0, present: 0, late: 0, absent: 0 },
+      'Friday': { total: 0, present: 0, late: 0, absent: 0 },
+      'Saturday': { total: 0, present: 0, late: 0, absent: 0 }
+    };
+
+    attendanceRecords.forEach(record => {
+      const dayName = record.date.toLocaleDateString('en-US', { weekday: 'long' });
+      
+      if (dayData[dayName]) {
+        dayData[dayName].total++;
+        if (record.status === 'PRESENT') dayData[dayName].present++;
+        else if (record.status === 'LATE') dayData[dayName].late++;
+        else if (record.status === 'ABSENT') dayData[dayName].absent++;
+      }
+    });
+
+    // Convert to chart format
+    return [
+      { 
+        day: 'Mon', 
+        attendance: dayData.Monday.total > 0 ? 
+          Math.round(((dayData.Monday.present + dayData.Monday.late) / dayData.Monday.total) * 100) : 0
+      },
+      { 
+        day: 'Tue', 
+        attendance: dayData.Tuesday.total > 0 ? 
+          Math.round(((dayData.Tuesday.present + dayData.Tuesday.late) / dayData.Tuesday.total) * 100) : 0
+      },
+      { 
+        day: 'Wed', 
+        attendance: dayData.Wednesday.total > 0 ? 
+          Math.round(((dayData.Wednesday.present + dayData.Wednesday.late) / dayData.Wednesday.total) * 100) : 0
+      },
+      { 
+        day: 'Thu', 
+        attendance: dayData.Thursday.total > 0 ? 
+          Math.round(((dayData.Thursday.present + dayData.Thursday.late) / dayData.Thursday.total) * 100) : 0
+      },
+      { 
+        day: 'Fri', 
+        attendance: dayData.Friday.total > 0 ? 
+          Math.round(((dayData.Friday.present + dayData.Friday.late) / dayData.Friday.total) * 100) : 0
+      }
+    ];
+  } catch (error) {
+    console.error('Error calculating day of week attendance:', error);
+    return [
+      { day: 'Mon', attendance: 0 },
+      { day: 'Tue', attendance: 0 },
+      { day: 'Wed', attendance: 0 },
+      { day: 'Thu', attendance: 0 },
+      { day: 'Fri', attendance: 0 }
+    ];
+  }
 }
 
 function calculateStudentAttendanceStats(attendanceRecords, startDate, endDate) {
@@ -829,7 +1134,8 @@ function calculateSchoolDays(startDate, endDate) {
 }
 
 module.exports = {
-  getAttendanceDashboardNew: exports.getAttendanceDashboardNew,
-  getAttendanceReportsDashboard: exports.getAttendanceReportsDashboard,
-  getStudentDetailedAttendance: exports.getStudentDetailedAttendance
+  getAttendanceDashboardNew,
+  getAttendanceReportsDashboard,
+  getStudentDetailedAttendance,
+  getAttendanceAnalytics
 };

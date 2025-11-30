@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import {
   PageContainer,
@@ -197,13 +197,16 @@ const CHART_COLORS = {
 
 const AttendanceReportsNew: React.FC = () => {
   const navigate = useNavigate();
+  const { classId } = useParams<{ classId?: string }>();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [reports, setReports] = useState<AttendanceReport[]>([]);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [selectedView, setSelectedView] = useState('overview');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
-  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string>(classId || 'all');
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: new Date()
@@ -223,10 +226,43 @@ const AttendanceReportsNew: React.FC = () => {
     format: 'PDF'
   });
 
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const params = {
+        ...(selectedClass !== 'all' && { classId: selectedClass }),
+        startDate: dateRange.from.toISOString(),
+        endDate: dateRange.to.toISOString()
+      };
+
+      const result = await get('/attendance/analytics', params);
+
+      if (result.success) {
+        setAnalyticsData(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Sync URL classId parameter with state
+  useEffect(() => {
+    if (classId && classId !== selectedClass) {
+      setSelectedClass(classId);
+      // Auto-switch to classes tab when viewing specific class
+      setSelectedView('classes');
+    }
+  }, [classId]);
+
   useEffect(() => {
     fetchDashboardData();
     fetchReports();
-  }, [selectedPeriod, selectedClass, dateRange]);
+    if (selectedView === 'analytics') {
+      fetchAnalytics();
+    }
+  }, [selectedPeriod, selectedClass, dateRange, selectedView]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -334,15 +370,15 @@ const AttendanceReportsNew: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED':
-        return <StatusBadge variant="success" icon={CheckCircle}>Completed</StatusBadge>;
+        return <StatusBadge status="success">Completed</StatusBadge>;
       case 'GENERATING':
-        return <StatusBadge variant="warning" icon={Clock}>Generating</StatusBadge>;
+        return <StatusBadge status="warning">Generating</StatusBadge>;
       case 'PENDING':
-        return <StatusBadge variant="secondary" icon={Timer}>Pending</StatusBadge>;
+        return <StatusBadge status="info">Pending</StatusBadge>;
       case 'FAILED':
-        return <StatusBadge variant="destructive" icon={AlertTriangle}>Failed</StatusBadge>;
+        return <StatusBadge status="error">Failed</StatusBadge>;
       default:
-        return <StatusBadge variant="secondary">Unknown</StatusBadge>;
+        return <StatusBadge status="neutral">Unknown</StatusBadge>;
     }
   };
 
@@ -395,7 +431,14 @@ const AttendanceReportsNew: React.FC = () => {
         <PageHeader>
           <div className="flex justify-between items-start">
             <div>
-              <PageTitle>Attendance Reports & Analytics</PageTitle>
+              <PageTitle>
+                Attendance Reports & Analytics
+                {classId && dashboardData?.classSummaries && (
+                  <span className="text-primary ml-2">
+                    • {dashboardData.classSummaries.find(c => c.id === classId)?.name || 'Class'}
+                  </span>
+                )}
+              </PageTitle>
               <PageDescription>
                 Comprehensive attendance analysis and reporting tools
                 {dashboardData?.currentPeriod && (
@@ -404,6 +447,16 @@ const AttendanceReportsNew: React.FC = () => {
               </PageDescription>
             </div>
             <div className="flex space-x-3">
+              {classId && (
+                <Button
+                  intent="action"
+                  size="sm"
+                  onClick={() => navigate('/attendance/reports')}
+                >
+                  <ChevronRight className="h-4 w-4 mr-2 rotate-180" />
+                  Back to All Classes
+                </Button>
+              )}
               <Button intent="secondary" size="sm" onClick={fetchDashboardData}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -526,6 +579,22 @@ const AttendanceReportsNew: React.FC = () => {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
+              {classId && (
+                <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg flex items-center justify-between">
+                  <p className="text-sm text-primary font-medium">
+                    Viewing data for: <span className="font-bold">
+                      {dashboardData?.classSummaries.find(c => c.id === classId)?.name || 'Selected Class'}
+                    </span>
+                  </p>
+                  <Button
+                    size="sm"
+                    intent="action"
+                    onClick={() => navigate('/attendance/reports')}
+                  >
+                    View All Classes
+                  </Button>
+                </div>
+              )}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Attendance Trends */}
                 {dashboardData?.trends.daily && (
@@ -536,7 +605,7 @@ const AttendanceReportsNew: React.FC = () => {
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <AreaChart data={dashboardData.trends.daily}>
-                          <CartesianGrid strokeDasharray="3 3" />
+                          <CartesianGrid strokeDasharray="3,3" />
                           <XAxis dataKey="date" />
                           <YAxis />
                           <Tooltip />
@@ -623,7 +692,14 @@ const AttendanceReportsNew: React.FC = () => {
                                 <Download className="h-3 w-3" />
                               </Button>
                             )}
-                            <Button size="sm" intent="secondary">
+                            <Button
+                              size="sm"
+                              intent="secondary"
+                              onClick={() => {
+                                // TODO: Navigate to report detail page or open modal
+                                toast.error('Report view coming soon');
+                              }}
+                            >
                               <Eye className="h-3 w-3" />
                             </Button>
                           </div>
@@ -637,8 +713,19 @@ const AttendanceReportsNew: React.FC = () => {
 
             {/* Classes Tab */}
             <TabsContent value="classes" className="space-y-6">
+              {classId && (
+                <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-primary font-medium">
+                    Viewing detailed report for: <span className="font-bold">
+                      {dashboardData?.classSummaries.find(c => c.id === classId)?.name || 'Selected Class'}
+                    </span>
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {dashboardData?.classSummaries.map((cls) => (
+                {dashboardData?.classSummaries
+                  .filter(cls => !classId || cls.id === classId)
+                  .map((cls) => (
                   <Card key={cls.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                       <div>
@@ -682,8 +769,11 @@ const AttendanceReportsNew: React.FC = () => {
                           </div>
                           <Button
                             size="sm"
-                            intent="secondary"
-                            onClick={() => navigate(`/attendance/reports/class/${cls.id}`)}
+                            intent="action"
+                            onClick={() => {
+                              console.log('Navigating to class:', cls.id);
+                              navigate(`/attendance/reports/class/${cls.id}`);
+                            }}
                           >
                             <Eye className="h-3 w-3 mr-1" />
                             Details
@@ -763,10 +853,10 @@ const AttendanceReportsNew: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <span className={`font-bold ${getAttendanceStatusColor(student.attendanceRate || student.percentage || 0)}`}>
-                                {(student.attendanceRate || student.percentage || 0).toFixed(1)}%
+                              <span className={`font-bold ${getAttendanceStatusColor(student.attendanceRate || 0)}`}>
+                                {(student.attendanceRate || 0).toFixed(1)}%
                               </span>
-                              <Progress value={student.attendanceRate || student.percentage || 0} className="w-16 h-2" />
+                              <Progress value={student.attendanceRate || 0} className="w-16 h-2" />
                             </div>
                           </TableCell>
                           <TableCell>{student.totalDays}</TableCell>
@@ -781,9 +871,9 @@ const AttendanceReportsNew: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <StatusBadge
-                              variant={
+                              status={
                                 student.status === 'good' ? 'success' :
-                                student.status === 'warning' ? 'warning' : 'destructive'
+                                student.status === 'warning' ? 'warning' : 'error'
                               }
                             >
                               {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
@@ -793,7 +883,14 @@ const AttendanceReportsNew: React.FC = () => {
                             <Button
                               size="sm"
                               intent="secondary"
-                              onClick={() => navigate(`/students/${student.id}/attendance`)}
+                              onClick={() => {
+                                // Pass date range to maintain context
+                                const params = new URLSearchParams({
+                                  startDate: dateRange.from.toISOString(),
+                                  endDate: dateRange.to.toISOString()
+                                });
+                                navigate(`/students/${student.id}/attendance?${params}`);
+                              }}
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               View
@@ -816,30 +913,38 @@ const AttendanceReportsNew: React.FC = () => {
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Attendance by Day of Week */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Attendance by Day of Week</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={[
-                        { day: 'Mon', attendance: 92.5 },
-                        { day: 'Tue', attendance: 94.2 },
-                        { day: 'Wed', attendance: 91.8 },
-                        { day: 'Thu', attendance: 93.1 },
-                        { day: 'Fri', attendance: 89.4 }
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="day" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="attendance" fill={CHART_COLORS.primary} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+              {analyticsLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-gray-600 mt-4">Loading analytics...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Attendance by Day of Week */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Attendance by Day of Week</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={analyticsData?.dayOfWeek || [
+                          { day: 'Mon', attendance: 0 },
+                          { day: 'Tue', attendance: 0 },
+                          { day: 'Wed', attendance: 0 },
+                          { day: 'Thu', attendance: 0 },
+                          { day: 'Fri', attendance: 0 }
+                        ]}>
+                          <CartesianGrid strokeDasharray="3,3" />
+                          <XAxis dataKey="day" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="attendance" fill={CHART_COLORS.primary} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
 
                 {/* Attendance Distribution */}
                 <Card>
@@ -858,7 +963,7 @@ const AttendanceReportsNew: React.FC = () => {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => name + ' ' + (percent * 100).toFixed(0) + '%'}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="value"
@@ -886,7 +991,7 @@ const AttendanceReportsNew: React.FC = () => {
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={dashboardData.trends.weekly}>
-                          <CartesianGrid strokeDasharray="3 3" />
+                          <CartesianGrid strokeDasharray="3,3" />
                           <XAxis dataKey="week" />
                           <YAxis />
                           <Tooltip />
@@ -902,6 +1007,7 @@ const AttendanceReportsNew: React.FC = () => {
                   </Card>
                 )}
               </div>
+              )}
             </TabsContent>
 
             {/* Reports Tab */}
@@ -949,7 +1055,14 @@ const AttendanceReportsNew: React.FC = () => {
                               Download
                             </Button>
                           )}
-                          <Button size="sm" intent="secondary">
+                          <Button
+                            size="sm"
+                            intent="secondary"
+                            onClick={() => {
+                              // TODO: Navigate to report detail page or open modal
+                              toast.error('Report view coming soon');
+                            }}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View
                           </Button>

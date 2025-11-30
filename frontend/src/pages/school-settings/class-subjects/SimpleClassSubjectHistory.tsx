@@ -17,27 +17,7 @@ import { getAllSubjects } from '@/services/subjectService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { getTeachers, StaffMember } from '@/services/staffService';
 import { createClassSubjectHistory, getClassSubjectHistory } from '@/services/classSubjectHistoryService';
-
-// Interface definitions
-interface Class {
-  id: string;
-  name: string;
-  grade?: string;
-}
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
-}
-
-interface AcademicYear {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  isCurrent: boolean;
-}
+import { Class, Subject, AcademicYear } from '@/types';
 
 // Use StaffMember as Teacher type since teachers are now staff
 type Teacher = StaffMember;

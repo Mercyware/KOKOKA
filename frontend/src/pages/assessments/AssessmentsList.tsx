@@ -36,6 +36,8 @@ import {
   Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getAllAssessments } from '../../services/assessmentService';
+import { toast } from 'react-hot-toast';
 
 interface Assessment {
   id: string;
@@ -74,20 +76,16 @@ const AssessmentsList: React.FC = () => {
   const fetchAssessments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/assessments', {
-        headers: {
-          'X-School-Subdomain': 'greenwood' // This should come from auth context
-        }
-      });
+      const response = await getAllAssessments();
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setAssessments(data.data);
-        }
+      if (response.success && response.data) {
+        setAssessments(Array.isArray(response.data) ? response.data : []);
+      } else {
+        toast.error(response.message || 'Failed to fetch assessments');
       }
     } catch (error) {
       console.error('Error fetching assessments:', error);
+      toast.error('Error loading assessments');
     } finally {
       setLoading(false);
     }
@@ -249,17 +247,19 @@ const AssessmentsList: React.FC = () => {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                intent="secondary"
+                                intent="action"
                                 onClick={() => navigate(`/assessments/${assessment.id}`)}
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
                               </Button>
                               <Button
                                 size="sm"
-                                intent="secondary"
+                                intent="action"
                                 onClick={() => navigate(`/assessments/${assessment.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
                               </Button>
                             </div>
                           </TableCell>

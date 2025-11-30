@@ -200,6 +200,7 @@ const AddStudentForm: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching sections:', error);
+        setSections([]); // Ensure it's always an array
       }
       try {
         const classesResponse = await getAllClasses();
@@ -207,11 +208,16 @@ const AddStudentForm: React.FC = () => {
           setClasses(classesResponse.data);
         }
         const academicYearsResponse = await getAllAcademicYears();
-        if (academicYearsResponse.data) {
-          setAcademicYears(academicYearsResponse.data);
+        if (academicYearsResponse.success && academicYearsResponse.data?.academicYears) {
+          setAcademicYears(academicYearsResponse.data.academicYears);
+        } else {
+          console.error('Failed to fetch academic years:', academicYearsResponse);
+          setAcademicYears([]); // Ensure it's always an array
         }
       } catch (error) {
         console.error('Error fetching form data:', error);
+        setClasses([]); // Ensure it's always an array
+        setAcademicYears([]); // Ensure it's always an array
       }
     };
 
@@ -225,6 +231,7 @@ const AddStudentForm: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching houses:', error);
+        setHouses([]); // Ensure it's always an array
       }
     };
 

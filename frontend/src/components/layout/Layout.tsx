@@ -5,6 +5,7 @@ import Sidebar from '../Sidebar';
 import TopNavigation from '../TopNavigation';
 import ContentHeader from '../ContentHeader';
 import EmailVerificationBanner from '../EmailVerificationBanner';
+import { ChatbotWidget } from '../chatbot/ChatbotWidget';
 import { useTheme } from '../ThemeProvider';
 import { useAuth } from '../../contexts/AuthContext';
 import { Toaster } from '../ui/toaster';
@@ -188,7 +189,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </main>
       </div>
-      
+
+      {/* AI Chatbot Widget - Available to all authenticated users */}
+      {authState.user && <ChatbotWidget />}
+
       <Toaster />
     </div>
   );

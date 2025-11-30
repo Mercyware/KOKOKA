@@ -1,4 +1,5 @@
 import api from './api';
+import { Class, Subject, AcademicYear, Staff, Section } from '../types';
 
 export interface ClassTeacherAssignment {
   id: string;
@@ -73,50 +74,12 @@ export interface UpdateAssignmentData {
   notes?: string;
 }
 
-export interface Staff {
-  id: string;
-  firstName: string;
-  lastName: string;
-  employeeId: string;
-  position: string;
-  user?: {
-    email: string;
-  };
-}
-
-export interface Class {
-  id: string;
-  name: string;
-  grade: string;
-}
-
-export interface Section {
-  id: string;
-  name: string;
-  capacity?: number;
-  description?: string;
-}
-
-export interface AcademicYear {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  isCurrent: boolean;
-}
-
 export interface FormData {
   classes: Class[];
   sections: Section[];
   academicYears: AcademicYear[];
   staff: Staff[];
   subjects: Subject[];
-}
-
-export interface Subject {
-  id: string;
-  name: string;
-  code: string;
 }
 
 export interface BulkAssignmentData {

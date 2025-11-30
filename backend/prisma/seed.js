@@ -150,7 +150,11 @@ async function main() {
   console.log('🏷️  Creating inventory allocations...');
   const inventoryAllocations = await createInventoryAllocations(school.id, inventoryItems, students, staff, users[0].id);
 
-  // 33. Create Notifications
+  // 33. Create Attendance Records
+  console.log('📅 Creating attendance records...');
+  const attendanceRecords = await createAttendanceRecords(school.id, students, classes, staff, academicYear.id);
+
+  // 34. Create Notifications
   console.log('🔔 Creating notifications...');
   const notifications = await createNotifications(school.id, users, students, classes);
 
@@ -206,6 +210,7 @@ async function clearExistingData() {
     console.log('🧹 Clearing existing data...');
 
     // Delete in dependency order (most dependent first)
+    await prisma.attendance.deleteMany();
     await prisma.messageRecipient.deleteMany();
     await prisma.message.deleteMany();
     await prisma.messageThreadParticipant.deleteMany();
@@ -1365,6 +1370,143 @@ async function createGuardians(schoolId, students) {
   return guardians;
 }
 
+async function createAttendanceRecords(schoolId, students, classes, staff, academicYearId) {
+  console.log('📅 Creating attendance records...');
+
+  const attendanceRecords = [];
+
+  // Get all active terms
+  const terms = await prisma.term.findMany({
+    where: {
+      academicYearId: academicYearId
+    },
+    orderBy: {
+      startDate: 'asc'
+    }
+  });
+
+  if (terms.length === 0) {
+    console.log('⚠️ No terms found, skipping attendance records');
+    return [];
+  }
+
+  const currentTerm = terms[0]; // Use first term for simplicity
+
+  // Use term dates for attendance records
+  const termStartDate = new Date(currentTerm.startDate);
+  const termEndDate = new Date(currentTerm.endDate);
+  const today = new Date();
+
+  // Create attendance from term start up to today or term end, whichever is earlier
+  const startDate = new Date(termStartDate);
+  const endDate = today < termEndDate ? today : termEndDate;
+
+  console.log(`   Creating records from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+
+  // Get a teacher to mark attendance
+  const teacherStaff = staff.find(s => s.staffType === 'TEACHER');
+  if (!teacherStaff) {
+    console.log('⚠️ No teachers found, skipping attendance records');
+    return [];
+  }
+
+  // Define student attendance patterns for variety
+  // 70% students will have good attendance (85-100%)
+  // 20% students will have average attendance (70-84%)
+  // 10% students will have poor attendance (50-69%)
+  const studentAttendanceProfiles = students.map(student => {
+    const random = Math.random();
+    let profile;
+
+    if (random < 0.7) {
+      // Good attendance: 85-100% present, 0-5% late, 0-10% absent
+      profile = { presentChance: 0.85, lateChance: 0.05, absentChance: 0.10 };
+    } else if (random < 0.9) {
+      // Average attendance: 70-84% present, 5-10% late, 10-20% absent
+      profile = { presentChance: 0.70, lateChance: 0.10, absentChance: 0.20 };
+    } else {
+      // Poor attendance: 50-69% present, 5-15% late, 20-40% absent
+      profile = { presentChance: 0.50, lateChance: 0.15, absentChance: 0.35 };
+    }
+
+    return {
+      studentId: student.id,
+      classId: student.currentClassId,
+      ...profile
+    };
+  });
+
+  // Generate attendance for each school day (Mon-Fri)
+  let currentDate = new Date(startDate);
+  let recordCount = 0;
+
+  while (currentDate <= endDate) {
+    const dayOfWeek = currentDate.getDay();
+
+    // Skip weekends (0 = Sunday, 6 = Saturday)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      // Create attendance records for all students for this day
+      for (const profile of studentAttendanceProfiles) {
+        const random = Math.random();
+        let status;
+
+        if (random < profile.presentChance) {
+          status = 'PRESENT';
+        } else if (random < profile.presentChance + profile.lateChance) {
+          status = 'LATE';
+        } else {
+          status = 'ABSENT';
+        }
+
+        // Create the attendance record
+        attendanceRecords.push({
+          studentId: profile.studentId,
+          classId: profile.classId,
+          date: new Date(currentDate),
+          status: status,
+          markedById: teacherStaff.userId,
+          schoolId: schoolId,
+          termId: currentTerm.id,
+          academicYearId: academicYearId,
+          notes: status === 'ABSENT' ? (Math.random() > 0.7 ? 'Sick' : null) : null,
+          createdAt: new Date(currentDate),
+          updatedAt: new Date(currentDate)
+        });
+
+        recordCount++;
+      }
+    }
+
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  // Batch create all attendance records
+  console.log(`📝 Creating ${recordCount} attendance records...`);
+
+  // Create in batches of 500 to avoid overwhelming the database
+  const batchSize = 500;
+  for (let i = 0; i < attendanceRecords.length; i += batchSize) {
+    const batch = attendanceRecords.slice(i, i + batchSize);
+    await prisma.attendance.createMany({
+      data: batch,
+      skipDuplicates: true
+    });
+    console.log(`   ✓ Created batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(attendanceRecords.length / batchSize)}`);
+  }
+
+  console.log(`✅ Created ${recordCount} attendance records across ${Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24))} days`);
+
+  // Calculate and log some statistics
+  const presentCount = attendanceRecords.filter(r => r.status === 'PRESENT').length;
+  const lateCount = attendanceRecords.filter(r => r.status === 'LATE').length;
+  const absentCount = attendanceRecords.filter(r => r.status === 'ABSENT').length;
+
+  console.log(`   📊 Statistics: ${presentCount} Present (${((presentCount / recordCount) * 100).toFixed(1)}%), ${lateCount} Late (${((lateCount / recordCount) * 100).toFixed(1)}%), ${absentCount} Absent (${((absentCount / recordCount) * 100).toFixed(1)}%)`);
+
+  return attendanceRecords;
+}
+
 async function createSampleCurriculum(schoolId, subjects, createdById) {
   const curriculum = await prisma.curriculum.create({
     data: {
@@ -1374,7 +1516,7 @@ async function createSampleCurriculum(schoolId, subjects, createdById) {
       type: 'STANDARD',
       status: 'ACTIVE',
       schoolId: schoolId,
-      implementationStatus: 'IN_PROGRESS',
+      implementationStatus: 'ACTIVE',
       adoptionDate: new Date('2024-09-01'),
       startYear: 2024,
       endYear: 2025,
@@ -1382,115 +1524,151 @@ async function createSampleCurriculum(schoolId, subjects, createdById) {
     }
   });
 
-  // Add core subjects to the curriculum
+  // Add core subjects to the curriculum with topics and concepts
   const coreSubjects = subjects.filter(s => ['MATH', 'ELA', 'SCI', 'SS', 'PE'].includes(s.code));
-  
+
   for (let i = 0; i < coreSubjects.length; i++) {
     const subject = coreSubjects[i];
-    await prisma.curriculumSubject.create({
+    const curriculumSubject = await prisma.curriculumSubject.create({
       data: {
         curriculumId: curriculum.id,
         subjectId: subject.id,
         gradeLevel: 1, // Base grade level - can be customized per class
-        hoursPerWeek: subject.code === 'MATH' || subject.code === 'ELA' ? 5 : 
+        hoursPerWeek: subject.code === 'MATH' || subject.code === 'ELA' ? 5 :
                      subject.code === 'SCI' || subject.code === 'SS' ? 4 : 3,
         isCore: true,
         isOptional: false,
         displayOrder: i + 1
       }
     });
+
+    // Add topics and concepts for Mathematics
+    if (subject.code === 'MATH') {
+      const topic1 = await prisma.topic.create({
+        data: {
+          curriculumSubjectId: curriculumSubject.id,
+          name: 'Number and Place Value',
+          description: 'Understanding numbers, counting, and place value system',
+          displayOrder: 1,
+          estimatedHours: 15,
+          difficultyLevel: 'BEGINNER'
+        }
+      });
+
+      await prisma.concept.createMany({
+        data: [
+          { topicId: topic1.id, name: 'Counting to 100', bloomsLevel: 'REMEMBER', displayOrder: 1, isCore: true },
+          { topicId: topic1.id, name: 'Understanding place value (tens and ones)', bloomsLevel: 'UNDERSTAND', displayOrder: 2, isCore: true },
+          { topicId: topic1.id, name: 'Comparing and ordering numbers', bloomsLevel: 'APPLY', displayOrder: 3, isCore: true }
+        ]
+      });
+
+      const topic2 = await prisma.topic.create({
+        data: {
+          curriculumSubjectId: curriculumSubject.id,
+          name: 'Addition and Subtraction',
+          description: 'Basic operations of addition and subtraction',
+          displayOrder: 2,
+          estimatedHours: 20,
+          difficultyLevel: 'BEGINNER'
+        }
+      });
+
+      await prisma.concept.createMany({
+        data: [
+          { topicId: topic2.id, name: 'Adding single-digit numbers', bloomsLevel: 'APPLY', displayOrder: 1, isCore: true },
+          { topicId: topic2.id, name: 'Subtracting single-digit numbers', bloomsLevel: 'APPLY', displayOrder: 2, isCore: true },
+          { topicId: topic2.id, name: 'Word problems involving addition/subtraction', bloomsLevel: 'ANALYZE', displayOrder: 3, isCore: true }
+        ]
+      });
+
+      // Add learning objectives
+      await prisma.learningObjective.createMany({
+        data: [
+          { curriculumSubjectId: curriculumSubject.id, code: 'M1.1', description: 'Count reliably to 100', bloomsLevel: 'REMEMBER', displayOrder: 1 },
+          { curriculumSubjectId: curriculumSubject.id, code: 'M1.2', description: 'Add and subtract one-digit numbers', bloomsLevel: 'APPLY', displayOrder: 2 },
+          { curriculumSubjectId: curriculumSubject.id, code: 'M1.3', description: 'Solve simple word problems', bloomsLevel: 'ANALYZE', displayOrder: 3 }
+        ]
+      });
+    }
+
+    // Add topics and concepts for English Language Arts
+    else if (subject.code === 'ELA') {
+      const topic1 = await prisma.topic.create({
+        data: {
+          curriculumSubjectId: curriculumSubject.id,
+          name: 'Phonics and Reading',
+          description: 'Foundational reading skills and phonemic awareness',
+          displayOrder: 1,
+          estimatedHours: 25,
+          difficultyLevel: 'BEGINNER'
+        }
+      });
+
+      await prisma.concept.createMany({
+        data: [
+          { topicId: topic1.id, name: 'Letter sounds and recognition', bloomsLevel: 'REMEMBER', displayOrder: 1, isCore: true },
+          { topicId: topic1.id, name: 'Blending sounds to read words', bloomsLevel: 'UNDERSTAND', displayOrder: 2, isCore: true },
+          { topicId: topic1.id, name: 'Reading simple sentences', bloomsLevel: 'APPLY', displayOrder: 3, isCore: true }
+        ]
+      });
+
+      const topic2 = await prisma.topic.create({
+        data: {
+          curriculumSubjectId: curriculumSubject.id,
+          name: 'Writing and Composition',
+          description: 'Basic writing skills and sentence formation',
+          displayOrder: 2,
+          estimatedHours: 20,
+          difficultyLevel: 'BEGINNER'
+        }
+      });
+
+      await prisma.concept.createMany({
+        data: [
+          { topicId: topic2.id, name: 'Forming letters correctly', bloomsLevel: 'REMEMBER', displayOrder: 1, isCore: true },
+          { topicId: topic2.id, name: 'Writing simple sentences', bloomsLevel: 'APPLY', displayOrder: 2, isCore: true },
+          { topicId: topic2.id, name: 'Using capital letters and periods', bloomsLevel: 'APPLY', displayOrder: 3, isCore: true }
+        ]
+      });
+    }
+
+    // Add topics and concepts for Science
+    else if (subject.code === 'SCI') {
+      const topic1 = await prisma.topic.create({
+        data: {
+          curriculumSubjectId: curriculumSubject.id,
+          name: 'Living Things',
+          description: 'Understanding plants, animals, and their characteristics',
+          displayOrder: 1,
+          estimatedHours: 12,
+          difficultyLevel: 'BEGINNER'
+        }
+      });
+
+      await prisma.concept.createMany({
+        data: [
+          { topicId: topic1.id, name: 'Identifying living vs non-living things', bloomsLevel: 'UNDERSTAND', displayOrder: 1, isCore: true },
+          { topicId: topic1.id, name: 'Parts of a plant', bloomsLevel: 'REMEMBER', displayOrder: 2, isCore: true },
+          { topicId: topic1.id, name: 'Animal habitats', bloomsLevel: 'UNDERSTAND', displayOrder: 3, isCore: true }
+        ]
+      });
+    }
   }
 
+  console.log(`✅ Created curriculum with topics and concepts`);
   return curriculum;
 }
 
 async function createGlobalCurricula() {
-  // Sample Global Curricula Data (similar to original seed.js but shorter)
-  const globalCurriculaData = [
-    {
-      name: "Cambridge International Primary Programme",
-      description: "A comprehensive primary education curriculum framework designed for learners aged 5-11 years.",
-      version: "2023.1",
-      type: "CAMBRIDGE",
-      provider: "Cambridge Assessment International Education",
-      country: "United Kingdom",
-      language: "en",
-      minGrade: 1,
-      maxGrade: 6,
-      status: "ACTIVE",
-      isOfficial: true,
-      licenseType: "INSTITUTIONAL",
-      adoptionCount: 245,
-      tags: ["primary", "international", "cambridge", "inquiry-based"],
-      difficulty: "STANDARD"
-    },
-    {
-      name: "International Baccalaureate Primary Years Programme",
-      description: "The PYP is designed for students aged 3-12. It focuses on the development of the whole child.",
-      version: "2018",
-      type: "IB",
-      provider: "International Baccalaureate Organization",
-      country: "Switzerland",
-      language: "en",
-      minGrade: 1,
-      maxGrade: 6,
-      status: "ACTIVE",
-      isOfficial: true,
-      licenseType: "INSTITUTIONAL",
-      adoptionCount: 189,
-      tags: ["primary", "international", "ib", "transdisciplinary"],
-      difficulty: "ADVANCED"
-    }
-  ];
-
-  for (const curriculumData of globalCurriculaData) {
-    const curriculum = await prisma.globalCurriculum.upsert({
-      where: { name: curriculumData.name },
-      update: curriculumData,
-      create: curriculumData
-    });
-    
-    // Add sample subjects for each global curriculum
-    await createGlobalCurriculumSubjects(curriculum.id, curriculum.type);
-  }
+  // Global curricula functionality removed - using school-specific curricula only
+  console.log('✅ Skipping global curricula (using school-specific curricula)');
+  return;
 }
 
 async function createGlobalCurriculumSubjects(curriculumId, type) {
-  let subjects = [];
-  
-  if (type === 'CAMBRIDGE') {
-    subjects = [
-      { name: "English", code: "ENG", description: "Cambridge Primary English", gradeLevel: 1, category: "Languages", recommendedHours: 6, isCore: true },
-      { name: "Mathematics", code: "MAT", description: "Cambridge Primary Mathematics", gradeLevel: 1, category: "Mathematics", recommendedHours: 5, isCore: true },
-      { name: "Science", code: "SCI", description: "Cambridge Primary Science", gradeLevel: 1, category: "Sciences", recommendedHours: 4, isCore: true }
-    ];
-  } else if (type === 'IB') {
-    subjects = [
-      { name: "Language Arts", code: "LA", description: "IB PYP Language Arts", gradeLevel: 1, category: "Languages", recommendedHours: 6, isCore: true },
-      { name: "Mathematics", code: "MAT", description: "IB PYP Mathematics", gradeLevel: 1, category: "Mathematics", recommendedHours: 5, isCore: true },
-      { name: "Science", code: "SCI", description: "IB PYP Science & Technology", gradeLevel: 1, category: "Sciences", recommendedHours: 4, isCore: true }
-    ];
-  }
-
-  for (const subject of subjects) {
-    await prisma.globalCurriculumSubject.upsert({
-      where: {
-        globalCurriculumId_code_gradeLevel: {
-          globalCurriculumId: curriculumId,
-          code: subject.code,
-          gradeLevel: subject.gradeLevel
-        }
-      },
-      update: {
-        ...subject,
-        globalCurriculumId: curriculumId
-      },
-      create: {
-        ...subject,
-        globalCurriculumId: curriculumId
-      }
-    });
-  }
+  // Not needed anymore
+  return;
 }
 
 async function createSampleAssessment(schoolId, targetClass, subject, academicYearId, term, teacher) {

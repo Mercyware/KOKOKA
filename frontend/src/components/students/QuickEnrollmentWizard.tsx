@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { DatePicker } from '@/components/ui/date-picker';
 import { ChevronLeft, ChevronRight, User, GraduationCap, Users, CheckCircle } from 'lucide-react';
 
 interface QuickFormData {
@@ -33,9 +34,9 @@ interface QuickEnrollmentWizardProps {
   onBack: () => void;
   onSwitchToFull: () => void;
   loading: boolean;
-  classes: any[];
-  sections: any[];
-  academicYears: any[];
+  classes: any[] | null | undefined;
+  sections: any[] | null | undefined;
+  academicYears: any[] | null | undefined;
 }
 
 const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
@@ -116,7 +117,7 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
+        <div className="bg-gradient-to-r from-primary to-secondary text-white rounded-lg p-6 shadow-md">
           <h2 className="text-2xl font-bold mb-2">Quick Student Enrollment</h2>
           <p className="text-blue-100">Get students enrolled in just 3 simple steps</p>
         </div>
@@ -135,10 +136,10 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
               <div key={stepNumber} className="flex flex-col items-center">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-2 transition-all ${
                   completed
-                    ? 'bg-green-500 border-green-500 text-white'
+                    ? 'bg-success border-success text-white'
                     : current
-                      ? `bg-${step.color}-500 border-${step.color}-500 text-white`
-                      : 'bg-gray-100 border-gray-300 text-gray-400'
+                      ? 'bg-primary border-primary text-white'
+                      : 'bg-slate-100 border-slate-300 text-slate-400'
                 }`}>
                   {completed && stepNumber < currentStep ? (
                     <CheckCircle className="h-6 w-6" />
@@ -147,7 +148,7 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   )}
                 </div>
                 <span className={`text-xs font-medium ${
-                  current ? 'text-gray-900' : completed ? 'text-green-600' : 'text-gray-500'
+                  current ? 'text-slate-900' : completed ? 'text-success' : 'text-slate-500'
                 }`}>
                   {step.label}
                 </span>
@@ -156,20 +157,20 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
           })}
         </div>
         <Progress value={progress} className="h-2" />
-        <div className="text-center mt-2 text-sm text-gray-600">
+        <div className="text-center mt-2 text-sm text-slate-600">
           Step {currentStep} of {totalSteps}
         </div>
       </div>
 
       {/* Form Steps */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {React.createElement(stepIcons[currentStep - 1].icon, { className: "h-5 w-5" })}
+      <Card className="mb-6 shadow-sm">
+        <CardHeader className="border-b border-slate-200">
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            {React.createElement(stepIcons[currentStep - 1].icon, { className: "h-5 w-5 text-primary" })}
             {stepIcons[currentStep - 1].label}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Step 1: Basic Information */}
           {currentStep === 1 && (
             <div className="space-y-4">
@@ -196,12 +197,10 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={e => handleChange('dateOfBirth', e.target.value)}
-                    required
+                  <DatePicker
+                    value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined}
+                    onChange={(date) => handleChange('dateOfBirth', date ? date.toISOString().split('T')[0] : '')}
+                    placeholder="Select date of birth"
                   />
                 </div>
                 <div className="space-y-2">
@@ -250,11 +249,19 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                       <SelectValue placeholder="Select academic year" />
                     </SelectTrigger>
                     <SelectContent>
-                      {academicYears.map(year => (
-                        <SelectItem key={year._id || year.id} value={year._id || year.id}>
-                          {year.name}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(academicYears) && academicYears.length > 0 ? (
+                        academicYears.map(year => {
+                          const yearId = year?._id || year?.id || '';
+                          const yearName = year?.name || 'Unnamed Year';
+                          return (
+                            <SelectItem key={yearId} value={yearId}>
+                              {yearName}
+                            </SelectItem>
+                          );
+                        })
+                      ) : (
+                        <SelectItem value="" disabled>No academic years available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -269,11 +276,19 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                       <SelectValue placeholder="Select class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map(classItem => (
-                        <SelectItem key={classItem._id || classItem.id} value={classItem._id || classItem.id}>
-                          {classItem.name}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(classes) && classes.length > 0 ? (
+                        classes.map(classItem => {
+                          const classId = classItem?._id || classItem?.id || '';
+                          const className = classItem?.name || 'Unnamed Class';
+                          return (
+                            <SelectItem key={classId} value={classId}>
+                              {className}
+                            </SelectItem>
+                          );
+                        })
+                      ) : (
+                        <SelectItem value="" disabled>No classes available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -288,11 +303,19 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                       <SelectValue placeholder="Select section" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sections.map(section => (
-                        <SelectItem key={section._id || section.id} value={section._id || section.id}>
-                          Section {section.name}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(sections) && sections.length > 0 ? (
+                        sections.map(section => {
+                          const sectionId = section?._id || section?.id || '';
+                          const sectionName = section?.name || 'Unnamed Section';
+                          return (
+                            <SelectItem key={sectionId} value={sectionId}>
+                              Section {sectionName}
+                            </SelectItem>
+                          );
+                        })
+                      ) : (
+                        <SelectItem value="" disabled>No sections available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -369,17 +392,17 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
       </Card>
 
       {/* Navigation Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between gap-3">
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button
             intent="cancel"
             onClick={onBack}
-            className="w-full sm:w-auto bg-white border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button
-            intent="secondary"
+            variant="outline"
             onClick={onSwitchToFull}
             className="w-full sm:w-auto"
           >
@@ -387,10 +410,10 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
           </Button>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           {currentStep > 1 && (
             <Button
-              intent="secondary"
+              variant="outline"
               onClick={handlePrev}
               className="w-full sm:w-auto"
             >
@@ -414,7 +437,7 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
               intent="primary"
               onClick={handleSubmit}
               disabled={loading || !validateStep(currentStep)}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto min-w-[160px]"
             >
               {loading ? (
                 <>

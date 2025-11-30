@@ -76,6 +76,22 @@ model School {
   users                       User[]
   vehicles                    Vehicle[]
   webhookSubscriptions        WebhookSubscription[]
+  performanceSnapshots        PerformanceSnapshot[]
+  learningActivities          LearningActivity[]
+  assignments                 Assignment[]
+  assignmentSubmissions       AssignmentSubmission[]
+  dataConsents                DataConsent[]
+  chatConversations           ChatConversation[]
+  knowledgeBase               KnowledgeBase[]
+  chatbotAnalytics            ChatbotAnalytics[]
+  notificationRules           NotificationRule[]
+  notificationIntelligence    NotificationIntelligence[]
+  notificationDigests         NotificationDigest[]
+  attendancePatterns          AttendancePattern[]
+  attendanceInsights          AttendanceInsight[]
+  performancePredictions      PerformancePrediction[]
+  riskAssessments             RiskAssessment[]
+  curricula                   Curriculum[]
 
   @@map("schools")
 }
@@ -137,6 +153,13 @@ model User {
   userNotifications            UserNotification[]
   school                       School                       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   webhookSubscriptions         WebhookSubscription[]
+  submissionsGraded            AssignmentSubmission[]       @relation("SubmissionGradedBy")
+  dataConsents                 DataConsent[]
+  chatConversations            ChatConversation[]
+  notificationRules            NotificationRule[]
+  notificationIntelligence     NotificationIntelligence[]
+  notificationDigests          NotificationDigest[]
+  createdCurricula             Curriculum[]                 @relation("CurriculumCreatedBy")
 
   @@map("users")
 }
@@ -196,29 +219,37 @@ model AcademicYear {
   students                    Student[]
   subjectAssignments          SubjectAssignment[]
   terms                       Term[]
+  performanceSnapshots        PerformanceSnapshot[]
+  assignments                 Assignment[]
+  classCurricula              ClassCurriculum[]
+  classTopicCoverages         ClassTopicCoverage[]
+  curriculumProgressTrackers  CurriculumProgressTracker[]
 
   @@unique([schoolId, name])
   @@map("academic_years")
 }
 
 model Term {
-  id             String        @id @default(uuid())
-  name           String
-  startDate      DateTime
-  endDate        DateTime
-  schoolId       String
-  academicYearId String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  assessments    Assessment[]
-  attendance     Attendance[]
-  gradeBooks     GradeBook[]
-  gradeReports   GradeReport[]
-  reportBatches  ReportBatch[]
-  reportCards    ReportCard[]
-  results        Result[]
-  academicYear   AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  school         School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  id                   String                @id @default(uuid())
+  name                 String
+  startDate            DateTime
+  endDate              DateTime
+  schoolId             String
+  academicYearId       String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  assessments          Assessment[]
+  attendance           Attendance[]
+  gradeBooks           GradeBook[]
+  gradeReports         GradeReport[]
+  reportBatches        ReportBatch[]
+  reportCards          ReportCard[]
+  results              Result[]
+  performanceSnapshots PerformanceSnapshot[]
+  assignments          Assignment[]
+  classTopicCoverages  ClassTopicCoverage[]
+  academicYear         AcademicYear          @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  school               School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, academicYearId, name])
   @@map("terms")
@@ -261,29 +292,33 @@ model Department {
 }
 
 model Subject {
-  id                  String                @id @default(uuid())
-  name                String
-  code                String
-  description         String?
-  credits             Int?
-  schoolId            String
-  departmentId        String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  assessments         Assessment[]
-  attendance          Attendance[]
-  classSubjectHistory ClassSubjectHistory[]
-  gradeBooks          GradeBook[]
-  subjectAssignments  SubjectAssignment[]
-  subjectResults      SubjectResult[]
-  department          Department?           @relation(fields: [departmentId], references: [id])
-  school              School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  teacherSubjects     TeacherSubject[]
+  id                     String                  @id @default(uuid())
+  name                   String
+  code                   String
+  description            String?
+  credits                Int?
+  schoolId               String
+  departmentId           String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  assessments            Assessment[]
+  attendance             Attendance[]
+  classSubjectHistory    ClassSubjectHistory[]
+  gradeBooks             GradeBook[]
+  subjectAssignments     SubjectAssignment[]
+  subjectResults         SubjectResult[]
+  department             Department?             @relation(fields: [departmentId], references: [id])
+  school                 School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacherSubjects        TeacherSubject[]
+  learningActivities     LearningActivity[]
+  assignments            Assignment[]
+  performancePredictions PerformancePrediction[]
+  curriculumSubjects     CurriculumSubject[]     @relation("CurriculumSubjects")
+  classTopicCoverages    ClassTopicCoverage[]    @relation("ClassTopicCoverageSubject")
 
   @@unique([schoolId, code])
   @@map("subjects")
 }
-
 
 model GradeBook {
   id              String          @id @default(uuid())
@@ -582,6 +617,13 @@ model Class {
   studentClassHistory        StudentClassHistory[]
   students                   Student[]
   subjectAssignments         SubjectAssignment[]
+  learningActivities         LearningActivity[]
+  assignments                Assignment[]
+  attendanceInsights         AttendanceInsight[]
+  classCurricula             ClassCurriculum[]
+  classTopicCoverages        ClassTopicCoverage[]
+  studentTopicProgress       StudentTopicProgress[]
+  curriculumProgressTrackers CurriculumProgressTracker[]
 
   @@unique([schoolId, name])
   @@map("classes")
@@ -654,6 +696,17 @@ model Student {
   tcDate                     DateTime?
   tcNumber                   String?
   transportInfo              Json?
+  learningPreferences        Json?
+  engagementMetrics          Json?
+  performanceHistory         Json?
+  behavioralPatterns         Json?
+  aiRecommendations          Json?
+  riskScore                  Float?
+  lastRiskAssessment         DateTime?
+  averageGradePoint          Float?
+  attendancePercentage       Float?
+  assignmentCompletionRate   Float?
+  participationScore         Float?
   attendance                 Attendance[]
   bookIssues                 BookIssue[]
   documents                  Document[]
@@ -667,6 +720,17 @@ model Student {
   results                    Result[]
   studentClassHistory        StudentClassHistory[]
   transportAssignments       StudentTransportAssignment[]
+  assignmentSubmissions      AssignmentSubmission[]
+  learningActivities         LearningActivity[]
+  performanceSnapshots       PerformanceSnapshot[]
+  dataConsents               DataConsent[]
+  attendancePatterns         AttendancePattern[]
+  attendanceInsights         AttendanceInsight[]
+  performancePredictions     PerformancePrediction[]
+  riskAssessments            RiskAssessment[]
+  studentTopicProgress       StudentTopicProgress[]
+  studentConceptMastery      StudentConceptMastery[]
+  curriculumProgressTrackers CurriculumProgressTracker[]
   academicYear               AcademicYear?                @relation(fields: [academicYearId], references: [id])
   currentClass               Class?                       @relation(fields: [currentClassId], references: [id])
   currentSection             Section?                     @relation(fields: [currentSectionId], references: [id])
@@ -680,43 +744,51 @@ model Student {
 }
 
 model Staff {
-  id                  String                @id @default(uuid())
-  employeeId          String
-  firstName           String
-  lastName            String
-  middleName          String?
-  dateOfBirth         DateTime?
-  gender              Gender?
-  photo               String?
-  profilePictureId    String?      @unique
-  phone               String?
-  streetAddress       String?
-  city                String?
-  state               String?
-  zipCode             String?
-  country             String?
-  position            String
-  joiningDate         DateTime              @default(now())
-  salary              Decimal?
-  status              StaffStatus           @default(ACTIVE)
-  schoolId            String
-  userId              String                @unique
-  departmentId        String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  staffType           StaffType             @default(GENERAL)
-  experience          Int?
-  qualification       String?
-  createdAssessments  Assessment[]
-  classSubjectHistory ClassSubjectHistory[]
-  classTeachers       ClassTeacher[]
-  gradeBooks          GradeBook[]
-  hostels             Hostel[]
-  department          Department?           @relation(fields: [departmentId], references: [id])
-  school              School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subjectAssignments  SubjectAssignment[]
-  teacherSubjects     TeacherSubject[]
+  id                      String                @id @default(uuid())
+  employeeId              String
+  firstName               String
+  lastName                String
+  middleName              String?
+  dateOfBirth             DateTime?
+  gender                  Gender?
+  photo                   String?
+  profilePictureId        String?               @unique
+  phone                   String?
+  streetAddress           String?
+  city                    String?
+  state                   String?
+  zipCode                 String?
+  country                 String?
+  position                String
+  joiningDate             DateTime              @default(now())
+  salary                  Decimal?
+  status                  StaffStatus           @default(ACTIVE)
+  schoolId                String
+  userId                  String                @unique
+  departmentId            String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  staffType               StaffType             @default(GENERAL)
+  experience              Int?
+  qualification           String?
+  teachingMetrics         Json?
+  specializations         String[]
+  teachingStyle           Json?
+  professionalDevelopment Json?
+  performanceMetrics      Json?
+  createdAssessments      Assessment[]
+  classSubjectHistory     ClassSubjectHistory[]
+  classTeachers           ClassTeacher[]
+  gradeBooks              GradeBook[]
+  hostels                 Hostel[]
+  assignmentsCreated      Assignment[]
+  learningActivities      LearningActivity[]
+  department              Department?           @relation(fields: [departmentId], references: [id])
+  school                  School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user                    User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectAssignments      SubjectAssignment[]
+  teacherSubjects         TeacherSubject[]
+  classTopicCoverages     ClassTopicCoverage[]
   // profilePicture      FileManager?  @relation("StaffProfilePicture", fields: [profilePictureId], references: [id])
 
   @@unique([schoolId, employeeId])
@@ -1940,6 +2012,416 @@ model SubjectResult {
   @@map("subject_results")
 }
 
+model PerformanceSnapshot {
+  id                    String       @id @default(uuid())
+  studentId             String
+  snapshotDate          DateTime     @default(now())
+  academicYearId        String
+  termId                String?
+  gpa                   Float?
+  averageScore          Float
+  subjectScores         Json
+  classRank             Int?
+  classSize             Int?
+  attendanceRate        Float
+  participationRate     Float
+  assignmentsCompleted  Int
+  assignmentsTotal      Int
+  completionRate        Float
+  conductGrade          String?
+  disciplinaryIncidents Int          @default(0)
+  positiveRemarks       Int          @default(0)
+  strengthAreas         String[]
+  weaknessAreas         String[]
+  riskLevel             String?
+  recommendations       Json?
+  createdAt             DateTime     @default(now())
+  schoolId              String
+  student               Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYear          AcademicYear @relation(fields: [academicYearId], references: [id])
+  term                  Term?        @relation(fields: [termId], references: [id])
+  school                School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, snapshotDate])
+  @@map("performance_snapshots")
+}
+
+model LearningActivity {
+  id               String               @id @default(uuid())
+  activityType     LearningActivityType
+  studentId        String?
+  staffId          String?
+  subjectId        String?
+  classId          String?
+  title            String
+  description      String?
+  duration         Int?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  score            Float?
+  maxScore         Float?
+  attempts         Int                  @default(1)
+  timeSpent        Int?
+  interactionData  Json?
+  difficultyLevel  String?
+  completionStatus String
+  deviceType       String?
+  location         Json?
+  schoolId         String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  student          Student?             @relation(fields: [studentId], references: [id])
+  staff            Staff?               @relation(fields: [staffId], references: [id])
+  subject          Subject?             @relation(fields: [subjectId], references: [id])
+  class            Class?               @relation(fields: [classId], references: [id])
+  school           School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("learning_activities")
+}
+
+model Assignment {
+  id                  String                 @id @default(uuid())
+  title               String
+  description         String?
+  instructions        String?
+  subjectId           String
+  classId             String
+  staffId             String
+  academicYearId      String
+  termId              String?
+  assignedDate        DateTime               @default(now())
+  dueDate             DateTime
+  availableFrom       DateTime?
+  availableUntil      DateTime?
+  maxScore            Float                  @default(100)
+  passingScore        Float?
+  weight              Float                  @default(1.0)
+  allowLateSubmission Boolean                @default(false)
+  latePenalty         Float?
+  maxAttempts         Int?
+  allowedFileTypes    String[]
+  maxFileSize         Int?
+  maxFiles            Int                    @default(5)
+  autoGrade           Boolean                @default(false)
+  plagiarismCheck     Boolean                @default(false)
+  aiAssisted          Boolean                @default(false)
+  attachments         Json?
+  rubric              Json?
+  gradingCriteria     Json?
+  status              AssignmentStatus       @default(DRAFT)
+  schoolId            String
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  subject             Subject                @relation(fields: [subjectId], references: [id])
+  class               Class                  @relation(fields: [classId], references: [id])
+  staff               Staff                  @relation(fields: [staffId], references: [id])
+  academicYear        AcademicYear           @relation(fields: [academicYearId], references: [id])
+  term                Term?                  @relation(fields: [termId], references: [id])
+  school              School                 @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  submissions         AssignmentSubmission[]
+
+  @@map("assignments")
+}
+
+model AssignmentSubmission {
+  id               String           @id @default(uuid())
+  assignmentId     String
+  studentId        String
+  submittedAt      DateTime         @default(now())
+  isLate           Boolean          @default(false)
+  daysLate         Int              @default(0)
+  attemptNumber    Int              @default(1)
+  content          String?
+  files            Json?
+  links            String[]
+  score            Float?
+  maxScore         Float
+  percentage       Float?
+  grade            String?
+  feedback         String?
+  rubricScores     Json?
+  status           SubmissionStatus @default(SUBMITTED)
+  gradedAt         DateTime?
+  gradedById       String?
+  plagiarismScore  Float?
+  plagiarismReport Json?
+  aiSuggestions    Json?
+  autoGraded       Boolean          @default(false)
+  timeSpent        Int?
+  editCount        Int              @default(0)
+  lastEditedAt     DateTime?
+  schoolId         String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  assignment       Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student          Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy         User?            @relation("SubmissionGradedBy", fields: [gradedById], references: [id])
+  school           School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId, attemptNumber])
+  @@map("assignment_submissions")
+}
+
+model DataConsent {
+  id          String      @id @default(uuid())
+  userId      String
+  studentId   String?
+  consentType ConsentType
+  purpose     String
+  granted     Boolean     @default(false)
+  grantedAt   DateTime?
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  student     Student?    @relation(fields: [studentId], references: [id])
+  schoolId    String
+  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("data_consents")
+}
+
+model ChatConversation {
+  id               String             @id @default(uuid())
+  userId           String
+  conversationType ConversationType   @default(FAQ)
+  status           ConversationStatus @default(ACTIVE)
+  title            String?
+  startedAt        DateTime           @default(now())
+  lastMessageAt    DateTime?
+  endedAt          DateTime?
+  metadata         Json?
+  schoolId         String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  user             User               @relation(fields: [userId], references: [id])
+  school           School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  messages         ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id               String           @id @default(uuid())
+  conversationId   String
+  role             MessageRole
+  content          String
+  intentDetected   String?
+  confidence       Float?
+  suggestedActions Json?
+  metadata         Json?
+  wasHelpful       Boolean?
+  feedbackText     String?
+  aiModel          String?
+  tokensUsed       Int?
+  responseTime     Int?
+  createdAt        DateTime         @default(now())
+  conversation     ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model KnowledgeBase {
+  id               String            @id @default(uuid())
+  category         KnowledgeCategory
+  question         String
+  answer           String
+  keywords         String[]
+  relatedQuestions String[]
+  metadata         Json?
+  views            Int               @default(0)
+  helpfulCount     Int               @default(0)
+  notHelpfulCount  Int               @default(0)
+  isActive         Boolean           @default(true)
+  priority         Int               @default(0)
+  schoolId         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  school           School?           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_base")
+}
+
+model ChatbotAnalytics {
+  id                 String   @id @default(uuid())
+  date               DateTime @default(now())
+  totalConversations Int      @default(0)
+  totalMessages      Int      @default(0)
+  avgResponseTime    Float?
+  satisfactionRate   Float?
+  topIntents         Json?
+  topQuestions       Json?
+  unhandledQueries   Json?
+  schoolId           String
+  createdAt          DateTime @default(now())
+  school             School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, date])
+  @@map("chatbot_analytics")
+}
+
+model NotificationRule {
+  id            String                @id @default(uuid())
+  name          String
+  description   String?
+  ruleType      NotificationRuleType
+  conditions    Json
+  priority      NotificationPriority
+  channels      NotificationChannel[]
+  template      String?
+  isActive      Boolean               @default(true)
+  triggerCount  Int                   @default(0)
+  lastTriggered DateTime?
+  schoolId      String
+  createdById   String
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  school        School                @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  createdBy     User                  @relation(fields: [createdById], references: [id])
+
+  @@map("notification_rules")
+}
+
+model NotificationIntelligence {
+  id                String    @id @default(uuid())
+  userId            String
+  preferredTime     Json?
+  preferredChannels String[]
+  readRate          Float?
+  avgResponseTime   Int?
+  topicPreferences  Json?
+  mutedTopics       String[]
+  lastAnalyzed      DateTime?
+  schoolId          String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id])
+  school            School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, schoolId])
+  @@map("notification_intelligence")
+}
+
+model NotificationDigest {
+  id              String          @id @default(uuid())
+  userId          String
+  digestType      DigestType
+  frequency       DigestFrequency
+  content         Json
+  notificationIds String[]
+  sentAt          DateTime?
+  status          DigestStatus    @default(PENDING)
+  schoolId        String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id])
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("notification_digests")
+}
+
+model AttendancePattern {
+  id              String          @id @default(uuid())
+  studentId       String
+  patternType     PatternType
+  severity        PatternSeverity
+  description     String
+  startDate       DateTime
+  endDate         DateTime?
+  occurrences     Int             @default(1)
+  dayPattern      Json?
+  timePattern     Json?
+  subjectPattern  Json?
+  confidence      Float
+  recommendations Json?
+  alertSent       Boolean         @default(false)
+  alertSentAt     DateTime?
+  resolved        Boolean         @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  notes           String?
+  schoolId        String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  student         Student         @relation(fields: [studentId], references: [id])
+  school          School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_patterns")
+}
+
+model AttendanceInsight {
+  id           String      @id @default(uuid())
+  studentId    String?
+  classId      String?
+  insightType  InsightType
+  insight      String
+  metrics      Json
+  actionable   Boolean     @default(false)
+  actions      Json?
+  priority     Int         @default(0)
+  validUntil   DateTime?
+  acknowledged Boolean     @default(false)
+  schoolId     String
+  createdAt    DateTime    @default(now())
+  student      Student?    @relation(fields: [studentId], references: [id])
+  class        Class?      @relation(fields: [classId], references: [id])
+  school       School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_insights")
+}
+
+model PerformancePrediction {
+  id              String         @id @default(uuid())
+  studentId       String
+  subjectId       String?
+  predictionType  PredictionType
+  currentValue    Float?
+  predictedValue  Float
+  confidence      Float
+  timeframe       String
+  factors         Json
+  recommendations Json?
+  validFrom       DateTime       @default(now())
+  validUntil      DateTime
+  actualValue     Float?
+  accuracy        Float?
+  modelVersion    String
+  schoolId        String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  student         Student        @relation(fields: [studentId], references: [id])
+  subject         Subject?       @relation(fields: [subjectId], references: [id])
+  school          School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("performance_predictions")
+}
+
+model RiskAssessment {
+  id              String    @id @default(uuid())
+  studentId       String
+  riskType        RiskType
+  riskLevel       RiskLevel
+  riskScore       Float
+  factors         Json
+  indicators      Json
+  recommendations Json
+  interventions   Json?
+  assessedAt      DateTime  @default(now())
+  validUntil      DateTime
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  notes           String?
+  schoolId        String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  student         Student   @relation(fields: [studentId], references: [id])
+  school          School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@map("risk_assessments")
+}
+
 enum UserRole {
   SUPER_ADMIN
   ADMIN
@@ -2282,7 +2764,6 @@ enum WebhookDeliveryStatus {
   RETRYING
 }
 
-
 enum ImplementationStatus {
   PLANNED
   IN_PROGRESS
@@ -2517,6 +2998,12 @@ enum MessageDeliveryStatus {
   READ
 }
 
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
 enum ParticipantStatus {
   ACTIVE
   LEFT
@@ -2649,4 +3136,399 @@ enum InventoryAllocationStatus {
   LOST
   DAMAGED
   CANCELLED
+}
+
+enum LearningActivityType {
+  ASSIGNMENT_SUBMISSION
+  ASSESSMENT_ATTEMPT
+  CONTENT_VIEW
+  RESOURCE_DOWNLOAD
+  DISCUSSION_POST
+  VIDEO_WATCH
+  PRACTICE_EXERCISE
+  QUIZ_ATTEMPT
+  READING_ACTIVITY
+  PROJECT_WORK
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADING
+  GRADED
+  RETURNED
+  RESUBMITTED
+  LATE
+  MISSING
+}
+
+enum ConsentType {
+  AI_ANALYTICS
+  PERFORMANCE_TRACKING
+  PERSONALIZED_LEARNING
+  PARENT_DATA_SHARING
+  RESEARCH_PARTICIPATION
+}
+
+enum ConversationType {
+  FAQ
+  SUPPORT
+  GENERAL_INQUIRY
+  COMPLAINT
+  FEEDBACK
+  EMERGENCY
+}
+
+enum ConversationStatus {
+  ACTIVE
+  RESOLVED
+  ESCALATED
+  CLOSED
+}
+
+enum KnowledgeCategory {
+  ADMISSIONS
+  ACADEMICS
+  ATTENDANCE
+  FEES
+  TRANSPORTATION
+  HOSTEL
+  LIBRARY
+  EXAMS
+  TIMETABLE
+  POLICIES
+  TECHNICAL
+  GENERAL
+}
+
+enum NotificationRuleType {
+  ATTENDANCE_PATTERN
+  GRADE_DROP
+  ASSIGNMENT_OVERDUE
+  FEE_REMINDER
+  EXAM_REMINDER
+  LOW_PERFORMANCE
+  HIGH_ACHIEVEMENT
+  BEHAVIOR_INCIDENT
+  CUSTOM
+}
+
+enum DigestType {
+  DAILY_SUMMARY
+  WEEKLY_SUMMARY
+  MONTHLY_REPORT
+  CUSTOM
+}
+
+enum DigestFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum DigestStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum PatternType {
+  CHRONIC_ABSENCE
+  FREQUENT_TARDINESS
+  MONDAY_PATTERN
+  FRIDAY_PATTERN
+  SUBJECT_SPECIFIC
+  WEATHER_RELATED
+  IRREGULAR
+  IMPROVING
+  DECLINING
+}
+
+enum PatternSeverity {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum InsightType {
+  TREND
+  ANOMALY
+  PREDICTION
+  RECOMMENDATION
+  ALERT
+}
+
+enum PredictionType {
+  FINAL_GRADE
+  TERM_AVERAGE
+  SUBJECT_PERFORMANCE
+  OVERALL_GPA
+  EXAM_SCORE
+  PASS_PROBABILITY
+}
+
+enum RiskType {
+  ACADEMIC_FAILURE
+  DROPOUT
+  CHRONIC_ABSENCE
+  BEHAVIORAL
+  MENTAL_HEALTH
+  FINANCIAL
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+// ==================== CURRICULUM TOPIC TRACKING MODELS ====================
+
+model Curriculum {
+  id                   String    @id @default(uuid())
+  schoolId             String
+  name                 String
+  description          String?
+  version              String?
+  type                 String // CAMBRIDGE, IB, NATIONAL, STEM, CUSTOM, etc.
+  status               String    @default("DRAFT") // DRAFT, ACTIVE, ARCHIVED
+  startYear            Int?
+  endYear              Int?
+  implementationStatus String? // PLANNED, PILOTING, ACTIVE, PHASED_OUT
+  customizationLevel   String? // FULL, PARTIAL, MINIMAL
+  adoptionDate         DateTime?
+  createdBy            String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  school           School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user             User                        @relation("CurriculumCreatedBy", fields: [createdBy], references: [id])
+  subjects         CurriculumSubject[]
+  classAssignments ClassCurriculum[]
+  progressTrackers CurriculumProgressTracker[]
+
+  @@unique([schoolId, name, version])
+  @@map("curricula")
+}
+
+model CurriculumSubject {
+  id            String   @id @default(uuid())
+  curriculumId  String
+  subjectId     String
+  gradeLevel    Int
+  term          String?
+  displayOrder  Int      @default(0)
+  hoursPerWeek  Int?
+  isCore        Boolean  @default(true)
+  isOptional    Boolean  @default(false)
+  prerequisites String[] @default([])
+
+  curriculum         Curriculum          @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  subject            Subject             @relation("CurriculumSubjects", fields: [subjectId], references: [id], onDelete: Cascade)
+  topics             Topic[]
+  learningObjectives LearningObjective[]
+  contentModules     ContentModule[]
+
+  @@unique([curriculumId, subjectId, gradeLevel])
+  @@map("curriculum_subjects")
+}
+
+model LearningObjective {
+  id                  String  @id @default(uuid())
+  curriculumSubjectId String
+  code                String?
+  description         String
+  bloomsLevel         String? // REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE
+  displayOrder        Int     @default(0)
+
+  curriculumSubject CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
+
+  @@map("learning_objectives")
+}
+
+model ContentModule {
+  id                  String  @id @default(uuid())
+  curriculumSubjectId String
+  name                String
+  description         String?
+  displayOrder        Int     @default(0)
+  estimatedHours      Int?
+  resources           Json?
+
+  curriculumSubject CurriculumSubject @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
+
+  @@map("content_modules")
+}
+
+model Topic {
+  id                  String  @id @default(uuid())
+  curriculumSubjectId String
+  name                String
+  description         String?
+  displayOrder        Int     @default(0)
+  parentTopicId       String?
+  estimatedHours      Int?
+  difficultyLevel     String? // BEGINNER, INTERMEDIATE, ADVANCED
+
+  curriculumSubject    CurriculumSubject      @relation(fields: [curriculumSubjectId], references: [id], onDelete: Cascade)
+  parentTopic          Topic?                 @relation("TopicHierarchy", fields: [parentTopicId], references: [id])
+  childTopics          Topic[]                @relation("TopicHierarchy")
+  concepts             Concept[]
+  classTopicCoverage   ClassTopicCoverage[]
+  studentTopicProgress StudentTopicProgress[]
+
+  @@map("topics")
+}
+
+model Concept {
+  id           String  @id @default(uuid())
+  topicId      String
+  name         String
+  description  String?
+  bloomsLevel  String? // REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE
+  displayOrder Int     @default(0)
+  isCore       Boolean @default(true)
+
+  topic                 Topic                   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  studentConceptMastery StudentConceptMastery[]
+
+  @@map("concepts")
+}
+
+model ClassCurriculum {
+  id                   String    @id @default(uuid())
+  classId              String
+  curriculumId         String
+  academicYearId       String
+  status               String    @default("ACTIVE") // ACTIVE, COMPLETED, SUSPENDED
+  startDate            DateTime?
+  endDate              DateTime?
+  completionPercentage Float     @default(0)
+  milestones           Json?
+
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum   @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, curriculumId, academicYearId])
+  @@map("class_curricula")
+}
+
+model ClassTopicCoverage {
+  id             String  @id @default(uuid())
+  classId        String
+  topicId        String
+  subjectId      String
+  termId         String?
+  academicYearId String
+  teacherId      String?
+
+  status       String    @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  startDate    DateTime?
+  endDate      DateTime?
+  plannedHours Int?
+  actualHours  Float?
+  notes        String?
+  resources    Json?
+
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  subject      Subject      @relation("ClassTopicCoverageSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  term         Term?        @relation(fields: [termId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  teacher      Staff?       @relation(fields: [teacherId], references: [id])
+
+  @@unique([classId, topicId, academicYearId, termId])
+  @@map("class_topic_coverage")
+}
+
+model StudentTopicProgress {
+  id        String @id @default(uuid())
+  studentId String
+  topicId   String
+  classId   String
+
+  status          String    @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, MASTERED, STRUGGLING
+  progressPercent Float     @default(0)
+  lastActivity    DateTime?
+  attemptsCount   Int       @default(0)
+  notes           String?
+
+  student        Student                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic          Topic                   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  class          Class                   @relation(fields: [classId], references: [id], onDelete: Cascade)
+  conceptMastery StudentConceptMastery[]
+
+  @@unique([studentId, topicId, classId])
+  @@map("student_topic_progress")
+}
+
+model StudentConceptMastery {
+  id              String  @id @default(uuid())
+  studentId       String
+  conceptId       String
+  topicProgressId String?
+
+  masteryLevel  Float    @default(0) // 0-100
+  status        String   @default("NOVICE") // NOVICE, DEVELOPING, PROFICIENT, ADVANCED, MASTERED
+  lastAssessed  DateTime @default(now())
+  evidenceCount Int      @default(0)
+  trend         String? // IMPROVING, STABLE, DECLINING
+
+  student       Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept       Concept               @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  topicProgress StudentTopicProgress? @relation(fields: [topicProgressId], references: [id], onDelete: Cascade)
+  evidence      MasteryEvidence[]
+
+  @@unique([studentId, conceptId])
+  @@map("student_concept_mastery")
+}
+
+model MasteryEvidence {
+  id         String   @id @default(uuid())
+  masteryId  String
+  sourceType String // ASSIGNMENT, QUIZ, TEST, CLASSWORK, HOMEWORK
+  sourceId   String?
+  score      Float
+  maxScore   Float
+  timestamp  DateTime @default(now())
+  weight     Float    @default(1.0)
+  aiAnalysis Json?
+
+  mastery StudentConceptMastery @relation(fields: [masteryId], references: [id], onDelete: Cascade)
+
+  @@map("mastery_evidence")
+}
+
+model CurriculumProgressTracker {
+  id             String @id @default(uuid())
+  studentId      String
+  curriculumId   String
+  classId        String
+  academicYearId String
+
+  overallProgress   Float    @default(0) // 0-100
+  subjectProgress   Json? // { subjectId: progressPercent }
+  progressionStatus String   @default("ON_TRACK") // ON_TRACK, AHEAD, BEHIND, AT_RISK
+  lastUpdated       DateTime @default(now())
+
+  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum   @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, curriculumId, classId, academicYearId])
+  @@map("curriculum_progress_trackers")
 }

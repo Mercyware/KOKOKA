@@ -67,6 +67,8 @@ import SubjectAssignments from "./pages/academics/SubjectAssignments";
 // Assessment Components
 import AssessmentsList from "./pages/assessments/AssessmentsList";
 import CreateAssessment from "./pages/assessments/CreateAssessment";
+import ViewAssessment from "./pages/assessments/ViewAssessment";
+import EditAssessment from "./pages/assessments/EditAssessment";
 // Behavioral Assessment Components
 import BehavioralAssessmentsList from "./pages/behavioral/BehavioralAssessmentsList";
 import RecordBehavioralScores from "./pages/behavioral/RecordBehavioralScores";
@@ -74,7 +76,6 @@ import RecordBehavioralScores from "./pages/behavioral/RecordBehavioralScores";
 import AttendanceDashboard from "./pages/attendance/AttendanceDashboardNew";
 import AttendanceEntry from "./pages/attendance/TakeAttendanceNew";
 import AttendanceReports from "./pages/attendance/AttendanceReportsNew";
-import QRAttendanceScanner from "./pages/attendance/QRAttendanceScanner";
 import StudentAttendanceView from "./pages/attendance/StudentAttendanceView";
 // Settings Components
 import SchoolSettings from "./pages/settings/SchoolSettings";
@@ -97,6 +98,13 @@ import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./p
 import TerminalReport from "./pages/results/TerminalReport";
 import TerminalReportSelector from "./pages/results/TerminalReportSelector";
 import StandardReportCard from "./pages/results/StandardReportCard";
+// Analytics/AI Components
+import StudentAnalyticsDashboard from "./pages/analytics/StudentAnalyticsDashboard";
+import AtRiskStudentsDashboard from "./pages/analytics/AtRiskStudentsDashboard";
+// Assignment Components
+import StudentAssignmentsList from "./pages/assignments/StudentAssignmentsList";
+import SubmitAssignment from "./pages/assignments/SubmitAssignment";
+import TeacherGradingQueue from "./pages/assignments/TeacherGradingQueue";
 
 const queryClient = new QueryClient();
 
@@ -202,6 +210,8 @@ const App = () => (
             {/* Assessment Routes */}
             <Route path="/assessments" element={<ProtectedRoute><AssessmentsList /></ProtectedRoute>} />
             <Route path="/assessments/create" element={<ProtectedRoute><CreateAssessment /></ProtectedRoute>} />
+            <Route path="/assessments/:id" element={<ProtectedRoute><ViewAssessment /></ProtectedRoute>} />
+            <Route path="/assessments/:id/edit" element={<ProtectedRoute><EditAssessment /></ProtectedRoute>} />
 
             {/* Behavioral Assessment Routes */}
             <Route path="/behavioral/record" element={<ProtectedRoute><RecordBehavioralScores /></ProtectedRoute>} />
@@ -241,8 +251,8 @@ const App = () => (
             <Route path="/attendance/take" element={<ProtectedRoute><AttendanceEntry /></ProtectedRoute>} />
             <Route path="/attendance/take/:classId" element={<ProtectedRoute><AttendanceEntry /></ProtectedRoute>} />
             <Route path="/attendance/reports" element={<ProtectedRoute><AttendanceReports /></ProtectedRoute>} />
+            <Route path="/attendance/reports/class/:classId" element={<ProtectedRoute><AttendanceReports /></ProtectedRoute>} />
             <Route path="/attendance/bulk" element={<ProtectedRoute><AttendanceEntry /></ProtectedRoute>} />
-            <Route path="/attendance/qr-scanner" element={<ProtectedRoute><QRAttendanceScanner /></ProtectedRoute>} />
             <Route path="/students/:studentId/attendance" element={<ProtectedRoute><StudentAttendanceView /></ProtectedRoute>} />
 
             {/* Settings and Security */}
@@ -286,6 +296,15 @@ const App = () => (
             <Route path="/results/terminal-report-select/:studentId" element={<ProtectedRoute><TerminalReportSelector /></ProtectedRoute>} />
             <Route path="/results/terminal-report/:studentId/:termId" element={<ProtectedRoute><TerminalReport /></ProtectedRoute>} />
             <Route path="/results/report-card/:studentId/:termId" element={<ProtectedRoute><StandardReportCard /></ProtectedRoute>} />
+
+            {/* Analytics/AI Routes */}
+            <Route path="/analytics/students/:studentId" element={<ProtectedRoute><StudentAnalyticsDashboard /></ProtectedRoute>} />
+            <Route path="/analytics/at-risk" element={<ProtectedRoute><AtRiskStudentsDashboard /></ProtectedRoute>} />
+
+            {/* Assignment Routes */}
+            <Route path="/assignments" element={<ProtectedRoute><StudentAssignmentsList /></ProtectedRoute>} />
+            <Route path="/assignments/:assignmentId/submit" element={<ProtectedRoute><SubmitAssignment /></ProtectedRoute>} />
+            <Route path="/assignments/grading-queue" element={<ProtectedRoute><TeacherGradingQueue /></ProtectedRoute>} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

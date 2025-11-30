@@ -1,15 +1,5 @@
 import { get, post, put, del } from './api';
-import { ApiResponse, PaginatedResponse } from '../types';
-
-export interface Section {
-  id: string;
-  name: string;
-  capacity?: number | null;
-  description?: string;
-  schoolId: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { ApiResponse, PaginatedResponse, Section } from '../types';
 
 export interface SectionQueryParams {
   page?: number;

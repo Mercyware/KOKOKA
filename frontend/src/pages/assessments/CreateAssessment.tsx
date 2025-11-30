@@ -125,7 +125,9 @@ const CreateAssessment: React.FC = () => {
       // Handle academic years
       if (academicYearsRes?.success && academicYearsRes.data) {
         console.log('Setting academic years:', academicYearsRes.data);
-        setAcademicYears(academicYearsRes.data);
+        // Handle both data.academicYears and direct data array
+        const years = (academicYearsRes.data as any).academicYears || academicYearsRes.data;
+        setAcademicYears(Array.isArray(years) ? years : []);
       } else {
         console.log('Academic years response failed or no data, using fallback:', academicYearsRes);
         // Fallback academic years for development/testing
@@ -198,10 +200,10 @@ const CreateAssessment: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.subjectId || !formData.classId || !formData.totalMarks) {
+    if (!formData.title || !formData.subjectId || !formData.classId || !formData.totalMarks || !formData.academicYearId) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields (Title, Subject, Class, Total Marks, Academic Year)",
         variant: "destructive",
       });
       return;
@@ -414,12 +416,12 @@ const CreateAssessment: React.FC = () => {
                           <SelectItem value="loading" disabled>Loading subjects...</SelectItem>
                         ) : (
                           <>
-                            {subjects.map((subject) => (
+                            {Array.isArray(subjects) && subjects.map((subject) => (
                               <SelectItem key={subject.id} value={subject.id}>
                                 {subject.name} ({subject.code})
                               </SelectItem>
                             ))}
-                            {subjects.length === 0 && (
+                            {(!Array.isArray(subjects) || subjects.length === 0) && (
                               <SelectItem value="no-subjects" disabled>No subjects available</SelectItem>
                             )}
                           </>
@@ -438,12 +440,12 @@ const CreateAssessment: React.FC = () => {
                           <SelectItem value="loading" disabled>Loading classes...</SelectItem>
                         ) : (
                           <>
-                            {classes.map((classItem) => (
+                            {Array.isArray(classes) && classes.map((classItem) => (
                               <SelectItem key={classItem.id} value={classItem.id}>
                                 {classItem.name} - Grade {classItem.grade}
                               </SelectItem>
                             ))}
-                            {classes.length === 0 && (
+                            {(!Array.isArray(classes) || classes.length === 0) && (
                               <SelectItem value="no-classes" disabled>No classes available</SelectItem>
                             )}
                           </>
@@ -454,13 +456,13 @@ const CreateAssessment: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Academic Year">
+                  <FormField label="Academic Year" required>
                     <Select value={formData.academicYearId} onValueChange={(value) => handleInputChange('academicYearId', value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select academic year" />
                       </SelectTrigger>
                       <SelectContent>
-                        {academicYears.map((year) => (
+                        {Array.isArray(academicYears) && academicYears.map((year) => (
                           <SelectItem key={year.id} value={year.id}>
                             {year.name}
                           </SelectItem>
@@ -475,12 +477,12 @@ const CreateAssessment: React.FC = () => {
                         <SelectValue placeholder="Select term" />
                       </SelectTrigger>
                       <SelectContent>
-                        {terms.filter(term => term.id || term._id).map((term) => (
+                        {Array.isArray(terms) && terms.filter(term => term.id || term._id).map((term) => (
                           <SelectItem key={term.id || term._id} value={term.id || term._id}>
                             {term.name}
                           </SelectItem>
                         ))}
-                        {terms.length === 0 && (
+                        {(!Array.isArray(terms) || terms.length === 0) && (
                           <SelectItem value="no-terms" disabled>No terms available</SelectItem>
                         )}
                       </SelectContent>

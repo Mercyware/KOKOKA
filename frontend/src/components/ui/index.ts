@@ -102,6 +102,12 @@ export {
   type IconProps,
 } from './icon';
 
+// Risk Badge Component
+export {
+  RiskBadge,
+  type RiskLevel,
+} from './risk-badge';
+
 // Legacy Status Badge (deprecated - use StatusBadge from status.tsx)
 export {
   StatusBadge as LegacyStatusBadge,

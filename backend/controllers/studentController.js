@@ -62,7 +62,7 @@ exports.getAllStudents = async (req, res) => {
 
     // Filter by status if provided
     if (status) {
-      studentWhere.status = status;
+      studentWhere.status = status.toUpperCase();
     }
 
     // Filter by gender if provided

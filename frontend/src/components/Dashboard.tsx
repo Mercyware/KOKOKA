@@ -31,7 +31,6 @@ import {
   PageContent,
   StatusBadge
 } from '@/components/ui';
-import EmailVerificationCard from './EmailVerificationCard';
 
 interface DashboardProps {
   user?: { 
@@ -99,18 +98,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onMenuToggle }) => {
   return (
     <PageContainer maxWidth="full" padding="none" className="bg-gray-50/50 dark:bg-gray-900/50">
       <div className="px-4 md:px-6 lg:px-8 py-6 space-y-8">
-        {/* Email Verification Card - Show if user email not verified */}
-        {user && !user.emailVerified && (
-          <EmailVerificationCard
-            user={{
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              emailVerified: user.emailVerified,
-            }}
-          />
-        )}
-
         {/* Welcome Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">

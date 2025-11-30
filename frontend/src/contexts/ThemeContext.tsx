@@ -20,8 +20,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Get stored theme preferences or use defaults
   const storedMode = localStorage.getItem('themeMode') as PaletteMode || 'light';
-  const storedPrimaryColor = localStorage.getItem('primaryColor') || '#1976d2';
-  const storedSecondaryColor = localStorage.getItem('secondaryColor') || '#f50057';
+  const storedPrimaryColor = localStorage.getItem('primaryColor') || '#0891B2'; // KOKOKA Brand Teal
+  const storedSecondaryColor = localStorage.getItem('secondaryColor') || '#4F46E5'; // KOKOKA Indigo
 
   const [mode, setMode] = useState<PaletteMode>(storedMode);
   const [primaryColor, setPrimaryColor] = useState<string>(storedPrimaryColor);
@@ -35,9 +35,27 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           mode,
           primary: {
             main: primaryColor,
+            contrastText: '#ffffff', // Always white text on primary color
           },
           secondary: {
             main: secondaryColor,
+            contrastText: '#ffffff', // Always white text on secondary color
+          },
+          success: {
+            main: '#10B981', // Emerald
+            contrastText: '#ffffff',
+          },
+          error: {
+            main: '#DC2626', // Red
+            contrastText: '#ffffff',
+          },
+          warning: {
+            main: '#F97316', // Orange
+            contrastText: '#ffffff',
+          },
+          info: {
+            main: '#0EA5E9', // Sky Blue
+            contrastText: '#ffffff',
           },
           background: {
             default: mode === 'light' ? '#f5f5f5' : '#121212',
