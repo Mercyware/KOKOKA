@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Mail, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { resendVerificationEmail } from '@/services/emailVerificationService';
 
 interface EmailVerificationBannerProps {

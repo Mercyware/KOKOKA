@@ -44,7 +44,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StaffProfilePictureUpload } from '@/components/ui/StaffProfilePictureUpload';
 import Layout from '@/components/layout/Layout';
 import { getStaffMember } from '@/services/staffService';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,

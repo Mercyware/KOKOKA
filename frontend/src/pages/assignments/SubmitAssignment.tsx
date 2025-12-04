@@ -28,7 +28,7 @@ import {
   Upload,
 } from 'lucide-react';
 import assignmentService, { Assignment } from '@/services/assignmentService';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const SubmitAssignment: React.FC = () => {
   const navigate = useNavigate();

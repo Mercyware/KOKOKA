@@ -26,7 +26,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import assignmentService, { Assignment, StudentAssignments } from '@/services/assignmentService';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const StudentAssignmentsList: React.FC = () => {
   const navigate = useNavigate();

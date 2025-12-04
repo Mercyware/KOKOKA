@@ -34,7 +34,7 @@ import {
 } from '@/components/ui';
 import { Plus, Edit, Trash2, Copy } from 'lucide-react';
 import resultService, { GradeScale, GradeRange } from '@/services/resultService';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 // Using imported types from resultService
 

@@ -189,7 +189,7 @@ const ClassAssignments: React.FC = () => {
         description: `Bulk assignment completed. ${result.data.successful.length} successful, ${result.data.failed.length} failed, ${result.data.skipped.length} skipped.`
       });
     } catch (err) {
-      Toast.error('Failed to process bulk assignments');
+      toast.error('Failed to process bulk assignments');
     }
   };
 
@@ -200,9 +200,9 @@ const ClassAssignments: React.FC = () => {
       await classTeacherService.deleteAssignment(id);
       loadAssignments();
       loadSummary();
-      Toast.success('Assignment deleted successfully');
+      toast.success('Assignment deleted successfully');
     } catch (err) {
-      Toast.error('Failed to delete assignment');
+      toast.error('Failed to delete assignment');
     }
   };
 

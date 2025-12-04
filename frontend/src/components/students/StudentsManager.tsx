@@ -292,14 +292,27 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
       .join(' ');
   };
 
-  // Get student class name
+  // Get student class and section name
   const getStudentClass = (student: Student) => {
-    if (typeof student.class === 'string') {
-      return student.class;
+    let classInfo = '';
+    
+    // Get class name - check multiple possible properties
+    const currentClass = (student as any).currentClass?.name;
+    if (currentClass) {
+      classInfo = currentClass;
+    } else if (typeof student.class === 'string') {
+      classInfo = student.class;
     } else if (student.class && typeof student.class === 'object') {
-      return (student.class as any).name || 'N/A';
+      classInfo = (student.class as any).name || '';
     }
-    return 'N/A';
+    
+    // Add section name if available
+    const sectionName = (student as any).currentSection?.name || (student as any).section?.name;
+    if (sectionName) {
+      classInfo = classInfo ? `${classInfo} - ${sectionName}` : sectionName;
+    }
+    
+    return classInfo || 'N/A';
   };
 
   // Get student email
@@ -309,7 +322,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
 
   // Get student phone
   const getStudentPhone = (student: Student) => {
-    return student.contactInfo?.phone || 'N/A';
+    return student.contactInfo?.phone || '-';
   };
 
   // Get student status badge variant
@@ -377,74 +390,84 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {students.map((student, index) => (
-          <Card key={student.id || index} className="hover:shadow-lg transition-all duration-200 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
-                    <User className="h-6 w-6 text-siohioma-primary dark:text-siohioma-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{formatStudentName(student)}</CardTitle>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Class:</span> {getStudentClass(student)}
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className={getStatusBadgeVariant(student.status)}>
-                  {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
-                </Badge>
+          <div
+            key={student.id || index}
+            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow duration-200"
+          >
+            {/* Header with Avatar, Name and Status */}
+            <div className="flex items-start gap-3 mb-4">
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 p-3 rounded-full flex-shrink-0">
+                <User className="h-7 w-7 text-cyan-500 dark:text-cyan-400" />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600 dark:text-gray-400 truncate">{getStudentEmail(student)}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-white">
+                    {formatStudentName(student)}
+                  </h3>
+                  <Badge className="bg-green-50 text-green-700 border-green-200 text-xs px-2 py-0.5 flex-shrink-0">
+                    {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                  </Badge>
                 </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600 dark:text-gray-400">{getStudentPhone(student)}</span>
-                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {getStudentClass(student)}
+                </p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t dark:border-gray-700">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-siohioma-primary dark:text-siohioma-primary">
-                    {student.averageGrade?.toFixed(1) || 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">GPA</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {student.attendancePercentage?.toFixed(0) || 'N/A'}%
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Attendance</p>
-                </div>
+            {/* Contact Information */}
+            <div className="space-y-2 mb-5">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-400 truncate">{getStudentEmail(student)}</span>
               </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-400">{getStudentPhone(student)}</span>
+              </div>
+            </div>
 
-              <div className="flex space-x-2 pt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => onViewStudent(student._id || student.id)} // Use proper ID field
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  View
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => onEditStudent(student._id || student.id)}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Metrics - Side by Side */}
+            <div className="flex items-center gap-8 mb-5">
+              {student.averageGrade && (
+                <div>
+                  <p className="text-4xl font-bold text-cyan-500 dark:text-cyan-400">
+                    {student.averageGrade.toFixed(1)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">GPA</p>
+                </div>
+              )}
+              {student.attendancePercentage && (
+                <div>
+                  <p className="text-4xl font-bold text-green-500 dark:text-green-400">
+                    {student.attendancePercentage.toFixed(0)}%
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Attendance</p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onViewStudent(student._id || student.id)}
+                className="flex-1"
+              >
+                <Eye className="h-4 w-4" />
+                View
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditStudent(student._id || student.id)}
+                className="flex-1"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -500,11 +523,9 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
             <TableHeader>
               <TableRow>
                 <TableHead>Student</TableHead>
-                <TableHead className="hidden md:table-cell">Class</TableHead>
+                <TableHead className="hidden md:table-cell">Class & Section</TableHead>
                 <TableHead className="hidden lg:table-cell">Email</TableHead>
                 <TableHead className="hidden lg:table-cell">Phone</TableHead>
-                <TableHead className="text-center">GPA</TableHead>
-                <TableHead className="text-center hidden sm:table-cell">Attendance</TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -527,12 +548,6 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                   <TableCell className="hidden md:table-cell">{getStudentClass(student)}</TableCell>
                   <TableCell className="hidden lg:table-cell">{getStudentEmail(student)}</TableCell>
                   <TableCell className="hidden lg:table-cell">{getStudentPhone(student)}</TableCell>
-                  <TableCell className="text-center font-medium">
-                    {student.averageGrade?.toFixed(1) || 'N/A'}
-                  </TableCell>
-                  <TableCell className="text-center hidden sm:table-cell">
-                    {student.attendancePercentage?.toFixed(0) || 'N/A'}%
-                  </TableCell>
                   <TableCell>
                     <div className="flex space-x-1">
                       <Button
@@ -1323,6 +1338,118 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
           </div>
         </div>
       </div>
+
+      {/* Page Size Selector */}
+      {!loading && students.length > 0 && (
+        <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <span>Items per page:</span>
+            <Select
+              value={pagination.limit.toString()}
+              onValueChange={(value) => {
+                applyFilter('limit', parseInt(value));
+                applyFilter('page', 1); // Reset to first page when changing page size
+              }}
+            >
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && students.length > 0 && pagination.pages > 1 && (
+        <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} students
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => applyFilter('page', pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {/* Show first page */}
+              {pagination.page > 3 && (
+                <>
+                  <Button
+                    variant={pagination.page === 1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => applyFilter('page', 1)}
+                  >
+                    1
+                  </Button>
+                  {pagination.page > 4 && <span className="px-2 text-gray-400">...</span>}
+                </>
+              )}
+
+              {/* Show pages around current page */}
+              {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                let pageNum;
+                if (pagination.pages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.pages - 2) {
+                  pageNum = pagination.pages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+
+                if (pageNum < 1 || pageNum > pagination.pages) return null;
+
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={pagination.page === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => applyFilter('page', pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+
+              {/* Show last page */}
+              {pagination.page < pagination.pages - 2 && (
+                <>
+                  {pagination.page < pagination.pages - 3 && <span className="px-2 text-gray-400">...</span>}
+                  <Button
+                    variant={pagination.page === pagination.pages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => applyFilter('page', pagination.pages)}
+                  >
+                    {pagination.pages}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => applyFilter('page', pagination.page + 1)}
+              disabled={pagination.page >= pagination.pages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

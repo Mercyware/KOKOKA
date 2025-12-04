@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { DatePicker } from '@/components/ui/date-picker';
-import { ChevronLeft, ChevronRight, User, GraduationCap, Users, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ChevronLeft, ChevronRight, User, GraduationCap, Users, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface QuickFormData {
   // Step 1: Basic Info (Required)
@@ -37,6 +38,7 @@ interface QuickEnrollmentWizardProps {
   classes: any[] | null | undefined;
   sections: any[] | null | undefined;
   academicYears: any[] | null | undefined;
+  error?: string | null;
 }
 
 const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
@@ -47,6 +49,7 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
   classes,
   sections,
   academicYears,
+  error,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<QuickFormData>({
@@ -161,6 +164,15 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
           Step {currentStep} of {totalSteps}
         </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Form Steps */}
       <Card className="mb-6 shadow-sm">

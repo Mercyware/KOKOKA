@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { fetchSections, fetchHouses } from '@/services/api';
 import { House } from '@/types';
@@ -176,6 +176,7 @@ const AddStudentForm: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
@@ -265,6 +266,7 @@ const AddStudentForm: React.FC = () => {
 
   const handleSubmit = (formData: FrontendFormData) => {
     setLoading(true);
+    setError(null); // Clear previous errors
     (async () => {
       try {
         // Convert frontend form data to backend format
@@ -286,9 +288,11 @@ const AddStudentForm: React.FC = () => {
           }
         } else {
           // Handle error from API response
+          const errorMsg = response.message || response.error || 'An error occurred while creating the student profile.';
+          setError(errorMsg);
           toast({
-            title: response.error || 'Failed to save student',
-            description: response.message || 'An error occurred while creating the student profile.',
+            title: 'Failed to save student',
+            description: errorMsg,
             variant: 'destructive',
           });
         }
@@ -296,6 +300,7 @@ const AddStudentForm: React.FC = () => {
         // Handle unexpected errors (this should not happen with the current setup)
         console.error('Unexpected error saving student:', error);
         const errorMessage = error?.response?.data?.message || error?.message || 'An unexpected error occurred while saving the student.';
+        setError(errorMessage);
         toast({
           title: 'Error',
           description: errorMessage,
@@ -433,12 +438,19 @@ const AddStudentForm: React.FC = () => {
                 </div>
                 <QuickEnrollmentWizard
                   onSubmit={handleQuickSubmit}
-                  onBack={() => setFormMode('selection')}
-                  onSwitchToFull={() => setFormMode('full')}
+                  onBack={() => {
+                    setError(null);
+                    setFormMode('selection');
+                  }}
+                  onSwitchToFull={() => {
+                    setError(null);
+                    setFormMode('full');
+                  }}
                   loading={loading}
                   classes={classes}
                   sections={sections}
                   academicYears={academicYears}
+                  error={error}
                 />
               </>
             )}

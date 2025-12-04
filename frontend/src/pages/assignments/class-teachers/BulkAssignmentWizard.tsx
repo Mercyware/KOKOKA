@@ -81,7 +81,7 @@ const BulkAssignmentWizard: React.FC<BulkAssignmentWizardProps> = ({
       const data = await classTeacherService.getFormData();
       setFormData(data);
     } catch (err) {
-      Toast.error('Failed to load form data');
+      toast.error('Failed to load form data');
     }
   };
 
@@ -180,9 +180,9 @@ const BulkAssignmentWizard: React.FC<BulkAssignmentWizardProps> = ({
       setAssignments(copiedAssignments);
       setShowCopyModal(false);
       setStep(2);
-      Toast.success(`Copied ${copiedAssignments.length} assignments from previous year`);
+      toast.success(`Copied ${copiedAssignments.length} assignments from previous year`);
     } catch (err) {
-      Toast.error('Failed to copy assignments');
+      toast.error('Failed to copy assignments');
     } finally {
       setProcessing(false);
     }
@@ -190,7 +190,7 @@ const BulkAssignmentWizard: React.FC<BulkAssignmentWizardProps> = ({
 
   const handleSubmit = async () => {
     if (!validateAssignments()) {
-      Toast.error('Please fix validation errors before submitting');
+      toast.error('Please fix validation errors before submitting');
       return;
     }
 
@@ -205,7 +205,7 @@ const BulkAssignmentWizard: React.FC<BulkAssignmentWizardProps> = ({
       setResults(result.data);
       setStep(3);
     } catch (err) {
-      Toast.error('Failed to process bulk assignments');
+      toast.error('Failed to process bulk assignments');
     } finally {
       setProcessing(false);
     }

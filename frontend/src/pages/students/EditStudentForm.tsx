@@ -9,7 +9,7 @@ import {
 import Layout from '../../components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { getStudentById, updateStudent } from '@/services/studentService';
 import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';

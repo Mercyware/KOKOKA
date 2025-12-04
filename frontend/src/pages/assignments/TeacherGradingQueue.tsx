@@ -43,7 +43,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import assignmentService, { Submission } from '@/services/assignmentService';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const TeacherGradingQueue: React.FC = () => {
   const navigate = useNavigate();

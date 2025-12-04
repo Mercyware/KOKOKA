@@ -18,7 +18,6 @@ export {
 // Core Interactive Components
 export {
   Button,
-  ButtonGroup,
   buttonVariants,
   type ButtonProps,
 } from './button';

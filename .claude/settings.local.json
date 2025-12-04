@@ -11,7 +11,13 @@
       "Bash(npx prisma format:*)",
       "Bash(npm run:*)",
       "Bash(timeout 5 npm run dev)",
-      "Bash(npx prisma studio:*)"
+      "Bash(npx prisma studio:*)",
+      "Bash(timeout:*)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -H \"X-School-Subdomain: greenwood\" -d \"{\"\"email\"\":\"\"admin@greenwood.com\"\",\"\"password\"\":\"\"admin123\"\"}\" -s)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -H \"X-School-Subdomain: greenwood\" -d \"{\"\"email\"\":\"\"john.doe@greenwood.com\"\",\"\"password\"\":\"\"teacher123\"\"}\" -s)",
+      "Bash(python:*)",
+      "Bash(curl -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -H \"X-School-Subdomain: greenwood\" -d \"{\"\"email\"\":\"\"jane.smith@greenwood.com\"\",\"\"password\"\":\"\"student123\"\"}\" -s)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],

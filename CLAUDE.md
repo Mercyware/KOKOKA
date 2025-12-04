@@ -136,37 +136,39 @@ The system uses a modern, professional color palette designed for educational pl
 
 #### Action Buttons in Tables/Lists
 ```tsx
-// ✅ PREFERRED: Dropdown menu for multiple actions
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-      <MoreVertical className="h-4 w-4" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end" className="w-48">
-    <DropdownMenuItem onClick={handleEdit}>
-      <Edit className="h-4 w-4 mr-2" />
-      Edit
-    </DropdownMenuItem>
-    <DropdownMenuItem onClick={handleView}>
-      <Eye className="h-4 w-4 mr-2" />
-      View
-    </DropdownMenuItem>
-    <DropdownMenuSeparator />
-    <DropdownMenuItem
-      onClick={handleDelete}
-      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-    >
-      <Trash2 className="h-4 w-4 mr-2" />
-      Delete
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
+// ✅ PREFERRED: Separate outline buttons in cards
+<div className="flex space-x-2 pt-3">
+  <Button
+    size="sm"
+    variant="outline"
+    className="flex-1"
+    onClick={handleView}
+  >
+    <Eye className="h-4 w-4 mr-1" />
+    View
+  </Button>
+  <Button
+    size="sm"
+    variant="outline"
+    className="flex-1"
+    onClick={handleEdit}
+  >
+    <Edit className="h-4 w-4 mr-1" />
+    Edit
+  </Button>
+</div>
 
-// ❌ AVOID: Multiple separate buttons in table rows (clutters UI)
-<div className="flex space-x-2">
-  <Button intent="action" size="sm"><Edit /></Button>
-  <Button intent="danger" size="sm"><Trash2 /></Button>
+// ✅ PREFERRED: Ghost icon buttons in tables
+<div className="flex space-x-1">
+  <Button size="sm" variant="ghost" onClick={handleView}>
+    <Eye className="h-4 w-4" />
+  </Button>
+  <Button size="sm" variant="ghost" onClick={handleEdit}>
+    <Edit className="h-4 w-4" />
+  </Button>
+  <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700" onClick={handleDelete}>
+    <Trash2 className="h-4 w-4" />
+  </Button>
 </div>
 ```
 
@@ -259,9 +261,9 @@ import { Button, Form, FormField, Input, Card } from '@/components/ui';
 
 #### Core Principles
 - **Always use intent-based variants** (`intent="primary"`, `intent="cancel"`, `intent="action"`, `intent="danger"`)
-- **Use `variant="ghost"` for dropdown triggers** and icon-only action buttons in tables
-- **Group multiple actions in dropdown menus** instead of showing multiple buttons
-- **Separate destructive actions** with `<DropdownMenuSeparator />` and style with red text
+- **Use `variant="outline"` for card action buttons** (View/Edit buttons)
+- **Use `variant="ghost"` for icon-only buttons** in tables
+- **Keep actions visible** - use separate buttons instead of hiding them in dropdowns
 
 #### Form Buttons
 - **Cancel buttons**: White background with red text/border (`intent="cancel"`)
@@ -271,10 +273,10 @@ import { Button, Form, FormField, Input, Card } from '@/components/ui';
 - **Responsive**: Full width on mobile (`w-full sm:w-auto`)
 
 #### Table/List Action Buttons
-- **Single action dropdown**: Use ghost variant with `MoreVertical` icon
-- **Icon sizing**: `h-8 w-8` for button, `h-4 w-4` for icons
-- **Alignment**: `align="end"` for dropdown content
-- **Destructive actions**: Red text with `text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950`
+- **Card actions**: Use separate outline buttons with icons and text (`variant="outline"`)
+- **Table actions**: Use ghost icon buttons (`variant="ghost"`)
+- **Icon sizing**: `h-4 w-4` for icons
+- **Destructive actions**: Red text with `text-red-600 hover:text-red-700`
 
 #### Page Header Actions (Export/Print/Share)
 - **Use labeled buttons** with icons (`intent="action"`)

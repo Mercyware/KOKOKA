@@ -35,7 +35,7 @@ import {
   AlertCircle,
   Printer,
 } from 'lucide-react';
-import { toast } from '../../components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import api from '../../services/api';
 import { API_CONFIG } from '../../config/api';
 
