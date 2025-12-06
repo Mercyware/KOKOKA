@@ -16,12 +16,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Users, Zap, FileText, CheckCircle2, Clock } from 'lucide-react';
 
 const emptyFormData: FrontendFormData = {
+  // Basic Personal Information
   firstName: '',
   middleName: '',
   lastName: '',
   email: '',
   dateOfBirth: '',
   gender: '',
+  phone: '',
+  alternativePhone: '',
+
+  // Additional Personal Information
+  placeOfBirth: '',
+  nationality: '',
+  religion: '',
+  motherTongue: '',
+  languagesSpoken: [],
+
+  // Academic Information
   admissionNumber: '',
   admissionDate: new Date().toISOString().split('T')[0],
   class: '',
@@ -30,57 +42,27 @@ const emptyFormData: FrontendFormData = {
   house: '',
   rollNumber: '',
   status: 'active',
-  
-  // Additional Personal Information
-  placeOfBirth: '',
-  nationality: '',
-  religion: '',
-  motherTongue: '',
   previousSchool: '',
   previousClass: '',
   tcNumber: '',
   tcDate: '',
-  
-  // Blood group and physical info
+  talents: '',
+  extracurriculars: '',
+
+  // Medical Information
   bloodGroup: '',
-  height: { value: '', unit: 'cm' },
-  weight: { value: '', unit: 'kg' },
-  
-  // Comprehensive Medical Information
-  medicalInfo: {
-    height: '',
-    weight: '',
-    lastCheckup: '',
-    generalHealth: '',
-    bloodType: '',
-    physicianName: '',
-    physicianPhone: ''
+  healthInfo: {
+    allergies: [],
+    medicalConditions: [],
+    medications: []
   },
-  allergies: [],
-  medications: {
-    current: []
-  },
-  medicalConditions: [],
-  immunizations: {
-    completed: [],
-    pending: [],
-    lastUpdated: ''
-  },
+  specialNeeds: '',
   emergencyMedicalInfo: '',
   doctorName: '',
   doctorPhone: '',
   hospitalPreference: '',
-  
-  // Health info (legacy compatibility)
-  healthInfo: {
-    allergies: [],
-    medicalConditions: [],
-    medications: [],
-    dietaryRestrictions: [],
-    disabilities: []
-  },
-  
-  // Emergency Contacts (separate from guardians)
+
+  // Emergency Contacts
   emergencyContacts: [{
     name: '',
     relationship: '',
@@ -89,18 +71,7 @@ const emptyFormData: FrontendFormData = {
     address: '',
     isPrimary: true
   }],
-  
-  // Contact info
-  contactInfo: {
-    phone: '',
-    alternativePhone: '',
-    emergencyContact: {
-      name: '',
-      relationship: '',
-      phone: ''
-    }
-  },
-  
+
   // Current Address
   address: {
     street: '',
@@ -109,7 +80,7 @@ const emptyFormData: FrontendFormData = {
     zipCode: '',
     country: ''
   },
-  
+
   // Permanent Address
   permanentAddress: {
     street: '',
@@ -118,49 +89,8 @@ const emptyFormData: FrontendFormData = {
     zipCode: '',
     country: ''
   },
-  
-  // Academic Background
-  previousAcademicRecord: {
-    previousSchool: '',
-    previousGrade: '',
-    subjects: [],
-    performance: '',
-    teacherRecommendations: ''
-  },
-  specialNeeds: '',
-  talents: [],
-  extracurriculars: [],
-  
-  // Administrative Information
-  applicationDate: '',
-  interviewDate: '',
-  admissionTestScore: 0,
-  feesPaid: 0,
-  scholarshipInfo: null,
-  transportInfo: {
-    mode: '',
-    busRoute: '',
-    pickupPoint: '',
-    dropoffPoint: ''
-  },
-  
-  // Behavioral and Social Information
-  behavioralNotes: '',
-  socialBackground: '',
-  languagesSpoken: [],
-  
-  // Documents and Identification
-  identificationDocs: {
-    birthCertificate: false,
-    passport: false,
-    socialSecurityCard: false
-  },
-  photographs: {
-    passport: 0,
-    school: 0
-  },
-  documentsSubmitted: [],
-  
+
+  // Guardians
   guardians: [{
     firstName: '',
     lastName: '',

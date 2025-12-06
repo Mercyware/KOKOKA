@@ -34,6 +34,7 @@ export {
   Textarea,
   type InputProps,
 } from './form';
+export { SearchableSelect, type SearchableSelectOption } from './searchable-select';
 
 // Status & Feedback
 export {

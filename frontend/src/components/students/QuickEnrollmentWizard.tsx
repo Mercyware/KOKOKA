@@ -188,7 +188,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName">
+                    First Name <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
@@ -198,7 +200,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName">
+                    Last Name <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
@@ -208,7 +212,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                  <Label htmlFor="dateOfBirth">
+                    Date of Birth <span className="text-red-600">*</span>
+                  </Label>
                   <DatePicker
                     value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined}
                     onChange={(date) => handleChange('dateOfBirth', date ? date.toISOString().split('T')[0] : '')}
@@ -216,7 +222,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender *</Label>
+                  <Label htmlFor="gender">
+                    Gender <span className="text-red-600">*</span>
+                  </Label>
                   <Select
                     value={formData.gender}
                     onValueChange={value => handleChange('gender', value)}
@@ -241,7 +249,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="admissionNumber">Admission Number *</Label>
+                  <Label htmlFor="admissionNumber">
+                    Admission Number <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="admissionNumber"
                     value={formData.admissionNumber}
@@ -251,7 +261,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="academicYear">Academic Year *</Label>
+                  <Label htmlFor="academicYear">
+                    Academic Year <span className="text-red-600">*</span>
+                  </Label>
                   <Select
                     value={formData.academicYear}
                     onValueChange={value => handleChange('academicYear', value)}
@@ -278,7 +290,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="class">Class *</Label>
+                  <Label htmlFor="class">
+                    Class <span className="text-red-600">*</span>
+                  </Label>
                   <Select
                     value={formData.class}
                     onValueChange={value => handleChange('class', value)}
@@ -305,7 +319,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="section">Section *</Label>
+                  <Label htmlFor="section">
+                    Section <span className="text-red-600">*</span>
+                  </Label>
                   <Select
                     value={formData.section}
                     onValueChange={value => handleChange('section', value)}
@@ -340,7 +356,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guardianFirstName">Guardian First Name *</Label>
+                  <Label htmlFor="guardianFirstName">
+                    Guardian First Name <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="guardianFirstName"
                     value={formData.guardianFirstName}
@@ -350,7 +368,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardianLastName">Guardian Last Name *</Label>
+                  <Label htmlFor="guardianLastName">
+                    Guardian Last Name <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="guardianLastName"
                     value={formData.guardianLastName}
@@ -360,7 +380,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardianRelationship">Relationship *</Label>
+                  <Label htmlFor="guardianRelationship">
+                    Relationship <span className="text-red-600">*</span>
+                  </Label>
                   <Select
                     value={formData.guardianRelationship}
                     onValueChange={value => handleChange('guardianRelationship', value)}
@@ -378,7 +400,9 @@ const QuickEnrollmentWizard: React.FC<QuickEnrollmentWizardProps> = ({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardianPhone">Phone Number *</Label>
+                  <Label htmlFor="guardianPhone">
+                    Phone Number <span className="text-red-600">*</span>
+                  </Label>
                   <Input
                     id="guardianPhone"
                     value={formData.guardianPhone}

@@ -250,85 +250,69 @@ exports.getStudentById = async (req, res) => {
 // Create new student with optional guardian information
 exports.createStudent = async (req, res) => {
   try {
-    const { 
-      // Basic Information
-      firstName, 
-      lastName, 
+    const {
+      // Basic Personal Information
+      firstName,
+      lastName,
       middleName,
       email,
+      phone,
+      dateOfBirth,
+      gender,
+
+      // Additional Personal Information
+      placeOfBirth,
+      nationality,
+      religion,
+      motherTongue,
+      languagesSpoken,
+
+      // Academic Information
       admissionNumber,
       admissionDate,
       academicYear: academicYearId,
       class: classId,
       section: sectionId,
       house: houseId,
-      dateOfBirth,
-      gender,
-      phone,
-      
+      previousSchool,
+      previousClass,
+      tcNumber,
+      tcDate,
+      talents,
+      extracurriculars,
+
+      // Medical Information
+      bloodGroup,
+      allergies,
+      medicalConditions,
+      medications,
+      specialNeeds,
+      emergencyMedicalInfo,
+      doctorName,
+      doctorPhone,
+      hospitalPreference,
+
+      // Emergency Contacts
+      emergencyContacts,
+
       // Address Information
       streetAddress,
       city,
       state,
       zipCode,
       country,
-      
+
       // Permanent Address
       permanentStreetAddress,
       permanentCity,
       permanentState,
       permanentZipCode,
       permanentCountry,
-      
-      // Additional Personal Information
-      placeOfBirth,
-      nationality,
-      religion,
-      bloodGroup,
-      motherTongue,
-      previousSchool,
-      previousClass,
-      tcNumber,
-      tcDate,
-      
-      // Medical Information
-      medicalInfo,
-      allergies,
-      medications,
-      medicalConditions,
-      immunizations,
-      emergencyMedicalInfo,
-      doctorName,
-      doctorPhone,
-      hospitalPreference,
-      emergencyContacts,
-      
-      // Academic Background
-      previousAcademicRecord,
-      specialNeeds,
-      talents,
-      extracurriculars,
-      
-      // Administrative Information
-      applicationDate,
-      interviewDate,
-      admissionTestScore,
-      feesPaid,
-      scholarshipInfo,
-      transportInfo,
-      
-      // Behavioral and Social Information
-      behavioralNotes,
-      socialBackground,
-      languagesSpoken,
-      
-      // Documents and Identification
-      identificationDocs,
-      photographs,
-      documentsSubmitted,
-      
-      // Other
+
+      // Guardians
       guardians: guardiansData,
+
+      // Other
       status,
       photo
     } = req.body;
@@ -384,40 +368,21 @@ exports.createStudent = async (req, res) => {
       tcDate: tcDate ? new Date(tcDate) : undefined,
       
       // Medical Information
-      medicalInfo: medicalInfo || undefined,
+      bloodGroup: bloodGroup || undefined,
       allergies: allergies && Array.isArray(allergies) ? allergies : [],
-      medications: medications || undefined,
       medicalConditions: medicalConditions && Array.isArray(medicalConditions) ? medicalConditions : [],
-      immunizations: immunizations || undefined,
+      medications: medications || undefined,
+      specialNeeds: specialNeeds || undefined,
       emergencyMedicalInfo: emergencyMedicalInfo || undefined,
       doctorName: doctorName || undefined,
       doctorPhone: doctorPhone || undefined,
       hospitalPreference: hospitalPreference || undefined,
       emergencyContacts: emergencyContacts || undefined,
-      
+
       // Academic Background
-      previousAcademicRecord: previousAcademicRecord || undefined,
-      specialNeeds: specialNeeds || undefined,
       talents: talents && Array.isArray(talents) ? talents : [],
       extracurriculars: extracurriculars && Array.isArray(extracurriculars) ? extracurriculars : [],
-      
-      // Administrative Information
-      applicationDate: applicationDate ? new Date(applicationDate) : undefined,
-      interviewDate: interviewDate ? new Date(interviewDate) : undefined,
-      admissionTestScore: admissionTestScore ? parseFloat(admissionTestScore) : undefined,
-      feesPaid: feesPaid ? parseFloat(feesPaid) : undefined,
-      scholarshipInfo: scholarshipInfo || undefined,
-      transportInfo: transportInfo || undefined,
-      
-      // Behavioral and Social Information
-      behavioralNotes: behavioralNotes || undefined,
-      socialBackground: socialBackground || undefined,
       languagesSpoken: languagesSpoken && Array.isArray(languagesSpoken) ? languagesSpoken : [],
-      
-      // Documents and Identification
-      identificationDocs: identificationDocs || undefined,
-      photographs: photographs || undefined,
-      documentsSubmitted: documentsSubmitted && Array.isArray(documentsSubmitted) ? documentsSubmitted : [],
       
       // Core fields
       admissionDate: admissionDate ? new Date(admissionDate) : new Date(),
@@ -625,38 +590,21 @@ exports.updateStudent = async (req, res) => {
     if (requestData.tcNumber !== undefined) studentData.tcNumber = requestData.tcNumber;
     
     // Medical information
-    if (requestData.medicalInfo !== undefined) studentData.medicalInfo = requestData.medicalInfo;
+    if (requestData.bloodGroup !== undefined) studentData.bloodGroup = requestData.bloodGroup;
     if (requestData.allergies !== undefined) studentData.allergies = Array.isArray(requestData.allergies) ? requestData.allergies : [];
-    if (requestData.medications !== undefined) studentData.medications = requestData.medications;
     if (requestData.medicalConditions !== undefined) studentData.medicalConditions = Array.isArray(requestData.medicalConditions) ? requestData.medicalConditions : [];
-    if (requestData.immunizations !== undefined) studentData.immunizations = requestData.immunizations;
+    if (requestData.medications !== undefined) studentData.medications = requestData.medications;
+    if (requestData.specialNeeds !== undefined) studentData.specialNeeds = requestData.specialNeeds;
     if (requestData.emergencyMedicalInfo !== undefined) studentData.emergencyMedicalInfo = requestData.emergencyMedicalInfo;
     if (requestData.doctorName !== undefined) studentData.doctorName = requestData.doctorName;
     if (requestData.doctorPhone !== undefined) studentData.doctorPhone = requestData.doctorPhone;
     if (requestData.hospitalPreference !== undefined) studentData.hospitalPreference = requestData.hospitalPreference;
     if (requestData.emergencyContacts !== undefined) studentData.emergencyContacts = requestData.emergencyContacts;
-    
+
     // Academic background
-    if (requestData.previousAcademicRecord !== undefined) studentData.previousAcademicRecord = requestData.previousAcademicRecord;
-    if (requestData.specialNeeds !== undefined) studentData.specialNeeds = requestData.specialNeeds;
     if (requestData.talents !== undefined) studentData.talents = Array.isArray(requestData.talents) ? requestData.talents : [];
     if (requestData.extracurriculars !== undefined) studentData.extracurriculars = Array.isArray(requestData.extracurriculars) ? requestData.extracurriculars : [];
-    
-    // Administrative information
-    if (requestData.admissionTestScore !== undefined) studentData.admissionTestScore = requestData.admissionTestScore ? parseFloat(requestData.admissionTestScore) : null;
-    if (requestData.feesPaid !== undefined) studentData.feesPaid = requestData.feesPaid ? parseFloat(requestData.feesPaid) : null;
-    if (requestData.scholarshipInfo !== undefined) studentData.scholarshipInfo = requestData.scholarshipInfo;
-    if (requestData.transportInfo !== undefined) studentData.transportInfo = requestData.transportInfo;
-    
-    // Behavioral and social information
-    if (requestData.behavioralNotes !== undefined) studentData.behavioralNotes = requestData.behavioralNotes;
-    if (requestData.socialBackground !== undefined) studentData.socialBackground = requestData.socialBackground;
     if (requestData.languagesSpoken !== undefined) studentData.languagesSpoken = Array.isArray(requestData.languagesSpoken) ? requestData.languagesSpoken : [];
-    
-    // Documents and identification
-    if (requestData.identificationDocs !== undefined) studentData.identificationDocs = requestData.identificationDocs;
-    if (requestData.photographs !== undefined) studentData.photographs = requestData.photographs;
-    if (requestData.documentsSubmitted !== undefined) studentData.documentsSubmitted = Array.isArray(requestData.documentsSubmitted) ? requestData.documentsSubmitted : [];
 
     // Map relationship fields with proper names
     if (requestData.academicYearId !== undefined) studentData.academicYearId = requestData.academicYearId;
@@ -685,14 +633,6 @@ exports.updateStudent = async (req, res) => {
     
     if (requestData.tcDate) {
       studentData.tcDate = new Date(requestData.tcDate);
-    }
-    
-    if (requestData.applicationDate) {
-      studentData.applicationDate = new Date(requestData.applicationDate);
-    }
-    
-    if (requestData.interviewDate) {
-      studentData.interviewDate = new Date(requestData.interviewDate);
     }
 
     // Remove empty string and null values, but keep false values

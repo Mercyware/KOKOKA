@@ -73,8 +73,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SearchableSelect } from '@/components/ui';
 import { DatePicker } from '@/components/ui/date-picker';
+import { NATIONALITIES, RELIGIONS } from '@/constants';
 
 interface ViewStudentProps {
   studentId: string;
@@ -1011,6 +1012,114 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                       </div>
                     </div>
 
+                    {/* Previous School & TC Information */}
+                    {(student.previousSchool || student.previousClass || student.tcNumber) && (
+                      <>
+                        <Separator className="my-6" />
+                        <div>
+                          <h4 className="text-lg font-medium mb-4">Previous Education</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {student.previousSchool && (
+                              <div className="space-y-4">
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <GraduationCap className="h-5 w-5 text-indigo-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Previous School</p>
+                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                      {student.previousSchool}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {student.previousClass && (
+                              <div className="space-y-4">
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <BookOpen className="h-5 w-5 text-purple-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Previous Class</p>
+                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                      {student.previousClass}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {student.tcNumber && (
+                              <div className="space-y-4">
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <FileText className="h-5 w-5 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Transfer Certificate</p>
+                                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                                      {student.tcNumber}
+                                    </p>
+                                    {student.tcDate && (
+                                      <p className="text-xs text-gray-400">
+                                        {new Date(student.tcDate).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Talents & Extracurriculars */}
+                    {((student.talents && student.talents.length > 0) || (student.extracurriculars && student.extracurriculars.length > 0)) && (
+                      <>
+                        <Separator className="my-6" />
+                        <div>
+                          <h4 className="text-lg font-medium mb-4">Talents & Activities</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {student.talents && student.talents.length > 0 && (
+                              <div className="space-y-4">
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                                    <Trophy className="h-5 w-5 text-yellow-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Special Talents</p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                      {student.talents.map((talent: string, index: number) => (
+                                        <Badge key={index} variant="outline">{talent}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {student.extracurriculars && student.extracurriculars.length > 0 && (
+                              <div className="space-y-4">
+                                <div className="flex items-start space-x-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Activity className="h-5 w-5 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Extracurricular Activities</p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                      {student.extracurriculars.map((activity: string, index: number) => (
+                                        <Badge key={index} variant="outline">{activity}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
                     {/* Academic Performance Summary */}
                     <Separator className="my-6" />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1490,18 +1599,26 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="nationality">Nationality</Label>
-                        <Input
-                          id="nationality"
+                        <SearchableSelect
+                          options={NATIONALITIES}
                           value={editData.personal.nationality || ''}
-                          onChange={(e) => updateEditData('personal', 'nationality', e.target.value)}
+                          onValueChange={(value) => updateEditData('personal', 'nationality', value)}
+                          placeholder="Select nationality"
+                          searchPlaceholder="Search nationalities..."
+                          emptyMessage="No nationality found."
+                          clearable
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="religion">Religion</Label>
-                        <Input
-                          id="religion"
+                        <SearchableSelect
+                          options={RELIGIONS}
                           value={editData.personal.religion || ''}
-                          onChange={(e) => updateEditData('personal', 'religion', e.target.value)}
+                          onValueChange={(value) => updateEditData('personal', 'religion', value)}
+                          placeholder="Select religion"
+                          searchPlaceholder="Search religions..."
+                          emptyMessage="No religion found."
+                          clearable
                         />
                       </div>
                     </div>
@@ -1550,6 +1667,80 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
                         </div>
                       </div>
                     </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Place of Birth</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.placeOfBirth || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                          <Home className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Nationality</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.nationality || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Religion</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.religion || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Mother Tongue</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.motherTongue || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {student.languagesSpoken && student.languagesSpoken.length > 0 && (
+                      <div className="space-y-4 md:col-span-2">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-teal-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Languages Spoken</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {student.languagesSpoken.map((lang: string, index: number) => (
+                                <Badge key={index} variant="outline">{lang}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

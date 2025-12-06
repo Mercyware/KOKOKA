@@ -93,12 +93,24 @@ export interface BackendStudentData {
 }
 
 export interface FrontendFormData {
+  // Basic Personal Information
   firstName: string;
   middleName: string;
   lastName: string;
   email: string;
   dateOfBirth: string;
   gender: 'male' | 'female' | 'other' | '';
+  phone: string;
+  alternativePhone: string;
+
+  // Additional Personal Information
+  placeOfBirth: string;
+  nationality: string;
+  religion: string;
+  motherTongue: string;
+  languagesSpoken: string[];
+
+  // Academic Information
   admissionNumber: string;
   admissionDate: string;
   class: string;
@@ -107,61 +119,27 @@ export interface FrontendFormData {
   house: string;
   rollNumber: string;
   status: 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled';
-  
-  // Additional Personal Information
-  placeOfBirth: string;
-  nationality: string;
-  religion: string;
-  motherTongue: string;
   previousSchool: string;
   previousClass: string;
   tcNumber: string;
   tcDate: string;
-  
-  // Blood group and physical info
+  talents: string;
+  extracurriculars: string;
+
+  // Medical Information
   bloodGroup: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown' | '';
-  height: { value: string; unit: 'cm' | 'in' };
-  weight: { value: string; unit: 'kg' | 'lb' };
-  
-  // Comprehensive Medical Information
-  medicalInfo: {
-    height: string;
-    weight: string;
-    lastCheckup: string;
-    generalHealth: string;
-    bloodType: string;
-    physicianName: string;
-    physicianPhone: string;
-  };
-  allergies: string[];
-  medications: {
-    current: Array<{
-      name: string;
-      dosage: string;
-      frequency: string;
-    }>;
-  };
-  medicalConditions: string[];
-  immunizations: {
-    completed: string[];
-    pending: string[];
-    lastUpdated: string;
-  };
-  emergencyMedicalInfo: string;
-  doctorName: string;
-  doctorPhone: string;
-  hospitalPreference: string;
-  
-  // Health info (legacy compatibility)
   healthInfo: {
     allergies: string[];
     medicalConditions: string[];
     medications: string[];
-    dietaryRestrictions: string[];
-    disabilities: string[];
   };
-  
-  // Emergency Contacts (separate from guardians)
+  specialNeeds: string;
+  emergencyMedicalInfo: string;
+  doctorName: string;
+  doctorPhone: string;
+  hospitalPreference: string;
+
+  // Emergency Contacts
   emergencyContacts: Array<{
     name: string;
     relationship: string;
@@ -170,18 +148,7 @@ export interface FrontendFormData {
     address: string;
     isPrimary: boolean;
   }>;
-  
-  // Contact info
-  contactInfo: {
-    phone: string;
-    alternativePhone: string;
-    emergencyContact: {
-      name: string;
-      relationship: string;
-      phone: string;
-    };
-  };
-  
+
   // Current Address
   address: {
     street: string;
@@ -190,7 +157,7 @@ export interface FrontendFormData {
     zipCode: string;
     country: string;
   };
-  
+
   // Permanent Address
   permanentAddress: {
     street: string;
@@ -199,53 +166,8 @@ export interface FrontendFormData {
     zipCode: string;
     country: string;
   };
-  
-  // Academic Background
-  previousAcademicRecord: {
-    previousSchool: string;
-    previousGrade: string;
-    subjects: string[];
-    performance: string;
-    teacherRecommendations: string;
-  };
-  specialNeeds: string;
-  talents: string[];
-  extracurriculars: string[];
-  
-  // Administrative Information
-  applicationDate: string;
-  interviewDate: string;
-  admissionTestScore: number;
-  feesPaid: number;
-  scholarshipInfo: {
-    type: string;
-    amount: number;
-    percentage: number;
-  } | null;
-  transportInfo: {
-    mode: string;
-    busRoute: string;
-    pickupPoint: string;
-    dropoffPoint: string;
-  };
-  
-  // Behavioral and Social Information
-  behavioralNotes: string;
-  socialBackground: string;
-  languagesSpoken: string[];
-  
-  // Documents and Identification
-  identificationDocs: {
-    birthCertificate: boolean;
-    passport: boolean;
-    socialSecurityCard: boolean;
-  };
-  photographs: {
-    passport: number;
-    school: number;
-  };
-  documentsSubmitted: string[];
-  
+
+  // Guardians
   guardians: Array<{
     firstName: string;
     lastName: string;
@@ -276,72 +198,53 @@ export function convertToFormData(backendData: any): FrontendFormData {
   };
 
   return {
-    // Basic Information
+    // Basic Personal Information
     firstName: backendData.firstName || '',
     middleName: backendData.middleName || '',
     lastName: backendData.lastName || '',
     email: backendData.email || '',
     dateOfBirth: convertDate(backendData.dateOfBirth),
     gender: (backendData.gender?.toLowerCase() as 'male' | 'female' | 'other') || '',
-    admissionNumber: backendData.admissionNumber || '',
-    admissionDate: convertDate(backendData.admissionDate),
-    status: (backendData.status?.toLowerCase() as 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled') || 'active',
-    rollNumber: backendData.rollNumber || '',
+    phone: backendData.phone || '',
+    alternativePhone: backendData.alternativePhone || '',
 
     // Additional Personal Information
     placeOfBirth: backendData.placeOfBirth || '',
     nationality: backendData.nationality || '',
     religion: backendData.religion || '',
     motherTongue: backendData.motherTongue || '',
-    previousSchool: extractString(backendData.previousSchool),
-    previousClass: backendData.previousClass || '',
-    tcNumber: backendData.tcNumber || '',
-    tcDate: convertDate(backendData.tcDate),
+    languagesSpoken: backendData.languagesSpoken || [],
 
-    // Academic assignments
+    // Academic Information
+    admissionNumber: backendData.admissionNumber || '',
+    admissionDate: convertDate(backendData.admissionDate),
     class: backendData.currentClassId || backendData.currentClass?.id || backendData.currentClass?._id || '',
     section: backendData.currentSectionId || backendData.currentSection?.id || backendData.currentSection?._id || '',
     academicYear: backendData.academicYearId || backendData.academicYear?.id || backendData.academicYear?._id || '',
     house: backendData.houseId || backendData.house?.id || backendData.house?._id || '',
+    rollNumber: backendData.rollNumber || '',
+    status: (backendData.status?.toLowerCase() as 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled') || 'active',
+    previousSchool: extractString(backendData.previousSchool),
+    previousClass: backendData.previousClass || '',
+    tcNumber: backendData.tcNumber || '',
+    tcDate: convertDate(backendData.tcDate),
+    talents: (backendData.talents || []).join(', '),
+    extracurriculars: (backendData.extracurriculars || []).join(', '),
 
-    // Physical info
+    // Medical Information
     bloodGroup: (backendData.bloodGroup as any) || '',
-    height: { 
-      value: backendData.medicalInfo?.height?.replace(/[^\d.]/g, '') || backendData.height?.value || '', 
-      unit: 'cm' as 'cm' | 'in' 
+    healthInfo: {
+      allergies: backendData.allergies || [],
+      medicalConditions: backendData.medicalConditions || [],
+      medications: (backendData.medications?.current || backendData.medications || []).map((m: any) =>
+        typeof m === 'string' ? m : m.name
+      )
     },
-    weight: { 
-      value: backendData.medicalInfo?.weight?.replace(/[^\d.]/g, '') || backendData.weight?.value || '', 
-      unit: 'kg' as 'kg' | 'lb' 
-    },
-
-    // Comprehensive Medical Information
-    medicalInfo: {
-      height: backendData.medicalInfo?.height || '',
-      weight: backendData.medicalInfo?.weight || '',
-      lastCheckup: backendData.medicalInfo?.lastCheckup || '',
-      generalHealth: backendData.medicalInfo?.generalHealth || '',
-      bloodType: backendData.medicalInfo?.bloodType || '',
-      physicianName: backendData.medicalInfo?.physicianName || '',
-      physicianPhone: backendData.medicalInfo?.physicianPhone || ''
-    },
-    allergies: backendData.allergies || [],
-    medications: backendData.medications || { current: [] },
-    medicalConditions: backendData.medicalConditions || [],
-    immunizations: backendData.immunizations || { completed: [], pending: [], lastUpdated: '' },
+    specialNeeds: backendData.specialNeeds || '',
     emergencyMedicalInfo: backendData.emergencyMedicalInfo || '',
     doctorName: backendData.doctorName || '',
     doctorPhone: backendData.doctorPhone || '',
     hospitalPreference: backendData.hospitalPreference || '',
-
-    // Health info (legacy compatibility)
-    healthInfo: {
-      allergies: backendData.allergies || backendData.healthInfo?.allergies || [],
-      medicalConditions: backendData.medicalConditions || backendData.healthInfo?.medicalConditions || [],
-      medications: backendData.healthInfo?.medications || [],
-      dietaryRestrictions: backendData.healthInfo?.dietaryRestrictions || [],
-      disabilities: backendData.healthInfo?.disabilities || []
-    },
 
     // Emergency Contacts
     emergencyContacts: backendData.emergencyContacts || [{
@@ -352,17 +255,6 @@ export function convertToFormData(backendData: any): FrontendFormData {
       address: '',
       isPrimary: true
     }],
-
-    // Contact info
-    contactInfo: {
-      phone: backendData.phone || '',
-      alternativePhone: backendData.alternativePhone || '',
-      emergencyContact: {
-        name: backendData.emergencyContact?.name || '',
-        relationship: backendData.emergencyContact?.relationship || '',
-        phone: backendData.emergencyContact?.phone || ''
-      }
-    },
 
     // Current Address
     address: {
@@ -381,48 +273,6 @@ export function convertToFormData(backendData: any): FrontendFormData {
       zipCode: backendData.permanentZipCode || backendData.permanentAddress?.zipCode || '',
       country: backendData.permanentCountry || backendData.permanentAddress?.country || ''
     },
-
-    // Academic Background
-    previousAcademicRecord: backendData.previousAcademicRecord || {
-      previousSchool: '',
-      previousGrade: '',
-      subjects: [],
-      performance: '',
-      teacherRecommendations: ''
-    },
-    specialNeeds: backendData.specialNeeds || '',
-    talents: backendData.talents || [],
-    extracurriculars: backendData.extracurriculars || [],
-
-    // Administrative Information
-    applicationDate: convertDate(backendData.applicationDate),
-    interviewDate: convertDate(backendData.interviewDate),
-    admissionTestScore: backendData.admissionTestScore || 0,
-    feesPaid: backendData.feesPaid || 0,
-    scholarshipInfo: backendData.scholarshipInfo || null,
-    transportInfo: backendData.transportInfo || {
-      mode: '',
-      busRoute: '',
-      pickupPoint: '',
-      dropoffPoint: ''
-    },
-
-    // Behavioral and Social Information
-    behavioralNotes: backendData.behavioralNotes || '',
-    socialBackground: backendData.socialBackground || '',
-    languagesSpoken: backendData.languagesSpoken || [],
-
-    // Documents and Identification
-    identificationDocs: backendData.identificationDocs || {
-      birthCertificate: false,
-      passport: false,
-      socialSecurityCard: false
-    },
-    photographs: backendData.photographs || {
-      passport: 0,
-      school: 0
-    },
-    documentsSubmitted: backendData.documentsSubmitted || [],
 
     // Guardians
     guardians: (backendData.guardianStudents || backendData.guardians)?.map((gs: any) => {
@@ -450,6 +300,14 @@ export function convertToFormData(backendData: any): FrontendFormData {
 
 // Convert frontend form data to backend format
 export function convertToBackendData(formData: FrontendFormData): any {
+  // Convert comma-separated strings to arrays
+  const talentsArray = formData.talents
+    ? formData.talents.split(',').map(t => t.trim()).filter(Boolean)
+    : [];
+  const extracurricularsArray = formData.extracurriculars
+    ? formData.extracurriculars.split(',').map(e => e.trim()).filter(Boolean)
+    : [];
+
   return {
     // Basic Information
     firstName: formData.firstName,
@@ -458,28 +316,29 @@ export function convertToBackendData(formData: FrontendFormData): any {
     email: formData.email || undefined,
     dateOfBirth: formData.dateOfBirth || undefined,
     gender: formData.gender || undefined,
-    admissionNumber: formData.admissionNumber,
-    admissionDate: formData.admissionDate || undefined,
-    status: formData.status,
+    phone: formData.phone || undefined,
 
     // Additional Personal Information
     placeOfBirth: formData.placeOfBirth || undefined,
     nationality: formData.nationality || undefined,
     religion: formData.religion || undefined,
     motherTongue: formData.motherTongue || undefined,
-    previousSchool: formData.previousSchool || undefined,
-    previousClass: formData.previousClass || undefined,
-    tcNumber: formData.tcNumber || undefined,
-    tcDate: formData.tcDate || undefined,
+    languagesSpoken: formData.languagesSpoken || [],
 
-    // Academic Assignment
+    // Academic Information
+    admissionNumber: formData.admissionNumber,
+    admissionDate: formData.admissionDate || undefined,
     class: formData.class,
     section: formData.section || undefined,
     academicYear: formData.academicYear || undefined,
     house: formData.house || undefined,
-
-    // Contact Information
-    phone: formData.contactInfo.phone || undefined,
+    status: formData.status,
+    previousSchool: formData.previousSchool || undefined,
+    previousClass: formData.previousClass || undefined,
+    tcNumber: formData.tcNumber || undefined,
+    tcDate: formData.tcDate || undefined,
+    talents: talentsArray,
+    extracurriculars: extracurricularsArray,
 
     // Current Address
     streetAddress: formData.address.street || undefined,
@@ -497,11 +356,12 @@ export function convertToBackendData(formData: FrontendFormData): any {
 
     // Medical Information
     bloodGroup: formData.bloodGroup || undefined,
-    medicalInfo: formData.medicalInfo,
-    allergies: formData.allergies || [],
-    medications: formData.medications,
-    medicalConditions: formData.medicalConditions || [],
-    immunizations: formData.immunizations,
+    allergies: formData.healthInfo.allergies || [],
+    medicalConditions: formData.healthInfo.medicalConditions || [],
+    medications: formData.healthInfo.medications?.length
+      ? { current: formData.healthInfo.medications.map(m => ({ name: m, dosage: '', frequency: '' })) }
+      : undefined,
+    specialNeeds: formData.specialNeeds || undefined,
     emergencyMedicalInfo: formData.emergencyMedicalInfo || undefined,
     doctorName: formData.doctorName || undefined,
     doctorPhone: formData.doctorPhone || undefined,
@@ -509,30 +369,6 @@ export function convertToBackendData(formData: FrontendFormData): any {
 
     // Emergency Contacts
     emergencyContacts: formData.emergencyContacts || [],
-
-    // Academic Background
-    previousAcademicRecord: formData.previousAcademicRecord,
-    specialNeeds: formData.specialNeeds || undefined,
-    talents: formData.talents || [],
-    extracurriculars: formData.extracurriculars || [],
-
-    // Administrative Information
-    applicationDate: formData.applicationDate || undefined,
-    interviewDate: formData.interviewDate || undefined,
-    admissionTestScore: formData.admissionTestScore || undefined,
-    feesPaid: formData.feesPaid || undefined,
-    scholarshipInfo: formData.scholarshipInfo,
-    transportInfo: formData.transportInfo,
-
-    // Behavioral and Social Information
-    behavioralNotes: formData.behavioralNotes || undefined,
-    socialBackground: formData.socialBackground || undefined,
-    languagesSpoken: formData.languagesSpoken || [],
-
-    // Documents and Identification
-    identificationDocs: formData.identificationDocs,
-    photographs: formData.photographs,
-    documentsSubmitted: formData.documentsSubmitted || [],
 
     // Guardian Information
     guardians: formData.guardians.filter(guardian =>

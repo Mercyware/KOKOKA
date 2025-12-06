@@ -1062,81 +1062,43 @@ async function createStudents(schoolId, users, classes, houses, academicYearId, 
       placeOfBirth: Math.random() > 0.5 ? 'Springfield, CA' : 'Los Angeles, CA',
       nationality: nationalities[Math.floor(Math.random() * nationalities.length)],
       religion: religions[Math.floor(Math.random() * religions.length)],
-      bloodGroup: bloodGroups[Math.floor(Math.random() * bloodGroups.length)],
       motherTongue: languages[Math.floor(Math.random() * languages.length)],
       previousSchool: Math.random() > 0.2 ? previousSchools[Math.floor(Math.random() * previousSchools.length)] : null,
       previousClass: Math.random() > 0.2 ? `Grade ${Math.floor(Math.random() * 5) + 1}` : null,
       
       // Medical Information
-      medicalInfo: {
-        height: `${120 + Math.floor(Math.random() * 40)}cm`,
-        weight: `${25 + Math.floor(Math.random() * 25)}kg`,
-        lastCheckup: '2024-08-15',
-        generalHealth: 'Good'
-      },
+      bloodGroup: bloodGroups[Math.floor(Math.random() * bloodGroups.length)],
       allergies: studentAllergies,
       medicalConditions: studentMedicalConditions,
-      immunizations: {
-        MMR: true,
-        DPT: true,
-        Polio: true,
-        Hepatitis: true,
-        lastUpdated: '2024-01-15'
-      },
+      medications: studentMedicalConditions.length > 0 ? {
+        current: studentMedicalConditions.map(condition => ({
+          name: `Medication for ${condition}`,
+          dosage: '1 tablet',
+          frequency: 'Daily'
+        }))
+      } : null,
+      specialNeeds: Math.random() > 0.95 ? 'Requires additional learning support' : null,
       emergencyMedicalInfo: studentMedicalConditions.length > 0 ? `Has ${studentMedicalConditions.join(', ')}` : null,
       doctorName: `Dr. ${['Smith', 'Johnson', 'Brown', 'Davis', 'Miller'][Math.floor(Math.random() * 5)]}`,
       doctorPhone: `+1-555-${String(300 + index).padStart(4, '0')}`,
       hospitalPreference: ['Springfield General', 'City Medical Center', 'Regional Hospital'][Math.floor(Math.random() * 3)],
-      
+
       // Emergency Contacts
       emergencyContacts: [
         {
           name: `Emergency Contact ${index + 1}`,
           relationship: 'Family Friend',
           phone: `+1-555-${String(400 + index).padStart(4, '0')}`,
-          address: `${300 + index} Emergency St, Springfield, CA`
+          email: `emergency${index + 1}@example.com`,
+          address: `${300 + index} Emergency St, Springfield, CA`,
+          isPrimary: true
         }
       ],
-      
-      // Academic Background
-      previousAcademicRecord: {
-        previousGrade: Math.random() > 0.2 ? `Grade ${Math.floor(Math.random() * 5) + 1}` : null,
-        performance: ['Excellent', 'Good', 'Average'][Math.floor(Math.random() * 3)],
-        subjects: ['Math', 'English', 'Science', 'Social Studies']
-      },
-      specialNeeds: Math.random() > 0.95 ? 'Requires additional learning support' : null,
+
+      // Academic Information
       talents: studentTalents,
       extracurriculars: studentExtracurriculars,
-      
-      // Administrative Information
-      applicationDate: new Date('2024-07-15'),
-      interviewDate: new Date('2024-08-01'),
-      admissionTestScore: Math.random() > 0.3 ? Math.floor(Math.random() * 40) + 60 : null, // 60-100
-      feesPaid: Math.floor(Math.random() * 5000) + 1000, // $1000-$6000
-      scholarshipInfo: Math.random() > 0.8 ? { type: 'Merit Scholarship', amount: 1000, percentage: 25 } : null,
-      transportInfo: {
-        mode: ['Bus', 'Car', 'Walk'][Math.floor(Math.random() * 3)],
-        busRoute: Math.random() > 0.5 ? `Route ${Math.floor(Math.random() * 10) + 1}` : null
-      },
-      
-      // Behavioral and Social Information
-      behavioralNotes: Math.random() > 0.8 ? 'Excellent behavior and attitude' : null,
-      socialBackground: 'Middle class family background',
       languagesSpoken: studentLanguages,
-      
-      // Documents and Identification
-      identificationDocs: {
-        birthCertificate: true,
-        passport: Math.random() > 0.5,
-        ssn: true,
-        medicalRecords: true
-      },
-      photographs: {
-        passport: true,
-        school: true,
-        family: Math.random() > 0.5
-      },
-      documentsSubmitted: ['Birth Certificate', 'Medical Records', 'Previous School Records', 'Passport Photos'],
       
       // Core fields
       admissionDate: new Date('2024-09-01'),

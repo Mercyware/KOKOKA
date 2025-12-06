@@ -1,0 +1,20 @@
+export const RELATIONSHIPS = [
+  { value: 'father', label: 'Father' },
+  { value: 'mother', label: 'Mother' },
+  { value: 'grandfather', label: 'Grandfather' },
+  { value: 'grandmother', label: 'Grandmother' },
+  { value: 'uncle', label: 'Uncle' },
+  { value: 'aunt', label: 'Aunt' },
+  { value: 'sibling', label: 'Sibling' },
+  { value: 'brother', label: 'Brother' },
+  { value: 'sister', label: 'Sister' },
+  { value: 'stepfather', label: 'Stepfather' },
+  { value: 'stepmother', label: 'Stepmother' },
+  { value: 'guardian', label: 'Guardian' },
+  { value: 'legal guardian', label: 'Legal Guardian' },
+  { value: 'adoptive parent', label: 'Adoptive Parent' },
+  { value: 'foster parent', label: 'Foster Parent' },
+  { value: 'cousin', label: 'Cousin' },
+  { value: 'family friend', label: 'Family Friend' },
+  { value: 'other', label: 'Other' }
+];

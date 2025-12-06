@@ -631,71 +631,72 @@ model Class {
 
 model Student {
   id                         String                       @id @default(uuid())
+  // Basic Personal Information
   admissionNumber            String
   firstName                  String
   lastName                   String
   middleName                 String?
+  email                      String?
+  phone                      String?
   dateOfBirth                DateTime?
   gender                     Gender?
   photo                      String?
-  email                      String?
-  phone                      String?
-  streetAddress              String?
-  city                       String?
-  state                      String?
-  zipCode                    String?
-  country                    String?
+  profilePictureId           String?                      @unique
+
+  // Additional Personal Information
+  placeOfBirth               String?
+  nationality                String?
+  religion                   String?
+  motherTongue               String?
+  languagesSpoken            String[]
+
+  // Academic Information
   admissionDate              DateTime                     @default(now())
   status                     StudentStatus                @default(ACTIVE)
   schoolId                   String
   userId                     String?                      @unique
   currentClassId             String?
+  currentSectionId           String?
   academicYearId             String?
   houseId                    String?
-  createdAt                  DateTime                     @default(now())
-  updatedAt                  DateTime                     @updatedAt
-  admissionTestScore         Float?
-  allergies                  String[]
-  applicationDate            DateTime?
-  behavioralNotes            String?
+  previousSchool             String?
+  previousClass              String?
+  tcNumber                   String?
+  tcDate                     DateTime?
+  talents                    String[]
+  extracurriculars           String[]
+
+  // Medical Information
   bloodGroup                 String?
-  currentSectionId           String?
+  allergies                  String[]
+  medicalConditions          String[]
+  medications                Json?
+  specialNeeds               String?
+  emergencyMedicalInfo       String?
   doctorName                 String?
   doctorPhone                String?
-  documentsSubmitted         String[]
-  emergencyContacts          Json?
-  emergencyMedicalInfo       String?
-  extracurriculars           String[]
-  feesPaid                   Float?
   hospitalPreference         String?
-  identificationDocs         Json?
-  immunizations              Json?
-  interviewDate              DateTime?
-  languagesSpoken            String[]
-  medicalConditions          String[]
-  medicalInfo                Json?
-  medications                Json?
-  motherTongue               String?
-  nationality                String?
-  permanentCity              String?
-  permanentCountry           String?
-  permanentState             String?
+
+  // Emergency Contacts
+  emergencyContacts          Json?
+
+  // Address Information
+  streetAddress              String?
+  city                       String?
+  state                      String?
+  zipCode                    String?
+  country                    String?
   permanentStreetAddress     String?
+  permanentCity              String?
+  permanentState             String?
   permanentZipCode           String?
-  photographs                Json?
-  placeOfBirth               String?
-  previousAcademicRecord     Json?
-  previousClass              String?
-  previousSchool             String?
-  profilePictureId           String?                      @unique
-  religion                   String?
-  scholarshipInfo            Json?
-  socialBackground           String?
-  specialNeeds               String?
-  talents                    String[]
-  tcDate                     DateTime?
-  tcNumber                   String?
-  transportInfo              Json?
+  permanentCountry           String?
+
+  // System Fields
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+
+  // AI & Analytics Fields (for future features)
   learningPreferences        Json?
   engagementMetrics          Json?
   performanceHistory         Json?

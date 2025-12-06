@@ -323,7 +323,7 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
 
   // Get student phone
   const getStudentPhone = (student: Student) => {
-    return student.contactInfo?.phone || '-';
+    return student.phone || student.contactInfo?.phone || '-';
   };
 
   // Get student status badge variant
