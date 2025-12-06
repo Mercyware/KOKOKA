@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Save, Calendar, ArrowLeft } from 'lucide-react';
 
 interface Guardian {
@@ -317,16 +318,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <div className="relative">
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={e => handleChange('dateOfBirth', e.target.value)}
-                    required
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-                </div>
+                <DatePicker
+                  value={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined}
+                  onChange={(date) => handleChange('dateOfBirth', date ? date.toISOString().split('T')[0] : '')}
+                  placeholder="Select date of birth"
+                  className="w-full"
+                />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
@@ -427,16 +424,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admissionDate">Admission Date *</Label>
-                <div className="relative">
-                  <Input
-                    id="admissionDate"
-                    type="date"
-                    value={formData.admissionDate}
-                    onChange={e => handleChange('admissionDate', e.target.value)}
-                    required
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-                </div>
+                <DatePicker
+                  value={formData.admissionDate ? new Date(formData.admissionDate) : undefined}
+                  onChange={(date) => handleChange('admissionDate', date ? date.toISOString().split('T')[0] : '')}
+                  placeholder="Select admission date"
+                  className="w-full"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="academicYear">Academic Year *</Label>
@@ -550,11 +543,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tcDate">Transfer Certificate Date</Label>
-                <Input
-                  id="tcDate"
-                  type="date"
-                  value={formData.tcDate}
-                  onChange={e => handleChange('tcDate', e.target.value)}
+                <DatePicker
+                  value={formData.tcDate ? new Date(formData.tcDate) : undefined}
+                  onChange={(date) => handleChange('tcDate', date ? date.toISOString().split('T')[0] : '')}
+                  placeholder="Select TC date"
+                  className="w-full"
                 />
               </div>
             </div>
@@ -933,16 +926,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastCheckup">Last Medical Checkup</Label>
-                  <Input
-                    id="lastCheckup"
-                    type="date"
-                    value={formData.medicalInfo.lastCheckup}
-                    onChange={e => {
+                  <DatePicker
+                    value={formData.medicalInfo.lastCheckup ? new Date(formData.medicalInfo.lastCheckup) : undefined}
+                    onChange={(date) => {
                       setFormData(prev => ({
                         ...prev,
-                        medicalInfo: { ...prev.medicalInfo, lastCheckup: e.target.value }
+                        medicalInfo: { ...prev.medicalInfo, lastCheckup: date ? date.toISOString().split('T')[0] : '' }
                       }));
                     }}
+                    placeholder="Select last checkup date"
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -1170,19 +1163,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="immunizationLastUpdated">Last Updated</Label>
-                  <Input
-                    id="immunizationLastUpdated"
-                    type="date"
-                    value={formData.immunizations.lastUpdated}
-                    onChange={e => {
+                  <DatePicker
+                    value={formData.immunizations.lastUpdated ? new Date(formData.immunizations.lastUpdated) : undefined}
+                    onChange={(date) => {
                       setFormData(prev => ({
                         ...prev,
                         immunizations: {
                           ...prev.immunizations,
-                          lastUpdated: e.target.value
+                          lastUpdated: date ? date.toISOString().split('T')[0] : ''
                         }
                       }));
                     }}
+                    placeholder="Select last updated date"
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -1681,20 +1674,20 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="applicationDate">Application Date</Label>
-                  <Input
-                    id="applicationDate"
-                    type="date"
-                    value={formData.applicationDate}
-                    onChange={e => handleChange('applicationDate', e.target.value)}
+                  <DatePicker
+                    value={formData.applicationDate ? new Date(formData.applicationDate) : undefined}
+                    onChange={(date) => handleChange('applicationDate', date ? date.toISOString().split('T')[0] : '')}
+                    placeholder="Select application date"
+                    className="w-full"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="interviewDate">Interview Date</Label>
-                  <Input
-                    id="interviewDate"
-                    type="date"
-                    value={formData.interviewDate}
-                    onChange={e => handleChange('interviewDate', e.target.value)}
+                  <DatePicker
+                    value={formData.interviewDate ? new Date(formData.interviewDate) : undefined}
+                    onChange={(date) => handleChange('interviewDate', date ? date.toISOString().split('T')[0] : '')}
+                    placeholder="Select interview date"
+                    className="w-full"
                   />
                 </div>
                 <div className="space-y-2">

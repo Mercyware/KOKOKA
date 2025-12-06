@@ -12,7 +12,8 @@ import {
   Form,
   FormField,
   StatusBadge,
-  Input
+  Input,
+  DatePicker
 } from '@/components/ui';
 import {
   Calendar,
@@ -375,10 +376,11 @@ const TakeAttendance: React.FC = () => {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormField label="Date">
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                <DatePicker
+                  value={selectedDate ? new Date(selectedDate) : undefined}
+                  onChange={(date) => setSelectedDate(date ? date.toISOString().split('T')[0] : '')}
+                  placeholder="Select date"
+                  className="w-full"
                 />
               </FormField>
 

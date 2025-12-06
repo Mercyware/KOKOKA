@@ -88,8 +88,8 @@ const CreateBehavioralAssessment: React.FC = () => {
         setClasses(classesRes.data);
       }
 
-      if (academicYearsRes?.success && academicYearsRes.data) {
-        setAcademicYears(academicYearsRes.data);
+      if (academicYearsRes?.success && academicYearsRes.data?.academicYears) {
+        setAcademicYears(academicYearsRes.data.academicYears);
       }
 
       if (termsRes) {

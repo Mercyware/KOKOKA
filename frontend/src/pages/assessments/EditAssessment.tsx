@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
-  toast
+  toast,
+  DatePicker
 } from '@/components/ui';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -489,18 +490,21 @@ const EditAssessment: React.FC = () => {
                   </FormField>
 
                   <FormField label="Scheduled Date">
-                    <Input
-                      type="date"
-                      value={formData.scheduledDate}
-                      onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
+                    <DatePicker
+                      value={formData.scheduledDate ? new Date(formData.scheduledDate) : undefined}
+                      onChange={(date) => handleInputChange('scheduledDate', date ? date.toISOString().split('T')[0] : '')}
+                      placeholder="Select scheduled date"
+                      className="w-full"
                     />
                   </FormField>
 
                   <FormField label="Due Date">
-                    <Input
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) => handleInputChange('dueDate', e.target.value)}
+                    <DatePicker
+                      value={formData.dueDate ? new Date(formData.dueDate) : undefined}
+                      onChange={(date) => handleInputChange('dueDate', date ? date.toISOString().split('T')[0] : '')}
+                      placeholder="Select due date"
+                      className="w-full"
+                      disabled={(date) => formData.scheduledDate ? date < new Date(formData.scheduledDate) : false}
                     />
                   </FormField>
                 </div>

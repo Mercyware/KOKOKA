@@ -117,10 +117,10 @@ export default function ResultEntry() {
         setSubjects(subjectsResponse.data);
       }
 
-      if (academicYearsResponse.success && academicYearsResponse.data) {
-        setAcademicYears(academicYearsResponse.data);
+      if (academicYearsResponse.success && academicYearsResponse.data?.academicYears) {
+        setAcademicYears(academicYearsResponse.data.academicYears);
         // Auto-select current academic year
-        const current = academicYearsResponse.data.find((year: any) => year.isCurrent);
+        const current = academicYearsResponse.data.academicYears.find((year: any) => year.isCurrent);
         if (current && current.terms) {
           setTerms(current.terms);
           // Set the first term as default if termId is not provided

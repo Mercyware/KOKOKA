@@ -36,7 +36,8 @@ import {
   Printer,
   Share2,
   Copy,
-  FileJson
+  FileJson,
+  Loader2
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ProfilePictureUpload } from '@/components/ui/ProfilePictureUpload';
@@ -46,7 +47,12 @@ import {
   getStudentAcademicPerformance,
   getStudentAttendanceStatistics,
   getStudentAchievements,
-  getStudentActivityLogs
+  getStudentActivityLogs,
+  patchStudentPersonalInfo,
+  patchStudentContactInfo,
+  patchStudentAcademicInfo,
+  patchStudentHealthInfo,
+  patchStudentGuardianInfo
 } from '@/services/studentService';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -66,6 +72,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface ViewStudentProps {
   studentId: string;
@@ -95,12 +104,50 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
 
+  // Edit mode states for different sections
+  const [editModes, setEditModes] = useState({
+    personal: false,
+    contact: false,
+    academic: false,
+    health: false,
+    guardians: false
+  });
+
+  // Edit form data states
+  const [editData, setEditData] = useState({
+    personal: {},
+    contact: {},
+    academic: {},
+    health: {},
+    guardians: {}
+  });
+
+  // Loading states for patch operations
+  const [patchLoading, setPatchLoading] = useState({
+    personal: false,
+    contact: false,
+    academic: false,
+    health: false,
+    guardians: false
+  });
+
   useEffect(() => {
     setLoading(true);
     setError(null);
     getStudentById(studentId)
       .then((res) => {
-        setStudent(res.student);
+        // Transform student data to include address object
+        const studentData = {
+          ...res.student,
+          address: {
+            street: res.student.streetAddress || '',
+            city: res.student.city || '',
+            state: res.student.state || '',
+            zipCode: res.student.zipCode || '',
+            country: res.student.country || ''
+          }
+        };
+        setStudent(studentData);
         setLoading(false);
         
         // Load additional data in parallel
@@ -326,6 +373,152 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
       title: 'Email Client Opened',
       description: 'Your default email client has been opened with the share details.',
     });
+  };
+
+  // Edit mode handlers
+  const toggleEditMode = (section: keyof typeof editModes) => {
+    setEditModes(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+    
+    // Initialize edit data when entering edit mode
+    if (!editModes[section] && student) {
+      setEditData(prev => ({
+        ...prev,
+        [section]: getInitialEditData(section, student)
+      }));
+    }
+  };
+
+  const getInitialEditData = (section: string, studentData: any) => {
+    switch (section) {
+      case 'personal':
+        return {
+          firstName: studentData.firstName || '',
+          lastName: studentData.lastName || '',
+          middleName: studentData.middleName || '',
+          dateOfBirth: studentData.dateOfBirth || '',
+          gender: studentData.gender || '',
+          nationality: studentData.nationality || '',
+          religion: studentData.religion || '',
+          bloodGroup: studentData.bloodGroup || ''
+        };
+      case 'contact':
+        return {
+          email: studentData.email || '',
+          phone: studentData.phone || '',
+          address: {
+            street: studentData.streetAddress || '',
+            city: studentData.city || '',
+            state: studentData.state || '',
+            zipCode: studentData.zipCode || '',
+            country: studentData.country || ''
+          }
+        };
+      case 'academic':
+        return {
+          admissionNumber: studentData.admissionNumber || '',
+          admissionDate: studentData.admissionDate || '',
+          currentClass: studentData.currentClass?.id || '',
+          currentSection: studentData.currentSection?.id || '',
+          academicYear: studentData.academicYear?.id || studentData.academicYear || '',
+          rollNumber: studentData.rollNumber || '',
+          house: studentData.house?.id || '',
+          status: studentData.status || 'active'
+        };
+      case 'health':
+        return {
+          bloodGroup: studentData.bloodGroup || '',
+          medicalInfo: {
+            height: studentData.medicalInfo?.height || '',
+            weight: studentData.medicalInfo?.weight || '',
+            allergies: studentData.medicalInfo?.allergies || [],
+            medicalConditions: studentData.medicalInfo?.medicalConditions || [],
+            medications: studentData.medicalInfo?.medications || []
+          }
+        };
+      case 'guardians':
+        return {
+          guardians: studentData.guardians || []
+        };
+      default:
+        return {};
+    }
+  };
+
+  const handleSaveSection = async (section: keyof typeof editModes) => {
+    setPatchLoading(prev => ({ ...prev, [section]: true }));
+    
+    try {
+      let response;
+      const data = editData[section];
+      
+      switch (section) {
+        case 'personal':
+          response = await patchStudentPersonalInfo(studentId, data);
+          break;
+        case 'contact':
+          response = await patchStudentContactInfo(studentId, data);
+          break;
+        case 'academic':
+          response = await patchStudentAcademicInfo(studentId, data);
+          break;
+        case 'health':
+          response = await patchStudentHealthInfo(studentId, data);
+          break;
+        case 'guardians':
+          response = await patchStudentGuardianInfo(studentId, data);
+          break;
+        default:
+          throw new Error('Invalid section');
+      }
+
+      if (response.success && response.student) {
+        // Transform student data to include address object
+        const studentData = {
+          ...response.student,
+          address: {
+            street: response.student.streetAddress || '',
+            city: response.student.city || '',
+            state: response.student.state || '',
+            zipCode: response.student.zipCode || '',
+            country: response.student.country || ''
+          }
+        };
+        setStudent(studentData);
+        setEditModes(prev => ({ ...prev, [section]: false }));
+        toast({
+          title: 'Success',
+          description: `${section.charAt(0).toUpperCase() + section.slice(1)} information updated successfully.`,
+        });
+      } else {
+        throw new Error(response.error || response.message || 'Failed to update');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Update Failed',
+        description: error.message || `Failed to update ${section} information.`,
+        variant: 'destructive',
+      });
+    } finally {
+      setPatchLoading(prev => ({ ...prev, [section]: false }));
+    }
+  };
+
+  const handleCancelEdit = (section: keyof typeof editModes) => {
+    setEditModes(prev => ({ ...prev, [section]: false }));
+    setEditData(prev => ({ ...prev, [section]: {} }));
+  };
+
+  const updateEditData = (section: keyof typeof editModes, field: string, value: any) => {
+    setEditData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
   };
 
   if (loading) {
@@ -606,233 +799,454 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
             {/* Academic Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <GraduationCap className="h-6 w-6 text-siohioma-primary" />
-                  <span className="text-xl">Academic Information</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <GraduationCap className="h-6 w-6 text-siohioma-primary" />
+                    <span className="text-xl">Academic Information</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {editModes.academic ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelEdit('academic')}
+                          disabled={patchLoading.academic}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveSection('academic')}
+                          disabled={patchLoading.academic}
+                        >
+                          {patchLoading.academic ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleEditMode('academic')}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <BookOpen className="h-5 w-5 text-blue-600" />
+                {editModes.academic ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="admissionNumber">Admission Number</Label>
+                        <Input
+                          id="admissionNumber"
+                          value={editData.academic.admissionNumber || ''}
+                          onChange={(e) => updateEditData('academic', 'admissionNumber', e.target.value)}
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Admission Number</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.admissionNumber || 'Not assigned'}
-                        </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="admissionDate">Admission Date</Label>
+                        <DatePicker
+                          value={editData.academic.admissionDate ? new Date(editData.academic.admissionDate) : undefined}
+                          onChange={(date) => updateEditData('academic', 'admissionDate', date?.toISOString())}
+                          placeholder="Select admission date"
+                          className="w-full"
+                        />
                       </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-green-600" />
+                      <div className="space-y-2">
+                        <Label htmlFor="rollNumber">Roll Number</Label>
+                        <Input
+                          id="rollNumber"
+                          value={editData.academic.rollNumber || ''}
+                          onChange={(e) => updateEditData('academic', 'rollNumber', e.target.value)}
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Admission Date</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : 'Not provided'}
-                        </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="status">Student Status</Label>
+                        <Select
+                          value={editData.academic.status || 'active'}
+                          onValueChange={(value) => updateEditData('academic', 'status', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="graduated">Graduated</SelectItem>
+                            <SelectItem value="transferred">Transferred</SelectItem>
+                            <SelectItem value="suspended">Suspended</SelectItem>
+                            <SelectItem value="expelled">Expelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="currentClass">Current Class</Label>
+                        <Input
+                          id="currentClass"
+                          value={editData.academic.currentClass || ''}
+                          onChange={(e) => updateEditData('academic', 'currentClass', e.target.value)}
+                          placeholder="Class ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="currentSection">Current Section</Label>
+                        <Input
+                          id="currentSection"
+                          value={editData.academic.currentSection || ''}
+                          onChange={(e) => updateEditData('academic', 'currentSection', e.target.value)}
+                          placeholder="Section ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="academicYear">Academic Year</Label>
+                        <Input
+                          id="academicYear"
+                          value={editData.academic.academicYear || ''}
+                          onChange={(e) => updateEditData('academic', 'academicYear', e.target.value)}
+                          placeholder="Academic Year ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="house">House</Label>
+                        <Input
+                          id="house"
+                          value={editData.academic.house || ''}
+                          onChange={(e) => updateEditData('academic', 'house', e.target.value)}
+                          placeholder="House ID"
+                        />
                       </div>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <BookOpen className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Admission Number</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {student.admissionNumber || 'Not assigned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Admission Date</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : 'Not provided'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-purple-600" />
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Current Class</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {student.currentClass?.name || 'No Class Assigned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Academic Year</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {typeof student.academicYear === 'object' ? student.academicYear?.name : student.academicYear || 'Not assigned'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Current Class</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.currentClass?.name || 'No Class Assigned'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-yellow-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Academic Year</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {typeof student.academicYear === 'object' ? student.academicYear?.name : student.academicYear || 'Not assigned'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Section</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.currentSection?.name || 'No Section Assigned'}
-                        </p>
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Section</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {student.currentSection?.name || 'No Section Assigned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <Home className="h-5 w-5 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">House</p>
+                            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {student.house?.name || 'Not assigned'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <Shield className="h-5 w-5 text-red-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Student Status</p>
+                            <Badge variant="secondary" className={`text-sm ${getStatusColor(student.status)}`}>
+                              {student.status || 'Active'}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <Home className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">House</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.house?.name || 'Not assigned'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                        <Shield className="h-5 w-5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Student Status</p>
-                        <Badge variant="secondary" className={`text-sm ${getStatusColor(student.status)}`}>
-                          {student.status || 'Active'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Academic Performance Summary */}
-                <Separator className="my-6" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg dark:bg-blue-900/20">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {loadingAcademic ? '...' : academicPerformance?.overallGPA?.toFixed(1) || student.averageGrade?.toFixed(1) || 'N/A'}
+                    {/* Academic Performance Summary */}
+                    <Separator className="my-6" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg dark:bg-blue-900/20">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {loadingAcademic ? '...' : academicPerformance?.overallGPA?.toFixed(1) || student.averageGrade?.toFixed(1) || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Current GPA</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg dark:bg-green-900/20">
+                        <div className="text-2xl font-bold text-green-600">
+                          {loadingAttendance ? '...' : attendanceStats?.overallPercentage?.toFixed(0) || student.attendancePercentage?.toFixed(0) || 'N/A'}%
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Attendance Rate</div>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 rounded-lg dark:bg-purple-900/20">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {loadingAchievements ? '...' : achievements.length || student.achievements?.length || 0}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Awards & Achievements</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Current GPA</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg dark:bg-green-900/20">
-                    <div className="text-2xl font-bold text-green-600">
-                      {loadingAttendance ? '...' : attendanceStats?.overallPercentage?.toFixed(0) || student.attendancePercentage?.toFixed(0) || 'N/A'}%
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Attendance Rate</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg dark:bg-purple-900/20">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {loadingAchievements ? '...' : achievements.length || student.achievements?.length || 0}
-                    </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Awards & Achievements</div>
-                  </div>
-                </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
             {/* Address Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MapPin className="h-6 w-6 text-siohioma-primary" />
-                  <span className="text-xl">Address Information</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-6 w-6 text-siohioma-primary" />
+                    <span className="text-xl">Contact & Address</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {editModes.contact ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelEdit('contact')}
+                          disabled={patchLoading.contact}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveSection('contact')}
+                          disabled={patchLoading.contact}
+                        >
+                          {patchLoading.contact ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleEditMode('contact')}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Home className="h-5 w-5 text-green-600" />
+                {editModes.contact ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={editData.contact.email || ''}
+                          onChange={(e) => updateEditData('contact', 'email', e.target.value)}
+                        />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Home Address</p>
-                        <p className="text-base font-medium text-gray-900 dark:text-white leading-relaxed">
-                          {formatAddress(student.address)}
-                        </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          value={editData.contact.phone || ''}
+                          onChange={(e) => updateEditData('contact', 'phone', e.target.value)}
+                        />
                       </div>
                     </div>
-
-                    {student.address && typeof student.address === 'object' && (
-                      <div className="grid grid-cols-2 gap-4 mt-4">
-                        {student.address.city && (
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.city}</p>
-                          </div>
-                        )}
-                        {student.address.state && (
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">State/Province</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.state}</p>
-                          </div>
-                        )}
-                        {student.address.zipCode && (
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Postal Code</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.zipCode}</p>
-                          </div>
-                        )}
-                        {student.address.country && (
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Country</p>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.country}</p>
-                          </div>
-                        )}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-medium">Address Information</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="street">Street Address</Label>
+                          <Input
+                            id="street"
+                            value={editData.contact.address?.street || ''}
+                            onChange={(e) => updateEditData('contact', 'address', { ...editData.contact.address, street: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input
+                            id="city"
+                            value={editData.contact.address?.city || ''}
+                            onChange={(e) => updateEditData('contact', 'address', { ...editData.contact.address, city: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State/Province</Label>
+                          <Input
+                            id="state"
+                            value={editData.contact.address?.state || ''}
+                            onChange={(e) => updateEditData('contact', 'address', { ...editData.contact.address, state: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="zipCode">Postal Code</Label>
+                          <Input
+                            id="zipCode"
+                            value={editData.contact.address?.zipCode || ''}
+                            onChange={(e) => updateEditData('contact', 'address', { ...editData.contact.address, zipCode: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="country">Country</Label>
+                          <Input
+                            id="country"
+                            value={editData.contact.address?.country || ''}
+                            onChange={(e) => updateEditData('contact', 'address', { ...editData.contact.address, country: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Phone className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <Home className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Home Address</p>
+                          <p className="text-base font-medium text-gray-900 dark:text-white leading-relaxed">
+                            {formatAddress(student.address)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Contact Information</p>
-                        <div className="space-y-2 mt-2">
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {student.phone || 'Not provided'}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
-                            <div className="flex items-center gap-2">
+
+                      {student.address && typeof student.address === 'object' && (
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          {student.address.city && (
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.city}</p>
+                            </div>
+                          )}
+                          {student.address.state && (
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">State/Province</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.state}</p>
+                            </div>
+                          )}
+                          {student.address.zipCode && (
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Postal Code</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.zipCode}</p>
+                            </div>
+                          )}
+                          {student.address.country && (
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Country</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{student.address.country}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Phone className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Contact Information</p>
+                          <div className="space-y-2 mt-2">
+                            <div className="flex items-center space-x-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
                               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {student.email || 'Not provided'}
+                                {student.phone || 'Not provided'}
                               </span>
-                              {student.user?.emailVerified !== undefined && student.email && (
-                                <Badge variant="secondary" className={
-                                  student.user.emailVerified 
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 text-xs' 
-                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 text-xs'
-                                }>
-                                  {student.user.emailVerified ? 'Verified' : 'Unverified'}
-                                </Badge>
-                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Mail className="h-4 w-4 text-gray-400" />
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {student.email || 'Not provided'}
+                                </span>
+                                {student.user?.emailVerified !== undefined && student.email && (
+                                  <Badge variant="secondary" className={
+                                    student.user.emailVerified 
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 text-xs' 
+                                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 text-xs'
+                                  }>
+                                    {student.user.emailVerified ? 'Verified' : 'Unverified'}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    {student.emergencyContacts && student.emergencyContacts.length > 0 && (
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                          <AlertTriangle className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Emergency Contact</p>
-                          <div className="mt-2 space-y-1">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {student.emergencyContacts[0].name}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {student.emergencyContacts[0].relationship} • {student.emergencyContacts[0].phone}
-                            </p>
+                      {student.emergencyContacts && student.emergencyContacts.length > 0 && (
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <AlertTriangle className="h-5 w-5 text-red-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Emergency Contact</p>
+                            <div className="mt-2 space-y-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {student.emergencyContacts[0].name}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {student.emergencyContacts[0].relationship} • {student.emergencyContacts[0].phone}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -963,56 +1377,181 @@ const ViewStudent = ({ studentId, onBack, onEdit }: ViewStudentProps) => {
             {/* Personal Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="h-6 w-6 text-siohioma-primary" />
-                  <span className="text-xl">Personal Information</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-6 w-6 text-siohioma-primary" />
+                    <span className="text-xl">Personal Information</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {editModes.personal ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelEdit('personal')}
+                          disabled={patchLoading.personal}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveSection('personal')}
+                          disabled={patchLoading.personal}
+                        >
+                          {patchLoading.personal ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleEditMode('personal')}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-blue-600" />
+                {editModes.personal ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={editData.personal.firstName || ''}
+                          onChange={(e) => updateEditData('personal', 'firstName', e.target.value)}
+                        />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Date of Birth</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'Not provided'}
-                        </p>
-                        <p className="text-xs text-gray-400">Age: {calculateAge(student.dateOfBirth)}</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={editData.personal.lastName || ''}
+                          onChange={(e) => updateEditData('personal', 'lastName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="middleName">Middle Name</Label>
+                        <Input
+                          id="middleName"
+                          value={editData.personal.middleName || ''}
+                          onChange={(e) => updateEditData('personal', 'middleName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                        <DatePicker
+                          value={editData.personal.dateOfBirth ? new Date(editData.personal.dateOfBirth) : undefined}
+                          onChange={(date) => updateEditData('personal', 'dateOfBirth', date?.toISOString())}
+                          placeholder="Select date of birth"
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="gender">Gender</Label>
+                        <Select
+                          value={editData.personal.gender || ''}
+                          onValueChange={(value) => updateEditData('personal', 'gender', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bloodGroup">Blood Group</Label>
+                        <Select
+                          value={editData.personal.bloodGroup || ''}
+                          onValueChange={(value) => updateEditData('personal', 'bloodGroup', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select blood group" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A+">A+</SelectItem>
+                            <SelectItem value="A-">A-</SelectItem>
+                            <SelectItem value="B+">B+</SelectItem>
+                            <SelectItem value="B-">B-</SelectItem>
+                            <SelectItem value="AB+">AB+</SelectItem>
+                            <SelectItem value="AB-">AB-</SelectItem>
+                            <SelectItem value="O+">O+</SelectItem>
+                            <SelectItem value="O-">O-</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nationality">Nationality</Label>
+                        <Input
+                          id="nationality"
+                          value={editData.personal.nationality || ''}
+                          onChange={(e) => updateEditData('personal', 'nationality', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="religion">Religion</Label>
+                        <Input
+                          id="religion"
+                          value={editData.personal.religion || ''}
+                          onChange={(e) => updateEditData('personal', 'religion', e.target.value)}
+                        />
                       </div>
                     </div>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Date of Birth</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'Not provided'}
+                          </p>
+                          <p className="text-xs text-gray-400">Age: {calculateAge(student.dateOfBirth)}</p>
+                        </div>
+                      </div>
+                    </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Gender</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.gender || 'Not specified'}
-                        </p>
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Gender</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.gender || 'Not specified'}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                        <Heart className="h-5 w-5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Blood Group</p>
-                        <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {student.bloodGroup || 'Not specified'}
-                        </p>
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                          <Heart className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Blood Group</p>
+                          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {student.bloodGroup || 'Not specified'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

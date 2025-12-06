@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -987,22 +988,21 @@ const StudentsManager = ({ onAddStudent, onViewStudent, onEditStudent }: Student
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label htmlFor="admission-date-from" className="text-xs">From</Label>
-                              <Input
-                                id="admission-date-from"
-                                type="date"
-                                value={filters.admissionDateFrom || ''}
-                                onChange={(e) => applyFilter('admissionDateFrom', e.target.value || undefined)}
-                                className="mt-1"
+                              <DatePicker
+                                value={filters.admissionDateFrom ? new Date(filters.admissionDateFrom) : undefined}
+                                onChange={(date) => applyFilter('admissionDateFrom', date ? date.toISOString().split('T')[0] : undefined)}
+                                placeholder="From date"
+                                className="mt-1 w-full"
                               />
                             </div>
                             <div>
                               <Label htmlFor="admission-date-to" className="text-xs">To</Label>
-                              <Input
-                                id="admission-date-to"
-                                type="date"
-                                value={filters.admissionDateTo || ''}
-                                onChange={(e) => applyFilter('admissionDateTo', e.target.value || undefined)}
-                                className="mt-1"
+                              <DatePicker
+                                value={filters.admissionDateTo ? new Date(filters.admissionDateTo) : undefined}
+                                onChange={(date) => applyFilter('admissionDateTo', date ? date.toISOString().split('T')[0] : undefined)}
+                                placeholder="To date"
+                                className="mt-1 w-full"
+                                disabled={(date) => filters.admissionDateFrom ? date < new Date(filters.admissionDateFrom) : false}
                               />
                             </div>
                           </div>

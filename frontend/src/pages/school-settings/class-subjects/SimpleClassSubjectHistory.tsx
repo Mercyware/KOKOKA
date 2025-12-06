@@ -116,7 +116,7 @@ const SimpleClassSubjectHistory: React.FC = () => {
         
         setClasses(classesRes.data || []);
         setSubjects(subjectsRes.data || []);
-        setAcademicYears(yearsRes.data || []);
+        setAcademicYears(yearsRes.data?.academicYears || []);
         setTeachers(teachersRes.data || []);
         
         // Load assignments from API

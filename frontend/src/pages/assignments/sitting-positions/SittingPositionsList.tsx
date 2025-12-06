@@ -95,7 +95,7 @@ const SittingPositionsList: React.FC = () => {
       try {
         // Fetch academic years
         const academicYearsResponse = await academicYearService.getAllAcademicYears();
-        const years = academicYearsResponse.data || [];
+        const years = academicYearsResponse.data?.academicYears || [];
         setAcademicYears(years as unknown as AcademicYear[]);
         
         // Find current academic year

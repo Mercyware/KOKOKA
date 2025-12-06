@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -333,11 +334,11 @@ const AttendanceEntry: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={session.date}
-                onChange={(e) => setSession(prev => ({ ...prev, date: e.target.value }))}
+              <DatePicker
+                value={session.date ? new Date(session.date) : undefined}
+                onChange={(date) => setSession(prev => ({ ...prev, date: date ? date.toISOString().split('T')[0] : '' }))}
+                placeholder="Select date"
+                className="w-full"
               />
             </div>
             <div>

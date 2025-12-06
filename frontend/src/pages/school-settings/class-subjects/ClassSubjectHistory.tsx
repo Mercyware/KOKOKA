@@ -105,7 +105,7 @@ const ClassSubjectHistoryPage: React.FC = () => {
         
         setClasses(classesRes.data || []);
         setSubjects(subjectsRes.data || []);
-        setAcademicYears(yearsRes.data || []);
+        setAcademicYears(yearsRes.data?.academicYears || []);
         setTeachers(teachersRes.data || []);
       } catch (error) {
         console.error('Error loading reference data:', error);

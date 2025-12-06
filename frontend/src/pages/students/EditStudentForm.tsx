@@ -60,8 +60,8 @@ const EditStudentForm = ({ studentId, onBack, onSave }: EditStudentFormProps) =>
         setClasses(classesResponse.data);
       }
 
-      if (academicYearsResponse.data) {
-        setAcademicYears(academicYearsResponse.data);
+      if (academicYearsResponse.data && academicYearsResponse.data.academicYears) {
+        setAcademicYears(academicYearsResponse.data.academicYears);
       }
 
       if (housesResponse.success && housesResponse.data) {

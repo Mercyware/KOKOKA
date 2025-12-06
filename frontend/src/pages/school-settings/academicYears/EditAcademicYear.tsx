@@ -7,6 +7,7 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Textarea } from '../../../components/ui/textarea';
 import { Switch } from '../../../components/ui/switch';
+import { DatePicker } from '../../../components/ui/date-picker';
 import { Badge } from '../../../components/ui/badge';
 import { Separator } from '../../../components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../components/ui/dialog';
@@ -322,12 +323,15 @@ const EditAcademicYear: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="startDate">Start Date *</Label>
-                  <Input
-                    id="startDate"
-                    name="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={handleDateChange}
+                  <DatePicker
+                    value={formData.startDate ? new Date(formData.startDate) : undefined}
+                    onChange={(date) => handleDateChange({
+                      target: {
+                        name: 'startDate',
+                        value: date ? date.toISOString().split('T')[0] : ''
+                      }
+                    })}
+                    placeholder="Select start date"
                     className={errors.startDate ? "border-red-500" : ""}
                   />
                   {errors.startDate && (
@@ -337,14 +341,17 @@ const EditAcademicYear: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="endDate">End Date *</Label>
-                  <Input
-                    id="endDate"
-                    name="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={handleDateChange}
-                    min={formData.startDate || undefined}
+                  <DatePicker
+                    value={formData.endDate ? new Date(formData.endDate) : undefined}
+                    onChange={(date) => handleDateChange({
+                      target: {
+                        name: 'endDate',
+                        value: date ? date.toISOString().split('T')[0] : ''
+                      }
+                    })}
+                    placeholder="Select end date"
                     className={errors.endDate ? "border-red-500" : ""}
+                    disabled={(date) => formData.startDate ? date < new Date(formData.startDate) : false}
                   />
                   {errors.endDate && (
                     <p className="text-sm text-red-500">{errors.endDate}</p>

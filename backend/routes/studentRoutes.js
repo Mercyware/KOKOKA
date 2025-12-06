@@ -1355,8 +1355,318 @@ router.get(
  */
 router.get(
   '/:id/activity-logs',
-  roleMiddleware.authorize(['admin', 'teacher']),
+  roleMiddleware.authorize('admin', 'teacher'),
   studentController.getStudentActivityLogs
+);
+
+/**
+ * @swagger
+ * /students/{id}/personal:
+ *   patch:
+ *     summary: Update student personal information
+ *     description: Update specific personal information fields for a student. Only provided fields will be updated.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               middleName:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female, other]
+ *               nationality:
+ *                 type: string
+ *               religion:
+ *                 type: string
+ *               bloodGroup:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Personal information updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.patch(
+  '/:id/personal',
+  roleMiddleware.authorize('admin', 'teacher'),
+  studentController.patchStudentPersonalInfo
+);
+
+/**
+ * @swagger
+ * /students/{id}/contact:
+ *   patch:
+ *     summary: Update student contact information
+ *     description: Update contact information and address for a student.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Contact information updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.patch(
+  '/:id/contact',
+  roleMiddleware.authorize('admin', 'teacher'),
+  studentController.patchStudentContactInfo
+);
+
+/**
+ * @swagger
+ * /students/{id}/academic:
+ *   patch:
+ *     summary: Update student academic information
+ *     description: Update academic information for a student including class, section, and status.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               admissionNumber:
+ *                 type: string
+ *               admissionDate:
+ *                 type: string
+ *                 format: date
+ *               currentClass:
+ *                 type: string
+ *               currentSection:
+ *                 type: string
+ *               academicYear:
+ *                 type: string
+ *               rollNumber:
+ *                 type: string
+ *               house:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, graduated, transferred, suspended, expelled]
+ *     responses:
+ *       200:
+ *         description: Academic information updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.patch(
+  '/:id/academic',
+  roleMiddleware.authorize('admin', 'teacher'),
+  studentController.patchStudentAcademicInfo
+);
+
+/**
+ * @swagger
+ * /students/{id}/health:
+ *   patch:
+ *     summary: Update student health information
+ *     description: Update health and medical information for a student.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bloodGroup:
+ *                 type: string
+ *               medicalInfo:
+ *                 type: object
+ *                 properties:
+ *                   height:
+ *                     type: string
+ *                   weight:
+ *                     type: string
+ *                   allergies:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   medicalConditions:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   medications:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Health information updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.patch(
+  '/:id/health',
+  roleMiddleware.authorize('admin', 'teacher'),
+  studentController.patchStudentHealthInfo
+);
+
+/**
+ * @swagger
+ * /students/{id}/guardians:
+ *   patch:
+ *     summary: Update student guardian information
+ *     description: Update guardian information for a student. This will replace all existing guardians.
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               guardians:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     relationship:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                     occupation:
+ *                       type: string
+ *                     address:
+ *                       type: object
+ *     responses:
+ *       200:
+ *         description: Guardian information updated successfully
+ *       400:
+ *         $ref: '#/components/responses/BadRequestError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         description: Forbidden - User does not have required role
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
+ */
+router.patch(
+  '/:id/guardians',
+  roleMiddleware.authorize('admin', 'teacher'),
+  studentController.patchStudentGuardianInfo
 );
 
 module.exports = router;

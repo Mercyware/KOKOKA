@@ -2200,3 +2200,329 @@ function calculateLetterGrade(percentage, gradingScale) {
   
   return 'N/A';
 }
+
+// PATCH: Update student personal information
+exports.patchStudentPersonalInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      middleName,
+      dateOfBirth,
+      gender,
+      nationality,
+      religion,
+      bloodGroup
+    } = req.body;
+
+    // Validate student exists and belongs to school
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: id,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Prepare update data (only include provided fields)
+    const updateData = {};
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (middleName !== undefined) updateData.middleName = middleName;
+    if (dateOfBirth !== undefined) updateData.dateOfBirth = new Date(dateOfBirth);
+    if (gender !== undefined) updateData.gender = gender;
+    if (nationality !== undefined) updateData.nationality = nationality;
+    if (religion !== undefined) updateData.religion = religion;
+    if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+
+    // Update student
+    const updatedStudent = await prisma.student.update({
+      where: { id: id },
+      data: updateData,
+      include: {
+        currentClass: true,
+        currentSection: true,
+        academicYear: true,
+        house: true,
+        guardians: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Personal information updated successfully',
+      student: updatedStudent
+    });
+
+  } catch (error) {
+    console.error('Error updating student personal info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update personal information',
+      error: error.message
+    });
+  }
+};
+
+// PATCH: Update student contact information
+exports.patchStudentContactInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, phone, address } = req.body;
+
+    // Validate student exists and belongs to school
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: id,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) {
+      // Map address object to individual fields
+      if (address.street !== undefined) updateData.streetAddress = address.street;
+      if (address.city !== undefined) updateData.city = address.city;
+      if (address.state !== undefined) updateData.state = address.state;
+      if (address.zipCode !== undefined) updateData.zipCode = address.zipCode;
+      if (address.country !== undefined) updateData.country = address.country;
+    }
+
+    // Update student
+    const updatedStudent = await prisma.student.update({
+      where: { id: id },
+      data: updateData,
+      include: {
+        currentClass: true,
+        currentSection: true,
+        academicYear: true,
+        house: true,
+        guardians: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Contact information updated successfully',
+      student: updatedStudent
+    });
+
+  } catch (error) {
+    console.error('Error updating student contact info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update contact information',
+      error: error.message
+    });
+  }
+};
+
+// PATCH: Update student academic information
+exports.patchStudentAcademicInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      admissionNumber,
+      admissionDate,
+      currentClass,
+      currentSection,
+      academicYear,
+      rollNumber,
+      house,
+      status
+    } = req.body;
+
+    // Validate student exists and belongs to school
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: id,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    if (admissionNumber !== undefined) updateData.admissionNumber = admissionNumber;
+    if (admissionDate !== undefined) updateData.admissionDate = new Date(admissionDate);
+    if (currentClass !== undefined) updateData.currentClassId = currentClass;
+    if (currentSection !== undefined) updateData.currentSectionId = currentSection;
+    if (academicYear !== undefined) updateData.academicYearId = academicYear;
+    if (rollNumber !== undefined) updateData.rollNumber = rollNumber;
+    if (house !== undefined) updateData.houseId = house;
+    if (status !== undefined) updateData.status = status;
+
+    // Update student
+    const updatedStudent = await prisma.student.update({
+      where: { id: id },
+      data: updateData,
+      include: {
+        currentClass: true,
+        currentSection: true,
+        academicYear: true,
+        house: true,
+        guardians: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Academic information updated successfully',
+      student: updatedStudent
+    });
+
+  } catch (error) {
+    console.error('Error updating student academic info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update academic information',
+      error: error.message
+    });
+  }
+};
+
+// PATCH: Update student health information
+exports.patchStudentHealthInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { bloodGroup, medicalInfo } = req.body;
+
+    // Validate student exists and belongs to school
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: id,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+    if (medicalInfo !== undefined) updateData.medicalInfo = medicalInfo;
+
+    // Update student
+    const updatedStudent = await prisma.student.update({
+      where: { id: id },
+      data: updateData,
+      include: {
+        currentClass: true,
+        currentSection: true,
+        academicYear: true,
+        house: true,
+        guardians: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Health information updated successfully',
+      student: updatedStudent
+    });
+
+  } catch (error) {
+    console.error('Error updating student health info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update health information',
+      error: error.message
+    });
+  }
+};
+
+// PATCH: Update student guardian information
+exports.patchStudentGuardianInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { guardians } = req.body;
+
+    // Validate student exists and belongs to school
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        id: id,
+        schoolId: req.school.id
+      }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Handle guardian updates (this is more complex as it involves related records)
+    if (guardians !== undefined && Array.isArray(guardians)) {
+      // Delete existing guardians and create new ones (simpler approach)
+      await prisma.guardian.deleteMany({
+        where: { studentId: id }
+      });
+
+      // Create new guardians
+      if (guardians.length > 0) {
+        await prisma.guardian.createMany({
+          data: guardians.map(guardian => ({
+            ...guardian,
+            studentId: id,
+            schoolId: req.school.id
+          }))
+        });
+      }
+    }
+
+    // Fetch updated student with guardians
+    const updatedStudent = await prisma.student.findUnique({
+      where: { id: id },
+      include: {
+        currentClass: true,
+        currentSection: true,
+        academicYear: true,
+        house: true,
+        guardians: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Guardian information updated successfully',
+      student: updatedStudent
+    });
+
+  } catch (error) {
+    console.error('Error updating student guardian info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update guardian information',
+      error: error.message
+    });
+  }
+};

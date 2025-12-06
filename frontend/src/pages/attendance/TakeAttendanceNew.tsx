@@ -19,7 +19,8 @@ import {
   Form,
   FormField,
   StatusBadge,
-  Input
+  Input,
+  DatePicker
 } from '@/components/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -909,15 +910,12 @@ const TakeAttendanceNew: React.FC = () => {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <FormField label="Date">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="pl-10 bg-white"
-                    />
-                  </div>
+                  <DatePicker
+                    value={selectedDate ? new Date(selectedDate) : undefined}
+                    onChange={(date) => setSelectedDate(date ? date.toISOString().split('T')[0] : '')}
+                    placeholder="Select date"
+                    className="w-full bg-white"
+                  />
                 </FormField>
 
                 <FormField label="Period">

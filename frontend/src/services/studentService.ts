@@ -311,3 +311,143 @@ export const getStudentActivityLogs = async (
     throw error;
   }
 };
+
+// Patch student sections - allows updating specific parts of student data
+export const patchStudentPersonalInfo = async (
+  id: string, 
+  personalData: {
+    firstName?: string;
+    lastName?: string;
+    middleName?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    nationality?: string;
+    religion?: string;
+    bloodGroup?: string;
+  }
+): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
+  try {
+    const response = await api.patch(`/students/${id}/personal`, personalData);
+    return { success: true, student: response.data?.student || response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update personal information',
+      error: error.message
+    };
+  }
+};
+
+export const patchStudentContactInfo = async (
+  id: string,
+  contactData: {
+    email?: string;
+    phone?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+  }
+): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
+  try {
+    const response = await api.patch(`/students/${id}/contact`, contactData);
+    return { success: true, student: response.data?.student || response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update contact information',
+      error: error.message
+    };
+  }
+};
+
+export const patchStudentAcademicInfo = async (
+  id: string,
+  academicData: {
+    admissionNumber?: string;
+    admissionDate?: string;
+    currentClass?: string;
+    currentSection?: string;
+    academicYear?: string;
+    rollNumber?: string;
+    house?: string;
+    status?: 'active' | 'graduated' | 'transferred' | 'suspended' | 'expelled';
+  }
+): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
+  try {
+    const response = await api.patch(`/students/${id}/academic`, academicData);
+    return { success: true, student: response.data?.student || response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update academic information',
+      error: error.message
+    };
+  }
+};
+
+export const patchStudentHealthInfo = async (
+  id: string,
+  healthData: {
+    bloodGroup?: string;
+    medicalInfo?: {
+      height?: string;
+      weight?: string;
+      allergies?: string[];
+      medicalConditions?: string[];
+      medications?: string[];
+      emergencyContact?: {
+        name: string;
+        phone: string;
+        relationship: string;
+      };
+    };
+  }
+): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
+  try {
+    const response = await api.patch(`/students/${id}/health`, healthData);
+    return { success: true, student: response.data?.student || response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update health information',
+      error: error.message
+    };
+  }
+};
+
+export const patchStudentGuardianInfo = async (
+  id: string,
+  guardianData: {
+    guardians?: Array<{
+      id?: string;
+      firstName: string;
+      lastName: string;
+      relationship: string;
+      phone: string;
+      email?: string;
+      occupation?: string;
+      address?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+        country?: string;
+      };
+    }>;
+  }
+): Promise<{ success: boolean; student?: Student; message?: string; error?: string }> => {
+  try {
+    const response = await api.patch(`/students/${id}/guardians`, guardianData);
+    return { success: true, student: response.data?.student || response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update guardian information',
+      error: error.message
+    };
+  }
+};
