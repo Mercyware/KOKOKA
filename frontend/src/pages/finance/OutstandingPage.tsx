@@ -34,9 +34,11 @@ import {
 import { getAllClasses } from '@/services/classService';
 import { getAllAcademicYears } from '@/services/academicYearService';
 import { useToast } from '@/hooks/use-toast';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 
 const OutstandingPage: React.FC = () => {
   const { toast } = useToast();
+  const { settings } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [summary, setSummary] = useState<any>(null);
@@ -68,11 +70,11 @@ const OutstandingPage: React.FC = () => {
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'KES',
+        currency: settings.currency.code,
         minimumFractionDigits: 0,
       }).format(amount);
     } catch (error) {
-      return `KES ${amount.toLocaleString()}`;
+      return `${settings.currency.symbol}${amount.toLocaleString()}`;
     }
   };
 

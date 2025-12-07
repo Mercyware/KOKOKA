@@ -224,7 +224,7 @@ const EditFeeStructureDialog: React.FC<EditFeeStructureDialogProps> = ({
             {/* Amount and Frequency */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">Amount (KES) *</Label>
+                <Label htmlFor="amount">Amount *</Label>
                 <Input
                   id="amount"
                   type="number"

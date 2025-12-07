@@ -30,9 +30,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import AddFeeStructureDialog from './components/AddFeeStructureDialog';
 import EditFeeStructureDialog from './components/EditFeeStructureDialog';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 
 const FeeStructuresPage: React.FC = () => {
   const { toast } = useToast();
+  const { settings } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
 
@@ -51,11 +53,11 @@ const FeeStructuresPage: React.FC = () => {
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'KES',
+        currency: settings.currency.code,
         minimumFractionDigits: 0,
       }).format(amount);
     } catch (error) {
-      return `KES ${amount.toLocaleString()}`;
+      return `${settings.currency.symbol}${amount.toLocaleString()}`;
     }
   };
 

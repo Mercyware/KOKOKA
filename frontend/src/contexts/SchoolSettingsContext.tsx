@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DEFAULT_CURRENCY, Currency, getCurrency } from '@/lib/currency';
+import { getSchoolSettings as fetchSchoolSettings } from '@/services/schoolSettingsService';
 
 interface SchoolSettings {
   currency: Currency;
@@ -10,6 +11,7 @@ interface SchoolSettings {
 interface SchoolSettingsContextType {
   settings: SchoolSettings;
   updateCurrency: (currencyCode: string) => void;
+  isLoading: boolean;
 }
 
 const defaultSettings: SchoolSettings = {
@@ -20,6 +22,7 @@ const defaultSettings: SchoolSettings = {
 const SchoolSettingsContext = createContext<SchoolSettingsContextType>({
   settings: defaultSettings,
   updateCurrency: () => {},
+  isLoading: true,
 });
 
 export const useSchoolSettings = () => {
@@ -36,24 +39,38 @@ interface SchoolSettingsProviderProps {
 
 export const SchoolSettingsProvider: React.FC<SchoolSettingsProviderProps> = ({ children }) => {
   const [settings, setSettings] = useState<SchoolSettings>(defaultSettings);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load school settings from localStorage or API
-    const loadSettings = () => {
+    // Load school settings from API
+    const loadSettings = async () => {
       try {
-        const savedSettings = localStorage.getItem('schoolSettings');
-        if (savedSettings) {
-          const parsed = JSON.parse(savedSettings);
-          if (parsed.currencyCode) {
-            setSettings(prev => ({
-              ...prev,
-              currency: getCurrency(parsed.currencyCode),
-              academicYearStart: parsed.academicYearStart || 'September',
-            }));
-          }
-        }
+        const schoolSettings = await fetchSchoolSettings();
+        const currencyCode = schoolSettings.settings?.currency || 'USD';
+
+        setSettings({
+          currency: getCurrency(currencyCode),
+          academicYearStart: schoolSettings.settings?.academicYearStart || 'September',
+        });
       } catch (error) {
         console.error('Error loading school settings:', error);
+        // Fallback to localStorage
+        try {
+          const savedSettings = localStorage.getItem('schoolSettings');
+          if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            if (parsed.currencyCode) {
+              setSettings(prev => ({
+                ...prev,
+                currency: getCurrency(parsed.currencyCode),
+              }));
+            }
+          }
+        } catch (localStorageError) {
+          console.error('Error loading from localStorage:', localStorageError);
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -64,7 +81,7 @@ export const SchoolSettingsProvider: React.FC<SchoolSettingsProviderProps> = ({ 
     const currency = getCurrency(currencyCode);
     setSettings(prev => ({ ...prev, currency }));
 
-    // Save to localStorage
+    // Save to localStorage as backup
     try {
       const currentSettings = JSON.parse(localStorage.getItem('schoolSettings') || '{}');
       localStorage.setItem('schoolSettings', JSON.stringify({
@@ -77,7 +94,7 @@ export const SchoolSettingsProvider: React.FC<SchoolSettingsProviderProps> = ({ 
   };
 
   return (
-    <SchoolSettingsContext.Provider value={{ settings, updateCurrency }}>
+    <SchoolSettingsContext.Provider value={{ settings, updateCurrency, isLoading }}>
       {children}
     </SchoolSettingsContext.Provider>
   );

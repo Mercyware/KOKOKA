@@ -33,10 +33,12 @@ import {
 } from '@/services/financeService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 
 const InvoicesPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { settings } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
@@ -53,11 +55,11 @@ const InvoicesPage: React.FC = () => {
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'KES',
+        currency: settings.currency.code,
         minimumFractionDigits: 0,
       }).format(amount);
     } catch (error) {
-      return `KES ${amount.toLocaleString()}`;
+      return `${settings.currency.symbol}${amount.toLocaleString()}`;
     }
   };
 

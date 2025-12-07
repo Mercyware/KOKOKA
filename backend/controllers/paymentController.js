@@ -71,6 +71,13 @@ const getAllPayments = async (req, res) => {
       limit = 50
     } = req.query;
 
+    // Get school currency
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { settings: true }
+    });
+    const currency = school?.settings?.currency || 'USD';
+
     const where = { schoolId };
 
     // Basic filters
@@ -147,6 +154,7 @@ const getAllPayments = async (req, res) => {
 
     res.json({
       payments,
+      currency,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -398,6 +406,13 @@ const getPaymentSummary = async (req, res) => {
     const schoolId = req.school.id;
     const { startDate, endDate, academicYear } = req.query;
 
+    // Get school currency
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { settings: true }
+    });
+    const currency = school?.settings?.currency || 'USD';
+
     const where = { schoolId, status: 'COMPLETED' };
 
     if (startDate && endDate) {
@@ -430,6 +445,7 @@ const getPaymentSummary = async (req, res) => {
     res.json({
       totalPayments: payments.length,
       totalAmount,
+      currency,
       byMethod: paymentsByMethod.map(pm => ({
         method: pm.paymentMethod,
         count: pm._count,
@@ -457,6 +473,13 @@ const getPaymentReport = async (req, res) => {
       status = 'COMPLETED',
       groupBy = 'none' // none, student, method, academicYear, term, date
     } = req.query;
+
+    // Get school currency
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { settings: true }
+    });
+    const currency = school?.settings?.currency || 'USD';
 
     const where = { schoolId };
 
@@ -652,6 +675,7 @@ const getPaymentReport = async (req, res) => {
     }
 
     res.json({
+      currency,
       summary: {
         totalPayments,
         totalAmount: parseFloat(totalAmount.toFixed(2)),
