@@ -435,6 +435,9 @@ const initializePaystackPayment = async (req, res) => {
 
     const amountInKobo = Math.round(parseFloat(amount) * 100); // Convert to kobo
 
+    // Get callback URL from environment or use default
+    const callbackUrl = process.env.PAYSTACK_CALLBACK_URL || `${process.env.FRONTEND_URL}/finance/payment-callback`;
+
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -445,6 +448,7 @@ const initializePaystackPayment = async (req, res) => {
         email,
         amount: amountInKobo,
         reference: `${invoice.invoiceNumber}-${Date.now()}`,
+        callback_url: callbackUrl,
         metadata: {
           invoiceId: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
@@ -474,9 +478,12 @@ const initializePaystackPayment = async (req, res) => {
     }
 
     res.json({
-      authorization_url: data.data.authorization_url,
-      access_code: data.data.access_code,
-      reference: data.data.reference
+      success: true,
+      data: {
+        authorization_url: data.data.authorization_url,
+        access_code: data.data.access_code,
+        reference: data.data.reference
+      }
     });
   } catch (error) {
     console.error('Error initializing Paystack payment:', error);
@@ -519,7 +526,11 @@ const verifyPaystackPayment = async (req, res) => {
     });
 
     if (existingPayment) {
-      return res.json({ message: 'Payment already recorded', payment: existingPayment });
+      return res.json({
+        success: true,
+        message: 'Payment already recorded',
+        data: existingPayment
+      });
     }
 
     // Generate payment number
@@ -563,7 +574,11 @@ const verifyPaystackPayment = async (req, res) => {
     // Update invoice status
     await updateInvoiceStatus(invoiceId);
 
-    res.json({ message: 'Payment verified and recorded successfully', payment });
+    res.json({
+      success: true,
+      message: 'Payment verified and recorded successfully',
+      data: payment
+    });
   } catch (error) {
     console.error('Error verifying Paystack payment:', error);
     res.status(500).json({ error: 'Failed to verify payment' });

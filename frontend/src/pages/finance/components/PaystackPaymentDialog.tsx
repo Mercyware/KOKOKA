@@ -104,27 +104,8 @@ export const PaystackPaymentDialog: React.FC<PaystackPaymentDialogProps> = ({
       });
 
       if (response?.success && response.data?.authorization_url) {
-        // Open Paystack payment page in new window
-        window.open(response.data.authorization_url, '_blank');
-
-        toast({
-          title: 'Payment Initiated',
-          description: 'Paystack payment page opened. Complete payment in the new window.',
-        });
-
-        onPaymentInitiated();
-        onClose();
-      } else if (response?.authorization_url) {
-        // Handle direct response
-        window.open(response.authorization_url, '_blank');
-
-        toast({
-          title: 'Payment Initiated',
-          description: 'Paystack payment page opened. Complete payment in the new window.',
-        });
-
-        onPaymentInitiated();
-        onClose();
+        // Redirect to Paystack payment page in the same window
+        window.location.href = response.data.authorization_url;
       } else {
         toast({
           title: 'Error',

@@ -97,6 +97,7 @@ import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./p
 import { FeeStructuresPage, InvoicesPage, PaymentsPage, OutstandingPage } from "./pages/finance";
 import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
 import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
+import PaymentCallbackPage from "./pages/finance/PaymentCallbackPage";
 // Results Components
 import TerminalReport from "./pages/results/TerminalReport";
 import TerminalReportSelector from "./pages/results/TerminalReportSelector";
@@ -302,6 +303,7 @@ const App = () => (
             <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
             <Route path="/finance/outstanding" element={<ProtectedRoute><OutstandingPage /></ProtectedRoute>} />
+            <Route path="/finance/payment-callback" element={<ProtectedRoute><PaymentCallbackPage /></ProtectedRoute>} />
 
             {/* Notifications */}
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
