@@ -19,7 +19,8 @@
       "Bash(curl -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -H \"X-School-Subdomain: greenwood\" -d \"{\"\"email\"\":\"\"jane.smith@greenwood.com\"\",\"\"password\"\":\"\"student123\"\"}\" -s)",
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [],

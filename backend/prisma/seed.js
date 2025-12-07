@@ -166,6 +166,18 @@ async function main() {
     const results = await createResults(school.id, students, classes, subjects, terms[0], gradeScales[0]);
   }
 
+  // 35. Create Fee Structures
+  console.log('💰 Creating fee structures...');
+  const feeStructures = await createFeeStructures(school.id, academicYear.id);
+
+  // 36. Create Invoices
+  console.log('🧾 Creating invoices...');
+  const invoices = await createInvoices(school.id, students, academicYear.name, terms[0]?.name || 'Term 1', feeStructures);
+
+  // 37. Create Payments
+  console.log('💳 Creating payments...');
+  const payments = await createPayments(school.id, invoices, students, users[0].id);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -4265,6 +4277,236 @@ async function createResults(schoolId, students, classes, subjects, term, gradeS
     return results;
   } catch (error) {
     console.error('❌ Error creating results:', error);
+    return [];
+  }
+}
+
+// ==================== FINANCE FUNCTIONS ====================
+
+async function createFeeStructures(schoolId, academicYearId) {
+  try {
+    const feeStructures = [
+      {
+        schoolId,
+        academicYearId,
+        name: 'Tuition Fee',
+        description: 'Regular tuition fee for students',
+        amount: 50000,
+        frequency: 'MONTHLY',
+        isActive: true,
+        category: 'Academic'
+      },
+      {
+        schoolId,
+        academicYearId,
+        name: 'Transport Fee',
+        description: 'School bus transportation fee',
+        amount: 5000,
+        frequency: 'MONTHLY',
+        isActive: true,
+        category: 'Transport'
+      },
+      {
+        schoolId,
+        academicYearId,
+        name: 'Library Fee',
+        description: 'Library access and maintenance fee',
+        amount: 2000,
+        frequency: 'YEARLY',
+        isActive: true,
+        category: 'Facilities'
+      },
+      {
+        schoolId,
+        academicYearId,
+        name: 'Sports Fee',
+        description: 'Sports facilities and activities fee',
+        amount: 3000,
+        frequency: 'YEARLY',
+        isActive: true,
+        category: 'Activities'
+      },
+      {
+        schoolId,
+        academicYearId,
+        name: 'Computer Lab Fee',
+        description: 'Computer lab access and maintenance',
+        amount: 4000,
+        frequency: 'YEARLY',
+        isActive: true,
+        category: 'Facilities'
+      },
+      {
+        schoolId,
+        academicYearId,
+        name: 'Examination Fee',
+        description: 'Examination and assessment fee',
+        amount: 8000,
+        frequency: 'YEARLY',
+        isActive: true,
+        category: 'Academic'
+      }
+    ];
+
+    const created = await prisma.feeStructure.createMany({
+      data: feeStructures
+    });
+
+    const allFeeStructures = await prisma.feeStructure.findMany({
+      where: { schoolId }
+    });
+
+    console.log(`✅ Created ${created.count} fee structures`);
+    return allFeeStructures;
+  } catch (error) {
+    console.error('❌ Error creating fee structures:', error);
+    return [];
+  }
+}
+
+async function createInvoices(schoolId, students, academicYear, term, feeStructures) {
+  try {
+    const invoices = [];
+
+    // Get fee structures for easier reference
+    const tuitionFee = feeStructures.find(f => f.name === 'Tuition Fee');
+    const transportFee = feeStructures.find(f => f.name === 'Transport Fee');
+    const libraryFee = feeStructures.find(f => f.name === 'Library Fee');
+    const sportsFee = feeStructures.find(f => f.name === 'Sports Fee');
+    const examFee = feeStructures.find(f => f.name === 'Examination Fee');
+
+    // Create invoices for first 10 students
+    for (let i = 0; i < Math.min(10, students.length); i++) {
+      const student = students[i];
+      const invoiceNumber = `INV-${academicYear}-${String(i + 1).padStart(4, '0')}`;
+
+      const items = [
+        {
+          feeStructureId: tuitionFee?.id,
+          description: 'Tuition Fee - Term 1',
+          quantity: 1,
+          unitPrice: tuitionFee?.amount || 50000,
+          amount: tuitionFee?.amount || 50000
+        },
+        {
+          feeStructureId: libraryFee?.id,
+          description: 'Library Fee',
+          quantity: 1,
+          unitPrice: libraryFee?.amount || 2000,
+          amount: libraryFee?.amount || 2000
+        },
+        {
+          feeStructureId: sportsFee?.id,
+          description: 'Sports Fee',
+          quantity: 1,
+          unitPrice: sportsFee?.amount || 3000,
+          amount: sportsFee?.amount || 3000
+        }
+      ];
+
+      // Add transport for some students
+      if (i % 3 === 0 && transportFee) {
+        items.push({
+          feeStructureId: transportFee.id,
+          description: 'Transport Fee - Term 1',
+          quantity: 1,
+          unitPrice: transportFee.amount,
+          amount: transportFee.amount
+        });
+      }
+
+      const subtotal = items.reduce((sum, item) => sum + Number(item.amount), 0);
+      const discount = i % 5 === 0 ? subtotal * 0.1 : 0; // 10% discount for every 5th student
+      const total = subtotal - discount;
+
+      // Randomize invoice status
+      const statuses = ['ISSUED', 'ISSUED', 'ISSUED', 'PARTIALLY_PAID', 'PAID'];
+      const status = statuses[i % statuses.length];
+
+      const amountPaid = status === 'PAID'
+        ? total
+        : status === 'PARTIALLY_PAID'
+        ? total * 0.5
+        : 0;
+
+      const balance = total - amountPaid;
+
+      const invoice = await prisma.invoice.create({
+        data: {
+          invoiceNumber,
+          schoolId,
+          studentId: student.id,
+          academicYear,
+          term,
+          issueDate: new Date('2024-01-15'),
+          dueDate: new Date('2024-02-15'),
+          status,
+          subtotal,
+          discount,
+          tax: 0,
+          total,
+          amountPaid,
+          balance,
+          notes: i % 5 === 0 ? 'Scholarship recipient - 10% discount applied' : null,
+          items: {
+            create: items
+          }
+        },
+        include: {
+          items: true
+        }
+      });
+
+      invoices.push(invoice);
+    }
+
+    console.log(`✅ Created ${invoices.length} invoices`);
+    return invoices;
+  } catch (error) {
+    console.error('❌ Error creating invoices:', error);
+    return [];
+  }
+}
+
+async function createPayments(schoolId, invoices, students, processedBy) {
+  try {
+    const payments = [];
+
+    // Create payments for invoices that have been paid or partially paid
+    const paidInvoices = invoices.filter(inv =>
+      inv.status === 'PAID' || inv.status === 'PARTIALLY_PAID'
+    );
+
+    for (let i = 0; i < paidInvoices.length; i++) {
+      const invoice = paidInvoices[i];
+      const paymentNumber = `PAY-${new Date().getFullYear()}-${String(i + 1).padStart(5, '0')}`;
+
+      const paymentMethods = ['CASH', 'BANK_TRANSFER', 'CARD', 'MOBILE_MONEY'];
+      const paymentMethod = paymentMethods[i % paymentMethods.length];
+
+      const payment = await prisma.payment.create({
+        data: {
+          paymentNumber,
+          schoolId,
+          invoiceId: invoice.id,
+          studentId: invoice.studentId,
+          amount: invoice.amountPaid,
+          paymentDate: new Date('2024-01-20'),
+          paymentMethod,
+          referenceNumber: paymentMethod === 'BANK_TRANSFER' ? `TXN${Math.random().toString(36).substr(2, 9).toUpperCase()}` : null,
+          status: 'COMPLETED',
+          notes: null,
+          processedBy
+        }
+      });
+
+      payments.push(payment);
+    }
+
+    console.log(`✅ Created ${payments.length} payments`);
+    return payments;
+  } catch (error) {
+    console.error('❌ Error creating payments:', error);
     return [];
   }
 }

@@ -92,6 +92,10 @@ model School {
   performancePredictions      PerformancePrediction[]
   riskAssessments             RiskAssessment[]
   curricula                   Curriculum[]
+  feeStructures               FeeStructure[]
+  invoices                    Invoice[]
+  payments                    Payment[]
+  paymentReminders            PaymentReminder[]
 
   @@map("schools")
 }
@@ -224,6 +228,7 @@ model AcademicYear {
   classCurricula              ClassCurriculum[]
   classTopicCoverages         ClassTopicCoverage[]
   curriculumProgressTrackers  CurriculumProgressTracker[]
+  feeStructures               FeeStructure[]
 
   @@unique([schoolId, name])
   @@map("academic_years")
@@ -732,6 +737,8 @@ model Student {
   studentTopicProgress       StudentTopicProgress[]
   studentConceptMastery      StudentConceptMastery[]
   curriculumProgressTrackers CurriculumProgressTracker[]
+  invoices                   Invoice[]
+  payments                   Payment[]
   academicYear               AcademicYear?                @relation(fields: [academicYearId], references: [id])
   currentClass               Class?                       @relation(fields: [currentClassId], references: [id])
   currentSection             Section?                     @relation(fields: [currentSectionId], references: [id])
@@ -2955,6 +2962,7 @@ enum AllocationStatus {
 enum FeeFrequency {
   MONTHLY
   QUARTERLY
+  TERMINAL
   SEMESTERLY
   YEARLY
   ONE_TIME
@@ -3532,4 +3540,167 @@ model CurriculumProgressTracker {
 
   @@unique([studentId, curriculumId, classId, academicYearId])
   @@map("curriculum_progress_trackers")
+}
+
+// ==================== FINANCE & INVOICING MODELS ====================
+
+model FeeStructure {
+  id             String   @id @default(uuid())
+  schoolId       String
+  academicYearId String
+  name           String
+  description    String?
+  amount         Decimal  @db.Decimal(10, 2)
+  frequency      FeeFrequency
+  isActive       Boolean  @default(true)
+  gradeLevel     String?  // null means applies to all classes
+  category       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  invoiceItems InvoiceItem[]
+
+  @@index([schoolId])
+  @@index([academicYearId])
+  @@index([isActive])
+  @@index([gradeLevel])
+  @@map("fee_structures")
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  schoolId      String
+  studentId     String
+  academicYear  String
+  term          String
+
+  issueDate DateTime      @default(now())
+  dueDate   DateTime
+  status    InvoiceStatus @default(DRAFT)
+
+  subtotal   Decimal @db.Decimal(10, 2)
+  discount   Decimal @default(0) @db.Decimal(10, 2)
+  tax        Decimal @default(0) @db.Decimal(10, 2)
+  total      Decimal @db.Decimal(10, 2)
+  amountPaid Decimal @default(0) @db.Decimal(10, 2)
+  balance    Decimal @db.Decimal(10, 2)
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school           School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student          Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items            InvoiceItem[]
+  payments         Payment[]
+  paymentReminders PaymentReminder[]
+
+  @@index([schoolId, studentId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id             String  @id @default(uuid())
+  invoiceId      String
+  feeStructureId String?
+
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  amount      Decimal @db.Decimal(10, 2)
+
+  invoice      Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  feeStructure FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  paymentNumber   String        @unique
+  schoolId        String
+  invoiceId       String
+  studentId       String
+
+  amount          Decimal       @db.Decimal(10, 2)
+  paymentDate     DateTime      @default(now())
+  paymentMethod   PaymentMethod
+  referenceNumber String?
+  status          PaymentStatus @default(PENDING)
+
+  notes       String?
+  processedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, studentId])
+  @@index([invoiceId])
+  @@index([paymentDate])
+  @@map("payments")
+}
+
+model PaymentReminder {
+  id        String   @id @default(uuid())
+  schoolId  String
+  invoiceId String
+
+  sentDate DateTime         @default(now())
+  method   ReminderMethod
+  status   ReminderStatus
+
+  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("payment_reminders")
+}
+
+// ==================== FINANCE ENUMS ====================
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  MOBILE_MONEY
+  CHEQUE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ReminderMethod {
+  EMAIL
+  SMS
+  PORTAL_NOTIFICATION
+}
+
+enum ReminderStatus {
+  SENT
+  FAILED
+  READ
 }

@@ -60,7 +60,10 @@ import {
   Package,
   Boxes,
   ArrowRightLeft,
-  UserCog
+  UserCog,
+  Receipt,
+  CreditCard,
+  AlertCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -216,6 +219,20 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'inventory-items', label: 'Items', icon: Boxes },
         { id: 'inventory-transactions', label: 'Transactions', icon: ArrowRightLeft },
         { id: 'inventory-allocations', label: 'Allocations', icon: UserCog },
+      ]
+    },
+
+    // Finance
+    {
+      id: 'finance',
+      label: 'Finance',
+      icon: DollarSign,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'finance-fee-structures', label: 'Fee Structures', icon: FileText },
+        { id: 'finance-invoices', label: 'Invoices', icon: Receipt },
+        { id: 'finance-payments', label: 'Payments', icon: CreditCard },
+        { id: 'finance-outstanding', label: 'Outstanding Debt', icon: AlertCircle },
       ]
     },
 
@@ -426,6 +443,10 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'inventory-transactions') navigate('/inventory/transactions');
                         if (subItem.id === 'analytics-at-risk') navigate('/analytics/at-risk');
                         if (subItem.id === 'inventory-allocations') navigate('/inventory/allocations');
+                        if (subItem.id === 'finance-fee-structures') navigate('/finance/fee-structures');
+                        if (subItem.id === 'finance-invoices') navigate('/finance/invoices');
+                        if (subItem.id === 'finance-payments') navigate('/finance/payments');
+                        if (subItem.id === 'finance-outstanding') navigate('/finance/outstanding');
                         if (subItem.id === 'assignments-list') navigate('/assignments');
                         if (subItem.id === 'assignments-grading') navigate('/assignments/grading-queue');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');

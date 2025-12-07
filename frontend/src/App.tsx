@@ -94,6 +94,9 @@ import { MessagingPage } from "./pages/messaging";
 import NotificationsPage from "./pages/NotificationsPage";
 import { TransportationPage, RoutesPage, VehiclesPage, AssignmentsPage, MaintenancePage } from "./pages/transportation";
 import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./pages/inventory";
+import { FeeStructuresPage, InvoicesPage, PaymentsPage, OutstandingPage } from "./pages/finance";
+import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
+import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
 // Results Components
 import TerminalReport from "./pages/results/TerminalReport";
 import TerminalReportSelector from "./pages/results/TerminalReportSelector";
@@ -136,15 +139,18 @@ function EditStudentFormWrapper() {
 
 
 
+import { SchoolSettingsProvider } from './contexts/SchoolSettingsContext';
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" storageKey="edumanage-ui-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter 
-          future={{
-            v7_startTransition: true,
+    <SchoolSettingsProvider>
+      <ThemeProvider defaultTheme="system" storageKey="edumanage-ui-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
             v7_relativeSplatPath: true
           }}
         >
@@ -289,6 +295,14 @@ const App = () => (
             <Route path="/inventory/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
             <Route path="/inventory/allocations" element={<ProtectedRoute><AllocationsPage /></ProtectedRoute>} />
 
+            {/* Finance Routes */}
+            <Route path="/finance/fee-structures" element={<ProtectedRoute><FeeStructuresPage /></ProtectedRoute>} />
+            <Route path="/finance/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
+            <Route path="/finance/invoices/create" element={<ProtectedRoute><CreateInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+            <Route path="/finance/outstanding" element={<ProtectedRoute><OutstandingPage /></ProtectedRoute>} />
+
             {/* Notifications */}
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
@@ -313,6 +327,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
+    </SchoolSettingsProvider>
   </QueryClientProvider>
 );
 
