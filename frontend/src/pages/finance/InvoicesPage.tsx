@@ -25,6 +25,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  DataPagination,
 } from '@/components/ui';
 import {
   getAllInvoices,
@@ -38,11 +39,15 @@ const InvoicesPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [pagination, setPagination] = useState<any>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Filters
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
 
   const formatCurrency = (amount: number) => {
     try {
@@ -75,7 +80,7 @@ const InvoicesPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [selectedStatus, currentPage]);
+  }, [selectedStatus, currentPage, itemsPerPage]);
 
   const loadData = async () => {
     try {
@@ -83,10 +88,11 @@ const InvoicesPage: React.FC = () => {
       const data = await getAllInvoices({
         status: selectedStatus === 'all' ? undefined : selectedStatus,
         page: currentPage,
-        limit: 20,
+        limit: itemsPerPage,
       });
       setInvoices(data.invoices);
-      setPagination(data.pagination);
+      setTotalItems(data.pagination?.total || 0);
+      setTotalPages(data.pagination?.totalPages || 0);
     } catch (error) {
       console.error('Error loading invoices:', error);
       toast({
@@ -101,6 +107,15 @@ const InvoicesPage: React.FC = () => {
 
   const handleViewInvoice = (invoiceId: string) => {
     navigate(`/finance/invoices/${invoiceId}`);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
   };
 
   return (
@@ -217,30 +232,15 @@ const InvoicesPage: React.FC = () => {
               )}
 
               {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-slate-600">
-                    Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={currentPage === pagination.totalPages}
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+              {!loading && invoices.length > 0 && (
+                <DataPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
               )}
             </CardContent>
           </Card>

@@ -51,17 +51,68 @@ const updateInvoiceStatus = async (invoiceId) => {
   });
 };
 
-// Get all payments
+// Get all payments with enhanced filters
 const getAllPayments = async (req, res) => {
   try {
     const schoolId = req.school.id;
-    const { status, studentId, invoiceId, paymentMethod, page = 1, limit = 50 } = req.query;
+    const {
+      status,
+      studentId,
+      invoiceId,
+      paymentMethod,
+      studentName,
+      startDate,
+      endDate,
+      academicYear,
+      term,
+      minAmount,
+      maxAmount,
+      page = 1,
+      limit = 50
+    } = req.query;
 
     const where = { schoolId };
+
+    // Basic filters
     if (status) where.status = status;
     if (studentId) where.studentId = studentId;
     if (invoiceId) where.invoiceId = invoiceId;
     if (paymentMethod) where.paymentMethod = paymentMethod;
+
+    // Date range filter
+    if (startDate || endDate) {
+      where.paymentDate = {};
+      if (startDate) where.paymentDate.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.paymentDate.lte = end;
+      }
+    }
+
+    // Amount range filter
+    if (minAmount || maxAmount) {
+      where.amount = {};
+      if (minAmount) where.amount.gte = parseFloat(minAmount);
+      if (maxAmount) where.amount.lte = parseFloat(maxAmount);
+    }
+
+    // Student name search
+    if (studentName) {
+      where.student = {
+        OR: [
+          { firstName: { contains: studentName, mode: 'insensitive' } },
+          { lastName: { contains: studentName, mode: 'insensitive' } }
+        ]
+      };
+    }
+
+    // Academic year and term filter
+    if (academicYear || term) {
+      where.invoice = {};
+      if (academicYear) where.invoice.academicYear = academicYear;
+      if (term) where.invoice.term = term;
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -391,6 +442,297 @@ const getPaymentSummary = async (req, res) => {
   }
 };
 
+// Get comprehensive payment report
+const getPaymentReport = async (req, res) => {
+  try {
+    const schoolId = req.school.id;
+    const {
+      startDate,
+      endDate,
+      academicYear,
+      term,
+      studentId,
+      classId,
+      paymentMethod,
+      status = 'COMPLETED',
+      groupBy = 'none' // none, student, method, academicYear, term, date
+    } = req.query;
+
+    const where = { schoolId };
+
+    // Apply filters
+    if (status && status !== 'all') where.status = status;
+    if (studentId) where.studentId = studentId;
+    if (paymentMethod && paymentMethod !== 'all') where.paymentMethod = paymentMethod;
+
+    // Class filter
+    if (classId && classId !== 'all') {
+      where.student = {
+        currentClassId: classId
+      };
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+      where.paymentDate = {};
+      if (startDate) where.paymentDate.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.paymentDate.lte = end;
+      }
+    }
+
+    // Academic year and term filter - build invoice filter properly
+    const invoiceFilter = {};
+    if (academicYear && academicYear !== 'all') invoiceFilter.academicYear = academicYear;
+    if (term && term !== 'all') invoiceFilter.term = term;
+    if (Object.keys(invoiceFilter).length > 0) {
+      where.invoice = invoiceFilter;
+    }
+
+    // Fetch all payments with detailed information
+    const payments = await prisma.payment.findMany({
+      where,
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            admissionNumber: true,
+            currentClass: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        invoice: {
+          select: {
+            id: true,
+            invoiceNumber: true,
+            academicYear: true,
+            term: true,
+            total: true,
+            items: {
+              include: {
+                feeStructure: {
+                  select: { name: true, category: true }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { paymentDate: 'desc' }
+    });
+
+    // Calculate overall statistics
+    const totalAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const totalPayments = payments.length;
+
+    // Group by payment method
+    const byMethod = payments.reduce((acc, payment) => {
+      const method = payment.paymentMethod;
+      if (!acc[method]) {
+        acc[method] = { count: 0, amount: 0 };
+      }
+      acc[method].count++;
+      acc[method].amount += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    // Group by academic year
+    const byAcademicYear = payments.reduce((acc, payment) => {
+      const year = payment.invoice?.academicYear || 'Unknown';
+      if (!acc[year]) {
+        acc[year] = { count: 0, amount: 0 };
+      }
+      acc[year].count++;
+      acc[year].amount += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    // Group by term
+    const byTerm = payments.reduce((acc, payment) => {
+      const term = payment.invoice?.term || 'Unknown';
+      if (!acc[term]) {
+        acc[term] = { count: 0, amount: 0 };
+      }
+      acc[term].count++;
+      acc[term].amount += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    // Group by student (top payers)
+    const byStudent = payments.reduce((acc, payment) => {
+      const studentId = payment.studentId;
+      const studentName = `${payment.student.firstName} ${payment.student.lastName}`;
+      if (!acc[studentId]) {
+        acc[studentId] = {
+          studentId,
+          studentName,
+          admissionNumber: payment.student.admissionNumber,
+          grade: payment.student.currentClass?.name || 'N/A',
+          count: 0,
+          amount: 0
+        };
+      }
+      acc[studentId].count++;
+      acc[studentId].amount += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    // Group by date (daily collections)
+    const byDate = payments.reduce((acc, payment) => {
+      const date = payment.paymentDate.toISOString().split('T')[0];
+      if (!acc[date]) {
+        acc[date] = { count: 0, amount: 0 };
+      }
+      acc[date].count++;
+      acc[date].amount += parseFloat(payment.amount);
+      return acc;
+    }, {});
+
+    // Fee category breakdown
+    const byFeeCategory = {};
+    payments.forEach(payment => {
+      if (payment.invoice?.items) {
+        payment.invoice.items.forEach(item => {
+          const category = item.feeStructure?.category || 'Unknown';
+          if (!byFeeCategory[category]) {
+            byFeeCategory[category] = { count: 0, amount: 0 };
+          }
+          byFeeCategory[category].count++;
+          // Proportional amount based on item amount vs invoice total
+          const invoiceTotal = parseFloat(payment.invoice.total);
+          if (invoiceTotal > 0) {
+            const proportion = parseFloat(item.amount) / invoiceTotal;
+            byFeeCategory[category].amount += parseFloat(payment.amount) * proportion;
+          }
+        });
+      }
+    });
+
+    // Build response based on groupBy parameter
+    let groupedData = null;
+    switch (groupBy) {
+      case 'student':
+        groupedData = Object.values(byStudent).sort((a, b) => b.amount - a.amount);
+        break;
+      case 'method':
+        groupedData = Object.entries(byMethod).map(([method, data]) => ({
+          method,
+          ...data
+        }));
+        break;
+      case 'academicYear':
+        groupedData = Object.entries(byAcademicYear).map(([year, data]) => ({
+          academicYear: year,
+          ...data
+        }));
+        break;
+      case 'term':
+        groupedData = Object.entries(byTerm).map(([term, data]) => ({
+          term,
+          ...data
+        }));
+        break;
+      case 'date':
+        groupedData = Object.entries(byDate)
+          .map(([date, data]) => ({
+            date,
+            ...data
+          }))
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        break;
+      default:
+        groupedData = null;
+    }
+
+    res.json({
+      summary: {
+        totalPayments,
+        totalAmount: parseFloat(totalAmount.toFixed(2)),
+        averagePayment: totalPayments > 0 ? parseFloat((totalAmount / totalPayments).toFixed(2)) : 0,
+        dateRange: {
+          start: startDate || payments[payments.length - 1]?.paymentDate,
+          end: endDate || payments[0]?.paymentDate
+        }
+      },
+      breakdown: {
+        byMethod: Object.entries(byMethod).map(([method, data]) => ({
+          method,
+          count: data.count,
+          amount: parseFloat(data.amount.toFixed(2)),
+          percentage: totalAmount > 0 ? parseFloat(((data.amount / totalAmount) * 100).toFixed(2)) : 0
+        })),
+        byAcademicYear: Object.entries(byAcademicYear).map(([year, data]) => ({
+          academicYear: year,
+          count: data.count,
+          amount: parseFloat(data.amount.toFixed(2)),
+          percentage: totalAmount > 0 ? parseFloat(((data.amount / totalAmount) * 100).toFixed(2)) : 0
+        })),
+        byTerm: Object.entries(byTerm).map(([term, data]) => ({
+          term,
+          count: data.count,
+          amount: parseFloat(data.amount.toFixed(2)),
+          percentage: totalAmount > 0 ? parseFloat(((data.amount / totalAmount) * 100).toFixed(2)) : 0
+        })),
+        byFeeCategory: Object.entries(byFeeCategory).map(([category, data]) => ({
+          category,
+          count: data.count,
+          amount: parseFloat(data.amount.toFixed(2)),
+          percentage: totalAmount > 0 ? parseFloat(((data.amount / totalAmount) * 100).toFixed(2)) : 0
+        }))
+      },
+      topPayers: Object.values(byStudent)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 10)
+        .map(student => ({
+          ...student,
+          amount: parseFloat(student.amount.toFixed(2))
+        })),
+      dailyCollections: Object.entries(byDate)
+        .map(([date, data]) => ({
+          date,
+          count: data.count,
+          amount: parseFloat(data.amount.toFixed(2))
+        }))
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 30), // Last 30 days
+      groupedData,
+      payments: payments.map(p => ({
+        id: p.id,
+        paymentNumber: p.paymentNumber,
+        amount: parseFloat(p.amount),
+        paymentDate: p.paymentDate,
+        paymentMethod: p.paymentMethod,
+        referenceNumber: p.referenceNumber,
+        status: p.status,
+        student: {
+          id: p.student.id,
+          name: `${p.student.firstName} ${p.student.lastName}`,
+          admissionNumber: p.student.admissionNumber,
+          grade: p.student.currentClass?.name || 'N/A'
+        },
+        invoice: p.invoice ? {
+          invoiceNumber: p.invoice.invoiceNumber,
+          academicYear: p.invoice.academicYear,
+          term: p.invoice.term,
+          total: parseFloat(p.invoice.total)
+        } : null
+      }))
+    });
+  } catch (error) {
+    console.error('Error generating payment report:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
+    res.status(500).json({ error: 'Failed to generate payment report', details: error.message });
+  }
+};
+
 // Initialize Paystack payment
 const initializePaystackPayment = async (req, res) => {
   try {
@@ -592,6 +934,7 @@ module.exports = {
   updatePayment,
   deletePayment,
   getPaymentSummary,
+  getPaymentReport,
   initializePaystackPayment,
   verifyPaystackPayment
 };

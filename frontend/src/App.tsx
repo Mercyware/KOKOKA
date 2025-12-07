@@ -94,7 +94,7 @@ import { MessagingPage } from "./pages/messaging";
 import NotificationsPage from "./pages/NotificationsPage";
 import { TransportationPage, RoutesPage, VehiclesPage, AssignmentsPage, MaintenancePage } from "./pages/transportation";
 import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./pages/inventory";
-import { FeeStructuresPage, InvoicesPage, PaymentsPage, OutstandingPage } from "./pages/finance";
+import { FeeStructuresPage, InvoicesPage, PaymentsPage, PaymentReportPage, OutstandingPage } from "./pages/finance";
 import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
 import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
 import PaymentCallbackPage from "./pages/finance/PaymentCallbackPage";
@@ -302,6 +302,7 @@ const App = () => (
             <Route path="/finance/invoices/create" element={<ProtectedRoute><CreateInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
+            <Route path="/finance/payment-report" element={<ProtectedRoute><PaymentReportPage /></ProtectedRoute>} />
             <Route path="/finance/outstanding" element={<ProtectedRoute><OutstandingPage /></ProtectedRoute>} />
             <Route path="/finance/payment-callback" element={<ProtectedRoute><PaymentCallbackPage /></ProtectedRoute>} />
 

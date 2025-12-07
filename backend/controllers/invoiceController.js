@@ -319,42 +319,162 @@ const deleteInvoice = async (req, res) => {
 const getOutstandingInvoices = async (req, res) => {
   try {
     const schoolId = req.school.id;
-    const { studentId } = req.query;
+    const {
+      studentId,
+      studentName,
+      classId,
+      academicYear,
+      term,
+      status,
+      minBalance,
+      maxBalance,
+      overdueDays,
+      sortBy = 'dueDate',
+      sortOrder = 'asc',
+      page = 1,
+      limit = 50
+    } = req.query;
 
     const where = {
       schoolId,
-      balance: { gt: 0 },
-      status: { in: ['ISSUED', 'PARTIALLY_PAID', 'OVERDUE'] }
+      balance: { gt: 0 }
     };
 
+    // Status filter - default to outstanding statuses if not specified
+    if (status && status !== 'all') {
+      where.status = status;
+    } else {
+      where.status = { in: ['ISSUED', 'PARTIALLY_PAID', 'OVERDUE'] };
+    }
+
+    // Student filter
     if (studentId) where.studentId = studentId;
 
-    const invoices = await prisma.invoice.findMany({
-      where,
-      include: {
-        student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            admissionNumber: true,
-            currentClass: {
-              select: { name: true }
+    // Student name search
+    if (studentName) {
+      where.student = {
+        OR: [
+          { firstName: { contains: studentName, mode: 'insensitive' } },
+          { lastName: { contains: studentName, mode: 'insensitive' } }
+        ]
+      };
+    }
+
+    // Class filter
+    if (classId && classId !== 'all') {
+      where.student = {
+        ...where.student,
+        currentClassId: classId
+      };
+    }
+
+    // Academic year and term filters
+    if (academicYear && academicYear !== 'all') where.academicYear = academicYear;
+    if (term && term !== 'all') where.term = term;
+
+    // Balance range filter
+    if (minBalance || maxBalance) {
+      where.balance = { ...where.balance };
+      if (minBalance) where.balance.gte = parseFloat(minBalance);
+      if (maxBalance) where.balance.lte = parseFloat(maxBalance);
+    }
+
+    // Overdue filter - invoices overdue by specific number of days
+    if (overdueDays) {
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.setDate() - parseInt(overdueDays));
+      where.dueDate = { lt: daysAgo };
+      where.status = { in: ['ISSUED', 'PARTIALLY_PAID', 'OVERDUE'] };
+    }
+
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Sorting
+    const orderBy = {};
+    if (sortBy === 'balance') {
+      orderBy.balance = sortOrder;
+    } else if (sortBy === 'studentName') {
+      orderBy.student = { firstName: sortOrder };
+    } else if (sortBy === 'total') {
+      orderBy.total = sortOrder;
+    } else {
+      orderBy.dueDate = sortOrder;
+    }
+
+    const [invoices, total] = await Promise.all([
+      prisma.invoice.findMany({
+        where,
+        include: {
+          student: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              admissionNumber: true,
+              email: true,
+              phone: true,
+              currentClass: {
+                select: { name: true }
+              }
+            }
+          },
+          payments: {
+            where: { status: 'COMPLETED' },
+            select: {
+              id: true,
+              amount: true,
+              paymentDate: true,
+              paymentMethod: true
             }
           }
-        }
-      },
-      orderBy: { dueDate: 'asc' }
-    });
+        },
+        orderBy,
+        skip,
+        take: parseInt(limit)
+      }),
+      prisma.invoice.count({ where })
+    ]);
 
-    // Calculate total outstanding
+    // Calculate summary statistics
     const totalOutstanding = invoices.reduce((sum, inv) => sum + parseFloat(inv.balance), 0);
+    const totalInvoiced = invoices.reduce((sum, inv) => sum + parseFloat(inv.total), 0);
+    const totalPaid = invoices.reduce((sum, inv) => sum + parseFloat(inv.amountPaid || 0), 0);
+
+    // Count overdue invoices
+    const overdueCount = invoices.filter(inv =>
+      new Date(inv.dueDate) < new Date() && inv.balance > 0
+    ).length;
+
+    // Group by status
+    const byStatus = invoices.reduce((acc, inv) => {
+      if (!acc[inv.status]) {
+        acc[inv.status] = { count: 0, totalBalance: 0 };
+      }
+      acc[inv.status].count++;
+      acc[inv.status].totalBalance += parseFloat(inv.balance);
+      return acc;
+    }, {});
 
     res.json({
       invoices,
       summary: {
         totalInvoices: invoices.length,
-        totalOutstanding
+        totalOutstanding: parseFloat(totalOutstanding.toFixed(2)),
+        totalInvoiced: parseFloat(totalInvoiced.toFixed(2)),
+        totalPaid: parseFloat(totalPaid.toFixed(2)),
+        overdueCount,
+        byStatus: Object.entries(byStatus).map(([status, data]) => ({
+          status,
+          count: data.count,
+          totalBalance: parseFloat(data.totalBalance.toFixed(2))
+        }))
+      },
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit))
       }
     });
   } catch (error) {

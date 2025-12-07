@@ -269,6 +269,19 @@ export {
   TableHeader,
   TableRow,
 } from './table';
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from './pagination';
+export {
+  DataPagination,
+  type DataPaginationProps,
+} from './data-pagination';
 
 // File Upload Components
 export { ProfilePictureUpload } from './ProfilePictureUpload';

@@ -4,7 +4,7 @@ const { prisma } = require('../config/database');
 const getAllFeeStructures = async (req, res) => {
   try {
     const schoolId = req.school.id;
-    const { isActive, academicYearId, gradeLevel } = req.query;
+    const { isActive, academicYearId, gradeLevel, page = 1, limit = 50 } = req.query;
 
     const where = { schoolId };
 
@@ -24,24 +24,39 @@ const getAllFeeStructures = async (req, res) => {
       ];
     }
 
-    const feeStructures = await prisma.feeStructure.findMany({
-      where,
-      include: {
-        academicYear: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: [
-        { isActive: 'desc' },
-        { category: 'asc' },
-        { name: 'asc' }
-      ]
-    });
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    res.json(feeStructures);
+    const [feeStructures, total] = await Promise.all([
+      prisma.feeStructure.findMany({
+        where,
+        include: {
+          academicYear: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        },
+        orderBy: [
+          { isActive: 'desc' },
+          { category: 'asc' },
+          { name: 'asc' }
+        ],
+        skip,
+        take: parseInt(limit)
+      }),
+      prisma.feeStructure.count({ where })
+    ]);
+
+    res.json({
+      feeStructures,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
+    });
   } catch (error) {
     console.error('Error fetching fee structures:', error);
     res.status(500).json({ error: 'Failed to fetch fee structures' });

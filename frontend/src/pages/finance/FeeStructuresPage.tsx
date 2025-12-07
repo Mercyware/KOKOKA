@@ -20,6 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  DataPagination,
 } from '@/components/ui';
 import {
   getAllFeeStructures,
@@ -34,6 +35,12 @@ const FeeStructuresPage: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Dialogs
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -80,13 +87,20 @@ const FeeStructuresPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await getAllFeeStructures();
-      setFeeStructures(data);
+      const response = await getAllFeeStructures({
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+
+      // Backend returns { feeStructures: [...], pagination: {...} } directly
+      setFeeStructures(response.feeStructures || []);
+      setTotalItems(response.pagination?.total || 0);
+      setTotalPages(response.pagination?.totalPages || 0);
     } catch (error) {
       console.error('Error loading fee structures:', error);
       toast({
@@ -97,6 +111,15 @@ const FeeStructuresPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
   };
 
   const handleEdit = (feeStructure: FeeStructure) => {
@@ -228,6 +251,18 @@ const FeeStructuresPage: React.FC = () => {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+
+              {/* Pagination */}
+              {!loading && feeStructures.length > 0 && (
+                <DataPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                />
               )}
             </CardContent>
           </Card>

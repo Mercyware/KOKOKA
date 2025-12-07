@@ -114,6 +114,79 @@ export interface PaymentSummary {
   }[];
 }
 
+export interface PaymentReport {
+  summary: {
+    totalPayments: number;
+    totalAmount: number;
+    averagePayment: number;
+    dateRange: {
+      start: string;
+      end: string;
+    };
+  };
+  breakdown: {
+    byMethod: {
+      method: string;
+      count: number;
+      amount: number;
+      percentage: number;
+    }[];
+    byAcademicYear: {
+      academicYear: string;
+      count: number;
+      amount: number;
+      percentage: number;
+    }[];
+    byTerm: {
+      term: string;
+      count: number;
+      amount: number;
+      percentage: number;
+    }[];
+    byFeeCategory: {
+      category: string;
+      count: number;
+      amount: number;
+      percentage: number;
+    }[];
+  };
+  topPayers: {
+    studentId: string;
+    studentName: string;
+    admissionNumber: string;
+    grade: string;
+    count: number;
+    amount: number;
+  }[];
+  dailyCollections: {
+    date: string;
+    count: number;
+    amount: number;
+  }[];
+  groupedData?: any;
+  payments: {
+    id: string;
+    paymentNumber: string;
+    amount: number;
+    paymentDate: string;
+    paymentMethod: string;
+    referenceNumber?: string;
+    status: string;
+    student: {
+      id: string;
+      name: string;
+      admissionNumber: string;
+      grade: string;
+    };
+    invoice: {
+      invoiceNumber: string;
+      academicYear: string;
+      term: string;
+      total: number;
+    } | null;
+  }[];
+}
+
 export interface CreateInvoiceData {
   studentId: string;
   academicYear: string;
@@ -142,8 +215,30 @@ export interface CreatePaymentData {
 
 // ==================== FEE STRUCTURES ====================
 
-export const getAllFeeStructures = async (params?: { isActive?: boolean }): Promise<ApiResponse<FeeStructure[]>> => {
-  return await get<FeeStructure[]>('/finance/fee-structures', params);
+export const getAllFeeStructures = async (params?: {
+  isActive?: boolean;
+  academicYearId?: string;
+  gradeLevel?: string;
+  page?: number;
+  limit?: number;
+}): Promise<ApiResponse<{
+  feeStructures: FeeStructure[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}>> => {
+  return await get<{
+    feeStructures: FeeStructure[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }>('/finance/fee-structures', params);
 };
 
 export const getFeeStructureById = async (id: string): Promise<ApiResponse<FeeStructure>> => {
@@ -199,11 +294,37 @@ export const deleteInvoice = async (id: string): Promise<ApiResponse<{ message: 
 
 export const getOutstandingInvoices = async (params?: {
   studentId?: string;
+  studentName?: string;
+  classId?: string;
+  academicYear?: string;
+  term?: string;
+  status?: string;
+  minBalance?: number;
+  maxBalance?: number;
+  overdueDays?: number;
+  sortBy?: 'dueDate' | 'balance' | 'studentName' | 'total';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
 }): Promise<ApiResponse<{
   invoices: Invoice[];
   summary: {
     totalInvoices: number;
     totalOutstanding: number;
+    totalInvoiced: number;
+    totalPaid: number;
+    overdueCount: number;
+    byStatus: {
+      status: string;
+      count: number;
+      totalBalance: number;
+    }[];
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
   };
 }>> => {
   return await get<{
@@ -211,6 +332,20 @@ export const getOutstandingInvoices = async (params?: {
     summary: {
       totalInvoices: number;
       totalOutstanding: number;
+      totalInvoiced: number;
+      totalPaid: number;
+      overdueCount: number;
+      byStatus: {
+        status: string;
+        count: number;
+        totalBalance: number;
+      }[];
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
     };
   }>('/finance/invoices/outstanding', params);
 };
@@ -222,6 +357,13 @@ export const getAllPayments = async (params?: {
   studentId?: string;
   invoiceId?: string;
   paymentMethod?: string;
+  studentName?: string;
+  startDate?: string;
+  endDate?: string;
+  academicYear?: string;
+  term?: string;
+  minAmount?: number;
+  maxAmount?: number;
   page?: number;
   limit?: number;
 }): Promise<ApiResponse<{ payments: Payment[]; pagination: any }>> => {
@@ -255,6 +397,20 @@ export const getPaymentSummary = async (params?: {
   academicYear?: string;
 }): Promise<ApiResponse<PaymentSummary>> => {
   return await get<PaymentSummary>('/finance/payments/summary', params);
+};
+
+export const getPaymentReport = async (params?: {
+  startDate?: string;
+  endDate?: string;
+  academicYear?: string;
+  term?: string;
+  studentId?: string;
+  classId?: string;
+  paymentMethod?: string;
+  status?: string;
+  groupBy?: 'none' | 'student' | 'method' | 'academicYear' | 'term' | 'date';
+}): Promise<ApiResponse<PaymentReport>> => {
+  return await get<PaymentReport>('/finance/payments/report', params);
 };
 
 // ==================== PAYSTACK PAYMENTS ====================

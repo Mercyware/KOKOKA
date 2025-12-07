@@ -20,7 +20,8 @@
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
       "Bash(npx prisma:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM5MjUyNWIxLTlmMDUtNGJjYy05YWFhLTAxNTlhY2UwNjYwZSIsInJvbGUiOiJBRE1JTiIsInNjaG9vbCI6ImU2YjRlMjg4LTkyYjUtNGY2NS1hMzU5LWRkZTY2NzZkNzRhMSIsImlhdCI6MTc2NTExODAwOSwiZXhwIjoxNzY1MTE4OTA5fQ.J1bmhSAd2vrq6JQ4LRMGiuM-eq4IRhpdg7TtHNjQzU8\")"
     ],
     "deny": [],
     "ask": [],

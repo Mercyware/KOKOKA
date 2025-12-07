@@ -46,6 +46,9 @@ router.get('/payments', paymentController.getAllPayments);
 // GET payment summary/statistics
 router.get('/payments/summary', paymentController.getPaymentSummary);
 
+// GET comprehensive payment report
+router.get('/payments/report', paymentController.getPaymentReport);
+
 // GET single payment
 router.get('/payments/:id', paymentController.getPaymentById);
 
