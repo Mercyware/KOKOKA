@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Printer, Mail } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Mail, CreditCard, Banknote } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import {
   PageContainer,
@@ -25,6 +25,8 @@ import { getInvoiceById, type Invoice } from '@/services/financeService';
 import { useToast } from '@/hooks/use-toast';
 import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 import { formatAmount } from '@/lib/currency';
+import { RecordPaymentDialog } from './components/RecordPaymentDialog';
+import { PaystackPaymentDialog } from './components/PaystackPaymentDialog';
 
 const ViewInvoicePage: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
@@ -33,6 +35,8 @@ const ViewInvoicePage: React.FC = () => {
   const { settings } = useSchoolSettings();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+  const [paystackPaymentOpen, setPaystackPaymentOpen] = useState(false);
 
   useEffect(() => {
     if (invoiceId) {
@@ -152,6 +156,18 @@ const ViewInvoicePage: React.FC = () => {
               </PageDescription>
             </div>
             <div className="flex gap-2 print:hidden">
+              {Number(invoice.balance) > 0 && (
+                <>
+                  <Button intent="primary" size="sm" onClick={() => setPaystackPaymentOpen(true)}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Pay Online
+                  </Button>
+                  <Button intent="action" size="sm" onClick={() => setRecordPaymentOpen(true)}>
+                    <Banknote className="h-4 w-4 mr-2" />
+                    Record Payment
+                  </Button>
+                </>
+              )}
               <Button intent="action" size="sm" onClick={handleDownloadPDF}>
                 <Download className="h-4 w-4 mr-2" />
                 PDF
@@ -373,6 +389,24 @@ const ViewInvoicePage: React.FC = () => {
           </div>
         </PageContent>
       </PageContainer>
+
+      {/* Payment Dialogs */}
+      {invoice && (
+        <>
+          <RecordPaymentDialog
+            open={recordPaymentOpen}
+            onClose={() => setRecordPaymentOpen(false)}
+            invoice={invoice}
+            onPaymentRecorded={loadInvoice}
+          />
+          <PaystackPaymentDialog
+            open={paystackPaymentOpen}
+            onClose={() => setPaystackPaymentOpen(false)}
+            invoice={invoice}
+            onPaymentInitiated={loadInvoice}
+          />
+        </>
+      )}
     </Layout>
   );
 };

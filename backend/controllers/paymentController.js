@@ -391,11 +391,192 @@ const getPaymentSummary = async (req, res) => {
   }
 };
 
+// Initialize Paystack payment
+const initializePaystackPayment = async (req, res) => {
+  try {
+    const schoolId = req.school.id;
+    const { invoiceId, amount, email } = req.body;
+
+    // Validation
+    if (!invoiceId || !amount || !email) {
+      return res.status(400).json({
+        error: 'Invoice ID, amount, and email are required'
+      });
+    }
+
+    // Verify invoice
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: invoiceId, schoolId },
+      include: {
+        student: true,
+        payments: { where: { status: 'COMPLETED' } }
+      }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Check balance
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const currentBalance = parseFloat(invoice.total) - totalPaid;
+
+    if (parseFloat(amount) > currentBalance) {
+      return res.status(400).json({
+        error: `Payment amount (${amount}) exceeds invoice balance (${currentBalance})`
+      });
+    }
+
+    // Initialize Paystack transaction
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!paystackSecretKey) {
+      return res.status(500).json({ error: 'Paystack not configured' });
+    }
+
+    const amountInKobo = Math.round(parseFloat(amount) * 100); // Convert to kobo
+
+    const response = await fetch('https://api.paystack.co/transaction/initialize', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        amount: amountInKobo,
+        reference: `${invoice.invoiceNumber}-${Date.now()}`,
+        metadata: {
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          studentId: invoice.studentId,
+          schoolId: schoolId,
+          studentName: `${invoice.student.firstName} ${invoice.student.lastName}`,
+          custom_fields: [
+            {
+              display_name: 'Invoice Number',
+              variable_name: 'invoice_number',
+              value: invoice.invoiceNumber
+            },
+            {
+              display_name: 'Student',
+              variable_name: 'student_name',
+              value: `${invoice.student.firstName} ${invoice.student.lastName}`
+            }
+          ]
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.status) {
+      return res.status(400).json({ error: data.message || 'Failed to initialize payment' });
+    }
+
+    res.json({
+      authorization_url: data.data.authorization_url,
+      access_code: data.data.access_code,
+      reference: data.data.reference
+    });
+  } catch (error) {
+    console.error('Error initializing Paystack payment:', error);
+    res.status(500).json({ error: 'Failed to initialize payment' });
+  }
+};
+
+// Verify Paystack payment
+const verifyPaystackPayment = async (req, res) => {
+  try {
+    const { reference } = req.params;
+    const schoolId = req.school.id;
+
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!paystackSecretKey) {
+      return res.status(500).json({ error: 'Paystack not configured' });
+    }
+
+    // Verify transaction with Paystack
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${paystackSecretKey}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!data.status || data.data.status !== 'success') {
+      return res.status(400).json({ error: 'Payment verification failed' });
+    }
+
+    const metadata = data.data.metadata;
+    const invoiceId = metadata.invoiceId;
+    const amount = data.data.amount / 100; // Convert from kobo
+
+    // Check if payment already recorded
+    const existingPayment = await prisma.payment.findFirst({
+      where: { referenceNumber: reference, schoolId }
+    });
+
+    if (existingPayment) {
+      return res.json({ message: 'Payment already recorded', payment: existingPayment });
+    }
+
+    // Generate payment number
+    const paymentNumber = await generatePaymentNumber(schoolId);
+
+    // Create payment record
+    const payment = await prisma.payment.create({
+      data: {
+        paymentNumber,
+        schoolId,
+        invoiceId,
+        studentId: metadata.studentId,
+        amount,
+        paymentDate: new Date(data.data.paid_at),
+        paymentMethod: 'CARD',
+        referenceNumber: reference,
+        status: 'COMPLETED',
+        notes: `Online payment via Paystack - ${data.data.channel}`,
+        processedBy: metadata.studentId // Using studentId as we don't have userId in this context
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            admissionNumber: true
+          }
+        },
+        invoice: {
+          select: {
+            id: true,
+            invoiceNumber: true,
+            academicYear: true,
+            term: true
+          }
+        }
+      }
+    });
+
+    // Update invoice status
+    await updateInvoiceStatus(invoiceId);
+
+    res.json({ message: 'Payment verified and recorded successfully', payment });
+  } catch (error) {
+    console.error('Error verifying Paystack payment:', error);
+    res.status(500).json({ error: 'Failed to verify payment' });
+  }
+};
+
 module.exports = {
   getAllPayments,
   getPaymentById,
   createPayment,
   updatePayment,
   deletePayment,
-  getPaymentSummary
+  getPaymentSummary,
+  initializePaystackPayment,
+  verifyPaystackPayment
 };

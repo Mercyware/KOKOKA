@@ -76,6 +76,9 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 // Finance Routes
 const financeRoutes = require('./routes/financeRoutes');
 
+// Settings Routes
+const settingsRoutes = require('./routes/settingsRoutes');
+
 // Import utilities
 const logger = require('./utils/logger');
 
@@ -264,7 +267,12 @@ app.use('/api/transportation', transportationRoutes);
 
 // Inventory Routes
 app.use('/api/inventory', inventoryRoutes);
+
+// Finance Routes
 app.use('/api/finance', financeRoutes);
+
+// Settings Routes
+app.use('/api/settings', settingsRoutes);
 
 // New Grade Management Routes
 app.use('/api/report-cards', reportCardRoutes);

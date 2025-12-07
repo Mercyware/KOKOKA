@@ -54,4 +54,8 @@ router.post('/payments', roleMiddleware.restrictTo('admin'), paymentController.c
 router.put('/payments/:id', roleMiddleware.restrictTo('admin'), paymentController.updatePayment);
 router.delete('/payments/:id', roleMiddleware.restrictTo('admin'), paymentController.deletePayment);
 
+// Paystack payment routes
+router.post('/payments/paystack/initialize', paymentController.initializePaystackPayment);
+router.get('/payments/paystack/verify/:reference', paymentController.verifyPaystackPayment);
+
 module.exports = router;

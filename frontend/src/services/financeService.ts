@@ -256,3 +256,31 @@ export const getPaymentSummary = async (params?: {
 }): Promise<ApiResponse<PaymentSummary>> => {
   return await get<PaymentSummary>('/finance/payments/summary', params);
 };
+
+// ==================== PAYSTACK PAYMENTS ====================
+
+export const initializePaystackPayment = async (data: {
+  invoiceId: string;
+  amount: number;
+  email: string;
+}): Promise<ApiResponse<{
+  authorization_url: string;
+  access_code: string;
+  reference: string;
+}>> => {
+  return await post<{
+    authorization_url: string;
+    access_code: string;
+    reference: string;
+  }>('/finance/payments/paystack/initialize', data);
+};
+
+export const verifyPaystackPayment = async (reference: string): Promise<ApiResponse<{
+  message: string;
+  payment: Payment;
+}>> => {
+  return await get<{
+    message: string;
+    payment: Payment;
+  }>(`/finance/payments/paystack/verify/${reference}`);
+};
