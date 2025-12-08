@@ -676,10 +676,30 @@ exports.updateSchoolSettings = async (req, res) => {
         select: { settings: true }
       });
 
-      updateData.settings = {
-        ...(currentSchool.settings || {}),
-        ...settings
-      };
+      // Deep merge settings (handle nested objects)
+      const currentSettings = currentSchool.settings || {};
+      const mergedSettings = { ...currentSettings };
+
+      // Merge each top-level key
+      for (const key in settings) {
+        if (settings[key] && typeof settings[key] === 'object' && !Array.isArray(settings[key])) {
+          // Deep merge for nested objects
+          mergedSettings[key] = {
+            ...(currentSettings[key] || {}),
+            ...settings[key]
+          };
+        } else {
+          // Direct assignment for primitives
+          mergedSettings[key] = settings[key];
+        }
+      }
+
+      // If system.currency is updated, also update top-level currency for finance pages
+      if (settings.system && settings.system.currency) {
+        mergedSettings.currency = settings.system.currency;
+      }
+
+      updateData.settings = mergedSettings;
     }
 
     // Update the school

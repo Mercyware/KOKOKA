@@ -28,11 +28,13 @@ import {
 } from '@/components/ui';
 import { getTransactions, getItems, type InventoryTransaction, type InventoryItem } from '@/services/inventoryService';
 import { useToast } from '@/hooks/use-toast';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 import TransactionDialog from './components/TransactionDialog';
 import { format } from 'date-fns';
 
 const TransactionsPage: React.FC = () => {
   const { toast } = useToast();
+  const { settings } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -46,8 +48,8 @@ const TransactionsPage: React.FC = () => {
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
   const [selectedItemForTransaction, setSelectedItemForTransaction] = useState<InventoryItem | null>(null);
 
-  const formatCurrency = (amount: number, currency?: string) => {
-    const currencyCode = currency || 'KES';
+  const formatCurrency = (amount: number) => {
+    const currencyCode = settings.currency.code;
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',

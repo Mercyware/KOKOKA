@@ -29,16 +29,18 @@ import {
 } from '@/components/ui';
 import { getDashboardStats, getItems, getCategories, type InventoryItem, type InventoryCategory } from '@/services/inventoryService';
 import { useToast } from '@/hooks/use-toast';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 import AddItemDialog from './components/AddItemDialog';
 import TransactionDialog from './components/TransactionDialog';
 import AllocationDialog from './components/AllocationDialog';
 
 const InventoryPage: React.FC = () => {
   const { toast } = useToast();
+  const { settings } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
 
-  const formatCurrency = (amount: number, currency?: string) => {
-    const currencyCode = currency || 'KES';
+  const formatCurrency = (amount: number) => {
+    const currencyCode = settings.currency.code;
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',

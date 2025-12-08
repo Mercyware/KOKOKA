@@ -63,7 +63,9 @@ import {
   UserCog,
   Receipt,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -233,6 +235,19 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
         { id: 'finance-invoices', label: 'Invoices', icon: Receipt },
         { id: 'finance-payments', label: 'Payments', icon: CreditCard },
         { id: 'finance-outstanding', label: 'Outstanding Debt', icon: AlertCircle },
+      ]
+    },
+
+    // Accounting
+    {
+      id: 'accounting',
+      label: 'Accounting',
+      icon: TrendingUp,
+      hasSubmenu: true,
+      submenu: [
+        { id: 'accounting-dashboard', label: 'Dashboard', icon: BarChart3 },
+        { id: 'accounting-income', label: 'Income', icon: ArrowUpRight },
+        { id: 'accounting-expenditure', label: 'Expenditure', icon: ArrowDownRight },
       ]
     },
 
@@ -447,6 +462,9 @@ const Sidebar = ({ activeTab, onTabChange, user }: SidebarProps) => {
                         if (subItem.id === 'finance-invoices') navigate('/finance/invoices');
                         if (subItem.id === 'finance-payments') navigate('/finance/payments');
                         if (subItem.id === 'finance-outstanding') navigate('/finance/outstanding');
+                        if (subItem.id === 'accounting-dashboard') navigate('/accounting/dashboard');
+                        if (subItem.id === 'accounting-income') navigate('/accounting/income');
+                        if (subItem.id === 'accounting-expenditure') navigate('/accounting/expenditure');
                         if (subItem.id === 'assignments-list') navigate('/assignments');
                         if (subItem.id === 'assignments-grading') navigate('/assignments/grading-queue');
                         if (subItem.id === 'attendance-dashboard') navigate('/attendance');

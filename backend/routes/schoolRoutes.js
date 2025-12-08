@@ -4,6 +4,7 @@ const multer = require('multer');
 
 // Import controllers
 const schoolController = require('../controllers/schoolController');
+const subaccountController = require('../controllers/subaccountController');
 
 // Import middleware
 const { protect } = require('../middlewares/authMiddleware');
@@ -194,6 +195,14 @@ router.get('/check-subdomain/:subdomain', schoolController.checkSubdomainAvailab
 router.get('/settings', protect, extractSchoolFromSubdomain, schoolController.getSchoolSettings);
 router.put('/settings', protect, extractSchoolFromSubdomain, schoolController.updateSchoolSettings);
 router.post('/settings/upload-logo', protect, extractSchoolFromSubdomain, upload.single('logo'), schoolController.uploadSchoolLogo);
+
+// Paystack subaccount routes
+router.get('/settings/banks', protect, subaccountController.getBanks);
+router.post('/settings/verify-bank', protect, extractSchoolFromSubdomain, subaccountController.verifyBankAccount);
+router.get('/settings/subaccount', protect, extractSchoolFromSubdomain, subaccountController.getSubaccount);
+router.post('/settings/subaccount', protect, extractSchoolFromSubdomain, subaccountController.createSubaccount);
+router.put('/settings/subaccount', protect, extractSchoolFromSubdomain, subaccountController.updateSubaccount);
+router.delete('/settings/subaccount', protect, extractSchoolFromSubdomain, subaccountController.deleteSubaccount);
 
 // Public route for school logo (no auth required)
 router.get('/logo/:schoolId', schoolController.getSchoolLogo);

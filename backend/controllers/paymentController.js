@@ -770,6 +770,15 @@ const initializePaystackPayment = async (req, res) => {
       });
     }
 
+    // Get school with subaccount info
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: {
+        paystackSubaccountCode: true,
+        name: true
+      }
+    });
+
     // Verify invoice
     const invoice = await prisma.invoice.findFirst({
       where: { id: invoiceId, schoolId },
@@ -799,10 +808,57 @@ const initializePaystackPayment = async (req, res) => {
       return res.status(500).json({ error: 'Paystack not configured' });
     }
 
-    const amountInKobo = Math.round(parseFloat(amount) * 100); // Convert to kobo
+    // Add digital fee to the total amount
+    const digitalFee = parseFloat(process.env.DIGITAL_FEE_AMOUNT || 0);
+    const totalAmountWithFee = parseFloat(amount) + digitalFee;
+    const amountInKobo = Math.round(totalAmountWithFee * 100); // Convert to kobo
 
     // Get callback URL from environment or use default
     const callbackUrl = process.env.PAYSTACK_CALLBACK_URL || `${process.env.FRONTEND_URL}/finance/payment-callback`;
+
+    // Build transaction payload
+    const transactionPayload = {
+      email,
+      amount: amountInKobo,
+      reference: `${invoice.invoiceNumber}-${Date.now()}`,
+      callback_url: callbackUrl,
+      metadata: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        studentId: invoice.studentId,
+        schoolId: schoolId,
+        studentName: `${invoice.student.firstName} ${invoice.student.lastName}`,
+        invoiceAmount: parseFloat(amount),
+        digitalFee: digitalFee,
+        totalAmount: totalAmountWithFee,
+        custom_fields: [
+          {
+            display_name: 'Invoice Number',
+            variable_name: 'invoice_number',
+            value: invoice.invoiceNumber
+          },
+          {
+            display_name: 'Student',
+            variable_name: 'student_name',
+            value: `${invoice.student.firstName} ${invoice.student.lastName}`
+          },
+          {
+            display_name: 'Digital Fee',
+            variable_name: 'digital_fee',
+            value: digitalFee.toString()
+          }
+        ]
+      }
+    };
+
+    // Add subaccount split if school has a subaccount configured
+    if (school.paystackSubaccountCode) {
+      const platformFeePercentage = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE || 10);
+
+      transactionPayload.subaccount = school.paystackSubaccountCode;
+      transactionPayload.transaction_charge = Math.round((totalAmountWithFee * platformFeePercentage / 100) * 100); // In kobo
+      transactionPayload.bearer = 'account'; // School bears the Paystack charge
+    }
 
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -810,31 +866,7 @@ const initializePaystackPayment = async (req, res) => {
         'Authorization': `Bearer ${paystackSecretKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        email,
-        amount: amountInKobo,
-        reference: `${invoice.invoiceNumber}-${Date.now()}`,
-        callback_url: callbackUrl,
-        metadata: {
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          studentId: invoice.studentId,
-          schoolId: schoolId,
-          studentName: `${invoice.student.firstName} ${invoice.student.lastName}`,
-          custom_fields: [
-            {
-              display_name: 'Invoice Number',
-              variable_name: 'invoice_number',
-              value: invoice.invoiceNumber
-            },
-            {
-              display_name: 'Student',
-              variable_name: 'student_name',
-              value: `${invoice.student.firstName} ${invoice.student.lastName}`
-            }
-          ]
-        }
-      })
+      body: JSON.stringify(transactionPayload)
     });
 
     const data = await response.json();
@@ -884,7 +916,9 @@ const verifyPaystackPayment = async (req, res) => {
 
     const metadata = data.data.metadata;
     const invoiceId = metadata.invoiceId;
-    const amount = data.data.amount / 100; // Convert from kobo
+    const totalAmountPaid = data.data.amount / 100; // Convert from kobo
+    const invoiceAmount = metadata.invoiceAmount || totalAmountPaid;
+    const digitalFee = metadata.digitalFee || 0;
 
     // Check if payment already recorded
     const existingPayment = await prisma.payment.findFirst({
@@ -899,22 +933,51 @@ const verifyPaystackPayment = async (req, res) => {
       });
     }
 
+    // Get school and accounting category
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId }
+    });
+
+    // Find or create "Student Fees" income category
+    let feeCategory = await prisma.accountingCategory.findFirst({
+      where: {
+        schoolId,
+        name: 'Student Fees',
+        type: 'INCOME'
+      }
+    });
+
+    if (!feeCategory) {
+      feeCategory = await prisma.accountingCategory.create({
+        data: {
+          schoolId,
+          name: 'Student Fees',
+          type: 'INCOME',
+          description: 'Income from student tuition and fees'
+        }
+      });
+    }
+
     // Generate payment number
     const paymentNumber = await generatePaymentNumber(schoolId);
 
-    // Create payment record
+    // Calculate platform fee from split
+    const platformFeePercentage = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE || 10);
+    const platformFee = (totalAmountPaid * platformFeePercentage) / 100;
+
+    // Create payment record (only the invoice amount, not digital fee)
     const payment = await prisma.payment.create({
       data: {
         paymentNumber,
         schoolId,
         invoiceId,
         studentId: metadata.studentId,
-        amount,
+        amount: invoiceAmount,
         paymentDate: new Date(data.data.paid_at),
         paymentMethod: 'CARD',
         referenceNumber: reference,
         status: 'COMPLETED',
-        notes: `Online payment via Paystack - ${data.data.channel}`,
+        notes: `Online payment via Paystack - ${data.data.channel}. Digital fee: ${digitalFee}`,
         processedBy: metadata.studentId // Using studentId as we don't have userId in this context
       },
       include: {
@@ -934,6 +997,24 @@ const verifyPaystackPayment = async (req, res) => {
             term: true
           }
         }
+      }
+    });
+
+    // Create income transaction record for accounting
+    await prisma.incomeTransaction.create({
+      data: {
+        schoolId,
+        categoryId: feeCategory.id,
+        paymentId: payment.id,
+        amount: invoiceAmount,
+        date: new Date(data.data.paid_at),
+        description: `Student fee payment - ${metadata.studentName} - Invoice ${metadata.invoiceNumber}`,
+        source: 'Student Fees',
+        reference: reference,
+        notes: `Paystack payment. Platform fee: ${platformFee.toFixed(2)} (${platformFeePercentage}%)`,
+        totalAmount: totalAmountPaid,
+        platformFee: platformFee,
+        platformFeePercentage: platformFeePercentage
       }
     });
 

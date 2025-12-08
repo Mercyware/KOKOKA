@@ -16,7 +16,8 @@ import {
   DollarSign,
   Loader2,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CreditCard
 } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import {
@@ -46,9 +47,12 @@ import {
 } from '@/services/schoolSettingsService';
 import { useToast } from '@/hooks/use-toast';
 import { resolveImageUrl, isValidImageFile, isValidImageSize } from '@/utils/imageUtils';
+import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
+import PaymentSettings from './PaymentSettings';
 
 const SchoolSettings: React.FC = () => {
   const { toast } = useToast();
+  const { updateCurrency } = useSchoolSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
@@ -281,6 +285,12 @@ const SchoolSettings: React.FC = () => {
     setSaving(true);
     try {
       await updateSystemPreferencesService(systemPreferences);
+
+      // Update currency in context to reflect immediately in all pages
+      if (systemPreferences.currency) {
+        updateCurrency(systemPreferences.currency);
+      }
+
       toast({
         title: 'Success',
         description: 'System preferences updated successfully',
@@ -426,7 +436,7 @@ const SchoolSettings: React.FC = () => {
 
           {/* Settings Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-2">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 gap-2">
               <TabsTrigger value="general" className="flex items-center gap-2">
                 <Building className="h-4 w-4" />
                 <span className="hidden sm:inline">General</span>
@@ -446,6 +456,10 @@ const SchoolSettings: React.FC = () => {
               <TabsTrigger value="features" className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />
                 <span className="hidden sm:inline">Features</span>
+              </TabsTrigger>
+              <TabsTrigger value="payment" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Payment</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1296,6 +1310,11 @@ const SchoolSettings: React.FC = () => {
                   )}
                 </Button>
               </div>
+            </TabsContent>
+
+            {/* Payment Settings Tab */}
+            <TabsContent value="payment" className="space-y-6">
+              <PaymentSettings />
             </TabsContent>
           </Tabs>
         </div>

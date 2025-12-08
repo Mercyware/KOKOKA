@@ -197,7 +197,7 @@ const HostelFees: React.FC = () => {
   };
 
   const formatCurrency = (amount: number, currency?: string) => {
-    const currencyCode = currency || 'KES';
+    const currencyCode = currency || 'USD';
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',

@@ -26,6 +26,11 @@ model School {
   phone                       String?
   website                     String?
   settings                    Json?
+  paystackSubaccountCode      String?                      @unique
+  paystackSubaccountId        String?
+  bankAccountName             String?
+  bankAccountNumber           String?
+  bankCode                    String?
   createdAt                   DateTime                     @default(now())
   updatedAt                   DateTime                     @updatedAt
   academicCalendars           AcademicCalendar[]
@@ -96,6 +101,9 @@ model School {
   invoices                    Invoice[]
   payments                    Payment[]
   paymentReminders            PaymentReminder[]
+  incomeTransactions          IncomeTransaction[]
+  expenditureTransactions     ExpenditureTransaction[]
+  accountingCategories        AccountingCategory[]
 
   @@map("schools")
 }
@@ -3641,9 +3649,10 @@ model Payment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school  School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  invoice           Invoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  student           Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  incomeTransaction IncomeTransaction[]
 
   @@index([schoolId, studentId])
   @@index([invoiceId])
@@ -3703,4 +3712,102 @@ enum ReminderStatus {
   SENT
   FAILED
   READ
+}
+
+// ==================== ACCOUNTING SYSTEM ====================
+
+model AccountingCategory {
+  id          String   @id @default(uuid())
+  schoolId    String
+  name        String
+  type        AccountingType // INCOME or EXPENDITURE
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school               School                   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  incomeTransactions   IncomeTransaction[]
+  expenditureTransactions ExpenditureTransaction[]
+
+  @@index([schoolId, type])
+  @@map("accounting_categories")
+}
+
+model IncomeTransaction {
+  id          String   @id @default(uuid())
+  schoolId    String
+  categoryId  String
+  paymentId   String?  // Link to Payment if from student fees
+
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime @default(now())
+  description String
+  source      String   // e.g., "Student Fees", "Donation", "Grant"
+  reference   String?
+  notes       String?
+
+  // Paystack split tracking
+  totalAmount       Decimal? @db.Decimal(10, 2) // Original total before split
+  platformFee       Decimal? @db.Decimal(10, 2) // Amount that went to platform
+  platformFeePercentage Decimal? @db.Decimal(5, 2) // Percentage that went to platform
+
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school   School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category AccountingCategory @relation(fields: [categoryId], references: [id])
+  payment  Payment?           @relation(fields: [paymentId], references: [id])
+
+  @@index([schoolId, date])
+  @@index([categoryId])
+  @@index([paymentId])
+  @@map("income_transactions")
+}
+
+model ExpenditureTransaction {
+  id          String   @id @default(uuid())
+  schoolId    String
+  categoryId  String
+
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime @default(now())
+  description String
+  payee       String   // Who received the payment
+  paymentMethod PaymentMethod
+  reference   String?
+  notes       String?
+  receiptUrl  String?  // URL to receipt/invoice document
+
+  approvedBy  String?
+  approvedAt  DateTime?
+  status      ExpenditureStatus @default(PENDING)
+
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school   School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  category AccountingCategory @relation(fields: [categoryId], references: [id])
+
+  @@index([schoolId, date])
+  @@index([categoryId])
+  @@index([status])
+  @@map("expenditure_transactions")
+}
+
+// ==================== ACCOUNTING ENUMS ====================
+
+enum AccountingType {
+  INCOME
+  EXPENDITURE
+}
+
+enum ExpenditureStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
 }

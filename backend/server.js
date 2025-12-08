@@ -76,6 +76,9 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 // Finance Routes
 const financeRoutes = require('./routes/financeRoutes');
 
+// Accounting Routes
+const accountingRoutes = require('./routes/accountingRoutes');
+
 // Settings Routes
 const settingsRoutes = require('./routes/settingsRoutes');
 
@@ -270,6 +273,9 @@ app.use('/api/inventory', inventoryRoutes);
 
 // Finance Routes
 app.use('/api/finance', financeRoutes);
+
+// Accounting Routes
+app.use('/api/accounting', accountingRoutes);
 
 // Settings Routes
 app.use('/api/settings', settingsRoutes);

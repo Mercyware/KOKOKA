@@ -46,7 +46,8 @@ export const SchoolSettingsProvider: React.FC<SchoolSettingsProviderProps> = ({ 
     const loadSettings = async () => {
       try {
         const schoolSettings = await fetchSchoolSettings();
-        const currencyCode = schoolSettings.settings?.currency || 'USD';
+        // Try settings.currency first, then fall back to settings.system.currency
+        const currencyCode = schoolSettings.settings?.currency || schoolSettings.settings?.system?.currency || 'USD';
 
         setSettings({
           currency: getCurrency(currencyCode),
