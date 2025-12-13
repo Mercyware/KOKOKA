@@ -32,8 +32,69 @@ export interface StaffMember {
     name: string;
     description?: string;
   };
+  teacherSubjects?: Array<{
+    id: string;
+    subject?: {
+      id: string;
+      name: string;
+      code: string;
+    };
+  }>;
+  subjectAssignments?: Array<{
+    id: string;
+    subject?: {
+      id: string;
+      name: string;
+      code: string;
+    };
+    class?: {
+      id: string;
+      name: string;
+      grade: string;
+    };
+  }>;
+  classTeachers?: Array<{
+    id: string;
+    class?: {
+      id: string;
+      name: string;
+      grade: string;
+    };
+  }>;
+  qualifications?: Qualification[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Qualification {
+  id: string;
+  staffId: string;
+  degree: string;
+  institution: string;
+  fieldOfStudy?: string;
+  yearObtained?: number;
+  grade?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QualificationCreateData {
+  degree: string;
+  institution: string;
+  fieldOfStudy?: string;
+  yearObtained?: number;
+  grade?: string;
+  description?: string;
+}
+
+export interface QualificationUpdateData {
+  degree?: string;
+  institution?: string;
+  fieldOfStudy?: string;
+  yearObtained?: number;
+  grade?: string;
+  description?: string;
 }
 
 export interface StaffCreateData {
@@ -212,7 +273,40 @@ export const assignClassesToTeacher = async (teacherId: string, classIds: string
   }
 };
 
-// This function is moved to departmentService.ts
+// Qualification management
+export const addQualification = async (staffId: string, data: QualificationCreateData) => {
+  try {
+    const response = await api.post(`/staff/${staffId}/qualifications`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateQualification = async (
+  staffId: string,
+  qualificationId: string,
+  data: QualificationUpdateData
+) => {
+  try {
+    const response = await api.put(
+      `/staff/${staffId}/qualifications/${qualificationId}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteQualification = async (staffId: string, qualificationId: string) => {
+  try {
+    const response = await api.delete(`/staff/${staffId}/qualifications/${qualificationId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export default {
   getStaffMembers,
@@ -226,5 +320,8 @@ export default {
   getAdminStaff,
   updateStaffStatus,
   assignSubjectsToTeacher,
-  assignClassesToTeacher
+  assignClassesToTeacher,
+  addQualification,
+  updateQualification,
+  deleteQualification
 };

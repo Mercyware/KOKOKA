@@ -16,7 +16,10 @@ const {
   addPerformanceReview,
   updateAccessPermissions,
   uploadProfilePicture,
-  deleteProfilePicture
+  deleteProfilePicture,
+  addQualification,
+  updateQualification,
+  deleteQualification
 } = require('../controllers/staffController');
 
 const { protect } = require('../middlewares/authMiddleware');
@@ -1129,5 +1132,10 @@ router.delete(
   restrictToOwnerOrRoles('staff', ['admin']),
   deleteProfilePicture
 );
+
+// Qualification routes
+router.post('/:id/qualifications', protect, hasStaffManagementAccess, addQualification);
+router.put('/:staffId/qualifications/:qualificationId', protect, hasStaffManagementAccess, updateQualification);
+router.delete('/:staffId/qualifications/:qualificationId', protect, hasStaffManagementAccess, deleteQualification);
 
 module.exports = router;

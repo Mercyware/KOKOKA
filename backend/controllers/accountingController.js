@@ -14,7 +14,10 @@ exports.getCategories = async (req, res) => {
     const { type } = req.query;
 
     const where = { schoolId, isActive: true };
-    if (type) where.type = type;
+    // Ensure type is a string, not an object
+    if (type && typeof type === 'string') {
+      where.type = type;
+    }
 
     const categories = await prisma.accountingCategory.findMany({
       where,
@@ -348,17 +351,18 @@ exports.createExpenditureTransaction = async (req, res) => {
       amount,
       date,
       description,
-      payee,
+      vendor,
+      payee, // For backward compatibility
       paymentMethod,
       reference,
       notes,
       receiptUrl
     } = req.body;
 
-    if (!categoryId || !amount || !description || !payee || !paymentMethod) {
+    if (!categoryId || !amount || !description) {
       return res.status(400).json({
         success: false,
-        message: 'Category, amount, description, payee, and payment method are required'
+        message: 'Category, amount, and description are required'
       });
     }
 
@@ -385,8 +389,8 @@ exports.createExpenditureTransaction = async (req, res) => {
         amount: parseFloat(amount),
         date: date ? new Date(date) : new Date(),
         description,
-        payee,
-        paymentMethod,
+        payee: payee || vendor || 'N/A', // Use vendor if payee not provided
+        paymentMethod: paymentMethod || 'CASH',
         reference,
         notes,
         receiptUrl,

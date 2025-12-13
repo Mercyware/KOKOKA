@@ -50,8 +50,6 @@ interface StaffFormData {
   status: string;
   // User account fields
   email: string;
-  password: string;
-  confirmPassword: string;
 }
 
 const CreateStaff: React.FC = () => {
@@ -83,8 +81,6 @@ const CreateStaff: React.FC = () => {
     status: 'ACTIVE',
     // User account fields
     email: '',
-    password: '',
-    confirmPassword: '',
   });
   
   useEffect(() => {
@@ -199,34 +195,18 @@ const CreateStaff: React.FC = () => {
       });
       return false;
     }
-    
-    if (!formData.password.trim()) {
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
       toast({
         title: "Error",
-        description: "Password is required",
+        description: "Please enter a valid email address",
         variant: "destructive",
       });
       return false;
     }
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (formData.password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
+
     return true;
   };
   
@@ -266,16 +246,15 @@ const CreateStaff: React.FC = () => {
         user: {
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           email: formData.email,
-          password: formData.password,
           role: 'STAFF'
         }
       };
       
       const response = await staffService.createStaffMember(createData);
-      
+
       toast({
         title: "Success",
-        description: "Staff member created successfully",
+        description: response.message || "Staff member created successfully. Login credentials have been sent to their email.",
       });
       
       // Redirect after a short delay
@@ -443,44 +422,22 @@ const CreateStaff: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="Enter email address"
-                      required
-                    />
-                    <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <div className="relative">
                   <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder="Enter password (min 6 characters)"
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="Enter email address"
                     required
                   />
+                  <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="Confirm password"
-                  required
-                />
+                <p className="text-sm text-slate-600 mt-1">
+                  A secure password will be automatically generated and sent to this email address.
+                </p>
               </div>
             </CardContent>
           </Card>

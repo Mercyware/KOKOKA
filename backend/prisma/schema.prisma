@@ -805,10 +805,28 @@ model Staff {
   subjectAssignments      SubjectAssignment[]
   teacherSubjects         TeacherSubject[]
   classTopicCoverages     ClassTopicCoverage[]
+  qualifications          Qualification[]
   // profilePicture      FileManager?  @relation("StaffProfilePicture", fields: [profilePictureId], references: [id])
 
   @@unique([schoolId, employeeId])
   @@map("staff")
+}
+
+model Qualification {
+  id            String   @id @default(uuid())
+  staffId       String
+  degree        String
+  institution   String
+  fieldOfStudy  String?
+  yearObtained  Int?
+  grade         String?
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  staff         Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@map("qualifications")
 }
 
 model Guardian {

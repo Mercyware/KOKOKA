@@ -99,9 +99,8 @@ export interface Bank {
 
 // ==================== CATEGORIES ====================
 
-export const getCategories = async (type?: 'INCOME' | 'EXPENDITURE') => {
-  const params = type ? { type } : {};
-  const response = await api.get('/accounting/categories', { params });
+export const getCategories = async (params?: { type?: 'INCOME' | 'EXPENDITURE' }) => {
+  const response = await api.get('/accounting/categories', { params: params || {} });
   return response.data;
 };
 

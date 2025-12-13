@@ -38,12 +38,20 @@ import {
   UserCheck,
   Loader2,
   Copy,
-  FileJson
+  FileJson,
+  Plus
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { StaffProfilePictureUpload } from '@/components/ui/StaffProfilePictureUpload';
 import Layout from '@/components/layout/Layout';
-import { getStaffMember } from '@/services/staffService';
+import {
+  getStaffMember,
+  addQualification,
+  updateQualification,
+  deleteQualification,
+  type Qualification,
+  type QualificationCreateData
+} from '@/services/staffService';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -61,6 +69,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ViewStaffProps {
   staffId?: string;
@@ -83,6 +92,18 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
 
+  // Qualification dialog state
+  const [qualificationDialogOpen, setQualificationDialogOpen] = useState(false);
+  const [editingQualification, setEditingQualification] = useState<Qualification | null>(null);
+  const [qualificationForm, setQualificationForm] = useState<QualificationCreateData>({
+    degree: '',
+    institution: '',
+    fieldOfStudy: '',
+    yearObtained: undefined,
+    grade: '',
+    description: ''
+  });
+
   useEffect(() => {
     if (!staffId) return;
 
@@ -91,6 +112,9 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
         setLoading(true);
         setError(null);
         const response = await getStaffMember(staffId);
+        console.log('Staff Response:', response);
+        console.log('Staff Data:', response.data);
+        console.log('Teacher Subjects:', response.data?.teacherSubjects);
         setStaff(response.data);
       } catch (err) {
         console.error('Error fetching staff:', err);
@@ -288,6 +312,97 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
     });
   };
 
+  // Qualification handlers
+  const handleAddQualification = () => {
+    setEditingQualification(null);
+    setQualificationForm({
+      degree: '',
+      institution: '',
+      fieldOfStudy: '',
+      yearObtained: undefined,
+      grade: '',
+      description: ''
+    });
+    setQualificationDialogOpen(true);
+  };
+
+  const handleEditQualification = (qualification: Qualification) => {
+    setEditingQualification(qualification);
+    setQualificationForm({
+      degree: qualification.degree,
+      institution: qualification.institution,
+      fieldOfStudy: qualification.fieldOfStudy || '',
+      yearObtained: qualification.yearObtained,
+      grade: qualification.grade || '',
+      description: qualification.description || ''
+    });
+    setQualificationDialogOpen(true);
+  };
+
+  const handleSaveQualification = async () => {
+    if (!qualificationForm.degree || !qualificationForm.institution) {
+      toast({
+        title: 'Required Fields',
+        description: 'Please fill in degree and institution.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (editingQualification) {
+        await updateQualification(staffId!, editingQualification.id, qualificationForm);
+        toast({
+          title: 'Qualification Updated',
+          description: 'Qualification has been updated successfully.',
+        });
+      } else {
+        await addQualification(staffId!, qualificationForm);
+        toast({
+          title: 'Qualification Added',
+          description: 'Qualification has been added successfully.',
+        });
+      }
+
+      // Refresh staff data
+      const response = await getStaffMember(staffId!);
+      setStaff(response.data);
+      setQualificationDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving qualification:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save qualification. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteQualification = async (qualificationId: string) => {
+    if (!confirm('Are you sure you want to delete this qualification?')) {
+      return;
+    }
+
+    try {
+      await deleteQualification(staffId!, qualificationId);
+      toast({
+        title: 'Qualification Deleted',
+        description: 'Qualification has been deleted successfully.',
+      });
+
+      // Refresh staff data
+      const response = await getStaffMember(staffId!);
+      setStaff(response.data);
+    } catch (error) {
+      console.error('Error deleting qualification:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete qualification. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -442,7 +557,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
                 <GraduationCap className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-green-600">{Array.isArray(staff.teacherSubjects) ? staff.teacherSubjects.length : 0}</h3>
+              <h3 className="text-2xl font-bold text-green-600">{Array.isArray(staff.subjectAssignments) ? staff.subjectAssignments.length : 0}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Subjects Teaching</p>
             </Card>
             <Card className="text-center p-4">
@@ -456,7 +571,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-full mx-auto mb-3">
                 <Award className="h-6 w-6 text-orange-600" />
               </div>
-              <h3 className="text-2xl font-bold text-orange-600">{staff.qualification ? '1' : '0'}</h3>
+              <h3 className="text-2xl font-bold text-orange-600">{Array.isArray(staff.qualifications) ? staff.qualifications.length : 0}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Qualifications</p>
             </Card>
           </div>
@@ -816,24 +931,79 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                 {/* Qualifications */}
                 <Separator className="my-6" />
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Qualifications</h3>
-                  {staff.qualification ? (
-                    <div className="p-4 bg-blue-50 rounded-lg dark:bg-blue-900/20">
-                      <div className="flex items-start space-x-3">
-                        <Award className="h-5 w-5 text-blue-600 mt-1" />
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{staff.qualification}</p>
-                          {staff.experience && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{staff.experience} years experience</p>
-                          )}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Qualifications</h3>
+                    <Button intent="action" size="sm" onClick={handleAddQualification}>
+                      <Award className="h-4 w-4 mr-2" />
+                      Add Qualification
+                    </Button>
+                  </div>
+                  {Array.isArray(staff.qualifications) && staff.qualifications.length > 0 ? (
+                    <div className="space-y-4">
+                      {staff.qualifications.map((qualification: Qualification) => (
+                        <div key={qualification.id} className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3 flex-1">
+                              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                <Award className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-semibold text-gray-900 dark:text-white">{qualification.degree}</h4>
+                                  {qualification.yearObtained && (
+                                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                      {qualification.yearObtained}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{qualification.institution}</p>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {qualification.fieldOfStudy && (
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                      <strong>Field:</strong> {qualification.fieldOfStudy}
+                                    </div>
+                                  )}
+                                  {qualification.grade && (
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                      <strong>Grade:</strong> {qualification.grade}
+                                    </div>
+                                  )}
+                                </div>
+                                {qualification.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">{qualification.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex space-x-1 ml-4">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditQualification(qualification)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleDeleteQualification(qualification.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
+                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
                       <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg">No qualifications recorded</p>
-                      <p className="text-gray-400 text-sm">Qualification details will be displayed here when added.</p>
+                      <p className="text-gray-500 text-lg font-medium">No qualifications recorded</p>
+                      <p className="text-gray-400 text-sm mb-4">Add qualifications to showcase educational background</p>
+                      <Button intent="action" size="sm" onClick={handleAddQualification}>
+                        <Award className="h-4 w-4 mr-2" />
+                        Add First Qualification
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -853,15 +1023,22 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {Array.isArray(staff.teacherSubjects) && staff.teacherSubjects.length > 0 ? (
+                  {Array.isArray(staff.subjectAssignments) && staff.subjectAssignments.length > 0 ? (
                     <div className="space-y-3">
-                      {staff.teacherSubjects.map((teacherSubject: any, index: number) => (
+                      {staff.subjectAssignments.map((assignment: any, index: number) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg dark:bg-gray-800">
                           <div className="flex items-center space-x-3">
                             <GraduationCap className="h-5 w-5 text-blue-600" />
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {teacherSubject.subject?.name || teacherSubject.subjectId || 'Unknown Subject'}
-                            </p>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {assignment.subject?.name || 'Unknown Subject'}
+                              </p>
+                              {assignment.class && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {assignment.class.name}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -990,6 +1167,116 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               <Button intent="primary" onClick={handleShareEmail}>
                 <Mail className="h-4 w-4 mr-2" />
                 Share
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Qualification Dialog */}
+        <Dialog open={qualificationDialogOpen} onOpenChange={setQualificationDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingQualification ? 'Edit Qualification' : 'Add Qualification'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingQualification
+                  ? 'Update the qualification details below.'
+                  : 'Add a new qualification to the staff member\'s profile.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="degree">Degree/Certificate *</Label>
+                  <Input
+                    id="degree"
+                    placeholder="e.g., Bachelor of Science, M.Ed."
+                    value={qualificationForm.degree}
+                    onChange={(e) =>
+                      setQualificationForm({ ...qualificationForm, degree: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="institution">Institution *</Label>
+                  <Input
+                    id="institution"
+                    placeholder="e.g., University of California"
+                    value={qualificationForm.institution}
+                    onChange={(e) =>
+                      setQualificationForm({ ...qualificationForm, institution: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fieldOfStudy">Field of Study</Label>
+                  <Input
+                    id="fieldOfStudy"
+                    placeholder="e.g., Mathematics, Education"
+                    value={qualificationForm.fieldOfStudy}
+                    onChange={(e) =>
+                      setQualificationForm({ ...qualificationForm, fieldOfStudy: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="yearObtained">Year Obtained</Label>
+                  <Input
+                    id="yearObtained"
+                    type="number"
+                    placeholder="e.g., 2020"
+                    value={qualificationForm.yearObtained || ''}
+                    onChange={(e) =>
+                      setQualificationForm({
+                        ...qualificationForm,
+                        yearObtained: e.target.value ? parseInt(e.target.value) : undefined
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="grade">Grade/Classification</Label>
+                <Input
+                  id="grade"
+                  placeholder="e.g., First Class Honors, Distinction"
+                  value={qualificationForm.grade}
+                  onChange={(e) =>
+                    setQualificationForm({ ...qualificationForm, grade: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Additional details about this qualification..."
+                  rows={3}
+                  value={qualificationForm.description}
+                  onChange={(e) =>
+                    setQualificationForm({ ...qualificationForm, description: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                intent="cancel"
+                onClick={() => {
+                  setQualificationDialogOpen(false);
+                  setEditingQualification(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button intent="primary" onClick={handleSaveQualification}>
+                {editingQualification ? 'Update' : 'Add'} Qualification
               </Button>
             </DialogFooter>
           </DialogContent>

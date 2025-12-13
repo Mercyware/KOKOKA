@@ -1,5 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
 const asyncHandler = require('express-async-handler');
+const bcrypt = require('bcryptjs');
+const { generateSecurePassword } = require('../utils/passwordGenerator');
+const queuedEmailService = require('../services/queuedEmailService');
 
 const prisma = new PrismaClient();
 
@@ -29,8 +32,27 @@ exports.getAllStaff = asyncHandler(async (req, res) => {
         include: {
           subject: {
             select: {
+              id: true,
               name: true,
               code: true
+            }
+          }
+        }
+      },
+      subjectAssignments: {
+        include: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              grade: true
             }
           }
         }
@@ -39,6 +61,7 @@ exports.getAllStaff = asyncHandler(async (req, res) => {
         include: {
           class: {
             select: {
+              id: true,
               name: true,
               grade: true
             }
@@ -83,8 +106,27 @@ exports.getStaffById = asyncHandler(async (req, res) => {
         include: {
           subject: {
             select: {
+              id: true,
               name: true,
               code: true
+            }
+          }
+        }
+      },
+      subjectAssignments: {
+        include: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              grade: true
             }
           }
         }
@@ -93,10 +135,16 @@ exports.getStaffById = asyncHandler(async (req, res) => {
         include: {
           class: {
             select: {
+              id: true,
               name: true,
               grade: true
             }
           }
+        }
+      },
+      qualifications: {
+        orderBy: {
+          yearObtained: 'desc'
         }
       }
     }
@@ -127,6 +175,8 @@ exports.createStaff = asyncHandler(async (req, res) => {
 
   let userObj;
 
+  let generatedPassword = null;
+
   // If user object is provided, create a new user
   if (user && !userId) {
     // Check if user with this email already exists
@@ -138,13 +188,17 @@ exports.createStaff = asyncHandler(async (req, res) => {
       throw new Error('User with this email already exists');
     }
 
+    // Generate secure password for the new user
+    generatedPassword = generateSecurePassword(12);
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
     // Create new user
     userObj = await prisma.user.create({
       data: {
         schoolId: req.school.id,
         name: user.name,
         email: user.email,
-        passwordHash: user.password, // Note: This should be hashed
+        passwordHash: hashedPassword,
         role: user.role || 'STAFF'
       }
     });
@@ -221,9 +275,56 @@ exports.createStaff = asyncHandler(async (req, res) => {
     data: { role: 'STAFF' }
   });
 
+  // Send welcome email with login credentials if password was generated (queued, non-blocking)
+  if (generatedPassword) {
+    // Queue the email asynchronously - don't wait for it to complete
+    queuedEmailService.sendEmail({
+      to: userObj.email,
+      subject: `Welcome to ${req.school.name || 'School'} - Your Account Details`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #0891B2;">Welcome to ${req.school.name || 'School'}!</h2>
+          <p>Dear ${userObj.name},</p>
+          <p>Your staff account has been created successfully. Below are your login credentials:</p>
+
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 10px 0;"><strong>Email:</strong> ${userObj.email}</p>
+            <p style="margin: 10px 0;"><strong>Temporary Password:</strong> <code style="background-color: #e9ecef; padding: 4px 8px; border-radius: 4px; font-size: 14px;">${generatedPassword}</code></p>
+            <p style="margin: 10px 0;"><strong>Employee ID:</strong> ${employeeId}</p>
+            <p style="margin: 10px 0;"><strong>Position:</strong> ${position || 'Staff'}</p>
+          </div>
+
+          <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404;"><strong>⚠️ Important Security Notice:</strong></p>
+            <p style="margin: 10px 0 0 0; color: #856404;">Please change your password immediately after your first login for security purposes.</p>
+          </div>
+
+          <p style="margin-top: 30px;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}" style="display: inline-block; padding: 12px 24px; background-color: #0891B2; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Login to Your Account</a>
+          </p>
+
+          <p style="margin-top: 30px; color: #6c757d; font-size: 14px;">
+            If you have any questions or need assistance, please contact the school administration.
+          </p>
+
+          <hr style="border: none; border-top: 1px solid #e9ecef; margin: 30px 0;">
+          <p style="color: #6c757d; font-size: 12px; text-align: center;">
+            This is an automated message from ${req.school.name || 'School'}. Please do not reply to this email.
+          </p>
+        </div>
+      `,
+      text: `Welcome to ${req.school.name || 'School'}!\n\nDear ${userObj.name},\n\nYour staff account has been created successfully.\n\nLogin Credentials:\nEmail: ${userObj.email}\nTemporary Password: ${generatedPassword}\nEmployee ID: ${employeeId}\nPosition: ${position || 'Staff'}\n\nIMPORTANT: Please change your password immediately after your first login.\n\nLogin URL: ${process.env.FRONTEND_URL || 'http://localhost:8080'}\n\nIf you have any questions, please contact the school administration.`,
+      priority: 3 // Higher priority for welcome emails
+    }).catch(err => {
+      // Log error but don't fail the request
+      console.error('Failed to queue welcome email:', err);
+    });
+  }
+
   res.status(201).json({
     success: true,
-    data: staff
+    data: staff,
+    message: generatedPassword ? 'Staff created successfully. Login credentials have been sent to their email.' : 'Staff created successfully.'
   });
 });
 
@@ -832,10 +933,146 @@ exports.deleteProfilePicture = async (req, res) => {
 
   } catch (error) {
     console.error('Error deleting staff profile picture:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Server error occurred while deleting profile picture',
-      error: error.message 
+      error: error.message
     });
   }
 };
+
+// @desc    Add qualification to staff
+// @route   POST /api/staff/:id/qualifications
+// @access  Private/Admin
+exports.addQualification = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { degree, institution, fieldOfStudy, yearObtained, grade, description } = req.body;
+
+  // Verify staff exists and belongs to the school
+  const staff = await prisma.staff.findFirst({
+    where: {
+      id,
+      schoolId: req.school.id
+    }
+  });
+
+  if (!staff) {
+    res.status(404);
+    throw new Error('Staff not found');
+  }
+
+  // Create qualification
+  const qualification = await prisma.qualification.create({
+    data: {
+      staffId: id,
+      degree,
+      institution,
+      fieldOfStudy,
+      yearObtained: yearObtained ? parseInt(yearObtained) : null,
+      grade,
+      description
+    }
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Qualification added successfully',
+    data: qualification
+  });
+});
+
+// @desc    Update qualification
+// @route   PUT /api/staff/:staffId/qualifications/:qualificationId
+// @access  Private/Admin
+exports.updateQualification = asyncHandler(async (req, res) => {
+  const { staffId, qualificationId } = req.params;
+  const { degree, institution, fieldOfStudy, yearObtained, grade, description } = req.body;
+
+  // Verify staff exists and belongs to the school
+  const staff = await prisma.staff.findFirst({
+    where: {
+      id: staffId,
+      schoolId: req.school.id
+    }
+  });
+
+  if (!staff) {
+    res.status(404);
+    throw new Error('Staff not found');
+  }
+
+  // Verify qualification exists and belongs to this staff
+  const existingQualification = await prisma.qualification.findFirst({
+    where: {
+      id: qualificationId,
+      staffId
+    }
+  });
+
+  if (!existingQualification) {
+    res.status(404);
+    throw new Error('Qualification not found');
+  }
+
+  // Update qualification
+  const qualification = await prisma.qualification.update({
+    where: { id: qualificationId },
+    data: {
+      degree,
+      institution,
+      fieldOfStudy,
+      yearObtained: yearObtained ? parseInt(yearObtained) : null,
+      grade,
+      description
+    }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Qualification updated successfully',
+    data: qualification
+  });
+});
+
+// @desc    Delete qualification
+// @route   DELETE /api/staff/:staffId/qualifications/:qualificationId
+// @access  Private/Admin
+exports.deleteQualification = asyncHandler(async (req, res) => {
+  const { staffId, qualificationId } = req.params;
+
+  // Verify staff exists and belongs to the school
+  const staff = await prisma.staff.findFirst({
+    where: {
+      id: staffId,
+      schoolId: req.school.id
+    }
+  });
+
+  if (!staff) {
+    res.status(404);
+    throw new Error('Staff not found');
+  }
+
+  // Verify qualification exists and belongs to this staff
+  const qualification = await prisma.qualification.findFirst({
+    where: {
+      id: qualificationId,
+      staffId
+    }
+  });
+
+  if (!qualification) {
+    res.status(404);
+    throw new Error('Qualification not found');
+  }
+
+  // Delete qualification
+  await prisma.qualification.delete({
+    where: { id: qualificationId }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Qualification deleted successfully'
+  });
+});

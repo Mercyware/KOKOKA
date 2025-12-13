@@ -178,6 +178,10 @@ async function main() {
   console.log('💳 Creating payments...');
   const payments = await createPayments(school.id, invoices, students, users[0].id);
 
+  // 38. Create Accounting Categories
+  console.log('📊 Creating accounting categories...');
+  const accountingCategories = await createAccountingCategories(school.id);
+
   console.log('🎉 Database seeding completed successfully!');
   console.log(`
 📊 Summary:
@@ -233,6 +237,7 @@ async function clearExistingData() {
     await prisma.classSubjectHistory.deleteMany();
     await prisma.teacherSubject.deleteMany();
     await prisma.student.deleteMany();
+    await prisma.qualification.deleteMany();
     await prisma.staff.deleteMany();
     await prisma.subject.deleteMany();
     await prisma.class.deleteMany();
@@ -1002,7 +1007,88 @@ async function createStaff(schoolId, users) {
     staff.push(staffRecord);
   }
 
+  // Create qualifications for staff members
+  console.log('   🎓 Adding qualifications for staff...');
+  await createStaffQualifications(staff);
+
   return staff;
+}
+
+async function createStaffQualifications(staff) {
+  const qualificationsData = [
+    // John Doe - Mathematics Teacher
+    {
+      staffId: staff[0].id,
+      degree: 'Bachelor of Science',
+      institution: 'University of California, Berkeley',
+      fieldOfStudy: 'Mathematics',
+      yearObtained: 2007,
+      grade: 'First Class Honors',
+      description: 'Specialized in Advanced Calculus and Linear Algebra'
+    },
+    {
+      staffId: staff[0].id,
+      degree: 'Master of Education',
+      institution: 'Stanford University',
+      fieldOfStudy: 'Mathematics Education',
+      yearObtained: 2010,
+      grade: 'Distinction',
+      description: 'Focus on innovative teaching methodologies and curriculum development'
+    },
+    // Mary Wilson - English Teacher
+    {
+      staffId: staff[1].id,
+      degree: 'Bachelor of Arts',
+      institution: 'Yale University',
+      fieldOfStudy: 'English Literature',
+      yearObtained: 2009,
+      grade: 'Summa Cum Laude',
+      description: 'Specialized in 19th Century British Literature'
+    },
+    {
+      staffId: staff[1].id,
+      degree: 'Master of Arts',
+      institution: 'Columbia University',
+      fieldOfStudy: 'English Literature',
+      yearObtained: 2012,
+      grade: 'High Distinction',
+      description: 'Thesis on Modern American Poetry and Creative Writing'
+    },
+    // David Garcia - Biology Teacher
+    {
+      staffId: staff[2].id,
+      degree: 'Bachelor of Science',
+      institution: 'MIT',
+      fieldOfStudy: 'Biology',
+      yearObtained: 2006,
+      grade: 'First Class',
+      description: 'Focus on Molecular Biology and Genetics'
+    },
+    {
+      staffId: staff[2].id,
+      degree: 'Master of Science',
+      institution: 'Harvard University',
+      fieldOfStudy: 'Biology',
+      yearObtained: 2009,
+      grade: 'Distinction',
+      description: 'Research in Cellular Biology and Biotechnology'
+    },
+    {
+      staffId: staff[2].id,
+      degree: 'Teaching Certificate',
+      institution: 'California Teaching Credential Program',
+      fieldOfStudy: 'Secondary Science Education',
+      yearObtained: 2011,
+      grade: 'Pass',
+      description: 'Certified to teach Biology and General Science at secondary level'
+    }
+  ];
+
+  for (const qualification of qualificationsData) {
+    await prisma.qualification.create({
+      data: qualification
+    });
+  }
 }
 
 async function createStudents(schoolId, users, classes, houses, academicYearId, sections) {
@@ -4507,6 +4593,52 @@ async function createPayments(schoolId, invoices, students, processedBy) {
     return payments;
   } catch (error) {
     console.error('❌ Error creating payments:', error);
+    return [];
+  }
+}
+
+// Create Accounting Categories
+async function createAccountingCategories(schoolId) {
+  try {
+    const categories = [];
+
+    // Income Categories
+    const incomeCategories = [
+      { name: 'Student Fees', description: 'Income from student tuition and fees', type: 'INCOME' }
+    ];
+
+    // Expenditure Categories
+    const expenditureCategories = [
+      { name: 'Salaries & Wages', description: 'Staff salaries and wages', type: 'EXPENDITURE' },
+      { name: 'Utilities', description: 'Electricity, water, internet', type: 'EXPENDITURE' },
+      { name: 'Office Supplies', description: 'Stationery and office supplies', type: 'EXPENDITURE' },
+      { name: 'Maintenance & Repairs', description: 'Building and equipment maintenance', type: 'EXPENDITURE' },
+      { name: 'Transportation', description: 'Vehicle fuel and maintenance', type: 'EXPENDITURE' },
+      { name: 'Teaching Materials', description: 'Books, equipment, and teaching aids', type: 'EXPENDITURE' },
+      { name: 'Professional Services', description: 'Legal, accounting, consulting fees', type: 'EXPENDITURE' },
+      { name: 'Insurance', description: 'Insurance premiums', type: 'EXPENDITURE' },
+      { name: 'Other Expenses', description: 'Miscellaneous expenses', type: 'EXPENDITURE' }
+    ];
+
+    const allCategories = [...incomeCategories, ...expenditureCategories];
+
+    for (const cat of allCategories) {
+      const category = await prisma.accountingCategory.create({
+        data: {
+          schoolId,
+          name: cat.name,
+          type: cat.type,
+          description: cat.description,
+          isActive: true
+        }
+      });
+      categories.push(category);
+    }
+
+    console.log(`✅ Created ${incomeCategories.length} income and ${expenditureCategories.length} expenditure categories`);
+    return categories;
+  } catch (error) {
+    console.error('❌ Error creating accounting categories:', error);
     return [];
   }
 }

@@ -98,7 +98,7 @@ import { FeeStructuresPage, InvoicesPage, PaymentsPage, PaymentReportPage, Outst
 import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
 import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
 import PaymentCallbackPage from "./pages/finance/PaymentCallbackPage";
-import { AccountingDashboard } from "./pages/accounting";
+import { AccountingDashboard, IncomePage, ExpenditurePage } from "./pages/accounting";
 // Results Components
 import TerminalReport from "./pages/results/TerminalReport";
 import TerminalReportSelector from "./pages/results/TerminalReportSelector";
@@ -309,6 +309,8 @@ const App = () => (
 
             {/* Accounting Routes */}
             <Route path="/accounting/dashboard" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
+            <Route path="/accounting/income" element={<ProtectedRoute><IncomePage /></ProtectedRoute>} />
+            <Route path="/accounting/expenditure" element={<ProtectedRoute><ExpenditurePage /></ProtectedRoute>} />
 
             {/* Notifications */}
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
