@@ -52,6 +52,8 @@ import {
   type Qualification,
   type QualificationCreateData
 } from '@/services/staffService';
+import { DocumentUpload } from '@/components/ui/DocumentUpload';
+import documentService, { Document } from '@/services/documentService';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -104,6 +106,10 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
     description: ''
   });
 
+  // Document state
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+
   useEffect(() => {
     if (!staffId) return;
 
@@ -126,6 +132,38 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
 
     fetchStaff();
   }, [staffId]);
+
+  useEffect(() => {
+    if (activeTab === 'documents' && staffId && staff) {
+      loadDocuments();
+    }
+  }, [activeTab, staffId, staff]);
+
+  const loadDocuments = async () => {
+    try {
+      setLoadingDocuments(true);
+
+      // Backend supports staffId filter via metadata.staffId query
+      const response = await documentService.getDocuments({
+        limit: 100,
+        // @ts-ignore - staffId is not yet in the strict interface but sent as extra param
+        staffId: staffId
+      });
+
+      if (response.data) {
+        setDocuments(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to load documents", error);
+      toast({
+        title: "Error",
+        description: "Failed to load documents.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Users },
@@ -424,7 +462,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Error Loading Staff Member</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-            <Button intent="primary" onClick={() => window.location.reload()}>Try Again</Button>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </div>
       </Layout>
@@ -439,7 +477,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Staff Member Not Found</h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">The requested staff profile could not be found.</p>
-            <Button intent="primary" onClick={handleBack}>Back to Staff List</Button>
+            <Button onClick={handleBack}>Back to Staff List</Button>
           </div>
         </div>
       </Layout>
@@ -544,37 +582,37 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             </div>
           </div>
         </div>
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="text-center p-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-3">
-                <Calendar className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-blue-600">{calculateYearsOfService(staff.joiningDate || staff.createdAt)}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Years of Service</p>
-            </Card>
-            <Card className="text-center p-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
-                <GraduationCap className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-green-600">{Array.isArray(staff.subjectAssignments) ? staff.subjectAssignments.length : 0}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Subjects Teaching</p>
-            </Card>
-            <Card className="text-center p-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mx-auto mb-3">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-purple-600">{Array.isArray(staff.classTeachers) ? staff.classTeachers.length : 0}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Classes Assigned</p>
-            </Card>
-            <Card className="text-center p-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-full mx-auto mb-3">
-                <Award className="h-6 w-6 text-orange-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-orange-600">{Array.isArray(staff.qualifications) ? staff.qualifications.length : 0}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Qualifications</p>
-            </Card>
-          </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="text-center p-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-3">
+              <Calendar className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-blue-600">{calculateYearsOfService(staff.joiningDate || staff.createdAt)}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Years of Service</p>
+          </Card>
+          <Card className="text-center p-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
+              <GraduationCap className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-green-600">{Array.isArray(staff.subjectAssignments) ? staff.subjectAssignments.length : 0}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Subjects Teaching</p>
+          </Card>
+          <Card className="text-center p-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mx-auto mb-3">
+              <Users className="h-6 w-6 text-purple-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-purple-600">{Array.isArray(staff.classTeachers) ? staff.classTeachers.length : 0}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Classes Assigned</p>
+          </Card>
+          <Card className="text-center p-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-full mx-auto mb-3">
+              <Award className="h-6 w-6 text-orange-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-orange-600">{Array.isArray(staff.qualifications) ? staff.qualifications.length : 0}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Qualifications</p>
+          </Card>
+        </div>
 
         {/* Tabs */}
         <div className="border-b border-gray-200 dark:border-gray-700">
@@ -583,11 +621,10 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-siohioma-primary text-siohioma-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
+                className={`flex items-center py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === tab.id
+                  ? 'border-siohioma-primary text-siohioma-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
                 {tab.label}
@@ -597,81 +634,81 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
         </div>
 
         {/* Tab Content */}
-              {activeTab === 'overview' && (
-                <div className="space-y-6">
-                  {/* Profile Picture Management */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Camera className="h-6 w-6 text-blue-600" />
-                        <span className="text-xl">Profile Picture</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
-                        <div className="flex-shrink-0">
-                          <StaffProfilePictureUpload
-                            staffId={staffId}
-                            currentImageUrl={staff.user?.profileImage || staff.photo}
-                            staffName={formatStaffName(staff)}
-                            size="lg"
-                            onUploadSuccess={(imageUrl) => {
-                              setStaff((prev: any) => ({ 
-                                ...prev, 
-                                user: {
-                                  ...prev.user,
-                                  profileImage: imageUrl
-                                },
-                                photo: imageUrl // Also update legacy field
-                              }));
-                            }}
-                            onDeleteSuccess={() => {
-                              setStaff((prev: any) => ({ 
-                                ...prev, 
-                                user: {
-                                  ...prev.user,
-                                  profileImage: null
-                                },
-                                photo: null 
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                            Manage Profile Picture
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            Upload a clear, high-quality photo of the staff member. The image will be automatically 
-                            resized and optimized for the best display across the system.
-                          </p>
-                          <div className="space-y-2">
-                            <p className="text-xs text-gray-500">
-                              <strong>Requirements:</strong>
-                            </p>
-                            <ul className="text-xs text-gray-500 space-y-1">
-                              <li>• File formats: JPEG, PNG, or WebP</li>
-                              <li>• Maximum file size: 5MB</li>
-                              <li>• Recommended dimensions: 400x400 pixels or larger</li>
-                              <li>• Square images work best</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Profile Picture Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Camera className="h-6 w-6 text-blue-600" />
+                  <span className="text-xl">Profile Picture</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-8">
+                  <div className="flex-shrink-0">
+                    <StaffProfilePictureUpload
+                      staffId={staffId!}
+                      currentImageUrl={staff.user?.profileImage || staff.photo}
+                      staffName={formatStaffName(staff)}
+                      size="lg"
+                      onUploadSuccess={(imageUrl) => {
+                        setStaff((prev: any) => ({
+                          ...prev,
+                          user: {
+                            ...prev.user,
+                            profileImage: imageUrl
+                          },
+                          photo: imageUrl // Also update legacy field
+                        }));
+                      }}
+                      onDeleteSuccess={() => {
+                        setStaff((prev: any) => ({
+                          ...prev,
+                          user: {
+                            ...prev.user,
+                            profileImage: null
+                          },
+                          photo: null
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Manage Profile Picture
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Upload a clear, high-quality photo of the staff member. The image will be automatically
+                      resized and optimized for the best display across the system.
+                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500">
+                        <strong>Requirements:</strong>
+                      </p>
+                      <ul className="text-xs text-gray-500 space-y-1">
+                        <li>• File formats: JPEG, PNG, or WebP</li>
+                        <li>• Maximum file size: 5MB</li>
+                        <li>• Recommended dimensions: 400x400 pixels or larger</li>
+                        <li>• Square images work best</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  {/* Personal Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <User className="h-6 w-6 text-blue-600" />
-                        <span className="text-xl">Personal Information</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="space-y-4">
+            {/* Personal Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="h-6 w-6 text-blue-600" />
+                  <span className="text-xl">Personal Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-4">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                         <Calendar className="h-5 w-5 text-blue-600" />
@@ -731,8 +768,8 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                           </p>
                           {staff.user?.emailVerified !== undefined && (
                             <Badge variant="secondary" className={
-                              staff.user.emailVerified 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              staff.user.emailVerified
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                             }>
                               {staff.user.emailVerified ? 'Verified' : 'Unverified'}
@@ -831,8 +868,8 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
           </div>
         )}
 
-              {activeTab === 'employment' && (
-                <div className="space-y-6">
+        {activeTab === 'employment' && (
+          <div className="space-y-6">
             {/* Employment Information */}
             <Card>
               <CardHeader>
@@ -933,7 +970,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Qualifications</h3>
-                    <Button intent="action" size="sm" onClick={handleAddQualification}>
+                    <Button size="sm" onClick={handleAddQualification}>
                       <Award className="h-4 w-4 mr-2" />
                       Add Qualification
                     </Button>
@@ -1000,7 +1037,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
                       <Award className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500 text-lg font-medium">No qualifications recorded</p>
                       <p className="text-gray-400 text-sm mb-4">Add qualifications to showcase educational background</p>
-                      <Button intent="action" size="sm" onClick={handleAddQualification}>
+                      <Button size="sm" onClick={handleAddQualification}>
                         <Award className="h-4 w-4 mr-2" />
                         Add First Qualification
                       </Button>
@@ -1012,8 +1049,8 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
           </div>
         )}
 
-              {activeTab === 'subjects' && (
-                <div className="space-y-6">
+        {activeTab === 'subjects' && (
+          <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -1087,28 +1124,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
           </div>
         )}
 
-              {activeTab === 'documents' && (
-                <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                  <span>Staff Documents</span>
-                </div>
-                <Button intent="action" size="sm" leftIcon={<Download />}>
-                  Upload Document
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">No documents uploaded</p>
-                <p className="text-gray-400 text-sm">Staff documents will appear here when uploaded.</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {activeTab === 'activity' && (
           <Card>
@@ -1156,7 +1172,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             </div>
             <DialogFooter>
               <Button
-                intent="cancel"
+                variant="outline"
                 onClick={() => {
                   setShareDialogOpen(false);
                   setShareEmail('');
@@ -1164,7 +1180,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               >
                 Cancel
               </Button>
-              <Button intent="primary" onClick={handleShareEmail}>
+              <Button onClick={handleShareEmail}>
                 <Mail className="h-4 w-4 mr-2" />
                 Share
               </Button>
@@ -1267,7 +1283,7 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
             </div>
             <DialogFooter>
               <Button
-                intent="cancel"
+                variant="outline"
                 onClick={() => {
                   setQualificationDialogOpen(false);
                   setEditingQualification(null);
@@ -1275,63 +1291,107 @@ const ViewStaff: React.FC<ViewStaffProps> = ({ staffId: propStaffId, onBack, onE
               >
                 Cancel
               </Button>
-              <Button intent="primary" onClick={handleSaveQualification}>
+              <Button onClick={handleSaveQualification}>
                 {editingQualification ? 'Update' : 'Add'} Qualification
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Print Styles */}
-        <style>{`
-          @media print {
-            nav,
-            .no-print,
-            button:not(.print-button),
-            [role="dialog"],
-            header > div:first-child,
-            .bg-gradient-to-r > div > div:last-child {
-              display: none !important;
-            }
 
-            body {
-              print-color-adjust: exact;
-              -webkit-print-color-adjust: exact;
-            }
 
-            .container {
-              max-width: 100% !important;
-              padding: 0 !important;
-            }
-
-            .space-y-6 > * {
-              page-break-inside: avoid;
-            }
-
-            .bg-gradient-to-r {
-              background: #2563eb !important;
-              color: white !important;
-              padding: 1rem !important;
-            }
-
-            .shadow-lg,
-            .shadow-sm,
-            .shadow {
-              box-shadow: none !important;
-            }
-
-            .space-y-6 {
-              gap: 0.5rem !important;
-            }
-
-            nav[role="tablist"],
-            .border-b.border-gray-200 {
-              display: none !important;
-            }
-          }
-        `}</style>
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <span className="text-xl">Documents</span>
+                </CardTitle>
+                <DocumentUpload
+                  onUploadSuccess={loadDocuments}
+                  staffId={staffId}
+                  trigger={
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Upload Document
+                    </Button>
+                  }
+                />
+              </CardHeader>
+              <CardContent>
+                {loadingDocuments ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  </div>
+                ) : documents.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p>No documents found.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {documents.map((doc) => (
+                      <Card key={doc._id} className="overflow-hidden border shadow-sm hover:shadow-md transition-shadow">
+                        <div className="p-4 flex items-start space-x-3">
+                          <div className="flex-shrink-0 bg-blue-50 p-2 rounded">
+                            <FileText className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold truncate" title={doc.title}>
+                              {doc.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 truncate">
+                              {doc.originalName}
+                            </p>
+                            <div className="flex items-center mt-2 space-x-2">
+                              <Badge variant="secondary" className="text-[10px] px-1.5 h-5">
+                                {doc.fileExtension}
+                              </Badge>
+                              <span className="text-xs text-gray-400">
+                                {(doc.fileSize / 1024).toFixed(0)} KB
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-2 border-t flex justify-between items-center">
+                          <span className="text-xs text-gray-500">
+                            {new Date(doc.createdAt).toLocaleDateString()}
+                          </span>
+                          <div className="flex space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => window.open(documentService.getDownloadUrl(doc._id), '_blank')}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                              onClick={async () => {
+                                if (confirm('Delete this document?')) {
+                                  await documentService.deleteDocument(doc._id);
+                                  loadDocuments();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
-    </Layout>
+    </Layout >
   );
 };
 

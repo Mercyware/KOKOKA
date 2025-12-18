@@ -45,7 +45,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const assessmentRoutes = require('./routes/assessmentRoutes');
 // const gradeRoutes = require('./routes/gradeRoutes');
-// const documentRoutes = require('./routes/documentRoutes');
+const documentRoutes = require('./routes/documentRoutes');
 // const parentPortalRoutes = require('./routes/parentPortalRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const scoreRoutes = require('./routes/scoreRoutes');
@@ -241,7 +241,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assessments', assessmentRoutes);
 // app.use('/api/grades', gradeRoutes);
-// app.use('/api/documents', documentRoutes);
+app.use('/api/documents', documentRoutes);
 // app.use('/api/parent-portal', parentPortalRoutes);
 
 // Notification routes
@@ -308,7 +308,7 @@ if (env.FEATURE_AI_ENABLED === 'true') {
 if (env.isProduction()) {
   // Set static folder
   app.use(express.static(path.join(__dirname, '../frontend/build')));
-  
+
   // Serve frontend
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
@@ -330,7 +330,7 @@ app.use('*', (req, res) => {
 const PORT = env.PORT;
 const server = app.listen(PORT, async () => {
   logger.info(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
-  
+
   // Initialize Socket.IO if notifications are enabled
   if (process.env.WEBSOCKET_NOTIFICATIONS_ENABLED === 'true') {
     try {
@@ -340,7 +340,7 @@ const server = app.listen(PORT, async () => {
       logger.error('Failed to initialize Socket.IO:', error);
     }
   }
-  
+
   // Create default notification templates for schools
   if (process.env.TEMPLATES_AUTO_CREATE === 'true') {
     try {
@@ -356,7 +356,7 @@ const server = app.listen(PORT, async () => {
 process.on('unhandledRejection', (err) => {
   logger.error(`Unhandled Rejection: ${err.message}`);
   logger.logError(err, { component: 'server', type: 'unhandledRejection' });
-  
+
   // Close server & exit process
   server.close(() => process.exit(1));
 });
@@ -365,7 +365,7 @@ process.on('unhandledRejection', (err) => {
 process.on('uncaughtException', (err) => {
   logger.error(`Uncaught Exception: ${err.message}`);
   logger.logError(err, { component: 'server', type: 'uncaughtException' });
-  
+
   // Close server & exit process
   server.close(() => process.exit(1));
 });

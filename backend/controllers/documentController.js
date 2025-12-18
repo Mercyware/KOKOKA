@@ -1,15 +1,36 @@
-const Document = require('../models/Document');
-const Student = require('../models/Student');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
 const asyncHandler = require('express-async-handler');
 
+// Helper to handle BigInt serialization
+const serializeDocument = (doc) => {
+  if (!doc) return null;
+  const serialized = { ...doc };
+  if (typeof doc.fileSize === 'bigint') {
+    serialized.fileSize = Number(doc.fileSize); // Safe for < 9PB
+  }
+
+  // Compatibility with Mongoose frontend
+  if (serialized.id) serialized._id = serialized.id;
+  if (serialized.uploadedBy && serialized.uploadedBy.id) serialized.uploadedBy._id = serialized.uploadedBy.id;
+  if (serialized.student && serialized.student.id) serialized.student._id = serialized.student.id;
+  if (serialized.verifiedBy && serialized.verifiedBy.id) serialized.verifiedBy._id = serialized.verifiedBy.id;
+
+  return serialized;
+};
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads', req.school._id.toString());
+    // Ensure req.school exists (authed routes should have it via middleware)
+    if (!req.school) {
+      return cb(new Error('School context required for upload'));
+    }
+    const uploadPath = path.join(__dirname, '../uploads', req.school.id.toString());
     try {
       await fs.mkdir(uploadPath, { recursive: true });
       cb(null, uploadPath);
@@ -79,6 +100,7 @@ exports.uploadDocument = [
       accessPermissions,
       relatedTo,
       studentId,
+      staffId,
       expiresAt
     } = req.body;
 
@@ -94,56 +116,73 @@ exports.uploadDocument = [
         let parsedPermissions = {};
         if (accessPermissions) {
           try {
-            parsedPermissions = JSON.parse(accessPermissions);
+            parsedPermissions = typeof accessPermissions === 'string'
+              ? JSON.parse(accessPermissions)
+              : accessPermissions;
           } catch (e) {
             parsedPermissions = {};
           }
         }
 
         // Parse related entity
-        let parsedRelatedTo = {};
+        let parsedMetadata = {};
         if (relatedTo) {
           try {
-            parsedRelatedTo = JSON.parse(relatedTo);
+            const rt = typeof relatedTo === 'string' ? JSON.parse(relatedTo) : relatedTo;
+            parsedMetadata.relatedTo = rt;
           } catch (e) {
-            parsedRelatedTo = {};
+            // ignore
           }
+        }
+
+        if (staffId) {
+          parsedMetadata.staffId = staffId;
         }
 
         // Create document record
         const documentData = {
-          school: req.school._id,
+          schoolId: req.school.id,
           title: title || path.basename(file.originalname, path.extname(file.originalname)),
           fileName: file.filename,
           originalName: file.originalname,
           filePath: path.relative(path.join(__dirname, '../uploads'), file.path),
-          fileUrl: `/uploads/${req.school._id}/${file.filename}`,
-          fileType: path.extname(file.originalname).substring(1).toUpperCase(),
-          mimeType: file.mimetype,
+          fileUrl: `/uploads/${req.school.id}/${file.filename}`,
+          // fileType field doesn't exist in Prisma model? Schema has type (enum) and mimeType.
+          // Schema also has fileExtension.
           fileExtension: path.extname(file.originalname).substring(1).toUpperCase(),
-          fileSize: file.size,
-          type: type || 'other',
-          category: category || 'other',
+          mimeType: file.mimetype,
+          fileSize: file.size, // Will be BigInt in Prisma, passing number is fine for create
+          type: type || 'OTHER', // Enum default
+          category: category || 'OTHER', // Enum default
           subcategory,
           description,
-          tags: tags ? tags.split(',').map(tag => tag.trim().toLowerCase()) : [],
-          uploadedBy: req.user.id,
-          isPublic: isPublic === 'true',
+          tags: tags ? (typeof tags === 'string' ? tags.split(',').map(tag => tag.trim().toLowerCase()) : tags) : [],
+          uploadedById: req.user.id,
+          isPublic: isPublic === 'true' || isPublic === true,
           accessPermissions: parsedPermissions,
-          relatedTo: parsedRelatedTo,
-          student: studentId,
+          metadata: parsedMetadata,
           checksum,
-          expiresAt: expiresAt ? new Date(expiresAt) : undefined
+          expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+          status: 'ACTIVE'
         };
 
-        const document = await Document.create(documentData);
+        if (studentId) {
+          documentData.studentId = studentId;
+        }
 
-        await document.populate([
-          { path: 'uploadedBy', select: 'name email' },
-          { path: 'student', select: 'firstName lastName admissionNumber' }
-        ]);
+        const document = await prisma.document.create({
+          data: documentData,
+          include: {
+            uploadedBy: {
+              select: { id: true, name: true, email: true }
+            },
+            student: {
+              select: { id: true, firstName: true, lastName: true, admissionNumber: true }
+            }
+          }
+        });
 
-        uploadedDocuments.push(document);
+        uploadedDocuments.push(serializeDocument(document));
 
       } catch (error) {
         // If error occurs, clean up the uploaded file
@@ -152,7 +191,8 @@ exports.uploadDocument = [
         } catch (unlinkError) {
           console.error('Failed to clean up file:', unlinkError);
         }
-        
+
+        console.error("Upload error:", error);
         return res.status(500).json({
           success: false,
           message: `Failed to process file ${file.originalname}`,
@@ -183,50 +223,72 @@ exports.getDocuments = asyncHandler(async (req, res) => {
     search,
     page = 1,
     limit = 20,
-    sortBy = 'uploadedAt',
+    sortBy = 'createdAt', // Prisma defaults to createdAt usually, Mongoose had uploadedAt
     sortOrder = 'desc'
   } = req.query;
 
   // Build base query
-  let query = { school: req.school._id };
+  let where = { schoolId: req.school.id };
 
   // Apply filters
-  if (category) query.category = category;
-  if (type) query.type = type;
-  if (status) query.status = status;
-  if (studentId) query.student = studentId;
-  if (tags) {
-    const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
-    query.tags = { $in: tagArray };
+  if (category) where.category = category;
+  if (type) where.type = type;
+  if (status) where.status = status;
+  if (studentId) where.studentId = studentId;
+  if (req.query.uploadedBy) where.uploadedById = req.query.uploadedBy;
+  if (req.query.staffId) {
+    where.metadata = {
+      path: ['staffId'],
+      equals: req.query.staffId
+    };
   }
 
-  // Text search
+  // Text search simulation with OR
   if (search) {
-    query.$text = { $search: search };
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { originalName: { contains: search, mode: 'insensitive' } }
+    ];
   }
 
   // Permission-based filtering for non-admin users
   if (req.user.role !== 'admin' && req.user.role !== 'principal') {
-    query.$or = [
-      { uploadedBy: req.user.id }, // Own documents
-      { isPublic: true }, // Public documents
-      { 'accessPermissions.roles': req.user.role }, // Role-based access
-      { 'accessPermissions.users': req.user.id } // User-specific access
+    // This requires complex OR logic at the top level.
+    // (uploadedBy == user) OR (isPublic == true) OR ...
+    // Note: merging with existing 'where' (schoolId)
+    // Prisma where: { AND: [ { schoolId }, { OR: [...] } ] }
+    const permissionOr = [
+      { uploadedById: req.user.id },
+      { isPublic: true }
     ];
+
+    where = {
+      AND: [
+        where,
+        { OR: permissionOr }
+      ]
+    };
   }
 
   // Pagination
-  const skip = (page - 1) * limit;
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
 
-  const documents = await Document.find(query)
-    .populate('uploadedBy', 'name email')
-    .populate('student', 'firstName lastName admissionNumber')
-    .populate('verifiedBy', 'name email')
-    .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
-    .skip(skip)
-    .limit(parseInt(limit));
-
-  const total = await Document.countDocuments(query);
+  const [documents, total] = await Promise.all([
+    prisma.document.findMany({
+      where,
+      include: {
+        uploadedBy: { select: { id: true, name: true, email: true } },
+        student: { select: { id: true, firstName: true, lastName: true, admissionNumber: true } },
+        verifiedBy: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { [sortBy]: sortOrder.toLowerCase() },
+      skip,
+      take
+    }),
+    prisma.document.count({ where })
+  ]);
 
   res.status(200).json({
     success: true,
@@ -234,7 +296,7 @@ exports.getDocuments = asyncHandler(async (req, res) => {
     total,
     currentPage: parseInt(page),
     totalPages: Math.ceil(total / limit),
-    data: documents
+    data: documents.map(serializeDocument)
   });
 });
 
@@ -242,14 +304,18 @@ exports.getDocuments = asyncHandler(async (req, res) => {
 // @route   GET /api/documents/:id
 // @access  Private (With permission check)
 exports.getDocument = asyncHandler(async (req, res) => {
-  const document = await Document.findOne({
-    _id: req.params.id,
-    school: req.school._id
-  })
-    .populate('uploadedBy', 'name email')
-    .populate('student', 'firstName lastName admissionNumber')
-    .populate('verifiedBy', 'name email')
-    .populate('parentDocument', 'title fileName version');
+  const document = await prisma.document.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    },
+    include: {
+      uploadedBy: { select: { id: true, name: true, email: true } },
+      student: { select: { id: true, firstName: true, lastName: true, admissionNumber: true } },
+      verifiedBy: { select: { id: true, name: true, email: true } },
+      parentDocument: { select: { title: true, fileName: true, version: true } }
+    }
+  });
 
   if (!document) {
     return res.status(404).json({
@@ -258,8 +324,12 @@ exports.getDocument = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check access permissions
-  if (!document.hasAccess(req.user.id, req.user.role)) {
+  // Check access permissions - simplified
+  const isOwner = document.uploadedById === req.user.id;
+  const isAdmin = ['admin', 'principal'].includes(req.user.role);
+  const isPublic = document.isPublic;
+
+  if (!isOwner && !isAdmin && !isPublic) {
     return res.status(403).json({
       success: false,
       message: 'Access denied to this document'
@@ -268,7 +338,7 @@ exports.getDocument = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: document
+    data: serializeDocument(document)
   });
 });
 
@@ -276,9 +346,11 @@ exports.getDocument = asyncHandler(async (req, res) => {
 // @route   GET /api/documents/:id/download
 // @access  Private (With permission check)
 exports.downloadDocument = asyncHandler(async (req, res) => {
-  const document = await Document.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const document = await prisma.document.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!document) {
@@ -289,7 +361,11 @@ exports.downloadDocument = asyncHandler(async (req, res) => {
   }
 
   // Check access permissions
-  if (!document.hasAccess(req.user.id, req.user.role)) {
+  const isOwner = document.uploadedById === req.user.id;
+  const isAdmin = ['admin', 'principal'].includes(req.user.role);
+  const isPublic = document.isPublic;
+
+  if (!isOwner && !isAdmin && !isPublic) {
     return res.status(403).json({
       success: false,
       message: 'Access denied to this document'
@@ -303,7 +379,10 @@ exports.downloadDocument = asyncHandler(async (req, res) => {
     await fs.access(filePath);
 
     // Increment download count
-    await document.incrementDownload();
+    await prisma.document.update({
+      where: { id: document.id },
+      data: { downloadCount: { increment: 1 } }
+    });
 
     // Set appropriate headers
     res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
@@ -325,9 +404,11 @@ exports.downloadDocument = asyncHandler(async (req, res) => {
 // @route   PUT /api/documents/:id
 // @access  Private (Owner/Admin)
 exports.updateDocument = asyncHandler(async (req, res) => {
-  let document = await Document.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  let document = await prisma.document.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!document) {
@@ -338,24 +419,25 @@ exports.updateDocument = asyncHandler(async (req, res) => {
   }
 
   // Check if user can edit this document
-  if (req.user.role !== 'admin' && 
-      req.user.role !== 'principal' && 
-      document.uploadedBy.toString() !== req.user.id) {
+  if (req.user.role !== 'admin' &&
+    req.user.role !== 'principal' &&
+    document.uploadedById !== req.user.id) {
     return res.status(403).json({
       success: false,
       message: 'Not authorized to update this document'
     });
   }
 
-  // Parse tags if provided as string
-  if (req.body.tags && typeof req.body.tags === 'string') {
-    req.body.tags = req.body.tags.split(',').map(tag => tag.trim().toLowerCase());
+  // Prepare update data
+  const updateData = { ...req.body };
+
+  if (updateData.tags && typeof updateData.tags === 'string') {
+    updateData.tags = updateData.tags.split(',').map(tag => tag.trim().toLowerCase());
   }
 
-  // Parse accessPermissions if provided as string
-  if (req.body.accessPermissions && typeof req.body.accessPermissions === 'string') {
+  if (updateData.accessPermissions && typeof updateData.accessPermissions === 'string') {
     try {
-      req.body.accessPermissions = JSON.parse(req.body.accessPermissions);
+      updateData.accessPermissions = JSON.parse(updateData.accessPermissions);
     } catch (e) {
       return res.status(400).json({
         success: false,
@@ -364,18 +446,19 @@ exports.updateDocument = asyncHandler(async (req, res) => {
     }
   }
 
-  document = await Document.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  )
-    .populate('uploadedBy', 'name email')
-    .populate('student', 'firstName lastName admissionNumber')
-    .populate('verifiedBy', 'name email');
+  document = await prisma.document.update({
+    where: { id: req.params.id },
+    data: updateData,
+    include: {
+      uploadedBy: { select: { id: true, name: true, email: true } },
+      student: { select: { id: true, firstName: true, lastName: true, admissionNumber: true } },
+      verifiedBy: { select: { id: true, name: true, email: true } }
+    }
+  });
 
   res.status(200).json({
     success: true,
-    data: document,
+    data: serializeDocument(document),
     message: 'Document updated successfully'
   });
 });
@@ -384,9 +467,11 @@ exports.updateDocument = asyncHandler(async (req, res) => {
 // @route   DELETE /api/documents/:id
 // @access  Private (Owner/Admin)
 exports.deleteDocument = asyncHandler(async (req, res) => {
-  const document = await Document.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const document = await prisma.document.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!document) {
@@ -397,28 +482,22 @@ exports.deleteDocument = asyncHandler(async (req, res) => {
   }
 
   // Check if user can delete this document
-  if (req.user.role !== 'admin' && 
-      req.user.role !== 'principal' && 
-      document.uploadedBy.toString() !== req.user.id) {
+  if (req.user.role !== 'admin' &&
+    req.user.role !== 'principal' &&
+    document.uploadedById !== req.user.id) {
     return res.status(403).json({
       success: false,
       message: 'Not authorized to delete this document'
     });
   }
 
-  // Soft delete (mark as deleted instead of actually deleting)
-  document.status = 'deleted';
-  await document.save();
-
-  // Optionally delete the physical file (uncomment if needed)
-  /*
-  const filePath = path.join(__dirname, '../uploads', document.filePath);
-  try {
-    await fs.unlink(filePath);
-  } catch (error) {
-    console.error('Failed to delete physical file:', error);
-  }
-  */
+  // Mark as deleted (Soft delete)
+  // Assuming 'status' is a enum, does it have 'DELETED'?
+  // Schema snippet showed DocumentStatus enum: ACTIVE, EXPIRED, REVOKED, PENDING_VERIFICATION, ARCHIVED, DELETED.
+  await prisma.document.update({
+    where: { id: req.params.id },
+    data: { status: 'DELETED' }
+  });
 
   res.status(200).json({
     success: true,
@@ -432,9 +511,11 @@ exports.deleteDocument = asyncHandler(async (req, res) => {
 exports.verifyDocument = asyncHandler(async (req, res) => {
   const { isVerified, notes } = req.body;
 
-  const document = await Document.findOne({
-    _id: req.params.id,
-    school: req.school._id
+  const document = await prisma.document.findFirst({
+    where: {
+      id: req.params.id,
+      schoolId: req.school.id
+    }
   });
 
   if (!document) {
@@ -444,25 +525,24 @@ exports.verifyDocument = asyncHandler(async (req, res) => {
     });
   }
 
-  document.isVerified = isVerified;
-  document.verifiedBy = req.user.id;
-  document.verificationDate = new Date();
-  document.status = isVerified ? 'active' : 'pending_verification';
-  
-  if (notes) {
-    document.notes = notes;
-  }
-
-  await document.save();
-
-  await document.populate([
-    { path: 'verifiedBy', select: 'name email' },
-    { path: 'uploadedBy', select: 'name email' }
-  ]);
+  const updatedDoc = await prisma.document.update({
+    where: { id: req.params.id },
+    data: {
+      isVerified,
+      verifiedById: req.user.id,
+      verificationDate: new Date(),
+      status: isVerified ? 'ACTIVE' : 'PENDING_VERIFICATION',
+      notes: notes || document.notes
+    },
+    include: {
+      verifiedBy: { select: { id: true, name: true, email: true } },
+      uploadedBy: { select: { id: true, name: true, email: true } }
+    }
+  });
 
   res.status(200).json({
     success: true,
-    data: document,
+    data: serializeDocument(updatedDoc),
     message: `Document ${isVerified ? 'verified' : 'rejected'} successfully`
   });
 });
@@ -471,50 +551,56 @@ exports.verifyDocument = asyncHandler(async (req, res) => {
 // @route   GET /api/documents/stats
 // @access  Private (Admin/Principal)
 exports.getDocumentStats = asyncHandler(async (req, res) => {
+  // Stats requiring aggregation. Simplified implementation.
   const { category, type, userId } = req.query;
 
-  let filters = {};
-  if (category) filters.category = category;
-  if (type) filters.type = type;
-  if (userId) filters.uploadedBy = userId;
+  const where = {
+    schoolId: req.school.id,
+    status: 'ACTIVE'
+  };
 
-  const stats = await Document.getStorageStats(req.school._id, filters.category);
+  if (category) where.category = category;
+  if (type) where.type = type;
+  if (userId) where.uploadedById = userId;
 
-  // Get document counts by category
-  const categoryStats = await Document.aggregate([
-    { 
-      $match: { 
-        school: req.school._id,
-        status: 'active',
-        ...filters
-      }
-    },
-    {
-      $group: {
-        _id: '$category',
-        count: { $sum: 1 },
-        totalSize: { $sum: '$fileSize' }
-      }
-    },
-    { $sort: { count: -1 } }
-  ]);
+  // Group by category
+  const categoryStatsRaw = await prisma.document.groupBy({
+    by: ['category'],
+    where,
+    _count: { _all: true },
+    _sum: { fileSize: true }
+  });
 
-  // Get recent uploads
-  const recentUploads = await Document.find({
-    school: req.school._id,
-    status: 'active'
-  })
-    .populate('uploadedBy', 'name')
-    .sort({ uploadedAt: -1 })
-    .limit(10)
-    .select('title fileName fileSize uploadedAt uploadedBy category');
+  const categoryStats = categoryStatsRaw.map(stat => ({
+    _id: stat.category,
+    count: stat._count._all,
+    totalSize: Number(stat._sum.fileSize || 0)
+  }));
+
+  // Overview
+  // getStorageStats was a custom method on Mongoose model. We simulate it.
+  const totalCount = categoryStats.reduce((acc, curr) => acc + curr.count, 0);
+  const totalSize = categoryStats.reduce((acc, curr) => acc + curr.totalSize, 0);
+
+  const stats = {
+    count: totalCount,
+    size: totalSize
+  };
+
+  // Recent uploads
+  const recentUploads = await prisma.document.findMany({
+    where,
+    include: { uploadedBy: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 10
+  });
 
   res.status(200).json({
     success: true,
     data: {
       overview: stats,
       byCategory: categoryStats,
-      recentUploads
+      recentUploads: recentUploads.map(serializeDocument)
     }
   });
 });

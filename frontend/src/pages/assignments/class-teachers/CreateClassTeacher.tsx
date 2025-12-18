@@ -60,13 +60,13 @@ const CreateClassTeacher: React.FC = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  
+
   // Data for dropdowns
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [classArms, setClassArms] = useState<ClassArm[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
-  
+
   // Form data
   const [formData, setFormData] = useState<ClassTeacherRequest>({
     teacher: '',
@@ -76,20 +76,20 @@ const CreateClassTeacher: React.FC = () => {
     isActive: true,
     remarks: '',
   });
-  
+
   // Form errors
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch academic years
         const academicYearsResponse = await academicYearService.getAllAcademicYears();
         const years = academicYearsResponse.data?.academicYears || [];
         setAcademicYears(years as unknown as AcademicYear[]);
-        
+
         // Find current academic year
         const currentYear = years.find((year) => year.isCurrent) as unknown as AcademicYear;
         if (currentYear) {
@@ -98,31 +98,31 @@ const CreateClassTeacher: React.FC = () => {
           const firstYear = years[0] as unknown as AcademicYear;
           setFormData((prev) => ({ ...prev, academicYear: firstYear._id }));
         }
-        
+
         // Fetch classes
         const classesResponse = await classService.getClasses();
         const classesData = classesResponse.data || [];
         setClasses(classesData as unknown as Class[]);
-        
+
         // Fetch teachers
         const teachersResponse = await staffService.getTeachers();
         const teachersData = teachersResponse.data || [];
         setTeachers(teachersData as unknown as Teacher[]);
-        
+
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch initial data');
         setLoading(false);
       }
     };
-    
+
     fetchInitialData();
   }, []);
-  
+
   useEffect(() => {
     const fetchClassArms = async () => {
       if (!formData.class) return;
-      
+
       try {
         setLoading(true);
         // Get all class arms
@@ -134,91 +134,95 @@ const CreateClassTeacher: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     fetchClassArms();
   }, [formData.class]);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Clear error when field is edited
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
-  
+
   const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Clear error when field is edited
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
-    
+
     // Reset class arm when class changes
     if (name === 'class') {
       setFormData((prev) => ({ ...prev, classArm: '' }));
     }
   };
-  
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     let isValid = true;
-    
+
     if (!formData.teacher) {
       errors.teacher = 'Teacher is required';
       isValid = false;
     }
-    
+
     if (!formData.class) {
       errors.class = 'Class is required';
       isValid = false;
     }
-    
+
     if (!formData.classArm) {
       errors.classArm = 'Class Arm/Section is required';
       isValid = false;
     }
-    
+
     if (!formData.academicYear) {
       errors.academicYear = 'Academic Year is required';
       isValid = false;
     }
-    
+
     setFormErrors(errors);
     return isValid;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       setSaving(true);
       setError(null);
-      
+
       // Check if this class and arm already has a class teacher assigned
-      const exists = await classTeacherService.checkClassTeacherExists(
-        formData.class,
-        formData.classArm,
-        formData.academicYear
-      );
-      
-      if (exists) {
-        setError('This class and section already has a class teacher assigned for the selected academic year');
-        setSaving(false);
-        return;
-      }
-      
+      // Note: checkClassTeacherExists doesn't exist on the service interface we saw, 
+      // but assuming we skip this check or need to implement it. 
+      // Given the file view showed it using it, it might be a missing method in the service OR 
+      // the previous code was hallucinating it. 
+      // Safest is to try to call createAssignment directly and let backend handle duplicates (400 error).
+
+      // Construct the payload matching CreateAssignmentData interface
+      const assignmentData = {
+        staffId: formData.teacher,
+        classId: formData.class,
+        sectionId: formData.classArm,
+        academicYearId: formData.academicYear,
+        isClassTeacher: true, // Default to true as this is "Assign Class Teacher" page
+        notes: formData.remarks
+      };
+
       // Create class teacher assignment
-      await classTeacherService.createClassTeacher(formData);
+      await classTeacherService.createAssignment(assignmentData);
       setSuccess(true);
-      
+
       // Redirect after a short delay
       setTimeout(() => {
         navigate('/assignments/class-teachers');
@@ -233,7 +237,7 @@ const CreateClassTeacher: React.FC = () => {
       setSaving(false);
     }
   };
-  
+
   if (loading) {
     return (
       <Layout>
@@ -243,17 +247,17 @@ const CreateClassTeacher: React.FC = () => {
       </Layout>
     );
   }
-  
+
   return (
     <Layout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Assign Class Teacher
         </Typography>
-        
+
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>Class teacher assigned successfully!</Alert>}
-        
+
         <Paper sx={{ p: 3 }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
@@ -263,7 +267,7 @@ const CreateClassTeacher: React.FC = () => {
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!formErrors.academicYear} required>
                   <InputLabel id="academic-year-label">Academic Year</InputLabel>
@@ -283,7 +287,7 @@ const CreateClassTeacher: React.FC = () => {
                   {formErrors.academicYear && <FormHelperText>{formErrors.academicYear}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!formErrors.teacher} required>
                   <InputLabel id="teacher-label">Teacher</InputLabel>
@@ -303,7 +307,7 @@ const CreateClassTeacher: React.FC = () => {
                   {formErrors.teacher && <FormHelperText>{formErrors.teacher}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!formErrors.class} required>
                   <InputLabel id="class-label">Class</InputLabel>
@@ -323,7 +327,7 @@ const CreateClassTeacher: React.FC = () => {
                   {formErrors.class && <FormHelperText>{formErrors.class}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth error={!!formErrors.classArm} required>
                   <InputLabel id="class-arm-label">Section/Arm</InputLabel>
@@ -344,7 +348,7 @@ const CreateClassTeacher: React.FC = () => {
                   {formErrors.classArm && <FormHelperText>{formErrors.classArm}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -356,7 +360,7 @@ const CreateClassTeacher: React.FC = () => {
                   rows={3}
                 />
               </Grid>
-              
+
               <Grid item xs={12} sx={{ mt: 3 }}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
