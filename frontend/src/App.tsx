@@ -238,7 +238,6 @@ const App = () => (
             <Route path="/staff/subject-assignments" element={<ProtectedRoute><TeacherSubjectAssignmentsList /></ProtectedRoute>} />
 
             {/* Grade Book Routes */}
-            <Route path="/gradebook/reports" element={<ProtectedRoute><Layout><ReportCards /></Layout></ProtectedRoute>} />
             <Route path="/gradebook/report-cards" element={<ProtectedRoute><Layout><ReportCards /></Layout></ProtectedRoute>} />
 
             {/* Parent Dashboard Routes */}

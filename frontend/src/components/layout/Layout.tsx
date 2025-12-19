@@ -44,7 +44,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                    subPath === 'qr-scanner' ? 'attendance-qr' : 'attendance',
       'gradebook': subPath === 'entry' ? 'gradebook-entry' :
                   subPath === 'teacher' ? 'gradebook-teacher' :
-                  subPath === 'reports' ? 'gradebook-reports' :
                   subPath === 'report-cards' ? 'report-cards' : 'gradebook',
       'parent': 'gradebook-parent',
       'academics': subPath === 'scores' ? 'scores-add' : basePath,
