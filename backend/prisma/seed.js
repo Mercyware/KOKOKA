@@ -170,15 +170,19 @@ async function main() {
   console.log('💰 Creating fee structures...');
   const feeStructures = await createFeeStructures(school.id, academicYear.id);
 
-  // 36. Create Invoices
+  // 36. Create Master Invoices
+  console.log('📋 Creating master invoices...');
+  const masterInvoices = await createMasterInvoices(school.id, academicYear.id, academicYear.name, classes, feeStructures);
+
+  // 37. Create Invoices
   console.log('🧾 Creating invoices...');
   const invoices = await createInvoices(school.id, students, academicYear.name, terms[0]?.name || 'Term 1', feeStructures);
 
-  // 37. Create Payments
+  // 38. Create Payments
   console.log('💳 Creating payments...');
   const payments = await createPayments(school.id, invoices, students, users[0].id);
 
-  // 38. Create Accounting Categories
+  // 39. Create Accounting Categories
   console.log('📊 Creating accounting categories...');
   const accountingCategories = await createAccountingCategories(school.id);
 
@@ -210,6 +214,10 @@ async function main() {
 - Student Transport Assignments: ${studentTransportAssignments.length}
 - Maintenance Records: ${maintenanceRecords.length}
 - Notifications: ${notifications.length}
+- Fee Structures: ${feeStructures.length}
+- Master Invoices: ${masterInvoices.length}
+- Invoices: ${invoices.length}
+- Payments: ${payments.length}
 
 🔐 Login Credentials:
 - Admin: admin@${school.subdomain}.com / admin123
@@ -4446,6 +4454,149 @@ async function createFeeStructures(schoolId, academicYearId) {
     return allFeeStructures;
   } catch (error) {
     console.error('❌ Error creating fee structures:', error);
+    return [];
+  }
+}
+
+async function createMasterInvoices(schoolId, academicYearId, academicYearName, classes, feeStructures) {
+  try {
+    const masterInvoices = [];
+
+    // Get fee structures for easier reference
+    const tuitionFee = feeStructures.find(f => f.name === 'Tuition Fee');
+    const libraryFee = feeStructures.find(f => f.name === 'Library Fee');
+    const sportsFee = feeStructures.find(f => f.name === 'Sports Fee');
+
+    // Create master invoice for Primary 1
+    const primaryClass = classes.find(c => c.name.includes('Primary 1') || c.name.includes('Primary-1'));
+    if (primaryClass && tuitionFee) {
+      const items = [
+        {
+          feeStructureId: tuitionFee.id,
+          description: 'Tuition Fee - Term 1',
+          quantity: 1,
+          unitPrice: tuitionFee.amount,
+          amount: tuitionFee.amount,
+          isMandatory: true
+        },
+        {
+          feeStructureId: libraryFee?.id,
+          description: 'Library Fee',
+          quantity: 1,
+          unitPrice: libraryFee?.amount || 2000,
+          amount: libraryFee?.amount || 2000,
+          isMandatory: true
+        },
+        {
+          feeStructureId: sportsFee?.id,
+          description: 'Sports Fee',
+          quantity: 1,
+          unitPrice: sportsFee?.amount || 3000,
+          amount: sportsFee?.amount || 3000,
+          isMandatory: false
+        }
+      ];
+
+      const subtotal = items.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+      const masterInvoice = await prisma.masterInvoice.create({
+        data: {
+          schoolId,
+          name: `Primary 1 - Term 1 Fees ${academicYearName}`,
+          description: 'Standard fees for Primary 1 students in Term 1',
+          academicYearId,
+          term: 'TERM_1',
+          classId: primaryClass.id,
+          gradeLevel: primaryClass.grade,
+          dueDate: new Date(new Date().getFullYear(), 2, 31), // End of March
+          subtotal,
+          tax: 0,
+          total: subtotal,
+          items: {
+            create: items
+          }
+        },
+        include: {
+          items: true
+        }
+      });
+
+      masterInvoices.push(masterInvoice);
+    }
+
+    // Create master invoice for JSS 1
+    const jssClass = classes.find(c => c.name.includes('JSS 1') || c.name.includes('JSS-1'));
+    if (jssClass && tuitionFee) {
+      const items = [
+        {
+          feeStructureId: tuitionFee.id,
+          description: 'Tuition Fee - Term 1',
+          quantity: 1,
+          unitPrice: tuitionFee.amount,
+          amount: tuitionFee.amount,
+          isMandatory: true
+        },
+        {
+          feeStructureId: libraryFee?.id,
+          description: 'Library Fee',
+          quantity: 1,
+          unitPrice: libraryFee?.amount || 2000,
+          amount: libraryFee?.amount || 2000,
+          isMandatory: true
+        },
+        {
+          feeStructureId: sportsFee?.id,
+          description: 'Sports Fee',
+          quantity: 1,
+          unitPrice: sportsFee?.amount || 3000,
+          amount: sportsFee?.amount || 3000,
+          isMandatory: true
+        }
+      ];
+
+      const examFee = feeStructures.find(f => f.name === 'Examination Fee');
+      if (examFee) {
+        items.push({
+          feeStructureId: examFee.id,
+          description: 'Examination Fee',
+          quantity: 1,
+          unitPrice: examFee.amount,
+          amount: examFee.amount,
+          isMandatory: true
+        });
+      }
+
+      const subtotal = items.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+      const masterInvoice = await prisma.masterInvoice.create({
+        data: {
+          schoolId,
+          name: `JSS 1 - Term 1 Fees ${academicYearName}`,
+          description: 'Standard fees for JSS 1 students in Term 1',
+          academicYearId,
+          term: 'TERM_1',
+          classId: jssClass.id,
+          gradeLevel: jssClass.grade,
+          dueDate: new Date(new Date().getFullYear(), 2, 31), // End of March
+          subtotal,
+          tax: 0,
+          total: subtotal,
+          items: {
+            create: items
+          }
+        },
+        include: {
+          items: true
+        }
+      });
+
+      masterInvoices.push(masterInvoice);
+    }
+
+    console.log(`✅ Created ${masterInvoices.length} master invoices`);
+    return masterInvoices;
+  } catch (error) {
+    console.error('❌ Error creating master invoices:', error);
     return [];
   }
 }

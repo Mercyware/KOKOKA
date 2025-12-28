@@ -153,18 +153,16 @@ const CreateInvoicePage: React.FC = () => {
 
       // Add gradeLevel filter if a class is selected
       if (selectedClass) {
-        params.gradeLevel = selectedClass.id;
+        params.gradeLevel = selectedClass.level; // Use level (e.g., "Primary 1"), not ID
       }
 
       const feesResponse = await getAllFeeStructures(params);
 
-      // Fee structures API returns array directly, not wrapped in { success, data }
-      if (feesResponse) {
-        if (Array.isArray(feesResponse)) {
-          setFeeStructures(feesResponse);
-        } else if (feesResponse?.success && feesResponse.data) {
-          setFeeStructures(Array.isArray(feesResponse.data) ? feesResponse.data : []);
-        }
+      // Fee structures API returns { feeStructures: [...], pagination: {...} }
+      if (feesResponse?.feeStructures) {
+        setFeeStructures(Array.isArray(feesResponse.feeStructures) ? feesResponse.feeStructures : []);
+      } else {
+        setFeeStructures([]);
       }
     } catch (error) {
       console.error('Error loading fee structures:', error);

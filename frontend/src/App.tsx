@@ -98,6 +98,8 @@ import { FeeStructuresPage, InvoicesPage, PaymentsPage, PaymentReportPage, Outst
 import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
 import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
 import PaymentCallbackPage from "./pages/finance/PaymentCallbackPage";
+import MasterInvoicesPage from "./pages/finance/MasterInvoicesPage";
+import CreateMasterInvoicePage from "./pages/finance/CreateMasterInvoicePage";
 import { AccountingDashboard, IncomePage, ExpenditurePage } from "./pages/accounting";
 // Results Components
 import TerminalReport from "./pages/results/TerminalReport";
@@ -298,6 +300,8 @@ const App = () => (
 
             {/* Finance Routes */}
             <Route path="/finance/fee-structures" element={<ProtectedRoute><FeeStructuresPage /></ProtectedRoute>} />
+            <Route path="/finance/master-invoices" element={<ProtectedRoute><MasterInvoicesPage /></ProtectedRoute>} />
+            <Route path="/finance/master-invoices/create" element={<ProtectedRoute><CreateMasterInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
             <Route path="/finance/invoices/create" element={<ProtectedRoute><CreateInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />

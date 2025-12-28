@@ -75,6 +75,7 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 
 // Finance Routes
 const financeRoutes = require('./routes/financeRoutes');
+const masterInvoiceRoutes = require('./routes/masterInvoiceRoutes');
 
 // Accounting Routes
 const accountingRoutes = require('./routes/accountingRoutes');
@@ -273,6 +274,7 @@ app.use('/api/inventory', inventoryRoutes);
 
 // Finance Routes
 app.use('/api/finance', financeRoutes);
+app.use('/api/finance/master-invoices', masterInvoiceRoutes);
 
 // Accounting Routes
 app.use('/api/accounting', accountingRoutes);

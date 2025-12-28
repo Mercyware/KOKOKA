@@ -53,6 +53,15 @@ const getAllInvoices = async (req, res) => {
               }
             }
           },
+          masterInvoice: {
+            select: {
+              id: true,
+              name: true,
+              academicYear: {
+                select: { name: true }
+              }
+            }
+          },
           payments: true
         },
         orderBy: { createdAt: 'desc' },
@@ -100,6 +109,15 @@ const getInvoiceById = async (req, res) => {
           include: {
             feeStructure: {
               select: { name: true, category: true }
+            }
+          }
+        },
+        masterInvoice: {
+          select: {
+            id: true,
+            name: true,
+            academicYear: {
+              select: { name: true }
             }
           }
         },

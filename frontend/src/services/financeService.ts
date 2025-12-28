@@ -27,6 +27,7 @@ export interface Invoice {
   invoiceNumber: string;
   schoolId: string;
   studentId: string;
+  masterInvoiceId?: string;
   academicYear: string;
   term: string;
   issueDate: string;
@@ -38,6 +39,10 @@ export interface Invoice {
   total: number;
   amountPaid: number;
   balance: number;
+  hasCustomItems: boolean;
+  discountReason?: string;
+  lastReminderDate?: string;
+  reminderCount: number;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -52,8 +57,104 @@ export interface Invoice {
       name: string;
     };
   };
+  masterInvoice?: {
+    id: string;
+    name: string;
+    academicYear?: {
+      name: string;
+    };
+  };
   items?: InvoiceItem[];
   payments?: Payment[];
+}
+
+export interface MasterInvoice {
+  id: string;
+  schoolId: string;
+  name: string;
+  description?: string;
+  academicYearId: string;
+  term: string;
+  gradeLevel?: string;
+  classId?: string;
+  dueDate: string;
+  isActive: boolean;
+  subtotal: number;
+  tax: number;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
+  academicYear?: {
+    id: string;
+    name: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  class?: {
+    id: string;
+    name: string;
+    grade: string;
+  };
+  items?: MasterInvoiceItem[];
+  childInvoices?: Invoice[];
+  _count?: {
+    childInvoices: number;
+  };
+}
+
+export interface MasterInvoiceItem {
+  id: string;
+  masterInvoiceId: string;
+  feeStructureId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+  isMandatory: boolean;
+  feeStructure?: {
+    name: string;
+    category?: string;
+    amount?: number;
+  };
+}
+
+export interface CreateMasterInvoiceData {
+  name: string;
+  description?: string;
+  academicYearId: string;
+  term: string;
+  gradeLevel?: string;
+  classId?: string;
+  dueDate: string;
+  items: {
+    feeStructureId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    amount: number;
+    isMandatory?: boolean;
+  }[];
+}
+
+export interface GenerateChildInvoicesData {
+  studentIds?: string[];
+  applyToAll?: boolean;
+}
+
+export interface MasterInvoiceStats {
+  totalInvoices: number;
+  totalAmount: number;
+  totalPaid: number;
+  totalBalance: number;
+  statusBreakdown: {
+    DRAFT: number;
+    ISSUED: number;
+    PARTIAL: number;
+    PAID: number;
+    OVERDUE: number;
+    CANCELLED: number;
+  };
+  collectionRate: string;
 }
 
 export interface InvoiceItem {
@@ -439,4 +540,73 @@ export const verifyPaystackPayment = async (reference: string): Promise<ApiRespo
     message: string;
     payment: Payment;
   }>(`/finance/payments/paystack/verify/${reference}`);
+};
+
+// ==================== MASTER INVOICES ====================
+
+export const getAllMasterInvoices = async (params?: {
+  isActive?: boolean;
+  academicYearId?: string;
+  classId?: string;
+  gradeLevel?: string;
+  page?: number;
+  limit?: number;
+}): Promise<ApiResponse<{
+  masterInvoices: MasterInvoice[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}>> => {
+  return await get<{
+    masterInvoices: MasterInvoice[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }>('/finance/master-invoices', params);
+};
+
+export const getMasterInvoiceById = async (id: string): Promise<ApiResponse<MasterInvoice>> => {
+  return await get<MasterInvoice>(`/finance/master-invoices/${id}`);
+};
+
+export const createMasterInvoice = async (data: CreateMasterInvoiceData): Promise<ApiResponse<MasterInvoice>> => {
+  return await post<MasterInvoice>('/finance/master-invoices', data);
+};
+
+export const updateMasterInvoice = async (
+  id: string,
+  data: Partial<Omit<CreateMasterInvoiceData, 'academicYearId' | 'term'>> & { isActive?: boolean }
+): Promise<ApiResponse<MasterInvoice>> => {
+  return await put<MasterInvoice>(`/finance/master-invoices/${id}`, data);
+};
+
+export const deleteMasterInvoice = async (id: string): Promise<ApiResponse<{ message: string }>> => {
+  return await del<{ message: string }>(`/finance/master-invoices/${id}`);
+};
+
+export const generateChildInvoices = async (
+  masterInvoiceId: string,
+  data: GenerateChildInvoicesData
+): Promise<ApiResponse<{
+  message: string;
+  generated: number;
+  skipped: number;
+  invoices: Invoice[];
+}>> => {
+  return await post<{
+    message: string;
+    generated: number;
+    skipped: number;
+    invoices: Invoice[];
+  }>(`/finance/master-invoices/${masterInvoiceId}/generate`, data);
+};
+
+export const getMasterInvoiceStats = async (masterInvoiceId: string): Promise<ApiResponse<MasterInvoiceStats>> => {
+  return await get<MasterInvoiceStats>(`/finance/master-invoices/${masterInvoiceId}/stats`);
 };
