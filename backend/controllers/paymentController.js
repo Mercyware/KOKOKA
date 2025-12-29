@@ -1,4 +1,6 @@
 const { prisma } = require('../config/database');
+const axios = require('axios');
+const { sendPaymentConfirmation } = require('../services/paymentEmailService');
 
 // Helper function to generate payment number
 const generatePaymentNumber = async (schoolId) => {
@@ -792,6 +794,14 @@ const initializePaystackPayment = async (req, res) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
+    // Check if invoice is already fully paid
+    if (invoice.status === 'PAID' || parseFloat(invoice.balance) <= 0) {
+      return res.status(400).json({
+        error: 'This invoice has already been paid in full',
+        message: 'Cannot make payment on a fully paid invoice'
+      });
+    }
+
     // Check balance
     const totalPaid = invoice.payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
     const currentBalance = parseFloat(invoice.total) - totalPaid;
@@ -893,7 +903,6 @@ const initializePaystackPayment = async (req, res) => {
 const verifyPaystackPayment = async (req, res) => {
   try {
     const { reference } = req.params;
-    const schoolId = req.school.id;
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
@@ -916,9 +925,14 @@ const verifyPaystackPayment = async (req, res) => {
 
     const metadata = data.data.metadata;
     const invoiceId = metadata.invoiceId;
+    const schoolId = metadata.schoolId; // Get schoolId from metadata instead of req.school
     const totalAmountPaid = data.data.amount / 100; // Convert from kobo
     const invoiceAmount = metadata.invoiceAmount || totalAmountPaid;
     const digitalFee = metadata.digitalFee || 0;
+
+    if (!schoolId) {
+      return res.status(400).json({ error: 'Invalid payment metadata' });
+    }
 
     // Check if payment already recorded
     const existingPayment = await prisma.payment.findFirst({
@@ -935,7 +949,13 @@ const verifyPaystackPayment = async (req, res) => {
 
     // Get school and accounting category
     const school = await prisma.school.findUnique({
-      where: { id: schoolId }
+      where: { id: schoolId },
+      select: {
+        id: true,
+        name: true,
+        currency: true,
+        paystackSubaccountCode: true
+      }
     });
 
     // Find or create "Student Fees" income category
@@ -1021,6 +1041,56 @@ const verifyPaystackPayment = async (req, res) => {
     // Update invoice status
     await updateInvoiceStatus(invoiceId);
 
+    // Send payment confirmation email to parent/student
+    console.log('📧 Attempting to send payment confirmation email...');
+    try {
+      const fullInvoice = await prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        include: {
+          student: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              admissionNumber: true,
+              email: true,
+              guardianStudents: {
+                select: {
+                  guardian: {
+                    select: {
+                      email: true
+                    }
+                  }
+                },
+                where: {
+                  isPrimary: true
+                },
+                take: 1
+              }
+            }
+          }
+        }
+      });
+
+      console.log('📧 Invoice data for email:', {
+        invoiceId: fullInvoice?.id,
+        studentEmail: fullInvoice?.student?.email,
+        parentEmail: fullInvoice?.student?.parentEmail
+      });
+
+      if (fullInvoice) {
+        console.log('📧 Calling sendPaymentConfirmation...');
+        const emailJobId = await sendPaymentConfirmation(payment, fullInvoice, fullInvoice.student, school);
+        console.log('✅ Payment confirmation email queued successfully. Job ID:', emailJobId);
+      } else {
+        console.warn('⚠️ Invoice not found for email sending');
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send payment confirmation email:', emailError);
+      console.error('Email error stack:', emailError.stack);
+      // Don't fail the payment verification if email fails
+    }
+
     res.json({
       success: true,
       message: 'Payment verified and recorded successfully',
@@ -1029,6 +1099,160 @@ const verifyPaystackPayment = async (req, res) => {
   } catch (error) {
     console.error('Error verifying Paystack payment:', error);
     res.status(500).json({ error: 'Failed to verify payment' });
+  }
+};
+
+// Initialize Paystack payment (public - no auth required for payment page)
+const initializePaystackPaymentPublic = async (req, res) => {
+  try {
+    const { invoiceId, amount, email } = req.body;
+    
+    console.log('Public payment initialization request:', { invoiceId, amount, email });
+
+    // Validation
+    if (!invoiceId || !amount || !email) {
+      return res.status(400).json({
+        error: 'Invoice ID, amount, and email are required'
+      });
+    }
+
+    // Verify invoice exists
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
+        school: {
+          select: {
+            id: true,
+            paystackSubaccountCode: true,
+            name: true
+          }
+        },
+        student: true,
+        payments: { where: { status: 'COMPLETED' } }
+      }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    const schoolId = invoice.schoolId;
+
+    // Check if invoice is already fully paid
+    if (invoice.status === 'PAID' || parseFloat(invoice.balance) <= 0) {
+      return res.status(400).json({
+        error: 'This invoice has already been paid in full',
+        message: 'Cannot make payment on a fully paid invoice'
+      });
+    }
+
+    // Check balance
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const currentBalance = parseFloat(invoice.total) - totalPaid;
+
+    if (parseFloat(amount) > currentBalance) {
+      return res.status(400).json({
+        error: `Payment amount (${amount}) exceeds invoice balance (${currentBalance})`
+      });
+    }
+
+    // Initialize Paystack transaction
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!paystackSecretKey) {
+      return res.status(500).json({ error: 'Paystack not configured' });
+    }
+
+    // Calculate digital fee (1.5% capped at ₦2000)
+    const digitalFee = Math.min(parseFloat(amount) * 0.015, 2000);
+    const totalAmountWithFee = parseFloat(amount) + digitalFee;
+
+    // Convert to kobo (Paystack uses smallest currency unit)
+    const amountInKobo = Math.round(totalAmountWithFee * 100);
+
+    const reference = `INV-${invoice.invoiceNumber}-${Date.now()}`;
+
+    const paystackData = {
+      email: email,
+      amount: amountInKobo,
+      reference: reference,
+      callback_url: `${process.env.FRONTEND_URL}/finance/payment-callback`,
+      metadata: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        studentId: invoice.studentId,
+        schoolId: schoolId,
+        studentName: `${invoice.student.firstName} ${invoice.student.lastName}`,
+        invoiceAmount: parseFloat(amount),
+        digitalFee: digitalFee,
+        totalAmount: totalAmountWithFee,
+        custom_fields: [
+          {
+            display_name: 'Invoice Number',
+            variable_name: 'invoice_number',
+            value: invoice.invoiceNumber
+          },
+          {
+            display_name: 'Student',
+            variable_name: 'student_name',
+            value: `${invoice.student.firstName} ${invoice.student.lastName}`
+          },
+          {
+            display_name: 'Digital Fee',
+            variable_name: 'digital_fee',
+            value: digitalFee.toString()
+          }
+        ]
+      }
+    };
+
+    // Add subaccount if configured
+    if (invoice.school.paystackSubaccountCode) {
+      paystackData.subaccount = invoice.school.paystackSubaccountCode;
+      paystackData.transaction_charge = digitalFee * 100; // in kobo
+    }
+
+    const response = await axios.post(
+      'https://api.paystack.co/transaction/initialize',
+      paystackData,
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // Generate payment number
+    const paymentNumber = await generatePaymentNumber(schoolId);
+
+    // Store pending payment record
+    await prisma.payment.create({
+      data: {
+        schoolId: schoolId,
+        studentId: invoice.studentId,
+        invoiceId: invoice.id,
+        amount: parseFloat(amount),
+        paymentMethod: 'CARD', // Using CARD for online/Paystack payments
+        paymentNumber: paymentNumber,
+        status: 'PENDING',
+        referenceNumber: reference,
+        notes: `Paystack payment - Digital fee: ₦${digitalFee}, Total: ₦${totalAmountWithFee}`
+      }
+    });
+
+    res.json({
+      success: true,
+      data: response.data.data,
+      message: 'Payment initialized successfully'
+    });
+
+  } catch (error) {
+    console.error('Error initializing Paystack payment (public):', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error response:', error.response?.data);
+    res.status(500).json({
+      error: error.response?.data?.message || error.message || 'Failed to initialize payment'
+    });
   }
 };
 
@@ -1041,5 +1265,6 @@ module.exports = {
   getPaymentSummary,
   getPaymentReport,
   initializePaystackPayment,
+  initializePaystackPaymentPublic,
   verifyPaystackPayment
 };

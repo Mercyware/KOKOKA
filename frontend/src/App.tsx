@@ -310,11 +310,9 @@ const App = () => (
             <Route path="/finance/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
             <Route path="/finance/invoices/create" element={<ProtectedRoute><CreateInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />
-            <Route path="/finance/invoices/:id/pay" element={<ProtectedRoute><PayInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/invoices/:id/pay" element={<PayInvoicePage />} />
+            <Route path="/finance/payment-callback" element={<PaymentCallbackPage />} />
             <Route path="/finance/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
-            <Route path="/finance/payment-report" element={<ProtectedRoute><PaymentReportPage /></ProtectedRoute>} />
-            <Route path="/finance/outstanding" element={<ProtectedRoute><OutstandingPage /></ProtectedRoute>} />
-            <Route path="/finance/payment-callback" element={<ProtectedRoute><PaymentCallbackPage /></ProtectedRoute>} />
 
             {/* Accounting Routes */}
             <Route path="/accounting/dashboard" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />

@@ -45,6 +45,19 @@ export const SchoolSettingsProvider: React.FC<SchoolSettingsProviderProps> = ({ 
     // Load school settings from API
     const loadSettings = async () => {
       try {
+        // Check if we're on a public page (pages that don't need auth)
+        const isPublicPage = window.location.pathname.includes('/pay') || 
+                            window.location.pathname.includes('/payment-callback') ||
+                            window.location.pathname.includes('/login') ||
+                            window.location.pathname.includes('/register') ||
+                            window.location.pathname.includes('/forgot-password');
+        
+        if (isPublicPage) {
+          // Skip loading school settings for public pages
+          setIsLoading(false);
+          return;
+        }
+
         const schoolSettings = await fetchSchoolSettings();
         // Try settings.currency first, then fall back to settings.system.currency
         const currencyCode = schoolSettings.settings?.currency || schoolSettings.settings?.system?.currency || 'USD';

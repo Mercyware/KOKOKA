@@ -12,14 +12,22 @@ import {
   CardTitle,
   Button,
 } from '@/components/ui';
-import { getInvoiceById, initializePaystackPayment, type Invoice } from '@/services/financeService';
-import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
+import { 
+  getInvoiceById,
+  getInvoiceByIdPublic, 
+  initializePaystackPayment,
+  initializePaystackPaymentPublic, 
+  type Invoice 
+} from '@/services/financeService';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 export default function PayInvoicePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { settings } = useSchoolSettings();
+  const { authState } = useAuth();
+  const isAuthenticated = authState.isAuthenticated;
+  const user = authState.user;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -31,11 +39,25 @@ export default function PayInvoicePage() {
   const fetchInvoice = async () => {
     try {
       setLoading(true);
-      const data = await getInvoiceById(id!);
+      console.log('Fetching invoice with ID:', id);
+      console.log('User authenticated:', isAuthenticated);
+      
+      let data;
+      if (isAuthenticated) {
+        // Use authenticated endpoint for logged-in users
+        const response = await getInvoiceById(id!);
+        data = response.data;
+      } else {
+        // Use public endpoint for guest users
+        data = await getInvoiceByIdPublic(id!);
+      }
+      
+      console.log('Invoice data received:', data);
       setInvoice(data);
     } catch (error: any) {
       console.error('Error fetching invoice:', error);
-      toast.error(error.message || 'Failed to load invoice');
+      console.error('Error response:', error.response?.data);
+      toast.error(error.response?.data?.error || error.message || 'Failed to load invoice');
     } finally {
       setLoading(false);
     }
@@ -46,16 +68,29 @@ export default function PayInvoicePage() {
 
     try {
       setProcessing(true);
-      // Initialize Paystack payment
-      const response = await initializePaystackPayment({
-        invoiceId: invoice.id,
-        amount: invoice.balance,
-        email: invoice.student.email || '', // Student's email for payment receipt
-      });
+      
+      let authorizationUrl;
+      if (isAuthenticated) {
+        // Use authenticated payment endpoint
+        const response = await initializePaystackPayment({
+          invoiceId: invoice.id,
+          amount: invoice.balance,
+          email: invoice.student.email || user?.email || '',
+        });
+        authorizationUrl = response.data?.authorization_url;
+      } else {
+        // Use public payment endpoint
+        const response = await initializePaystackPaymentPublic({
+          invoiceId: invoice.id,
+          amount: invoice.balance,
+          email: invoice.student.email || '',
+        });
+        authorizationUrl = response.authorization_url;
+      }
 
       // Redirect to Paystack checkout
-      if (response.data?.authorization_url) {
-        window.location.href = response.data.authorization_url;
+      if (authorizationUrl) {
+        window.location.href = authorizationUrl;
       }
     } catch (error: any) {
       console.error('Error initiating payment:', error);
@@ -94,10 +129,10 @@ export default function PayInvoicePage() {
     );
   }
 
-  // Extract currency symbol - settings.currency might be an object or string
-  const currencySymbol = typeof settings?.currency === 'object' 
-    ? settings.currency.symbol 
-    : (settings?.currency || invoice.school?.currency || '₦');
+  // Extract currency symbol from invoice.school data
+  const currencySymbol = typeof invoice?.school?.currency === 'object' 
+    ? invoice.school.currency.symbol 
+    : (invoice?.school?.currency || '₦');
 
   return (
     <PageContainer>
@@ -235,20 +270,22 @@ export default function PayInvoicePage() {
           )}
 
           {/* Actions */}
-          <div className="flex justify-between">
-            <Button
-              intent="cancel"
-              onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
-            >
-              View Invoice Details
-            </Button>
-            <Button
-              intent="action"
-              onClick={() => navigate('/finance/invoices')}
-            >
-              Back to Invoices
-            </Button>
-          </div>
+          {isAuthenticated && (
+            <div className="flex justify-between">
+              <Button
+                intent="cancel"
+                onClick={() => navigate(`/finance/invoices/${invoice.id}`)}
+              >
+                View Invoice Details
+              </Button>
+              <Button
+                intent="action"
+                onClick={() => navigate('/finance/invoices')}
+              >
+                Back to Invoices
+              </Button>
+            </div>
+          )}
         </div>
       </PageContent>
     </PageContainer>

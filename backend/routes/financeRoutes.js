@@ -6,7 +6,18 @@ const paymentController = require('../controllers/paymentController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const roleMiddleware = require('../middlewares/roleMiddleware');
 
-// Protect all routes
+// ==================== PUBLIC ROUTES (NO AUTH REQUIRED) ====================
+
+// Public invoice view for payment (parents can view without login)
+router.get('/invoices/:id/public', invoiceController.getInvoiceByIdPublic);
+
+// Public Paystack payment initialization (for parents)
+router.post('/payments/paystack/initialize-public', paymentController.initializePaystackPaymentPublic);
+
+// Public Paystack payment verification (callback after payment)
+router.get('/payments/paystack/verify/:reference', paymentController.verifyPaystackPayment);
+
+// Protect all other routes
 router.use(authMiddleware.protect);
 
 // ==================== FEE STRUCTURES ====================
@@ -63,8 +74,7 @@ router.post('/payments', roleMiddleware.restrictTo('admin'), paymentController.c
 router.put('/payments/:id', roleMiddleware.restrictTo('admin'), paymentController.updatePayment);
 router.delete('/payments/:id', roleMiddleware.restrictTo('admin'), paymentController.deletePayment);
 
-// Paystack payment routes
+// Paystack payment routes (authenticated)
 router.post('/payments/paystack/initialize', paymentController.initializePaystackPayment);
-router.get('/payments/paystack/verify/:reference', paymentController.verifyPaystackPayment);
 
 module.exports = router;

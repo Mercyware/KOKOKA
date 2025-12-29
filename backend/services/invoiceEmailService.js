@@ -97,7 +97,6 @@ const sendInvoiceEmail = async (invoiceId, schoolId, options = {}) => {
       recipientName = `${invoice.student.firstName} ${invoice.student.lastName}`;
     }
 
-    recipientEmail = "mercyware@gmail.com" // Test email override
     if (!recipientEmail) {
       throw new Error('No email address found for recipient');
     }
@@ -137,7 +136,7 @@ const sendInvoiceEmail = async (invoiceId, schoolId, options = {}) => {
       text: textContent,
       html: htmlContent,
       attachments: [attachment],
-      from: "mercyware@gmail.com", //invoice.school.email || process.env.EMAIL_FROM,
+      from: invoice.school.email || process.env.EMAIL_FROM,
       priority: 5 // Regular priority (invoice emails)
     });
 

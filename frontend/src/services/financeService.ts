@@ -1,5 +1,7 @@
 import { get, post, put, del } from './api';
 import { ApiResponse } from '../types';
+import axios from 'axios';
+import { API_CONFIG } from '../config/api';
 
 // ==================== TYPES ====================
 
@@ -375,6 +377,11 @@ export const getInvoiceById = async (id: string): Promise<ApiResponse<Invoice>> 
   return await get<Invoice>(`/finance/invoices/${id}`);
 };
 
+export const getInvoiceByIdPublic = async (id: string): Promise<Invoice> => {
+  const response = await axios.get(`${API_CONFIG.BASE_URL}/finance/invoices/${id}/public`);
+  return response.data;
+};
+
 export const createInvoice = async (data: CreateInvoiceData): Promise<ApiResponse<Invoice>> => {
   return await post<Invoice>('/finance/invoices', data);
 };
@@ -546,6 +553,19 @@ export const initializePaystackPayment = async (data: {
     access_code: string;
     reference: string;
   }>('/finance/payments/paystack/initialize', data);
+};
+
+export const initializePaystackPaymentPublic = async (data: {
+  invoiceId: string;
+  amount: number;
+  email: string;
+}): Promise<{
+  authorization_url: string;
+  access_code: string;
+  reference: string;
+}> => {
+  const response = await axios.post(`${API_CONFIG.BASE_URL}/finance/payments/paystack/initialize-public`, data);
+  return response.data.data;
 };
 
 export const verifyPaystackPayment = async (reference: string): Promise<ApiResponse<{

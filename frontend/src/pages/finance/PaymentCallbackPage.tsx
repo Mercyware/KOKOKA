@@ -3,12 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyPaystackPayment } from '@/services/financeService';
 import { PageContainer, PageHeader, PageTitle, Card, Button } from '@/components/ui';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed';
 
 const PaymentCallbackPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { authState } = useAuth();
+  const isAuthenticated = authState.isAuthenticated;
   const [status, setStatus] = useState<PaymentStatus>('verifying');
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -112,14 +115,20 @@ const PaymentCallbackPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3">
-                <Button intent="primary" onClick={handleViewInvoice} className="w-full">
-                  View Invoice
-                </Button>
-                <Button intent="action" onClick={handleViewPayments} className="w-full">
-                  View All Payments
-                </Button>
-              </div>
+              {isAuthenticated ? (
+                <div className="flex flex-col gap-3">
+                  <Button intent="primary" onClick={handleViewInvoice} className="w-full">
+                    View Invoice
+                  </Button>
+                  <Button intent="action" onClick={handleViewPayments} className="w-full">
+                    View All Payments
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-600">
+                  <p>Thank you for your payment! A confirmation email has been sent.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -133,14 +142,20 @@ const PaymentCallbackPage: React.FC = () => {
                 {errorMessage || 'We could not verify your payment. Please contact support.'}
               </p>
 
-              <div className="flex flex-col gap-3">
-                <Button intent="primary" onClick={() => navigate('/finance/invoices')} className="w-full">
-                  Back to Invoices
-                </Button>
-                <Button intent="action" onClick={handleViewPayments} className="w-full">
-                  View Payments
-                </Button>
-              </div>
+              {isAuthenticated ? (
+                <div className="flex flex-col gap-3">
+                  <Button intent="primary" onClick={() => navigate('/finance/invoices')} className="w-full">
+                    Back to Invoices
+                  </Button>
+                  <Button intent="action" onClick={handleViewPayments} className="w-full">
+                    View Payments
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-600">
+                  <p>If you believe this is an error, please contact support.</p>
+                </div>
+              )}
             </div>
           )}
         </Card>

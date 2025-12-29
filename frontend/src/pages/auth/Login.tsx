@@ -191,7 +191,7 @@ const Login: React.FC = () => {
             </CardTitle>
             <CardDescription className="text-sm">
               {loadingBranding ? (
-                <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-56 mx-auto rounded"></div>
+                <span className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 w-56 mx-auto rounded inline-block"></span>
               ) : schoolBranding ? (
                 `Sign in to access your ${schoolBranding.name} account`
               ) : (

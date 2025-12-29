@@ -53,6 +53,23 @@ export const updateSubdomainHeader = () => {
   }
 };
 
+// Helper function to clear auth and redirect
+const clearAuthAndRedirect = () => {
+  // Don't redirect if on a public page
+  if (window.location.pathname.includes('/pay') || 
+      window.location.pathname.includes('/payment-callback') ||
+      window.location.pathname.includes('/login') ||
+      window.location.pathname.includes('/register') ||
+      window.location.pathname.includes('/forgot-password')) {
+    return;
+  }
+  
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+};
+
 // Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {

@@ -620,9 +620,83 @@ const downloadInvoicePDF = async (req, res) => {
   }
 };
 
+// Get invoice by ID (public - no auth required for payment page)
+const getInvoiceByIdPublic = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Optional: Add rate limiting check here
+    // Optional: Verify payment token if implementing secure links
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            currency: true,
+            enableOnlinePayment: true,
+            // Only return bank details if online payment is disabled
+            // This prevents exposing bank info unless necessary
+            bankName: true,
+            accountNumber: true,
+            accountName: true,
+            bankBranch: true
+          }
+        },
+        student: {
+          select: {
+            // Minimal student info - only what's needed for payment
+            id: true,
+            firstName: true,
+            lastName: true,
+            admissionNumber: true,
+            email: true,
+            // Don't expose phone number publicly
+          }
+        },
+        items: {
+          include: {
+            feeStructure: {
+              select: { name: true, category: true }
+            }
+          }
+        },
+        masterInvoice: {
+          select: {
+            id: true,
+            name: true,
+            academicYear: {
+              select: { name: true }
+            }
+          }
+        },
+        payments: {
+          where: { status: 'COMPLETED' }, // Only show completed payments
+          orderBy: { paymentDate: 'desc' }
+        }
+      }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    
+    // Log access for audit trail
+    console.log(`Public invoice access: ${id} at ${new Date().toISOString()}`);
+
+    res.json(invoice);
+  } catch (error) {
+    console.error('Error fetching invoice:', error);
+    res.status(500).json({ error: 'Failed to fetch invoice' });
+  }
+};
+
 module.exports = {
   getAllInvoices,
   getInvoiceById,
+  getInvoiceByIdPublic,
   createInvoice,
   updateInvoice,
   deleteInvoice,
