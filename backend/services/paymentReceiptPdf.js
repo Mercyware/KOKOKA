@@ -166,11 +166,30 @@ const generatePaymentReceiptPDF = async (payment, school) => {
       
       yPosition += 25;
 
-      const currency = school.currency?.symbol || school.currency || '₦';
+      // Get currency - use 'NGN ' prefix for Nigerian Naira to avoid encoding issues
+      let currencySymbol = 'NGN ';
+      if (school.currency) {
+        if (typeof school.currency === 'object' && school.currency.symbol) {
+          // If it's the Naira symbol or NGN, use 'NGN ' prefix
+          if (school.currency.symbol === '₦' || school.currency.symbol === 'NGN') {
+            currencySymbol = 'NGN ';
+          } else {
+            currencySymbol = school.currency.symbol;
+          }
+        } else if (typeof school.currency === 'string') {
+          // If it's a string like '₦' or 'NGN', use 'NGN ' prefix
+          if (school.currency === '₦' || school.currency === 'NGN') {
+            currencySymbol = 'NGN ';
+          } else {
+            currencySymbol = school.currency;
+          }
+        }
+      }
+      
       doc.fontSize(28)
          .font('Helvetica-Bold')
          .fillColor('#22c55e')
-         .text(`${currency}${parseFloat(payment.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 70, yPosition);
+         .text(`${currencySymbol}${parseFloat(payment.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 70, yPosition);
       
       doc.fillColor('#000000');
       yPosition += 60;
@@ -205,12 +224,12 @@ const generatePaymentReceiptPDF = async (payment, school) => {
         doc.font('Helvetica-Bold')
            .text('Invoice Total:', infoLeft, yPosition)
            .font('Helvetica')
-           .text(`${currency}${parseFloat(payment.invoice.total).toFixed(2)}`, infoLeft + 120, yPosition);
+           .text(`${currencySymbol}${parseFloat(payment.invoice.total).toFixed(2)}`, infoLeft + 120, yPosition);
         
         doc.font('Helvetica-Bold')
            .text('Total Paid:', infoRight, yPosition)
            .font('Helvetica')
-           .text(`${currency}${parseFloat(payment.invoice.amountPaid).toFixed(2)}`, infoRight + 90, yPosition);
+           .text(`${currencySymbol}${parseFloat(payment.invoice.amountPaid).toFixed(2)}`, infoRight + 90, yPosition);
 
         yPosition += 20;
 
@@ -219,7 +238,7 @@ const generatePaymentReceiptPDF = async (payment, school) => {
            .text('Remaining Balance:', infoLeft, yPosition)
            .font('Helvetica')
            .fillColor(balance > 0 ? '#d32f2f' : '#22c55e')
-           .text(`${currency}${balance.toFixed(2)}`, infoLeft + 120, yPosition);
+           .text(`${currencySymbol}${balance.toFixed(2)}`, infoLeft + 120, yPosition);
         
         doc.fillColor('#000000');
 

@@ -30,9 +30,30 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
       return null;
     }
 
-    // Format currency
-    const currency = school.currency?.symbol || school.currency || '₦';
-    console.log('📧 Currency:', currency);
+    // Format currency - use 'NGN ' prefix for Nigerian Naira to avoid encoding issues
+    let currencySymbol = 'NGN ';
+    if (school.currency) {
+      if (typeof school.currency === 'object' && school.currency.symbol) {
+        // If it's the Naira symbol or NGN, use 'NGN ' prefix
+        if (school.currency.symbol === '₦' || school.currency.symbol === 'NGN') {
+          currencySymbol = 'NGN ';
+        } else {
+          currencySymbol = school.currency.symbol;
+        }
+      } else if (typeof school.currency === 'string') {
+        // If it's a string like '₦' or 'NGN', use 'NGN ' prefix
+        if (school.currency === '₦' || school.currency === 'NGN') {
+          currencySymbol = 'NGN ';
+        } else {
+          currencySymbol = school.currency;
+        }
+      }
+    }
+    console.log('📧 Currency symbol:', currencySymbol);
+    
+    // Calculate status based on balance
+    const invoiceStatus = parseFloat(invoice.balance) === 0 ? 'PAID IN FULL' : 'PARTIALLY PAID';
+    console.log('📧 Invoice status:', invoiceStatus, 'Balance:', invoice.balance);
     
     // Build email content
     const emailSubject = `Payment Confirmation - ${invoice.invoiceNumber}`;
@@ -72,7 +93,7 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
             
             <p>We are pleased to confirm that we have received your payment for <strong>${student.firstName} ${student.lastName}</strong>.</p>
             
-            <div class="amount">${currency}${parseFloat(payment.amount).toFixed(2)}</div>
+            <div class="amount">${currencySymbol}${parseFloat(payment.amount).toFixed(2)}</div>
             
             <div class="details">
               <h3 style="margin-top: 0; color: #4CAF50;">Payment Details</h3>
@@ -94,7 +115,7 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
               
               <div class="detail-row">
                 <span class="detail-label">Amount Paid:</span>
-                <span class="detail-value">${currency}${parseFloat(payment.amount).toFixed(2)}</span>
+                <span class="detail-value">${currencySymbol}${parseFloat(payment.amount).toFixed(2)}</span>
               </div>
               
               <div class="detail-row">
@@ -121,12 +142,16 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
               ${invoice.balance > 0 ? `
               <div class="detail-row">
                 <span class="detail-label">Remaining Balance:</span>
-                <span class="detail-value" style="color: #ff9800; font-weight: bold;">${currency}${parseFloat(invoice.balance).toFixed(2)}</span>
+                <span class="detail-value" style="color: #ff9800; font-weight: bold;">${currencySymbol}${parseFloat(invoice.balance).toFixed(2)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Invoice Status:</span>
+                <span class="detail-value" style="color: #ff9800; font-weight: bold;">PARTIALLY PAID</span>
               </div>
               ` : `
               <div class="detail-row">
                 <span class="detail-label">Invoice Status:</span>
-                <span class="detail-value" style="color: #4CAF50; font-weight: bold;">FULLY PAID ✓</span>
+                <span class="detail-value" style="color: #4CAF50; font-weight: bold;">PAID IN FULL ✓</span>
               </div>
               `}
             </div>
@@ -135,7 +160,7 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
             
             ${invoice.balance > 0 ? `
             <p style="color: #ff9800;">
-              <strong>Note:</strong> There is a remaining balance of ${currency}${parseFloat(invoice.balance).toFixed(2)} on this invoice. 
+              <strong>Note:</strong> There is a remaining balance of ${currencySymbol}${parseFloat(invoice.balance).toFixed(2)} on this invoice. 
               You can make another payment anytime using your payment link.
             </p>
             ` : ''}
@@ -167,7 +192,18 @@ async function sendPaymentConfirmation(payment, invoice, student, school) {
     // Generate PDF receipt
     let pdfAttachment = null;
     try {
-      const pdfBuffer = await generatePaymentReceiptPDF(payment, school);
+      // Enrich payment object with invoice data for PDF
+      const enrichedPayment = {
+        ...payment,
+        invoice: invoice,
+        student: student
+      };
+      console.log('📧 Enriched payment data for PDF:', {
+        invoiceTotal: invoice.total,
+        invoiceBalance: invoice.balance,
+        invoiceAmountPaid: invoice.amountPaid
+      });
+      const pdfBuffer = await generatePaymentReceiptPDF(enrichedPayment, school);
       pdfAttachment = {
         filename: `Payment_Receipt_${payment.paymentNumber}.pdf`,
         content: pdfBuffer.toString('base64'),
