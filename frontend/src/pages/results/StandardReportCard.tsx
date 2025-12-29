@@ -417,71 +417,101 @@ const StandardReportCard: React.FC = () => {
           <div style={{ padding: '24px' }}>
             {/* Academic Year and Term Bar */}
             <div style={{
-              background: '#eff6ff',
-              padding: '12px 16px',
-              borderRadius: '8px',
+              display: 'flex',
+              justifyContent: 'space-between',
               marginBottom: '20px',
-              border: '1px solid #bfdbfe',
-              textAlign: 'center',
-              fontSize: '13px',
-              fontWeight: '600',
-              color: '#1e40af'
+              fontSize: '12px',
+              fontWeight: '700',
+              color: '#1e293b'
             }}>
-              Academic Year: {reportData.academicYear.name} &nbsp;&nbsp;|&nbsp;&nbsp; Term: {reportData.term.name}
+              <div>Academic Year: {reportData.academicYear.name}</div>
+              <div>Term: {reportData.term.name}</div>
             </div>
 
-            {/* Student Information Card */}
+            {/* Student Information with Performance Summary Box */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '16px',
-              marginBottom: '20px',
-              background: '#f8fafc',
-              padding: '16px',
+              border: '2px solid #1e40af',
               borderRadius: '8px',
-              border: '1px solid #e2e8f0'
+              marginBottom: '20px',
+              overflow: 'hidden'
             }}>
-              <div>
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>STUDENT NAME:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '600', textTransform: 'uppercase', color: '#1e293b' }}>
-                        {reportData.student.lastName} {reportData.student.firstName} {reportData.student.middleName}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>ADMISSION NO.:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '600', color: '#1e293b' }}>{reportData.student.registrationNumber}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>CLASS:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '600', color: '#1e293b' }}>{reportData.class.name}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>Position in Class:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '700', color: '#dc2626', fontSize: '14px' }}>
-                        {reportData.position ? `${reportData.position}${getOrdinalSuffix(reportData.position)}` : 'N/A'}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>Total Average:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '700', color: '#059669', fontSize: '14px' }}>
-                        {reportData.averageScore.toFixed(1)}%
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '6px 0', color: '#64748b', fontWeight: '600' }}>Total Subjects:</td>
-                      <td style={{ padding: '6px 0', fontWeight: '600', color: '#1e293b' }}>{reportData.totalSubjects}</td>
-                    </tr>
-                  </tbody>
-                </table>
+              {/* Main Student Info */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '2fr 1fr',
+                gap: '0'
+              }}>
+                {/* Left: Student Details */}
+                <div style={{
+                  padding: '16px',
+                  borderRight: '2px solid #1e40af'
+                }}>
+                  <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '6px 8px', color: '#1e293b', fontWeight: '700', width: '140px' }}>STUDENT NAME:</td>
+                        <td style={{ padding: '6px 8px', fontWeight: '600', textTransform: 'uppercase', color: '#1e293b' }}>
+                          {reportData.student.lastName} {reportData.student.firstName} {reportData.student.middleName}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '6px 8px', color: '#1e293b', fontWeight: '700' }}>ADMISSION NO.:</td>
+                        <td style={{ padding: '6px 8px', fontWeight: '600', color: '#1e293b' }}>{reportData.student.registrationNumber}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '6px 8px', color: '#1e293b', fontWeight: '700' }}>CLASS:</td>
+                        <td style={{ padding: '6px 8px', fontWeight: '600', color: '#1e293b' }}>{reportData.class.name}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '6px 8px', color: '#1e293b', fontWeight: '700' }}>CLASS TEACHER:</td>
+                        <td style={{ padding: '6px 8px', fontWeight: '600', color: '#1e293b' }}>
+                          {reportData.class.classTeacher ? 
+                            `${reportData.class.classTeacher.firstName} ${reportData.class.classTeacher.lastName}` : 
+                            '_______________'}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Right: Performance Summary Box */}
+                <div style={{
+                  background: '#eff6ff',
+                  padding: '8px 12px'
+                }}>
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: '12px',
+                    fontWeight: '700',
+                    fontSize: '11px',
+                    color: '#1e40af',
+                    textTransform: 'uppercase',
+                    borderBottom: '1px solid #1e40af',
+                    paddingBottom: '6px'
+                  }}>
+                    PERFORMANCE SUMMARY
+                  </div>
+                  <table style={{ width: '100%', fontSize: '11px' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: '#1e293b', fontWeight: '600' }}>Position in Class:</td>
+                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700', color: '#1e40af', fontSize: '16px' }}>
+                          {reportData.position ? `${reportData.position}${getOrdinalSuffix(reportData.position)}` : 'N/A'}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: '#1e293b', fontWeight: '600' }}>Total Average:</td>
+                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700', color: '#1e40af', fontSize: '14px' }}>
+                          {reportData.averageScore.toFixed(1)}%
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: '#1e293b', fontWeight: '600' }}>Total Subjects:</td>
+                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700', color: '#1e40af' }}>{reportData.totalSubjects}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -509,28 +539,28 @@ const StandardReportCard: React.FC = () => {
               background: 'white'
             }}>
               <thead>
-                <tr style={{ background: '#dbeafe', color: '#1e40af' }}>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>S/N</th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'left', fontWeight: '700' }}>SUBJECT</th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
-                    1ST CA<br/>(10)
+                <tr style={{ background: '#1e40af', color: 'white' }}>
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '11px' }}>S/N</th>
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'left', fontWeight: '700', fontSize: '11px' }}>SUBJECT</th>
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '10px' }}>
+                    CA1<br/><span style={{ fontSize: '9px', fontWeight: '400' }}>(10)</span>
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
-                    2ND CA<br/>(10)
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '10px' }}>
+                    CA2<br/><span style={{ fontSize: '9px', fontWeight: '400' }}>(10)</span>
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
-                    3RD CA<br/>(10)
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '10px' }}>
+                    CA3<br/><span style={{ fontSize: '9px', fontWeight: '400' }}>(10)</span>
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
-                    EXAM<br/>(60)
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '10px' }}>
+                    EXAM<br/><span style={{ fontSize: '9px', fontWeight: '400' }}>(70)</span>
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
-                    TOTAL<br/>(100)
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '10px' }}>
+                    TOTAL<br/><span style={{ fontSize: '9px', fontWeight: '400' }}>(100)</span>
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '11px' }}>
                     GRADE
                   </th>
-                  <th style={{ border: '1px solid #cbd5e1', padding: '10px 8px', textAlign: 'center', fontWeight: '700' }}>
+                  <th style={{ border: '1px solid #94a3b8', padding: '10px 8px', textAlign: 'center', fontWeight: '700', fontSize: '11px' }}>
                     REMARK
                   </th>
                 </tr>
@@ -563,53 +593,55 @@ const StandardReportCard: React.FC = () => {
             {/* Grading Scale and Attendance Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
               {/* Grading Scale */}
-              <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ background: '#1e40af', color: 'white', padding: '8px 12px', fontWeight: '700', fontSize: '12px' }}>
+              <div style={{ border: '2px solid #1e40af', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ background: '#1e40af', color: 'white', padding: '8px 12px', fontWeight: '700', fontSize: '11px' }}>
                   GRADING SCALE
                 </div>
-                <div style={{ padding: '12px' }}>
-                  <table style={{ width: '100%', fontSize: '11px' }}>
+                <div style={{ padding: '12px', background: 'white' }}>
+                  <table style={{ width: '100%', fontSize: '11px', lineHeight: '1.8' }}>
                     <tbody>
-                      <tr><td style={{ padding: '4px 0' }}><strong>A:</strong> 70-100 - Excellent</td></tr>
-                      <tr><td style={{ padding: '4px 0' }}><strong>B:</strong> 60-69 - Very Good</td></tr>
-                      <tr><td style={{ padding: '4px 0' }}><strong>C:</strong> 50-59 - Good</td></tr>
-                      <tr><td style={{ padding: '4px 0' }}><strong>D:</strong> 40-49 - Fair</td></tr>
-                      <tr><td style={{ padding: '4px 0' }}><strong>F:</strong> 0-39 - Fail</td></tr>
+                      <tr><td style={{ padding: '2px 0' }}><strong>A</strong></td><td style={{ padding: '2px 8px' }}>75-100</td><td style={{ padding: '2px 0' }}>Excellent</td></tr>
+                      <tr><td style={{ padding: '2px 0' }}><strong>B</strong></td><td style={{ padding: '2px 8px' }}>70-74</td><td style={{ padding: '2px 0' }}>Very Good</td></tr>
+                      <tr><td style={{ padding: '2px 0' }}><strong>C</strong></td><td style={{ padding: '2px 8px' }}>60-69</td><td style={{ padding: '2px 0' }}>Good</td></tr>
+                      <tr><td style={{ padding: '2px 0' }}><strong>D</strong></td><td style={{ padding: '2px 8px' }}>50-59</td><td style={{ padding: '2px 0' }}>Pass</td></tr>
+                      <tr><td style={{ padding: '2px 0' }}><strong>F</strong></td><td style={{ padding: '2px 8px' }}>0-49</td><td style={{ padding: '2px 0' }}>Fail</td></tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
               {/* Attendance & Conduct */}
-              <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ background: '#1e40af', color: 'white', padding: '8px 12px', fontWeight: '700', fontSize: '12px' }}>
+              <div style={{ border: '2px solid #1e40af', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ background: '#1e40af', color: 'white', padding: '8px 12px', fontWeight: '700', fontSize: '11px' }}>
                   ATTENDANCE & CONDUCT
                 </div>
-                <div style={{ padding: '12px' }}>
-                  <table style={{ width: '100%', fontSize: '11px' }}>
+                <div style={{ padding: '12px', background: 'white' }}>
+                  <table style={{ width: '100%', fontSize: '11px', lineHeight: '1.8' }}>
                     <tbody>
                       <tr>
-                        <td style={{ padding: '4px 0', color: '#64748b' }}>Days Present:</td>
-                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.daysPresent}</td>
+                        <td style={{ padding: '2px 0', color: '#1e293b' }}>Days Present:</td>
+                        <td style={{ padding: '2px 0', textAlign: 'right', fontWeight: '700' }}>
+                          {reportData.daysPresent} / {reportData.daysPresent + reportData.daysAbsent} days
+                        </td>
                       </tr>
                       <tr>
-                        <td style={{ padding: '4px 0', color: '#64748b' }}>Days Absent:</td>
-                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.daysAbsent}</td>
+                        <td style={{ padding: '2px 0', color: '#1e293b' }}>Days Absent:</td>
+                        <td style={{ padding: '2px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.daysAbsent} days</td>
                       </tr>
                       <tr>
-                        <td style={{ padding: '4px 0', color: '#64748b' }}>Attendance %:</td>
-                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700', color: '#059669' }}>
+                        <td style={{ padding: '2px 0', color: '#1e293b' }}>Attendance %:</td>
+                        <td style={{ padding: '2px 0', textAlign: 'right', fontWeight: '700', color: '#059669' }}>
                           {attendancePercentage}%
                         </td>
                       </tr>
                       <tr>
-                        <td style={{ padding: '4px 0', color: '#64748b' }}>Times Late:</td>
-                        <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.timesLate}</td>
+                        <td style={{ padding: '2px 0', color: '#1e293b' }}>Times Late:</td>
+                        <td style={{ padding: '2px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.timesLate}</td>
                       </tr>
                       {reportData.conductGrade && (
                         <tr>
-                          <td style={{ padding: '4px 0', color: '#64748b' }}>Conduct:</td>
-                          <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.conductGrade}</td>
+                          <td style={{ padding: '2px 0', color: '#1e293b' }}>Conduct:</td>
+                          <td style={{ padding: '2px 0', textAlign: 'right', fontWeight: '700' }}>{reportData.conductGrade}</td>
                         </tr>
                       )}
                     </tbody>
@@ -619,38 +651,30 @@ const StandardReportCard: React.FC = () => {
             </div>
 
             {/* Class Teacher's Comment */}
-            <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', marginBottom: '16px', overflow: 'hidden' }}>
-              <div style={{ background: '#f1f5f9', padding: '8px 12px', fontWeight: '700', fontSize: '12px', color: '#1e293b', borderBottom: '1px solid #cbd5e1' }}>
+            <div style={{ border: '2px solid #cbd5e1', borderRadius: '8px', marginBottom: '16px', overflow: 'hidden' }}>
+              <div style={{ background: '#f1f5f9', padding: '8px 12px', fontWeight: '700', fontSize: '11px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', textTransform: 'uppercase' }}>
                 CLASS TEACHER'S COMMENT
               </div>
-              <div style={{ padding: '12px', minHeight: '60px', fontSize: '12px', lineHeight: '1.6' }}>
+              <div style={{ padding: '16px', minHeight: '70px', fontSize: '12px', lineHeight: '1.6', background: 'white' }}>
                 {reportData.teacherComment || 'Excellent performance. Keep up the good work!'}
               </div>
             </div>
 
             {/* Principal's Comment */}
-            <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', marginBottom: '20px', overflow: 'hidden' }}>
-              <div style={{ background: '#f1f5f9', padding: '8px 12px', fontWeight: '700', fontSize: '12px', color: '#1e293b', borderBottom: '1px solid #cbd5e1' }}>
+            <div style={{ border: '2px solid #cbd5e1', borderRadius: '8px', marginBottom: '20px', overflow: 'hidden' }}>
+              <div style={{ background: '#f1f5f9', padding: '8px 12px', fontWeight: '700', fontSize: '11px', color: '#1e293b', borderBottom: '2px solid #cbd5e1', textTransform: 'uppercase' }}>
                 PRINCIPAL'S COMMENT
               </div>
-              <div style={{ padding: '12px', minHeight: '60px', fontSize: '12px', lineHeight: '1.6' }}>
-                {reportData.principalComment || 'Good performance. Maintain the standard.'}
+              <div style={{ padding: '16px', minHeight: '70px', fontSize: '12px', lineHeight: '1.6', background: 'white' }}>
+                {reportData.principalComment || ''}
               </div>
             </div>
 
             {/* Signatures */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderBottom: '2px solid #cbd5e1', height: '50px', marginBottom: '8px' }}></div>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Class Teacher's Signature</p>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderBottom: '2px solid #cbd5e1', height: '50px', marginBottom: '8px' }}></div>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Head Master's Signature</p>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ borderBottom: '2px solid #cbd5e1', height: '50px', marginBottom: '8px' }}></div>
-                <p style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Date Principal</p>
+            <div style={{ marginTop: '30px', marginBottom: '16px' }}>
+              <div style={{ display: 'inline-block', width: '100%', maxWidth: '300px' }}>
+                <div style={{ borderBottom: '1px solid #1e293b', height: '50px', marginBottom: '8px' }}></div>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#1e293b' }}>Class Teacher's Signature:</p>
               </div>
             </div>
 

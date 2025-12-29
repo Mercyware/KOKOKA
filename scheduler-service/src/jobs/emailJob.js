@@ -5,7 +5,7 @@
  */
 
 const nodemailer = require('nodemailer');
-const config = require('../config');
+const config = require('../config/index');
 const logger = require('../utils/logger');
 
 class EmailJobProcessor {

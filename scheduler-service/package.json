@@ -1,0 +1,30 @@
+{
+  "name": "kokoka-scheduler-service",
+  "version": "1.0.0",
+  "description": "Email scheduler and queue processor for KOKOKA School Management System",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "scheduler",
+    "queue",
+    "email",
+    "sqs",
+    "redis"
+  ],
+  "author": "KOKOKA Team",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.470.0",
+    "dotenv": "^16.3.1",
+    "ioredis": "^5.3.2",
+    "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0"
+  }
+}

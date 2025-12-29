@@ -200,6 +200,7 @@ exports.getStudentReports = async (req, res) => {
 exports.generatePDF = async (req, res) => {
   try {
     const { studentId, termId } = req.params;
+    console.log('DEBUG generatePDF - Starting PDF generation for student:', studentId, 'term:', termId);
     console.log('DEBUG generatePDF - req.user.schoolId:', req.user?.schoolId);
     console.log('DEBUG generatePDF - req.school:', req.school);
     const schoolId = req.user?.schoolId || req.school?.id;
@@ -213,6 +214,7 @@ exports.generatePDF = async (req, res) => {
       });
     }
 
+    console.log('DEBUG generatePDF - Fetching result from database...');
     const result = await prisma.result.findUnique({
       where: {
         studentId_termId: { studentId, termId }
@@ -245,24 +247,32 @@ exports.generatePDF = async (req, res) => {
       }
     });
 
+    console.log('DEBUG generatePDF - Result found:', !!result);
     if (!result) {
+      console.error('DEBUG generatePDF - No result found for studentId:', studentId, 'termId:', termId);
       return res.status(404).json({
         success: false,
         message: 'Report card not found'
       });
     }
 
+    console.log('DEBUG generatePDF - Generating PDF buffer...');
     // Generate PDF
     const pdfBuffer = await generateReportCardPDF(result);
+    console.log('DEBUG generatePDF - PDF buffer generated, size:', pdfBuffer.length, 'bytes');
 
     const fileName = `${result.student.user.name.replace(/\s+/g, '_')}_${result.term.name.replace(/\s+/g, '_')}_Report.pdf`;
+    console.log('DEBUG generatePDF - Sending PDF file:', fileName);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
+    console.log('DEBUG generatePDF - PDF sent successfully');
   } catch (error) {
     console.error('Generate PDF error:', error);
+    console.error('Generate PDF error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to generate PDF',
@@ -366,6 +376,7 @@ exports.getPublishedResults = async (req, res) => {
 async function generateReportCardPDF(result) {
   return new Promise((resolve, reject) => {
     try {
+      console.log('DEBUG generateReportCardPDF - Creating PDF document...');
       const doc = new PDFDocument({
         size: 'A4',
         layout: 'portrait',
@@ -373,29 +384,53 @@ async function generateReportCardPDF(result) {
       });
 
       const buffers = [];
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('data', (chunk) => {
+        buffers.push(chunk);
+      });
+      
+      doc.on('end', () => {
+        console.log('DEBUG generateReportCardPDF - PDF document ended, concatenating buffers...');
+        const pdfBuffer = Buffer.concat(buffers);
+        console.log('DEBUG generateReportCardPDF - PDF buffer created, size:', pdfBuffer.length);
+        resolve(pdfBuffer);
+      });
 
+      doc.on('error', (err) => {
+        console.error('DEBUG generateReportCardPDF - PDF document error:', err);
+        reject(err);
+      });
+
+      console.log('DEBUG generateReportCardPDF - Adding content to PDF...');
       // Add content to PDF
       generatePDFContent(doc, result);
 
+      console.log('DEBUG generateReportCardPDF - Ending PDF document...');
       doc.end();
     } catch (error) {
+      console.error('DEBUG generateReportCardPDF - Error in try-catch:', error);
       reject(error);
     }
   });
 }
 
 function generatePDFContent(doc, result) {
-  const { student, term, school, subjectResults } = result;
+  try {
+    console.log('DEBUG generatePDFContent - Starting content generation...');
+    const { student, term, school, subjectResults } = result;
 
-  // ============================================
-  // HEADER SECTION WITH SCHOOL BRANDING
-  // ============================================
+    console.log('DEBUG generatePDFContent - Student:', student?.user?.name);
+    console.log('DEBUG generatePDFContent - Term:', term?.name);
+    console.log('DEBUG generatePDFContent - School:', school?.name);
+    console.log('DEBUG generatePDFContent - Subject results count:', subjectResults?.length);
 
-  // Draw header background
-  doc.rect(0, 0, doc.page.width, 120).fill('#1e3a8a');
-  doc.fillColor('white');
+    // ============================================
+    // HEADER SECTION WITH SCHOOL BRANDING
+    // ============================================
+
+    console.log('DEBUG generatePDFContent - Drawing header...');
+    // Draw header background
+    doc.rect(0, 0, doc.page.width, 120).fill('#1e3a8a');
+    doc.fillColor('white');
 
   // School Name (Large, Bold, Centered)
   doc.fontSize(26).font('Helvetica-Bold').text(school.name.toUpperCase(), 0, 25, { align: 'center' });
@@ -756,6 +791,10 @@ function generatePDFContent(doc, result) {
     footerY + 25,
     { align: 'center', width: doc.page.width }
   );
+  } catch (error) {
+    console.error('DEBUG generatePDFContent - Error generating content:', error);
+    throw error;
+  }
 }
 
 // Helper function for ordinal suffix
