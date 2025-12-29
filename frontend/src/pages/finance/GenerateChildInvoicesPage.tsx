@@ -42,6 +42,7 @@ const GenerateChildInvoicesPage: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+  const [sendEmailToParent, setSendEmailToParent] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -147,7 +148,8 @@ const GenerateChildInvoicesPage: React.FC = () => {
       setGenerating(true);
       const response = await generateChildInvoices(id!, {
         studentIds: Array.from(selectedStudents),
-        applyToAll: false
+        applyToAll: false,
+        sendEmailToParent,
       });
 
       if (response?.success) {
@@ -308,6 +310,26 @@ const GenerateChildInvoicesPage: React.FC = () => {
                       ))}
                     </TableBody>
                   </Table>
+
+                  {/* Email Option */}
+                  <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="sendEmailToParent"
+                        checked={sendEmailToParent}
+                        onCheckedChange={(checked) => setSendEmailToParent(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="sendEmailToParent"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Send invoices to parents/guardians via email immediately
+                      </label>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 ml-6">
+                      When checked, all generated invoices will be queued for email delivery to the students' guardians
+                    </p>
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 mt-6 border-t">

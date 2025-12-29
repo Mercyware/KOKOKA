@@ -582,11 +582,17 @@ const downloadInvoicePDF = async (req, res) => {
         school: {
           select: {
             name: true,
+            streetAddress: true,
+            city: true,
+            state: true,
+            zipCode: true,
+            country: true,
             address: true,
             phone: true,
             email: true,
             website: true,
             currency: true,
+            settings: true,
             bankName: true,
             accountNumber: true,
             accountName: true,
@@ -636,6 +642,7 @@ const getInvoiceByIdPublic = async (req, res) => {
             id: true,
             name: true,
             currency: true,
+            settings: true,
             enableOnlinePayment: true,
             // Only return bank details if online payment is disabled
             // This prevents exposing bank info unless necessary

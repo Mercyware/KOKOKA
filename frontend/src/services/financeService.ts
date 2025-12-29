@@ -141,6 +141,7 @@ export interface CreateMasterInvoiceData {
 export interface GenerateChildInvoicesData {
   studentIds?: string[];
   applyToAll?: boolean;
+  sendEmailToParent?: boolean;
 }
 
 export interface MasterInvoiceStats {

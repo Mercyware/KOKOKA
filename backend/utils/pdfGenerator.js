@@ -4,6 +4,7 @@ const path = require('path');
 const { promisify } = require('util');
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
+const { getSchoolCurrency, formatCurrency } = require('./currency');
 
 /**
  * Generate Invoice PDF
@@ -14,6 +15,11 @@ const mkdir = promisify(fs.mkdir);
 const generateInvoicePDF = async (invoice, school) => {
   return new Promise((resolve, reject) => {
     try {
+      // Get proper currency info from school settings
+      const currency = getSchoolCurrency(school);
+      const currencySymbol = currency.symbol;
+      const decimalPlaces = currency.decimalPlaces || 2;
+      
       const doc = new PDFDocument({ 
         size: 'A4',
         margin: 50,
@@ -177,8 +183,8 @@ const generateInvoicePDF = async (invoice, school) => {
         doc.fontSize(9)
            .text(item.description, descCol, itemY, { width: 260 })
            .text(item.quantity.toString(), qtyCol, itemY, { width: 50, align: 'center' })
-           .text(`${school.currency || '₦'}${parseFloat(item.unitPrice).toFixed(2)}`, priceCol, itemY, { width: 70, align: 'right' })
-           .text(`${school.currency || '₦'}${parseFloat(item.amount).toFixed(2)}`, amountCol, itemY, { width: 65, align: 'right' });
+           .text(`${currencySymbol}${parseFloat(item.unitPrice).toFixed(decimalPlaces)}`, priceCol, itemY, { width: 70, align: 'right' })
+           .text(`${currencySymbol}${parseFloat(item.amount).toFixed(decimalPlaces)}`, amountCol, itemY, { width: 65, align: 'right' });
       });
 
       yPosition += (invoice.items.length * 25) + 10;
@@ -191,18 +197,18 @@ const generateInvoicePDF = async (invoice, school) => {
       doc.fontSize(10)
          .font('Helvetica')
          .text('Subtotal:', totalsX, yPosition)
-         .text(`${school.currency || '₦'}${parseFloat(invoice.subtotal).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+         .text(`${currencySymbol}${parseFloat(invoice.subtotal).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
       
       if (parseFloat(invoice.discount) > 0) {
         yPosition += 15;
         doc.text('Discount:', totalsX, yPosition)
-           .text(`-${school.currency || '₦'}${parseFloat(invoice.discount).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+           .text(`-${currencySymbol}${parseFloat(invoice.discount).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
       }
       
       if (parseFloat(invoice.tax) > 0) {
         yPosition += 15;
         doc.text('Tax:', totalsX, yPosition)
-           .text(`${school.currency || '₦'}${parseFloat(invoice.tax).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+           .text(`${currencySymbol}${parseFloat(invoice.tax).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
       }
 
       yPosition += 15;
@@ -213,7 +219,7 @@ const generateInvoicePDF = async (invoice, school) => {
       doc.fontSize(12)
          .font('Helvetica-Bold')
          .text('Total:', totalsX, yPosition)
-         .text(`${school.currency || '₦'}${parseFloat(invoice.total).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+         .text(`${currencySymbol}${parseFloat(invoice.total).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
 
       // Amount Paid and Balance
       if (parseFloat(invoice.amountPaid) > 0) {
@@ -221,7 +227,7 @@ const generateInvoicePDF = async (invoice, school) => {
         doc.fontSize(10)
            .font('Helvetica')
            .text('Amount Paid:', totalsX, yPosition)
-           .text(`${school.currency || '₦'}${parseFloat(invoice.amountPaid).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+           .text(`${currencySymbol}${parseFloat(invoice.amountPaid).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
       }
 
       yPosition += 15;
@@ -229,7 +235,7 @@ const generateInvoicePDF = async (invoice, school) => {
          .font('Helvetica-Bold')
          .fillColor('#d32f2f')
          .text('Balance Due:', totalsX, yPosition)
-         .text(`${school.currency || '₦'}${parseFloat(invoice.balance).toFixed(2)}`, amountCol, yPosition, { width: 65, align: 'right' });
+         .text(`${currencySymbol}${parseFloat(invoice.balance).toFixed(decimalPlaces)}`, amountCol, yPosition, { width: 65, align: 'right' });
       
       doc.fillColor('#000000');
 

@@ -1,4 +1,5 @@
 const { prisma } = require('../config/database');
+const { sendInvoiceEmail } = require('../services/invoiceEmailService');
 
 // Helper function to generate invoice number
 const generateInvoiceNumber = async (schoolId, academicYear) => {
@@ -412,7 +413,7 @@ const generateChildInvoices = async (req, res) => {
   try {
     const { id } = req.params;
     const schoolId = req.school.id;
-    const { studentIds = [], applyToAll = false } = req.body;
+    const { studentIds = [], applyToAll = false, sendEmailToParent = false } = req.body;
 
     // Get master invoice
     const masterInvoice = await prisma.masterInvoice.findFirst({
@@ -557,6 +558,22 @@ const generateChildInvoices = async (req, res) => {
       });
 
       createdInvoices.push(invoice);
+    }
+
+    // Queue emails to parents/guardians if requested
+    if (sendEmailToParent && createdInvoices.length > 0) {
+      // Queue emails in the background (don't wait for them to complete)
+      Promise.all(
+        createdInvoices.map(invoice => 
+          sendInvoiceEmail(invoice.id, schoolId, { sendTo: 'guardian' })
+            .catch(err => {
+              console.error(`Failed to queue email for invoice ${invoice.invoiceNumber}:`, err);
+              // Don't fail the overall operation if email queuing fails
+            })
+        )
+      ).catch(err => {
+        console.error('Error queuing invoice emails:', err);
+      });
     }
 
     res.status(201).json({
