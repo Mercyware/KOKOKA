@@ -139,9 +139,12 @@ exports.authorize = (...roles) => {
       });
     }
     
+    // Flatten roles in case an array is passed instead of individual arguments
+    const flatRoles = roles.flat();
+    
     // Convert both user role and expected roles to lowercase for case-insensitive comparison
     const userRole = req.user.role?.toLowerCase();
-    const allowedRoles = roles.map(role => role.toLowerCase());
+    const allowedRoles = flatRoles.map(role => typeof role === 'string' ? role.toLowerCase() : role);
     
     // Check if user has a valid role
     if (!userRole) {

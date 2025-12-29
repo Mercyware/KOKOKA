@@ -90,12 +90,15 @@ const getAllMasterInvoices = async (req, res) => {
     ]);
 
     res.json({
-      masterInvoices,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / parseInt(limit))
+      success: true,
+      data: {
+        masterInvoices,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / parseInt(limit))
+        }
       }
     });
   } catch (error) {

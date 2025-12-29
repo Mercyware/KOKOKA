@@ -1,4 +1,7 @@
 const { prisma } = require('../config/database');
+const { sendInvoiceEmail } = require('../services/invoiceEmailService');
+const { generateInvoicePDF } = require('../utils/pdfGenerator');
+const logger = require('../utils/logger');
 
 // Helper function to generate invoice number
 const generateInvoiceNumber = async (schoolId, academicYear) => {
@@ -95,6 +98,18 @@ const getInvoiceById = async (req, res) => {
     const invoice = await prisma.invoice.findFirst({
       where: { id, schoolId },
       include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            currency: true,
+            enableOnlinePayment: true,
+            bankName: true,
+            accountNumber: true,
+            accountName: true,
+            bankBranch: true
+          }
+        },
         student: {
           select: {
             id: true,
@@ -501,11 +516,117 @@ const getOutstandingInvoices = async (req, res) => {
   }
 };
 
+// Send invoice email
+const sendInvoice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schoolId = req.school.id;
+    const { sendTo = 'student' } = req.body; // 'student' or 'guardian'
+
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, schoolId }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Invoice not found' 
+      });
+    }
+
+    const result = await sendInvoiceEmail(id, schoolId, { sendTo });
+
+    res.json({
+      success: true,
+      message: 'Invoice email sent successfully',
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error sending invoice:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send invoice',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Download invoice PDF
+const downloadInvoicePDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const schoolId = req.school.id;
+
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, schoolId },
+      include: {
+        student: {
+          select: {
+            firstName: true,
+            lastName: true,
+            admissionNumber: true,
+            email: true,
+            phone: true
+          }
+        },
+        items: {
+          include: {
+            feeStructure: {
+              select: {
+                name: true,
+                category: true
+              }
+            }
+          }
+        },
+        school: {
+          select: {
+            name: true,
+            address: true,
+            phone: true,
+            email: true,
+            website: true,
+            currency: true,
+            bankName: true,
+            accountNumber: true,
+            accountName: true,
+            bankBranch: true,
+            enableOnlinePayment: true
+          }
+        }
+      }
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Invoice not found' 
+      });
+    }
+
+    const pdfBuffer = await generateInvoicePDF(invoice, invoice.school);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    logger.error('Error downloading invoice PDF:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to generate PDF',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 module.exports = {
   getAllInvoices,
   getInvoiceById,
   createInvoice,
   updateInvoice,
   deleteInvoice,
-  getOutstandingInvoices
+  getOutstandingInvoices,
+  sendInvoice,
+  downloadInvoicePDF
 };

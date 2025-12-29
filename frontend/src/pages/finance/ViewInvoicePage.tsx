@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui';
-import { getInvoiceById, type Invoice } from '@/services/financeService';
+import { getInvoiceById, sendInvoiceEmail, downloadInvoicePDF, type Invoice } from '@/services/financeService';
 import { useToast } from '@/hooks/use-toast';
 import { useSchoolSettings } from '@/contexts/SchoolSettingsContext';
 import { formatAmount } from '@/lib/currency';
@@ -35,6 +35,7 @@ const ViewInvoicePage: React.FC = () => {
   const { settings } = useSchoolSettings();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   const [paystackPaymentOpen, setPaystackPaymentOpen] = useState(false);
 
@@ -91,17 +92,40 @@ const ViewInvoicePage: React.FC = () => {
   };
 
   const handleDownloadPDF = () => {
-    toast({
-      title: 'Coming Soon',
-      description: 'PDF download functionality will be available soon',
-    });
+    if (!invoice) return;
+    const pdfUrl = downloadInvoicePDF(invoice.id);
+    window.open(pdfUrl, '_blank');
   };
 
-  const handleSendEmail = () => {
-    toast({
-      title: 'Coming Soon',
-      description: 'Email functionality will be available soon',
-    });
+  const handleSendEmail = async () => {
+    if (!invoice) return;
+
+    try {
+      setSending(true);
+      const response = await sendInvoiceEmail(invoice.id, 'student');
+
+      if (response?.success) {
+        toast({
+          title: 'Success',
+          description: `Invoice sent to ${response.data.recipient}`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: response?.message || 'Failed to send invoice',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error sending invoice:', error);
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to send invoice',
+        variant: 'destructive',
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading) {
@@ -176,9 +200,14 @@ const ViewInvoicePage: React.FC = () => {
                 <Printer className="h-4 w-4 mr-2" />
                 Print
               </Button>
-              <Button intent="action" size="sm" onClick={handleSendEmail}>
+              <Button 
+                intent="action" 
+                size="sm" 
+                onClick={handleSendEmail}
+                disabled={sending}
+              >
                 <Mail className="h-4 w-4 mr-2" />
-                Email
+                {sending ? 'Sending...' : 'Email'}
               </Button>
             </div>
           </div>

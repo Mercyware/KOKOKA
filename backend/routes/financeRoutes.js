@@ -33,6 +33,12 @@ router.get('/invoices/outstanding', invoiceController.getOutstandingInvoices);
 // GET single invoice
 router.get('/invoices/:id', invoiceController.getInvoiceById);
 
+// Download invoice PDF
+router.get('/invoices/:id/pdf', invoiceController.downloadInvoicePDF);
+
+// Send invoice email
+router.post('/invoices/:id/send', invoiceController.sendInvoice);
+
 // Admin only routes for invoices
 router.post('/invoices', roleMiddleware.restrictTo('admin'), invoiceController.createInvoice);
 router.put('/invoices/:id', roleMiddleware.restrictTo('admin'), invoiceController.updateInvoice);

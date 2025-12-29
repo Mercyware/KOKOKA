@@ -393,6 +393,22 @@ export const deleteInvoice = async (id: string): Promise<ApiResponse<{ message: 
   return await del<{ message: string }>(`/finance/invoices/${id}`);
 };
 
+export const sendInvoiceEmail = async (
+  id: string,
+  sendTo: 'student' | 'guardian' = 'student'
+): Promise<ApiResponse<{ message: string; jobId: string; recipient: string }>> => {
+  return await post<{ message: string; jobId: string; recipient: string }>(
+    `/finance/invoices/${id}/send`,
+    { sendTo }
+  );
+};
+
+export const downloadInvoicePDF = (id: string): string => {
+  const token = localStorage.getItem('token');
+  const schoolSubdomain = localStorage.getItem('schoolSubdomain');
+  return `${import.meta.env.VITE_API_URL}/finance/invoices/${id}/pdf?token=${token}&subdomain=${schoolSubdomain}`;
+};
+
 export const getOutstandingInvoices = async (params?: {
   studentId?: string;
   studentName?: string;

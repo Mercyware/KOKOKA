@@ -97,9 +97,12 @@ import { InventoryPage, ItemsPage, TransactionsPage, AllocationsPage } from "./p
 import { FeeStructuresPage, InvoicesPage, PaymentsPage, PaymentReportPage, OutstandingPage } from "./pages/finance";
 import CreateInvoicePage from "./pages/finance/CreateInvoicePage";
 import ViewInvoicePage from "./pages/finance/ViewInvoicePage";
+import PayInvoicePage from "./pages/finance/PayInvoicePage";
 import PaymentCallbackPage from "./pages/finance/PaymentCallbackPage";
 import MasterInvoicesPage from "./pages/finance/MasterInvoicesPage";
 import CreateMasterInvoicePage from "./pages/finance/CreateMasterInvoicePage";
+import ViewMasterInvoicePage from "./pages/finance/ViewMasterInvoicePage";
+import GenerateChildInvoicesPage from "./pages/finance/GenerateChildInvoicesPage";
 import { AccountingDashboard, IncomePage, ExpenditurePage } from "./pages/accounting";
 // Results Components
 import TerminalReport from "./pages/results/TerminalReport";
@@ -302,9 +305,12 @@ const App = () => (
             <Route path="/finance/fee-structures" element={<ProtectedRoute><FeeStructuresPage /></ProtectedRoute>} />
             <Route path="/finance/master-invoices" element={<ProtectedRoute><MasterInvoicesPage /></ProtectedRoute>} />
             <Route path="/finance/master-invoices/create" element={<ProtectedRoute><CreateMasterInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/master-invoices/:id" element={<ProtectedRoute><ViewMasterInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/master-invoices/:id/generate" element={<ProtectedRoute><GenerateChildInvoicesPage /></ProtectedRoute>} />
             <Route path="/finance/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
             <Route path="/finance/invoices/create" element={<ProtectedRoute><CreateInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/invoices/:invoiceId" element={<ProtectedRoute><ViewInvoicePage /></ProtectedRoute>} />
+            <Route path="/finance/invoices/:id/pay" element={<ProtectedRoute><PayInvoicePage /></ProtectedRoute>} />
             <Route path="/finance/payments" element={<ProtectedRoute><PaymentsPage /></ProtectedRoute>} />
             <Route path="/finance/payment-report" element={<ProtectedRoute><PaymentReportPage /></ProtectedRoute>} />
             <Route path="/finance/outstanding" element={<ProtectedRoute><OutstandingPage /></ProtectedRoute>} />

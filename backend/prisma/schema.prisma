@@ -26,11 +26,17 @@ model School {
   phone                       String?
   website                     String?
   settings                    Json?
+  currency                    String?                      @default("₦")
   paystackSubaccountCode      String?                      @unique
   paystackSubaccountId        String?
+  bankName                    String?
   bankAccountName             String?
+  accountName                 String?
   bankAccountNumber           String?
+  accountNumber               String?
   bankCode                    String?
+  bankBranch                  String?
+  enableOnlinePayment         Boolean?                     @default(true)
   createdAt                   DateTime                     @default(now())
   updatedAt                   DateTime                     @updatedAt
   academicCalendars           AcademicCalendar[]
